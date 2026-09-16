@@ -5,7 +5,11 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "node server.mjs",
+    "build": "node scripts/build.mjs",
+    "start": "npm run build && node server.mjs",
     "test": "node --test"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

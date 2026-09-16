@@ -9,12 +9,20 @@ exercises it over live HTTP.
 
 ## Run it
 
-No build step — plain ES modules loaded directly by the browser.
-
 ```
-npm start          # serves the app at http://localhost:8080
+npm start          # builds, then serves the app at http://localhost:8080
+npm run build       # bundles src/app.js -> dist/app.<hash>.js and rewrites index.html to match
 npm test           # runs the test suite (node's built-in test runner)
 ```
+
+`index.html` never references `src/*.js` or `styles.css` directly — only the content-hashed
+files in `dist/`, committed alongside the source. That's not optional polish: with separate
+unversioned ES module files, a browser (or a CDN) can serve a fresh `app.js` next to a *stale*
+`anthropic.js` that it imports — new UI running old logic, silently, no error. A single
+content-hashed bundle makes that structurally impossible: any change to any source file changes
+the one URL that matters, so there's nothing left to go stale independently. Run `npm run build`
+after editing anything in `src/` or `styles.css`, and commit the resulting `dist/` files —
+GitHub Pages has no build step of its own, so the committed bundle *is* what ships.
 
 ## Layout
 
