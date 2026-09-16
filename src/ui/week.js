@@ -1,8 +1,10 @@
 import { esc, dayLabel } from '../dom.js';
 import { dur, CATS } from '../solver.js';
+import * as Add from './add.js';
 
 export function render(state, solveRes, ctx) {
   const sel = state.sel;
+  const addOpen = !!state.addPanelOpen;
   const cols = solveRes.dates.map((d) => {
     const lbl = dayLabel(d);
     const dayFixed = state.fixed.filter((e) => e.date === d && !e.parentId);
@@ -38,6 +40,10 @@ export function render(state, solveRes, ctx) {
   }).join('');
 
   return `
+    <div class="add-panel-toggle-row">
+      <button class="btn ${addOpen ? 'btn-primary' : 'btn-ghost'}" data-act="toggle-add-panel">${addOpen ? '✕ Close' : '+ Add'}</button>
+    </div>
+    ${addOpen ? `<div class="add-panel-inline">${Add.render(state, solveRes, ctx)}</div>` : ''}
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${cols}</div>
     <div class="panel" style="margin-top:14px">
       <div class="section-title">Carried debt by category</div>
@@ -48,4 +54,5 @@ export function render(state, solveRes, ctx) {
 
 export const handlers = {
   'week-select-day': (ctx, t) => ctx.store.setState({ sel: t.dataset.date, page: 'day' }),
+  'toggle-add-panel': (ctx) => ctx.store.setState({ addPanelOpen: !ctx.store.getState().addPanelOpen }),
 };

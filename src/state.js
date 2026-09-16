@@ -7,9 +7,14 @@
 // (fixed events, bubbles, week windows, buffers) actually changed, or a new minute has
 // ticked over (so "don't place anything before now" stays correct).
 import { solve, dateKey, addDays, HORIZON_DAYS } from './solver.js';
-import { loadState, saveState, backingStorage } from './storage.js';
+import { loadState, saveState, backingStorage, readItem, writeItem, removeItem } from './storage.js';
 
+// apiKey is deliberately NOT here: it's a billing credential, not calendar data, so it must
+// never ride along in a Supabase sync (push()/pull() only ever touch these keys) — it gets its
+// own dedicated, device-local storage slot below, the same way supabase.js keeps the Supabase
+// URL/key out of this blob too.
 export const PERSIST_KEYS = ['fixed', 'bubbles', 'weekWindows', 'buf', 'density', 'hints', 'modelMode', 'seq'];
+const API_KEY_STORAGE_KEY = 'bubbles.apiKey';
 const SCHEDULE_KEYS = new Set(['fixed', 'bubbles', 'weekWindows', 'buf']);
 
 export function defaultState() {
@@ -47,7 +52,8 @@ export class Store {
     this._solveCache = null;
     const saved = loadState(this.storage);
     const today = dateKey(new Date());
-    this.state = { ...defaultState(), ...(saved ? freshenDates(saved, today) : {}) };
+    const apiKey = readItem(API_KEY_STORAGE_KEY, this.storage) || '';
+    this.state = { ...defaultState(), ...(saved ? freshenDates(saved, today) : {}), apiKey };
   }
 
   subscribe(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
@@ -64,6 +70,10 @@ export class Store {
     let dirty = false;
     for (const k of PERSIST_KEYS) if (k in resolved) { toPersist[k] = this.state[k]; dirty = true; }
     if (dirty) saveState(toPersist, this.storage);
+    if ('apiKey' in resolved) {
+      if (resolved.apiKey) writeItem(API_KEY_STORAGE_KEY, resolved.apiKey, this.storage);
+      else removeItem(API_KEY_STORAGE_KEY, this.storage);
+    }
     this.notify();
   }
 

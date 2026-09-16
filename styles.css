@@ -77,6 +77,11 @@ input, select { font-family: inherit; }
 .status-line.ok { color: var(--success-text); }
 .status-line.bad { color: var(--error-text); }
 
+/* Inline Add panel (embedded in Day and Week so adding doesn't mean leaving the page) */
+.add-panel-toggle-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.add-panel-inline { margin-bottom: 16px; animation: pageIn 0.22s ease; }
+@keyframes pageIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
 /* Day strip */
 .day-strip { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; }
 .day-chip {

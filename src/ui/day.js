@@ -1,5 +1,6 @@
 import { esc, dayLabel, isToday } from '../dom.js';
 import { fmt, dur, lanes, addDays, dateKey, CATS } from '../solver.js';
+import * as Add from './add.js';
 
 const PPM = { compact: 0.7, comfortable: 1.1, roomy: 1.6 };
 
@@ -134,8 +135,14 @@ export function render(state, solveRes, ctx) {
       </div>`).join('') : '<div class="muted">Nothing queued.</div>'}
     </div>`;
 
+  const addOpen = !!state.addPanelOpen;
+
   return `
     <div class="day-strip">${chips}</div>
+    <div class="add-panel-toggle-row">
+      <button class="btn ${addOpen ? 'btn-primary' : 'btn-ghost'}" data-act="toggle-add-panel">${addOpen ? '✕ Close' : '+ Add'}</button>
+    </div>
+    ${addOpen ? `<div class="add-panel-inline">${Add.render(state, solveRes, ctx)}</div>` : ''}
     <div class="grid-2" style="grid-template-columns:2fr 1fr">
       <div class="card">${renderTimeline(state, solveRes, sel, now)}</div>
       <div>${rightCol}</div>
@@ -145,10 +152,13 @@ export function render(state, solveRes, ctx) {
 
 export const handlers = {
   'select-day': (ctx, t) => ctx.store.setState({ sel: t.dataset.date }),
-  'goto-add': (ctx) => ctx.store.setState({ page: 'add' }),
+  // Both open the inline panel in place rather than switching to the separate Add tab —
+  // staying on Day is the whole point of embedding it here.
+  'goto-add': (ctx) => ctx.store.setState({ addPanelOpen: true }),
+  'toggle-add-panel': (ctx) => ctx.store.setState({ addPanelOpen: !ctx.store.getState().addPanelOpen }),
   'bubble-done': (ctx, t) => ctx.store.applyAction({ type: 'mark_done', params: { id: t.dataset.id } }),
   'bubble-delete': (ctx, t) => ctx.store.patchBubbles((bs) => bs.filter((b) => b.id !== t.dataset.id)),
   'open-event': (ctx, t) => ctx.store.setState({ sheet: { open: true, kind: 'event', id: t.dataset.id } }),
   'open-bubble': (ctx, t) => ctx.store.setState({ sheet: { open: true, kind: 'bubble', id: t.dataset.id } }),
-  'add-at-gap': (ctx, t) => ctx.store.setState({ page: 'add', prefillStart: +t.dataset.start, prefillDate: t.dataset.date }),
+  'add-at-gap': (ctx, t) => ctx.store.setState({ addPanelOpen: true, prefillStart: +t.dataset.start, prefillDate: t.dataset.date }),
 };

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Store, freshenDates, defaultState } from '../src/state.js';
+import { Store, freshenDates, defaultState, PERSIST_KEYS } from '../src/state.js';
 import { MemoryStorage } from '../src/storage.js';
 
 test('solve() is memoized: unrelated state changes reuse the cached result object', () => {
@@ -79,6 +79,31 @@ test('setState persists only the declared PERSIST_KEYS, not ephemeral UI state',
   store.applyAction({ type: 'add_fixed', params: { title: 'X', date: '2026-01-05', start: 0, end: 30 } });
   const raw2 = JSON.parse(storage.getItem('bubbles.state.v1') || '{}');
   assert.equal(raw2.fixed.length, 1);
+});
+
+test('apiKey survives a reload (its own storage slot, not the PERSIST_KEYS blob)', () => {
+  const storage = new MemoryStorage();
+  const s1 = new Store({ storage });
+  s1.setState({ apiKey: 'sk-ant-real-key' });
+
+  const s2 = new Store({ storage });
+  assert.equal(s2.getState().apiKey, 'sk-ant-real-key');
+
+  // Must never ride along in a Supabase sync payload — it's a billing credential, not calendar data.
+  const blob = JSON.parse(storage.getItem('bubbles.state.v1') || '{}');
+  assert.equal('apiKey' in blob, false);
+  assert.equal(PERSIST_KEYS.includes('apiKey'), false);
+});
+
+test('clearing apiKey removes it from storage, not just from memory', () => {
+  const storage = new MemoryStorage();
+  const s1 = new Store({ storage });
+  s1.setState({ apiKey: 'sk-ant-real-key' });
+  s1.setState({ apiKey: '' });
+
+  const s2 = new Store({ storage });
+  assert.equal(s2.getState().apiKey, '');
+  assert.equal(storage.getItem('bubbles.apiKey'), null);
 });
 
 test('a fresh Store reloads persisted state from storage', () => {
