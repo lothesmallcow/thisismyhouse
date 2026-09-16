@@ -1,0 +1,11 @@
+{
+  "name": "bubbles-calendar",
+  "version": "1.0.0",
+  "description": "Auto-placing scheduler: fixed events + flexible bubbles solved into the gaps between them.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  }
+}
