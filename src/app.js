@@ -109,8 +109,8 @@ function renderHeader(state) {
     <div class="greet">${greeting(ctx.now)}</div>
     <div class="sub">${state.bubbles.filter((b) => b.status !== 'done').length} bubble(s) queued · ${state.fixed.filter((e) => !e.parentId).length} fixed event(s)</div>
     <div class="cmdbar">
-      <input id="cmd-input" placeholder='Try: "gym every weekday at 7:30 to 8:30" — or paste/attach a photo of a timetable'>
-      <input type="file" id="cmd-image-input" accept="image/*" multiple hidden data-act-change="cmd-image-file">
+      <textarea id="cmd-input" rows="1" placeholder='Try: "gym every weekday at 7:30 to 8:30" — or tap 📷 for a photo of a timetable'></textarea>
+      <input type="file" id="cmd-image-input" accept="image/*" multiple class="visually-hidden" data-act-change="cmd-image-file">
       <button type="button" class="cmd-attach-btn" data-act="cmd-attach" title="Attach a photo (needs a Claude connection)" ${canAttach ? '' : 'disabled'}>📷</button>
       <button data-act="cmd-run">Run</button>
     </div>
@@ -176,7 +176,14 @@ root.addEventListener('change', (ev) => {
 });
 
 root.addEventListener('keydown', (ev) => {
-  if (ev.key === 'Enter' && ev.target && ev.target.id === 'cmd-input') runCommand();
+  // cmd-input is a <textarea> (not <input>) so Safari will surface image data on paste —
+  // plain single-line text inputs silently refuse non-text clipboard content in WebKit, which
+  // is why "paste an image" could look like it does nothing. Enter still submits; Shift+Enter
+  // still inserts a newline, same as any chat-style box.
+  if (ev.key === 'Enter' && !ev.shiftKey && ev.target && ev.target.id === 'cmd-input') {
+    ev.preventDefault();
+    runCommand();
+  }
 });
 
 root.addEventListener('paste', (ev) => {

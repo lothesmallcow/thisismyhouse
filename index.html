@@ -9,12 +9,23 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Bubbles">
 <meta name="theme-color" content="#f7f5f1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+  // Safari's back-forward cache can restore this exact page (old JS included) from memory
+  // when you switch back to the tab, with zero network request — so a deploy can go live and
+  // this tab would never know. An empty pagehide/unload listener is a well-known way to opt a
+  // page out of bfcache, forcing a real re-fetch (and this meta no-cache) next time it's shown.
+  window.addEventListener('pagehide', () => {});
+  window.addEventListener('unload', () => {});
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./styles.css?v=3">
 </head>
 <body>
 <div id="root">Loading…</div>
-<script type="module" src="./src/app.js"></script>
+<script type="module" src="./src/app.js?v=3"></script>
 </body>
 </html>
