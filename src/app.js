@@ -3,6 +3,7 @@ import { SupabaseClient } from './supabase.js';
 import { parseLocalCommand } from './parser.js';
 import { parseCommand } from './anthropic.js';
 import { esc } from './dom.js';
+import { dateKey } from './solver.js';
 import * as Day from './ui/day.js';
 import * as Week from './ui/week.js';
 import * as Add from './ui/add.js';
@@ -79,7 +80,7 @@ async function runCommand() {
   let result;
   if (state.apiKey) {
     try {
-      result = await parseCommand({ text, images, spendMode: state.modelMode, apiKey: state.apiKey });
+      result = await parseCommand({ text, images, today: dateKey(ctx.now), spendMode: state.modelMode, apiKey: state.apiKey });
     } catch (e) {
       result = parseLocalCommand(text, { today: ctx.now });
       result.reply = 'Claude call failed (' + e.message + ') — used the local parser instead. ' + (result.reply || '');

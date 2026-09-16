@@ -66,16 +66,44 @@ export function parseJSONLoose(text) {
   return { reply: replyMatch ? JSON.parse('"' + replyMatch[1] + '"') : '', actions };
 }
 
-const COMMAND_SYSTEM_PROMPT = `You extract calendar actions from a user's message. You never compute a schedule,
-never invent a start time for flexible work, and never guess dates the user did not give you.
-Reply with JSON only: {"reply": string, "actions": Action[]}.
-Action.type is one of: add_fixed, add_bubble, modify, modify_event, split_event, delete, delete_event,
-mark_done, shift, set_buffer, set_window, extend_window.
-A question with no changes to make returns actions: [].`;
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export async function parseCommand({ text, images, spendMode = 'balanced', apiKey, fetchImpl = (...args) => fetch(...args) }) {
+/** Build the extraction system prompt anchored to a specific "today" so relative dates resolve correctly. */
+export function buildCommandSystemPrompt(todayKey) {
+  const [y, m, d] = todayKey.split('-').map(Number);
+  const weekday = WEEKDAY_NAMES[new Date(y, m - 1, d).getDay()];
+  return `You extract calendar actions from a user's message, which may include one or more photos —
+a class timetable, a printed schedule, a screenshot from another calendar app, a syllabus.
+
+Today is ${todayKey} (${weekday}). Resolve every relative or weekday-only date against this.
+
+A photo is always external source material to transcribe FROM — it is never a picture of what is
+already in this app. This app's own calendar is not shown to you and is usually empty or sparse;
+never assume a photographed schedule is "already there" or ask whether to avoid duplicating it —
+extract every item you can read and return it as actions. The user attached the photo specifically
+so you would add these for them, not so you would describe or second-guess it back to them.
+
+Extraction rules:
+- An item with a specific clock time (e.g. "Mon 9:00–10:30 Maths") becomes one add_fixed action:
+  {"type":"add_fixed","params":{"title","date":"YYYY-MM-DD","start":minutesFromMidnight,"end":minutesFromMidnight}}.
+- A weekday with no explicit date resolves to its next occurrence from today. If the source states a
+  recurrence ("every Monday", a whole term's timetable), emit one add_fixed action per occurrence
+  over the next 14 days, not just the first.
+- An item with a duration but no fixed clock time (e.g. "2h of revision", "finish the essay") becomes
+  one add_bubble action — never invent a start time for it:
+  {"type":"add_bubble","params":{"title","category":one of "study"|"job apps"|"gym"|"misc","date":"YYYY-MM-DD" (earliest day it may be placed, default today),"total":minutes,"type":"divisible"|"solid","minChunk":minutes (divisible only),"priority":1-5,"deadline":{"date":"YYYY-MM-DD","time":minutesFromMidnight} (optional)}}.
+- Other action types: modify, modify_event, split_event, delete, delete_event, mark_done, shift,
+  set_buffer, set_window, extend_window — use {"target": title} to identify an existing item by name.
+- If a photo is genuinely unreadable or unrelated to scheduling, say so in reply and return actions: [].
+- A plain question with no schedule content to add returns actions: [] and reply answers it.
+
+Reply with JSON only: {"reply": string, "actions": Action[]}.`;
+}
+
+export async function parseCommand({ text, images, today, spendMode = 'balanced', apiKey, fetchImpl = (...args) => fetch(...args) }) {
   const model = MODELS.parse[spendMode] || MODELS.parse.balanced;
-  const content = [{ type: 'text', text }];
+  const todayKey = today || new Date().toISOString().slice(0, 10);
+  const content = [{ type: 'text', text: text || (images && images.length ? 'Add everything you can read from the attached photo(s) to my calendar.' : '') }];
   (images || []).slice(0, 4).forEach((img) => content.push({ type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.data } }));
   const res = await fetchImpl('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -87,8 +115,8 @@ export async function parseCommand({ text, images, spendMode = 'balanced', apiKe
     },
     body: JSON.stringify({
       model,
-      max_tokens: 1024,
-      system: COMMAND_SYSTEM_PROMPT,
+      max_tokens: 1536,
+      system: buildCommandSystemPrompt(todayKey),
       messages: [{ role: 'user', content }],
     }),
   });
