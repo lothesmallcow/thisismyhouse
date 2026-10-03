@@ -1,0 +1,12 @@
+[Unit]
+Description=edgelab: poll EDGAR latest filings + enrich
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=edgelab
+WorkingDirectory=__APP_DIR__
+ExecStart=__APP_DIR__/deploy/run.sh collect filings
+TimeoutStartSec=3h
+Nice=5

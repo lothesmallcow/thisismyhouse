@@ -1,0 +1,10 @@
+[Unit]
+Description=edgelab timer: health check + dead-man ping
+
+[Timer]
+OnCalendar=*:3/15
+Persistent=true
+RandomizedDelaySec=20
+
+[Install]
+WantedBy=timers.target

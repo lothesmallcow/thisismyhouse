@@ -1,0 +1,10 @@
+[Unit]
+Description=edgelab timer: after-close bars, fills, equity, outcomes, report
+
+[Timer]
+OnCalendar=Mon..Fri 18:30 America/New_York
+Persistent=true
+RandomizedDelaySec=20
+
+[Install]
+WantedBy=timers.target

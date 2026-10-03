@@ -1,0 +1,100 @@
+# edgelab settings. Secrets never go here: they live in the environment (.env on the VPS).
+# Changing anything under `risk:` or `splits:` is a GATE decision (needs Lorenzo).
+
+project:
+  timezone_market: America/New_York
+  data_dir: ${EDGELAB_DATA_DIR:-./data}      # sqlite db, filing texts, backups
+  db_file: edgelab.sqlite
+
+sec:
+  # SEC requires a descriptive User-Agent with contact email. Set EDGELAB_SEC_UA in .env
+  user_agent_env: EDGELAB_SEC_UA
+  max_requests_per_sec: 8                     # SEC cap is 10/s; stay under it
+  forms_tracked: ["8-K", "8-K/A", "10-K", "10-Q", "NT 10-K", "NT 10-Q", "4", "SC 13D", "SC 13D/A", "S-3", "424B5"]
+  store_text_forms: ["8-K", "10-K", "10-Q", "NT 10-K", "NT 10-Q"]
+
+alpaca:
+  data_feed: sip          # free plan: SIP historical is allowed when the query ends >15 min ago
+  key_env: ALPACA_API_KEY
+  secret_env: ALPACA_SECRET_KEY
+
+universe:
+  exchanges: ["NYSE", "NASDAQ", "AMEX", "ARCA", "BATS"]
+  min_price: 2.0
+  min_adv20_usd: 1000000          # $1M/day minimum. Below this, costs dominate and paper fills are fiction.
+  size_buckets_adv_usd:           # liquidity buckets (dollar volume proxy for size; free data lacks clean market caps)
+    mega: 500000000
+    large: 100000000
+    mid: 20000000
+    small: 5000000
+    micro: 0
+
+costs:
+  # Per-side costs in basis points, by liquidity bucket. Optimistic ~ what paper fills give you.
+  # Pessimistic ~ what you would actually pay with market-on-open orders. If an edge only
+  # exists under 'opt', it does not exist.
+  opt:
+    half_spread_bps: {mega: 1, large: 2, mid: 5, small: 10, micro: 25}
+    commission_bps: 0
+    impact_coef: 0.0
+  pess:
+    half_spread_bps: {mega: 3, large: 6, mid: 15, small: 35, micro: 80}
+    commission_bps: 1             # stand-in for SEC/FINRA fees and FX on a real account
+    impact_coef: 0.1              # impact_bps = coef * vol20_bps * sqrt(notional / adv20)
+  borrow_annual: {mega: 0.003, large: 0.005, mid: 0.01, small: 0.05, micro: 0.20}
+
+risk:
+  max_position_pct: 0.05          # of account equity at decision time
+  max_open_positions: 20
+  max_gross_exposure: 1.0         # no leverage
+  max_daily_loss_pct: 0.03        # breach -> no new entries until next day, alert
+  max_drawdown_kill_pct: 0.15     # breach -> kill switch for that account, alert
+  allow_short: false              # per-strategy override allowed only for candidate strategies
+  stale_bars_max_trading_days: 1  # latest daily bar must be from the previous trading day
+  stale_filings_max_minutes: 45   # during EDGAR hours (06:00-22:00 ET weekdays)
+
+execution:
+  entry_tif: opg                  # market-on-open auction; Alpaca requires submission before 09:28 ET
+  exit_tif: opg
+  decision_time_et: "09:15"
+
+outcomes:
+  intraday_horizons_min: {"5m": 5, "30m": 30, "1h": 60, "4h": 240}
+  daily_horizons_days: {"1d": 1, "3d": 3, "5d": 5, "10d": 10, "20d": 20, "60d": 60}
+  beta_window_days: 250
+  beta_min_obs: 120
+  n_peers: 10
+
+splits:
+  # Fixed before looking at any returns. Events within embargo_days before a boundary are dropped
+  # so that no outcome window crosses into the next split.
+  discovery:  {start: "2016-01-01", end: "2020-12-31"}
+  validation: {start: "2021-01-01", end: "2023-12-31"}
+  holdout:    {start: "2024-01-01", end: "2026-06-30"}
+  forward:    {start: "2026-10-01", end: null}
+  embargo_days: 90
+
+accounts:
+  # Controls run from Phase 1. All accounting is done by the internal simulator with both cost
+  # models; 'alpaca_paper' additionally sends the orders to an Alpaca paper account so the
+  # plumbing a real account would use is exercised and broker fills can be compared.
+  - account_id: ctrl_spy
+    strategy: spy_buy_hold
+    broker: sim
+    start_equity: 100000
+    risk_overrides: {max_position_pct: 1.0}   # the market control holds one position at ~99%
+  - account_id: ctrl_random
+    strategy: random_universe
+    broker: sim                   # switch to alpaca_paper once keys exist
+    start_equity: 100000
+    params: {trades_per_day: 2, hold_days: 5, position_pct: 0.04}
+  - account_id: ctrl_event_random
+    strategy: random_event
+    broker: sim
+    start_equity: 100000
+    params: {trades_per_day: 2, hold_days: 5, position_pct: 0.04, event_forms: ["8-K"]}
+
+alerts:
+  ntfy_topic_env: EDGELAB_NTFY_TOPIC          # unguessable topic name, phone subscribes to it
+  ntfy_server: https://ntfy.sh
+  healthchecks_url_env: EDGELAB_HC_URL         # dead-man switch: alerts if the VPS goes silent

@@ -1,0 +1,10 @@
+[Unit]
+Description=edgelab timer: download filing texts
+
+[Timer]
+OnCalendar=*:2/20
+Persistent=true
+RandomizedDelaySec=20
+
+[Install]
+WantedBy=timers.target

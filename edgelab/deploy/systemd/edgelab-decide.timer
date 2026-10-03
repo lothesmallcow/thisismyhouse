@@ -1,0 +1,10 @@
+[Unit]
+Description=edgelab timer: pre-open decisions and orders
+
+[Timer]
+OnCalendar=Mon..Fri 09:12 America/New_York
+Persistent=true
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target

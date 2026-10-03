@@ -1,0 +1,10 @@
+[Unit]
+Description=edgelab timer: publish reports to GitHub
+
+[Timer]
+OnCalendar=Mon..Fri 19:30 America/New_York
+Persistent=true
+RandomizedDelaySec=20
+
+[Install]
+WantedBy=timers.target

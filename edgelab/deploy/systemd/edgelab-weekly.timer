@@ -1,0 +1,10 @@
+[Unit]
+Description=edgelab timer: weekly reference data refresh
+
+[Timer]
+OnCalendar=Sun 03:00 America/New_York
+Persistent=true
+RandomizedDelaySec=20
+
+[Install]
+WantedBy=timers.target

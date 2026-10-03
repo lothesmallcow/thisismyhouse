@@ -1,0 +1,12 @@
+[Unit]
+Description=edgelab: weekly reference data refresh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=edgelab
+WorkingDirectory=__APP_DIR__
+ExecStart=/bin/bash -c '__APP_DIR__/deploy/run.sh collect tickers && __APP_DIR__/deploy/run.sh collect assets && __APP_DIR__/deploy/run.sh collect sic --limit 3000 && __APP_DIR__/deploy/run.sh collect factors'
+TimeoutStartSec=3h
+Nice=5

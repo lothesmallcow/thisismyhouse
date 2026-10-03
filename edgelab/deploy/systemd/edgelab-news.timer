@@ -1,0 +1,10 @@
+[Unit]
+Description=edgelab timer: pull Alpaca/Benzinga news
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=20
+
+[Install]
+WantedBy=timers.target

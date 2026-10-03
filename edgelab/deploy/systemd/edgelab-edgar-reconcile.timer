@@ -1,0 +1,10 @@
+[Unit]
+Description=edgelab timer: prove no filings were missed yesterday
+
+[Timer]
+OnCalendar=*-*-* 07:05 America/New_York
+Persistent=true
+RandomizedDelaySec=20
+
+[Install]
+WantedBy=timers.target

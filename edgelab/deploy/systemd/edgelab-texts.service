@@ -1,0 +1,12 @@
+[Unit]
+Description=edgelab: download filing texts
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=edgelab
+WorkingDirectory=__APP_DIR__
+ExecStart=__APP_DIR__/deploy/run.sh collect texts
+TimeoutStartSec=3h
+Nice=5
