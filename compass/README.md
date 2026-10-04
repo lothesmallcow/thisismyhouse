@@ -133,6 +133,11 @@ Code map:
 
 ## Run it
 
+**In the browser, nothing to install**: open
+[a GitHub Codespace on this branch](https://codespaces.new/lothesmallcow/thisismyhouse?ref=claude/zen-carson-uxhsg1).
+The first start installs, loads the data and opens Compass in demo mode (about 5 minutes); the
+demo accounts are listed below.
+
 Requirements: Node 20.9+.
 
 ```bash
