@@ -90,3 +90,28 @@ describe("every company of the sector, and the official boards a site links to",
     expect(names).not.toContain("Mediobanca");
   });
 });
+
+describe("several careers and several countries at once", () => {
+  it("each chosen career adds its position for job seekers; students already search by career", async () => {
+    const { careerRoles } = await import("@/lib/pipeline/search-terms");
+    expect(careerRoles(["Investment banking analyst"], ["investment-banking", "consulting", "asset-management"], "lavoro")).toEqual(["Investment banking analyst", "Consulente strategico", "Analista asset management"]);
+    expect(careerRoles([], ["consulting"], "stage")).toEqual([]);
+    const { buildSearchCode } = await import("@/lib/core/search-code");
+    const code = buildSearchCode({ track: "lavoro", roles: ["Analista investment banking", "Consulente strategico", "Analista asset management", "Analista private equity"], sectors: [], companies: [], places: [{ country: "IT", where: "Milano", distanceKm: 15 }, { country: "GB", where: "London", distanceKm: 30 }], years: 0, studyStage: null, hours: "full", contracts: [] });
+    const gb = code.queries.filter((q) => q.channel === "api" && q.country === "GB").map((q) => q.what);
+    expect(gb).toEqual(["Investment banking analyst junior", "Strategy consultant junior", "Asset management analyst junior", "Private equity analyst junior"]);
+  });
+
+  it("Italy and the UK: the global firms of the career count in both", async () => {
+    const { searchTargets } = await import("@/lib/pipeline/targets");
+    const { ensureCatalog } = await import("@/lib/server/catalog");
+    const { updateProfile } = await import("@/lib/server/profile");
+    const { seedPeople } = await import("./helpers/db");
+    const db = await freshDb();
+    const { L } = await seedPeople(db, new Date("2026-10-05T07:00:00Z"));
+    await ensureCatalog(db);
+    await updateProfile(db, L, { roles: ["Consulente strategico"], synonyms: [], city: "London", countries: ["GB"], extraPlaces: [] });
+    const names = (await searchTargets(db, L)).map((c) => c.name);
+    expect(names).toEqual(expect.arrayContaining(["McKinsey & Company", "Boston Consulting Group", "Bain & Company"]));
+  });
+});

@@ -81,7 +81,7 @@ export function buildSearchCode(i: CodeInput): SearchCode {
   // The words to search, in the language of each country.
   const termsFor = (lang: "it" | "en" | "de" | "fr"): string[] => {
     if (i.track === "stage") {
-      const t = i.sectors.slice(0, 3).map((s) => `${INTERNSHIP[lang]} ${s.term}`);
+      const t = i.sectors.slice(0, 6).map((s) => `${INTERNSHIP[lang]} ${s.term}`); // several careers at once
       return t.length ? t : [INTERNSHIP[lang]];
     }
     // Generic roles ("venditrice moda") become the precise titles listings use, for this level.
@@ -89,7 +89,8 @@ export function buildSearchCode(i: CodeInput): SearchCode {
     const sectors = i.sectors.map((s) => s.slug);
     const base = i.roles.flatMap((r) => specificTitles(r, lv, sectors));
     const pool = i.priority === "alta" ? [...base, ...i.roles.flatMap((r) => specificTitles(r, below[lv], sectors))] : i.priority === "bassa" ? i.roles.map((r) => specificTitles(r, lv, sectors)[0]) : base;
-    const precise = [...new Set(pool)].slice(0, i.priority === "alta" ? 5 : 3);
+    // Several careers chosen: one title each, up to six (the shared caches and daily caps keep it cheap).
+    const precise = [...new Set(pool)].slice(0, Math.max(i.priority === "alta" ? 5 : 3, Math.min(6, i.roles.length)));
     const roles = precise.map((r) => (lang === "it" ? r : (translations(r, [lang])[0] ?? r)));
     // Early careers: the junior form of the role is what the listings say (unless only the best is wanted).
     return level === "junior" && i.priority !== "bassa" ? roles.map((r) => `${r} junior`) : roles;

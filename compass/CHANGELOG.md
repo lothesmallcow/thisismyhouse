@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.0 · 2026-10-04
+
+- **Carriere e paesi** (Profilo, and a line on Offerte): choose several careers at once (investment
+  banking, strategy consulting, asset management...) and several countries, each with its city.
+  Every career adds its position to the searches and all its companies to the web scraping, in all
+  the chosen countries; global firms (Goldman Sachs, McKinsey...) count in every country.
+
 ## 0.13.0 · 2026-10-04
 
 - **Offers arrive rolling**: during "Fai web scraping" each site's offers are saved as soon as that

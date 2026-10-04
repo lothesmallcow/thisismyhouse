@@ -3,7 +3,7 @@
 // in each country's language: fewer, better searches, so the free quotas last.
 import { STUDENT_ROLE } from "../core/cv-positions";
 import { COUNTRIES, findPlace, homeCountries, type CountryCode } from "../core/geo";
-import { translations } from "../catalog/positions";
+import { findPosition, POSITIONS, translations } from "../catalog/positions";
 import { inArray } from "drizzle-orm";
 import { careerStage } from "../core/career-stage";
 import { buildSearchCode, type CodeQuery, type SearchCode } from "../core/search-code";
@@ -76,7 +76,7 @@ export async function searchCodeFor(db: DB, userId: number, now = new Date()): P
   const bg = await background(db, userId, profile);
   return buildSearchCode({
     track: profile.track,
-    roles: profile.roles.filter((r) => !STUDENT_ROLE.test(r)), // "Studente" is not a position to search
+    roles: careerRoles(profile.roles.filter((r) => !STUDENT_ROLE.test(r)), sectors.map((s) => s.slug), profile.track), // "Studente" is not a position to search
     sectors,
     companies,
     places: plan.places,
@@ -86,6 +86,22 @@ export async function searchCodeFor(db: DB, userId: number, now = new Date()): P
     contracts: profile.contracts,
     priority: profile.priority,
   });
+}
+
+/**
+ * The positions searched: those written, then one for each chosen career not covered yet
+ * ("Consulenza strategica" chosen → "Consulente strategico"), so several careers are searched at once.
+ */
+const CAREER_TITLE: Record<string, string> = { consulting: "Consulente strategico", "transaction-services": "Transaction services analyst" };
+
+export function careerRoles(roles: string[], careers: string[], track: "lavoro" | "stage"): string[] {
+  if (track === "stage") return roles; // students search by career already ("stage" + the career)
+  const covered = new Set(roles.map((r) => findPosition(r)?.sector).filter(Boolean));
+  const extra = careers
+    .filter((c) => !covered.has(c))
+    .map((c) => CAREER_TITLE[c] ?? POSITIONS.find((p) => p.sector === c && p.track !== "stage")?.it)
+    .filter((t): t is string => Boolean(t));
+  return [...new Set([...roles, ...extra])].slice(0, 6);
 }
 
 /** Searches not made in the last `hours` (by anyone): the rest are already in the database. */

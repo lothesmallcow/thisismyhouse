@@ -2,7 +2,7 @@
 // EVERY company of the sectors their positions belong to ("Investment banking analyst" → every
 // investment bank and advisory boutique in their countries), biggest first. Companies they avoid
 // and where they work now (discreet search) are never included.
-import { and, desc, eq, inArray, or, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { findPosition } from "../catalog/positions";
 import { homeCountries } from "../core/geo";
 import { companyNameMatches } from "../core/rank";
@@ -31,9 +31,11 @@ export async function searchTargets(db: DB, userId: number): Promise<Company[]> 
   const c = schema.catalogCompanies;
   const readable = or(isNotNull(c.website), isNotNull(c.careersUrl), isNotNull(c.ats));
   const perSector = await Promise.all(
-    sectorRows.slice(0, 12).flatMap(({ id }) =>
-      countries.map((cc) => db.select().from(c).where(and(eq(c.sectorId, id), eq(c.country, cc), eq(c.shared, true), readable)).orderBy(desc(c.size)).limit(PER_SECTOR)),
-    ),
+    sectorRows.slice(0, 16).flatMap(({ id }) => [
+      ...countries.map((cc) => db.select().from(c).where(and(eq(c.sectorId, id), eq(c.country, cc), eq(c.shared, true), readable)).orderBy(desc(c.size)).limit(PER_SECTOR)),
+      // Global firms of the hand-made list (no city: Goldman Sachs, McKinsey...) hire in every country.
+      db.select().from(c).where(and(eq(c.sectorId, id), eq(c.source, "curato"), isNull(c.city), readable)).limit(PER_SECTOR),
+    ]),
   );
   const avoided = new Set([...prefs.companies.entries()].filter(([, v]) => v === "avoid").map(([id]) => id));
   const mine = (co: Company) => bg.currentEmployers.some((name) => companyNameMatches(name, co));

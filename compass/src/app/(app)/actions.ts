@@ -27,13 +27,14 @@ import {
   updateDraft,
 } from "@/lib/server/applications";
 import { requireUser, signOut } from "@/lib/server/auth";
-import { canChoose, setPref } from "@/lib/server/catalog";
+import { canChoose, getPrefs, setPref } from "@/lib/server/catalog";
+import { COUNTRIES, findPlace } from "@/lib/core/geo";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
 import { dismissJob, markSeen, rerankUser, restoreJob, setAdjustmentActive, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
 import { deleteAllMyData } from "@/lib/server/privacy";
 import { fitWarnings } from "@/lib/server/career";
 import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences, pdfText, rematchExperiences, saveExperiences } from "@/lib/server/experiences";
-import { updateProfile } from "@/lib/server/profile";
+import { getProfile, updateProfile } from "@/lib/server/profile";
 import { after } from "next/server";
 import { quickSearchFor } from "@/lib/pipeline/jobs";
 import { lastQuickSearch, QUICK_SEARCH_EVERY_MIN } from "@/lib/pipeline/quick-search";
@@ -423,6 +424,31 @@ export async function restartQuestionnaireAction(f?: FormData) {
   await updateProfile(getDb(), u.id, { onboardingStep: 1, ...(mode ? { onboardingMode: mode } : {}) });
   revalidatePath("/", "layout");
   redirect("/benvenuto/1?rifai=1");
+}
+
+/** "Carriere e paesi": several careers (liked sectors) and several countries (each with an optional city). */
+export async function saveCareersAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const shown = f.getAll("shown").map(Number).filter(Boolean);
+  const picked = new Set(f.getAll("sector").map(Number));
+  const prefs = await getPrefs(db, u.id);
+  for (const id of shown) {
+    if (picked.has(id)) await setPref(db, u.id, "sector", id, "like");
+    else if (prefs.sectors.get(id) === "like") await setPref(db, u.id, "sector", id, null);
+  }
+  const countries = COUNTRIES.map((c) => c.code).filter((cc) => f.getAll("country").map(String).includes(cc));
+  const cities = Object.fromEntries(countries.map((cc) => [cc, str(f, `city_${cc}`).trim().slice(0, 80)]));
+  const p = await getProfile(db, u.id);
+  const homeCc = findPlace(p.city)?.country;
+  // The home city stays the city of its country; the others become the "other cities".
+  const homeCity = homeCc && countries.includes(homeCc) && cities[homeCc] ? cities[homeCc] : !homeCc || !countries.includes(homeCc) ? (countries.map((cc) => cities[cc]).find(Boolean) ?? p.city) : p.city;
+  const newHomeCc = findPlace(homeCity)?.country;
+  const extraPlaces = countries.filter((cc) => cc !== newHomeCc && cities[cc]).map((cc) => cities[cc]);
+  await updateProfile(db, u.id, { countries: countries.length ? countries : [newHomeCc ?? "IT"], city: homeCity, extraPlaces });
+  await rerankUser(db, u.id);
+  after(() => quickSearchFor(getDb(), u.id));
+  done("/profilo/carriere", "carriere-salvate");
 }
 
 /** "Cerca ora": a search for this person in the background (at most every half hour). */
