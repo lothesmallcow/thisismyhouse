@@ -1,6 +1,7 @@
 // What to ask the job APIs and the search API for, per person: job titles for job seekers,
 // "stage" + interests (and chosen companies) for students. Only in the countries they chose,
 // in each country's language: fewer, better searches, so the free quotas last.
+import { STUDENT_ROLE } from "../core/cv-positions";
 import { COUNTRIES, findPlace, homeCountries, type CountryCode } from "../core/geo";
 import { translations } from "../catalog/positions";
 import { inArray } from "drizzle-orm";
@@ -75,7 +76,7 @@ export async function searchCodeFor(db: DB, userId: number, now = new Date()): P
   const bg = await background(db, userId, profile);
   return buildSearchCode({
     track: profile.track,
-    roles: profile.roles,
+    roles: profile.roles.filter((r) => !STUDENT_ROLE.test(r)), // "Studente" is not a position to search
     sectors,
     companies,
     places: plan.places,

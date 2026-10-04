@@ -20,7 +20,7 @@ export async function usageToday(db: DB, counter: string, now = new Date()): Pro
 }
 
 /** Count BEFORE calling the provider, so a crash can never cause extra unpaid-for queries. */
-async function bump(db: DB, counter: string, now: Date): Promise<void> {
+export async function bump(db: DB, counter: string, now: Date): Promise<void> {
   await db
     .insert(schema.usageCounters)
     .values({ counter, day: romeDateKey(now), count: 1 })

@@ -15,7 +15,21 @@ import { runDiscover } from "./discover";
 import { runIngest, type MailboxRun } from "./ingest";
 import { scanMailbox } from "./mailbox-scan";
 import { runWithHealth } from "./health";
+import { runQuickSearch, type QuickResult } from "./quick-search";
 import { and, eq, gte, isNotNull } from "drizzle-orm";
+
+/** The first search for one person (after the questionnaire, or "Cerca ora"). Never throws. */
+export async function quickSearchFor(db: DB, userId: number, now = new Date()): Promise<QuickResult | null> {
+  const demo = env.demoMode;
+  const fetchImpl = demo ? demoFetch() : fetch;
+  const key = demo ? "demo" : env.tavilyKey;
+  const adzuna = demo ? { appId: "demo", appKey: "demo" } : env.adzuna;
+  try {
+    return await runQuickSearch(db, userId, { fetchImpl, web: key ? new TavilyProvider(fetchImpl, key) : null, adzuna: adzuna.appId && adzuna.appKey ? adzuna : null, now });
+  } catch {
+    return null; // the daily run will do it
+  }
+}
 
 export const JOB_NAMES = ["ingest", "discover", "queue", "replies", "digest"] as const;
 export type JobName = (typeof JOB_NAMES)[number];

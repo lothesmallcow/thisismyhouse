@@ -29,6 +29,8 @@ import { chooseModeAction } from "../actions";
 import { KmSlider, NetSalaryField } from "./fields";
 
 export const metadata = { title: "Questionario" };
+// The last answer starts the first search in the background: give it time.
+export const maxDuration = 60;
 
 export default async function WizardPage({ params, searchParams }: { params: Promise<{ passo: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { passo } = await params;

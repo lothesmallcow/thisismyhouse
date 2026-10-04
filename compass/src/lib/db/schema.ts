@@ -285,6 +285,8 @@ export const catalogCompanies = sqliteTable("catalog_companies", {
   /** Optional public ATS feed (filled in by the admin after checking it). */
   ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio"] }),
   atsSlug: text("ats_slug"),
+  /** When Compass last looked for its public job board on its own (sources/ats/discover.ts). */
+  atsCheckedAt: ts("ats_checked_at"),
   createdByUserId: integer("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
   shared: integer("shared", { mode: "boolean" }).notNull().default(true),
   /** curato = hand-made list; altro = added by a person; borsa = listed companies (shown when searched or chosen). */

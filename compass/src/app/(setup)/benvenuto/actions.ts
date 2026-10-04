@@ -1,5 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { quickSearchFor } from "@/lib/pipeline/jobs";
 import { redirect } from "next/navigation";
 import { TASTES } from "@/lib/catalog/data";
 import { getDb } from "@/lib/db";
@@ -129,7 +131,11 @@ export async function saveStepAction(f: FormData) {
 
   const last = n >= steps.length && step !== "risposte";
   if (!back && step !== "risposte" && n + 1 > current.onboardingStep) patch.onboardingStep = Math.min(n + 1, steps.length);
-  if (last && !current.onboardedAt) patch.onboardedAt = new Date();
+  if (last && !current.onboardedAt) {
+    patch.onboardedAt = new Date();
+    // The first offers now, not tomorrow morning: a search in the background after the reply.
+    after(() => quickSearchFor(getDb(), user.id));
+  }
   await updateProfile(db, user.id, patch);
   if (!["nome", "risposte", "cv"].includes(step)) await rerankUser(db, user.id);
   revalidatePath("/", "layout");

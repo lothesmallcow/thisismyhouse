@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.10.0 · 2026-10-04
+
+- **First search right away**: when someone finishes the questionnaire (and with "Cerca ora" on
+  Offerte, at most every 30 minutes), a search runs in the background for them instead of waiting
+  for the next morning; then the daily runs carry on.
+- **Company job boards found on their own**: for the chosen companies Compass tries their public
+  Greenhouse, SmartRecruiters and Workable boards, keeps one only when the published name matches,
+  and reads it; no key needed. Looked for again at most once a month.
+- **"Da dove arrivano le tue offerte"** on Offerte: which sources are on, ready links to create the
+  LinkedIn, Indeed and InfoJobs alerts, and what an admin key would add.
+- **Students**: positions recommended from the CV follow where studies and activities point
+  (e.g. finance, markets) with the reason; past leadership and passion roles (coach, captain,
+  club founder, goalkeeper), studies and "Studente" are never proposed.
+- CV reading: letter-spaced headings ("I S T R U Z I O N E") are sections.
+
 ## 0.9.0 · 2026-10-04
 
 Ready to go online, invite or request only.
