@@ -19,6 +19,7 @@ const MESSAGES: Record<string, { tone: "success" | "info" | "warn" | "danger"; t
   "cv-caricato": { tone: "success", text: "CV caricato." },
   "posizioni-salvate": { tone: "success", text: "Posizioni salvate: le prossime ricerche useranno queste." },
   "posizioni-vuote": { tone: "warn", text: "Nessuna posizione spuntata: le ricerche useranno solo settori e aziende scelti." },
+  "carriere-salvate": { tone: "success", text: "Salvato: ora cerco in tutte queste carriere e in tutti questi paesi. Il web scraping parte da solo (se non l'hai lanciato negli ultimi 10 minuti)." },
   "ricerca-avviata": { tone: "success", text: "Web scraping avviato: siti delle aziende, pagine lavoro e ricerca sul web. Le offerte compaiono qui entro un minuto." },
   "ricerca-recente": { tone: "info", text: "Hai già cercato da poco: riprova tra 10 minuti. Intanto la ricerca continua ogni mattina." },
   "punteggio-salvato": { tone: "success", text: "Salvato: punteggi ricalcolati." },

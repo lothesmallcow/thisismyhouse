@@ -13,6 +13,7 @@ import { getProfile } from "@/lib/server/profile";
 import { getSettings } from "@/lib/server/settings";
 import { saveDefaultFiltersAction, searchNowAction } from "../actions";
 import { SourcesCard } from "@/components/sources-card";
+import { CareersLine } from "@/components/careers-line";
 
 export const metadata = { title: "Offerte" };
 // "Cerca ora" runs a search after the reply: give it time.
@@ -103,6 +104,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
         }
       />
 
+      <CareersLine userId={user.id} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div role="group" aria-label="Quali offerte" className="inline-flex rounded-lg border border-line bg-surface p-0.5">
           {views.map((v) => (

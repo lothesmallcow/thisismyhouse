@@ -369,6 +369,20 @@ test("persona: luxury store manager in Milan, score, requirements, role sheet, f
   await expect(page.getByRole("checkbox", { name: /^Area manager/ })).toBeChecked();
   await page.goto("/profilo/codice");
   await expect(page.getByText(/area-manager/).first()).toBeVisible();
+
+  // Several careers and several countries at once.
+  await page.goto("/profilo/carriere");
+  await assertUiBasics(page);
+  await page.locator("label", { hasText: /^Consulenza strategica/ }).click();
+  await page.locator("label", { hasText: /^Regno Unito$/ }).click();
+  await page.getByLabel("Città in Regno Unito (facoltativa)").fill("London");
+  await page.getByRole("button", { name: "Salva e cerca" }).click();
+  await expect(page.getByText(/ora cerco in tutte queste carriere/)).toBeVisible();
+  await page.goto("/offerte");
+  await expect(page.getByText(/Regno Unito \(London\)/)).toBeVisible();
+  await expect(page.getByText(/Consulenza strategica/).first()).toBeVisible();
+  await page.goto("/profilo/codice");
+  await expect(page.getByText(/GB:London/).first()).toBeVisible();
 });
 
 test("admin: people, invitation, view-as, catalog, rules, metrics, cron endpoint", async ({ page, request }) => {
