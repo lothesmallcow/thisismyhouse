@@ -46,7 +46,8 @@ export default async function ClaudePage({ params }: { params: Promise<{ id: str
 
       <Card className="mt-5">
         <p className="font-bold">2. Incollalo nella chat di Claude</p>
-        <p className="mt-1">Apri claude.ai, incolla il testo e invia. Controlla che la lettera dica solo cose vere.</p>
+        <p className="mt-1">Claude è un assistente che aiuta a scrivere: apri claude.ai, incolla il testo e invia. Controlla che la lettera dica solo cose vere.</p>
+        <p className="mt-2 text-ink-soft">La prima volta fatti aiutare da chi ti ha preparato Compass: serve un account su claude.ai.</p>
         {!cvText && <p className="mt-3 rounded-xl bg-amber px-4 py-3 text-amber-ink">Il testo del tuo CV non è ancora salvato: puoi aggiungerlo in Aiuto → I miei CV.</p>}
       </Card>
 

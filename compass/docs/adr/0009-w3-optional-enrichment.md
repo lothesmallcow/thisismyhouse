@@ -9,8 +9,11 @@ The brief allows an optional module that, logged out and with strict limits (20 
 explicit OK on each platform's current terms.
 
 ## Decision
-- The hook exists: `w3Enabled` setting (default `false`), `w3` source kind, `usage_counters`
-  table for the daily cap, health tracking with day-long pause on blocks.
+- The safety layer is public and tested: `src/lib/sources/web/w3-gate.ts` (`W3Gate`) refuses
+  everything unless `w3Enabled` (default `false`), accepts only single job-page URLs of the three
+  platforms, caps at 20 per Rome day (counted before each request), waits >= 10 s between
+  requests, and stops for the rest of the day on the first 403, 429, login wall or CAPTCHA
+  (`tests/unit/w3-gate.test.ts`). It never touches the network itself.
 - The fetcher itself is **not** written here, because this repository is public and the code
   would be lost if kept only in this cloud container. `private-sources/` is in `.gitignore`.
 

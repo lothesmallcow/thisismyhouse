@@ -113,14 +113,18 @@ npm run demo              # migrate + seed fake data + start on http://localhost
 |---|---|
 | `npm run demo` | one-command local start in demo mode |
 | `npm run check` | lint + typecheck + unit tests + personal-data scan |
-| `npm test` | Vitest: 146 unit and integration tests (rules, parsers, pipeline, guardrails) |
-| `npm run build && npm run test:e2e` | Playwright: 10 end-to-end flows on a phone viewport |
+| `npm test` | Vitest: 243 unit and integration tests (rules, parsers, sources, pipeline, guardrails, races, edge dates) |
+| `npm run build && npm run test:e2e` | Playwright: 15 end-to-end flows on a phone viewport (incl. auth matrix, XSS, axe) |
+| `npm run simulate:week` | a full demo week on a simulated clock, every step checked against the database |
+| `npm run audit:ui` | every screen at 360/1280 px: axe, text and target sizes, keyboard focus, zoom (needs a running demo) |
 | `npm run job:<ingest\|discover\|queue\|replies\|digest>` | run a scheduled job by hand |
 | `npm run hooks:install` | install the pre-commit secret/personal-data scan |
 | `node scripts/screenshots.mjs` | regenerate the README screenshots from a running demo |
 
 Going live (real mailbox, real sending, hosting) is described step by step in
-[docs/setup.md](docs/setup.md).
+[docs/setup.md](docs/setup.md). Day-to-day admin tasks: [docs/guida-admin.md](docs/guida-admin.md).
+Her one-page guide (Italian, printable): [docs/come-si-usa.md](docs/come-si-usa.md).
+Audit evidence (accessibility report, error states, load test, demo week): [docs/audit/](docs/audit/).
 
 ## Legal and ethical design
 
@@ -152,6 +156,6 @@ says plainly that online payments are not active; no payment provider is integra
 
 ## Status
 
-See [CHANGELOG.md](CHANGELOG.md) and the decisions in [docs/adr/](docs/adr/). Parsers were built
+MIT licensed. See [CHANGELOG.md](CHANGELOG.md) and the decisions in [docs/adr/](docs/adr/). Parsers were built
 against synthetic alert e-mails and are marked "needs real sample" until real (anonymized)
 samples are added (see `fixtures/emails/README.md`).

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.0 · 2026-10-04
+
+Hardening after an independent review and a full audit.
+
+- **Sending**: her stop and the admin's stop are separate; scam rules recomputed at send time;
+  one e-mail per queue run with real spacing; daily cap re-checked at send time; atomic claim
+  (no double sends); stuck sends recovered and reported; real mode with sending off waits instead
+  of pretending; first week starts at the first real send; Italian public holidays; "Invia tutte"
+  sends exactly what she saw and never flagged drafts; digest independent of the sending switch.
+- **Sources**: 403/429 pause the whole host; W2 follows redirects through robots.txt and never
+  fetches job platforms; HTTP retries with backoff; W1 suggests spontaneous companies; W3 safety
+  gate (caps, spacing, stop rules) with tests; optional Nominatim geocoder (off).
+- **Security/privacy**: startup env validation in real mode; sign-in throttling; reply status
+  whitelist; delete-all in one transaction; admin alerts by e-mail; CSV backup export.
+- **UI**: axe-clean on 98 screens (WCAG A/AA + AAA contrast), all her text >= 18 px, no sideways
+  scroll at 320 px; clearer copy found in a first-time-user walkthrough.
+- **Performance**: batched re-ranking (5,000 jobs: 7.5 s -> 0.8 s).
+- **Docs**: admin guide, Italian guide with screenshots, audit reports, LICENSE (MIT).
+
 ## 0.1.0 · 2026-10-04
 
 First complete version, demo mode end to end.

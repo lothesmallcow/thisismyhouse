@@ -14,7 +14,10 @@ app keeps working in demo mode until the last one.
    MAILBOX_APP_PASSWORD=the 16-character app password
    DIGEST_TO=her normal e-mail address (for the morning e-mail)
    CONTACT_EMAIL=an address websites can contact about our requests
+   ADMIN_ALERT_EMAIL=your inbox, for alerts when a source breaks
    ```
+   With `DEMO_MODE=false` the server **refuses to start** if a required variable is missing or
+   weak (it prints which one), so mistakes show up at deploy time, not weeks later.
 
 ## 2. Forward the job alerts
 

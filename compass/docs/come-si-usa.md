@@ -12,9 +12,13 @@ Premi il pulsante blu **Apri Compass**.
 - **Le mie candidature**: a chi ti sei candidata e chi ti ha risposto.
 - **Aiuto**: questa guida, il tuo profilo, i tuoi CV.
 
+<img src="guida/1-offerte.png" width="260" alt="La pagina Offerte">
+
 **3. Le offerte**
 In alto ci sono quelle **Molto adatte** (tre pallini verdi). Sotto il titolo leggi perché te le
 propongo, per esempio *A 8 km da casa*. Tocca un'offerta per leggerla tutta.
+
+<img src="guida/2-offerta.png" width="260" alt="Un'offerta aperta">
 
 **4. Ti piace? Ci sono tre modi per candidarti**
 - **Prepara la candidatura via e-mail**: preparo io l'e-mail con il tuo CV. La trovi in *Da inviare*.
@@ -23,6 +27,8 @@ propongo, per esempio *A 8 km da casa*. Tocca un'offerta per leggerla tutta.
 - **Prepara con Claude** (per le offerte migliori): copi un testo, lo incolli nella chat di Claude,
   poi incolli qui la lettera che ti prepara.
 
+<img src="guida/3-kit.png" width="260" alt="Il kit candidatura con i pulsanti Copia">
+
 **5. Non ti interessa?**
 Premi **Non mi interessa** e, se vuoi, dimmi perché. Non te la mostro più e imparo cosa preferisci.
 
@@ -30,9 +36,13 @@ Premi **Non mi interessa** e, se vuoi, dimmi perché. Non te la mostro più e im
 In *Da inviare* leggi l'e-mail, poi premi **Invia** e conferma. Parte dopo almeno 15 minuti:
 fino ad allora puoi premere **Annulla l'invio**.
 
+<img src="guida/4-da-inviare.png" width="260" alt="La pagina Da inviare">
+
 **7. Quando qualcuno risponde**
 In *Le mie candidature* compare **Hai ricevuto una risposta da ...!** Premi **Sì, va bene** per
 segnare, per esempio, *Colloquio*. L'e-mail completa la leggi nella casella della ricerca di lavoro.
+
+<img src="guida/5-candidature.png" width="260" alt="Le mie candidature con una risposta">
 
 **8. Se qualcosa non va**
 Il pulsante rosso **Ferma tutti gli invii** (in *Da inviare*) blocca tutto subito. Non succede niente

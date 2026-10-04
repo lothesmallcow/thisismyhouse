@@ -85,7 +85,7 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <Fact icon={<IconPin />} label="Dove">
             {job.remote === "remote" ? "Da casa" : job.city ?? "Non indicato"}
-            {job.distanceKm != null && job.remote !== "remote" ? `, a ${Math.round(job.distanceKm)} km da casa` : ""}
+            {job.distanceKm != null && job.remote !== "remote" ? (job.distanceKm < 1 ? ", nella tua città" : `, a ${Math.round(job.distanceKm)} km da casa`) : ""}
             {job.remote === "hybrid" ? " (in parte da casa)" : ""}
           </Fact>
           <Fact icon={<IconEuro />} label="Stipendio">

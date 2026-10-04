@@ -10,7 +10,9 @@ export interface EnvProblem {
 
 const WEAK_SECRETS = new Set(["", "change-me-to-a-long-random-string", "change-me-too", "dev-only-insecure-secret"]);
 
-export function checkEnv(e: NodeJS.ProcessEnv = process.env): EnvProblem[] {
+export type Env = Record<string, string | undefined>;
+
+export function checkEnv(e: Env = process.env): EnvProblem[] {
   const real = (e.DEMO_MODE ?? "true").toLowerCase() === "false";
   const out: EnvProblem[] = [];
   const need = (variable: string, ok: boolean, message: string, fatalInReal = true) => {
@@ -30,7 +32,7 @@ export function checkEnv(e: NodeJS.ProcessEnv = process.env): EnvProblem[] {
   return out;
 }
 
-export function assertEnv(e: NodeJS.ProcessEnv = process.env): void {
+export function assertEnv(e: Env = process.env): void {
   const problems = checkEnv(e);
   const fatal = problems.filter((p) => p.fatal);
   for (const p of problems.filter((x) => !x.fatal)) {

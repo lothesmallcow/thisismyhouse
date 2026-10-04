@@ -18,3 +18,4 @@ what to re-verify.
 | [0010](0010-auth.md) | Own sessions, scrypt, separate admin cookie |
 | [0011](0011-privacy-and-data.md) | What is stored, where, and how it is deleted |
 | [0012](0012-project-location-and-name.md) | Name "Compass", code in `compass/` for now |
+| [0013](0013-send-queue.md) | Send queue: atomic claim, one per run, cap at send time, recovery |

@@ -133,7 +133,7 @@
       "unlabeled": [],
       "help": true,
       "status": true,
-      "focusOk": 24,
+      "focusOk": 23,
       "focusBad": []
     },
     {
@@ -638,8 +638,8 @@
       "axe": [],
       "minFont": 15.2,
       "minFontText": "{\"mailbox\":{\"alerts\":5,\"jobsNew\":13,\"job",
-      "minTarget": 29,
-      "minTargetText": "Regole di invio",
+      "minTarget": 48,
+      "minTargetText": "Apri l'app di lei",
       "unlabeled": [],
       "help": false,
       "status": false,
@@ -966,7 +966,7 @@
       "unlabeled": [],
       "help": true,
       "status": true,
-      "focusOk": 24,
+      "focusOk": 23,
       "focusBad": []
     },
     {
@@ -1471,8 +1471,8 @@
       "axe": [],
       "minFont": 15.2,
       "minFontText": "{\"mailbox\":{\"alerts\":5,\"jobsNew\":13,\"job",
-      "minTarget": 29,
-      "minTargetText": "Regole di invio",
+      "minTarget": 48,
+      "minTargetText": "Apri l'app di lei",
       "unlabeled": [],
       "help": false,
       "status": false,

@@ -25,7 +25,10 @@
     "scan": "node scripts/scan-personal-data.mjs",
     "check": "npm run lint && npm run typecheck && npm run test && npm run scan",
     "hooks:install": "node scripts/install-hooks.mjs",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "node scripts/make-icons.mjs",
+    "audit:ui": "node scripts/audit-ui.mjs",
+    "audit:errors": "node scripts/audit-errors.mjs",
+    "simulate:week": "tsx scripts/simulate-week.ts"
   },
   "engines": {
     "node": ">=20.9"
@@ -62,5 +65,6 @@
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
-  }
+  },
+  "license": "MIT"
 }

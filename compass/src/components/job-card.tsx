@@ -63,7 +63,7 @@ export function JobCard({ job }: { job: Job }) {
             <IconMail size={20} /> Candidatura via e-mail
           </span>
         )}
-        <span>Vista {daysAgoLabel(job.postedAt ?? job.firstSeenAt)}</span>
+        <span>Trovata {daysAgoLabel(job.postedAt ?? job.firstSeenAt)}</span>
       </div>
 
       <div className="mt-5 flex items-center justify-end">

@@ -65,7 +65,10 @@ export default async function DaInviarePage({ searchParams }: { searchParams: Pr
                 <p className="text-[1.15rem] font-bold">{q.company ?? "Azienda"}</p>
                 <p>{q.role}</p>
                 <p className="mt-2 flex items-center gap-2 text-ink-soft">
-                  <IconSend size={20} /> {q.sendAt && formatWhen(q.sendAt)} · <Countdown at={q.sendAt!.toISOString()} />
+                  <IconSend size={20} className="shrink-0" />
+                  <span>
+                    {q.sendAt && formatWhen(q.sendAt)} · <Countdown at={q.sendAt!.toISOString()} />
+                  </span>
                 </p>
                 <form action={cancelAction} className="mt-4">
                   <input type="hidden" name="appId" value={q.id} />
@@ -102,10 +105,13 @@ export default async function DaInviarePage({ searchParams }: { searchParams: Pr
                   <h3 className="mt-3 text-[1.45rem] font-semibold">{app.company ?? "Azienda"}</h3>
                   <p className="text-[1.05rem]">{app.role}</p>
                   <p className="mt-2 flex items-center gap-2 text-[0.98rem] text-ink-soft">
-                    <IconDoc size={20} /> CV allegato: <strong className="text-ink">{cvName(app.cvId)}</strong>
+                    <IconDoc size={20} className="shrink-0" />
+                    <span>
+                      CV allegato: <strong className="text-ink">{cvName(app.cvId)}</strong>
+                    </span>
                   </p>
                   <p className="text-[0.98rem] text-ink-soft">
-                    A: <strong className="text-ink">{app.toEmail}</strong>
+                    La mando a: <strong className="text-ink">{app.toEmail}</strong>
                   </p>
 
                   <div className="mt-4 rounded-2xl border border-line bg-paper p-4">
@@ -142,6 +148,7 @@ export default async function DaInviarePage({ searchParams }: { searchParams: Pr
                       </Button>
                     </form>
                   </div>
+                  <p className="mt-2 text-center text-[0.98rem] text-ink-soft">&ldquo;Salta&rdquo; la mette da parte: non parte niente.</p>
                   <LinkButton href={`/da-inviare/${app.id}/modifica`} variant="quiet" wide className="mt-2">
                     Cambia il testo o il CV
                   </LinkButton>

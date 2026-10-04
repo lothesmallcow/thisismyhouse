@@ -61,7 +61,7 @@ export async function runDigest(db: DB, transport: Transport, now = new Date()):
   const profile = await getProfile(db);
   const to = env.digestTo || (env.demoMode ? profile.email || "lei@example.com" : "");
   if (!to) return "no-recipient";
-  const d = composeDigest(profile.name, await digestCounts(db, now), env.appUrl);
+  const d = composeDigest(profile.name, await digestCounts(db, now), `${env.appUrl}/offerte`);
   await transport.send({ kind: "digest", to, subject: d.subject, text: d.text, html: d.html });
   await setSetting(db, "lastDigestDay", day);
   return "sent";

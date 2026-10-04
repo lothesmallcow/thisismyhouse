@@ -46,5 +46,19 @@ await shoot(phone, "/benvenuto/3?ritorno=profilo", "phone-onboarding");
 await shoot(laptop, "/offerte", "laptop-offerte");
 await shoot(admin, "/admin/fonti", "admin-fonti");
 await shoot(admin, "/admin/metriche", "admin-metriche");
+// Images for the printable Italian guide (docs/come-si-usa.md), phone size, top of the screen only.
+fs.mkdirSync("docs/guida", { recursive: true });
+const guide = async (path, name) => {
+  const page = await phone.newPage();
+  await page.goto(BASE + path);
+  await page.waitForLoadState("networkidle");
+  await page.screenshot({ path: `docs/guida/${name}.png` });
+  await page.close();
+};
+await guide("/offerte", "1-offerte");
+await guide("/offerte/2", "2-offerta");
+await guide("/offerte/2/kit", "3-kit");
+await guide("/da-inviare", "4-da-inviare");
+await guide("/candidature", "5-candidature");
 await browser.close();
-console.log(`screenshots in ${OUT}/`);
+console.log(`screenshots in ${OUT}/ and docs/guida/`);
