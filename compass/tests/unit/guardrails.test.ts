@@ -14,8 +14,8 @@ const cand: SendCandidate = {
   jobId: 7,
   company: "Rossi Srl",
   title: "Impiegata amministrativa",
-  description: "Inviare CV a hr@rossi.it",
-  recipient: "hr@rossi.it",
+  description: "Inviare CV a hr@rossi.example",
+  recipient: "hr@rossi.example",
   spontaneous: false,
   level: "molto",
   scamFlags: [],
@@ -41,24 +41,24 @@ describe("checkSend", () => {
     expect(checkSend(cand, ctx({ settings: { ...DEFAULT_GUARDRAILS, killSwitch: true } })).blockers[0].code).toBe("kill-switch");
   });
   it("never the same job twice", () => {
-    const history = [{ jobId: 7, company: "Altra", recipient: "x@y.it", at: new Date("2026-01-01"), spontaneous: false }];
+    const history = [{ jobId: 7, company: "Altra", recipient: "x@y.example", at: new Date("2026-01-01"), spontaneous: false }];
     expect(checkSend(cand, ctx({ history })).blockers.map((b) => b.code)).toContain("repeat-job");
   });
   it("same company at most once per 60 days", () => {
-    const recent = [{ jobId: 1, company: "ROSSI S.R.L.", recipient: "a@rossi.it", at: new Date("2026-09-01"), spontaneous: false }];
+    const recent = [{ jobId: 1, company: "ROSSI S.R.L.", recipient: "a@rossi.example", at: new Date("2026-09-01"), spontaneous: false }];
     expect(checkSend(cand, ctx({ history: recent })).blockers.map((b) => b.code)).toContain("repeat-company");
     const old = [{ ...recent[0], at: new Date("2026-07-01") }];
     expect(checkSend(cand, ctx({ history: old })).ok).toBe(true);
   });
   it("spontaneous: once per 6 months per company", () => {
     const sp = { ...cand, jobId: null, spontaneous: true };
-    const h = [{ jobId: null, company: "Rossi", recipient: "hr@rossi.it", at: new Date("2026-06-01"), spontaneous: true }];
+    const h = [{ jobId: null, company: "Rossi", recipient: "hr@rossi.example", at: new Date("2026-06-01"), spontaneous: true }];
     expect(checkSend(sp, ctx({ history: h })).blockers.map((b) => b.code)).toContain("repeat-spontaneous");
     expect(checkSend(sp, ctx({ history: [{ ...h[0], at: new Date("2026-03-01") }] })).ok).toBe(true);
   });
   it("blocklist by company, domain and keyword", () => {
     expect(checkSend(cand, ctx({ blocklist: { ...blocklist, companies: ["Rossi"] } })).ok).toBe(false);
-    expect(checkSend(cand, ctx({ blocklist: { ...blocklist, domains: ["rossi.it"] } })).ok).toBe(false);
+    expect(checkSend(cand, ctx({ blocklist: { ...blocklist, domains: ["rossi.example"] } })).ok).toBe(false);
     expect(checkSend(cand, ctx({ blocklist: { ...blocklist, keywords: ["amministrativa"] } })).ok).toBe(false);
   });
   it("attachments over 2 MB are refused", () => {

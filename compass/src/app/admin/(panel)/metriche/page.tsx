@@ -10,7 +10,8 @@ const LANE = { email: "Invio via e-mail (Lane 1)", curated: "Curata con Claude (
 export default async function MetrichePage() {
   const m = await computeMetrics(getDb());
   const max = Math.max(1, ...m.jobsBySource.map((s) => s.jobs));
-  const h = (x: number | null) => (x == null ? "-" : x < 48 ? `${x.toFixed(1)} ore` : `${(x / 24).toFixed(1)} giorni`);
+  const it1 = (n: number) => n.toLocaleString("it-IT", { maximumFractionDigits: 1 });
+  const h = (x: number | null) => (x == null ? "-" : x < 48 ? `${it1(x)} ore` : `${it1(x / 24)} giorni`);
   const kpi = (label: string, value: string, note?: string) => (
     <Card className="!p-5">
       <p className="text-[0.92rem] font-bold uppercase tracking-wide text-ink-soft">{label}</p>

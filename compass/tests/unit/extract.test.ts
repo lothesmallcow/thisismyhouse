@@ -71,31 +71,31 @@ describe("sector", () => {
     expect(extractSector("Giardiniere")).toBeNull();
   });
   it("does not see 'IT' in a domain name", () => {
-    expect(extractSector("Scrivere a info@rossi.it")).toBeNull();
+    expect(extractSector("Scrivere a info@rossi.example.it")).toBeNull();
   });
 });
 
 describe("application e-mail detection", () => {
   it("finds the address and keeps the sentence as evidence", () => {
-    const text = "Cerchiamo impiegata.\nGli interessati possono inviare il CV a selezione@rossisrl.it entro il 30 ottobre.";
+    const text = "Cerchiamo impiegata.\nGli interessati possono inviare il CV a selezione@rossisrl.example entro il 30 ottobre.";
     expect(extractApplicationEmails(text)).toEqual([
-      { email: "selezione@rossisrl.it", evidence: "Gli interessati possono inviare il CV a selezione@rossisrl.it entro il 30 ottobre." },
+      { email: "selezione@rossisrl.example", evidence: "Gli interessati possono inviare il CV a selezione@rossisrl.example entro il 30 ottobre." },
     ]);
   });
   it("ignores addresses not asked for applications", () => {
-    expect(extractApplicationEmails("Per info sul negozio scrivete a info@rossi.it.")).toEqual([]);
-    expect(extractApplicationEmails("Invia il CV a noreply@rossi.it")).toEqual([]);
+    expect(extractApplicationEmails("Per info sul negozio scrivete a info@rossi.example.")).toEqual([]);
+    expect(extractApplicationEmails("Invia il CV a noreply@rossi.example")).toEqual([]);
   });
   it("ignores privacy-notice addresses", () => {
     expect(
-      extractApplicationEmails("Informativa privacy: il titolare del trattamento dei dati dei candidati è contattabile a dpo@rossi.it."),
+      extractApplicationEmails("Informativa privacy: il titolare del trattamento dei dati dei candidati è contattabile a dpo@rossi.example."),
     ).toEqual([]);
   });
   it("handles English ads", () => {
-    expect(extractApplicationEmails("Please send your CV to jobs@acme.com.")[0].email).toBe("jobs@acme.com");
+    expect(extractApplicationEmails("Please send your CV to jobs@acme.example.")[0].email).toBe("jobs@acme.example");
   });
   it("deduplicates and lowercases", () => {
-    const r = extractApplicationEmails("Invia il CV a HR@Acme.it. Ripeto: invia il curriculum a hr@acme.it");
-    expect(r.map((x) => x.email)).toEqual(["hr@acme.it"]);
+    const r = extractApplicationEmails("Invia il CV a HR@Acme.example. Ripeto: invia il curriculum a hr@acme.example");
+    expect(r.map((x) => x.email)).toEqual(["hr@acme.example"]);
   });
 });

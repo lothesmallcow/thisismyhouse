@@ -64,7 +64,7 @@ describe("normalizeJob", () => {
         company: "Rossi Srl",
         location: "Moncalieri (TO)",
         description:
-          "Rossi Srl cerca una impiegata amministrativa part-time, 25 ore settimanali.\nContratto a tempo indeterminato.\nRAL 24.000 € lordi.\nRichiesta buona conoscenza dell'inglese.\nInviare il CV a selezione@rossisrl.it",
+          "Rossi Srl cerca una impiegata amministrativa part-time, 25 ore settimanali.\nContratto a tempo indeterminato.\nRAL 24.000 € lordi.\nRichiesta buona conoscenza dell'inglese.\nInviare il CV a selezione@rossisrl.example",
       },
       home,
     );
@@ -73,7 +73,7 @@ describe("normalizeJob", () => {
       province: "TO",
       hours: "part",
       contract: "indeterminato",
-      applicationEmail: "selezione@rossisrl.it",
+      applicationEmail: "selezione@rossisrl.example",
       sector: "Amministrazione e contabilità",
       url: "https://rossisrl.it/lavora-con-noi",
       scamFlags: [],

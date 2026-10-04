@@ -1,0 +1,35 @@
+# CI for compass/ while it lives inside this repository. Tests never call real APIs,
+# real websites or real mailboxes (DEMO_MODE + fixtures).
+name: Compass CI
+on:
+  push:
+    paths: ["compass/**", ".github/workflows/compass-ci.yml"]
+  pull_request:
+    paths: ["compass/**"]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: compass
+    env:
+      DEMO_MODE: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Secret scan (gitleaks)
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks dir . --config .gitleaks.toml --redact --no-banner
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: compass/package-lock.json }
+      - run: npm ci
+      - run: npm run scan
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

@@ -102,7 +102,7 @@ describe("scam rules", () => {
     expect(scamFlags({ ...ad, description: "Richiesto un piccolo investimento iniziale." }).map((f) => f.id)).toContain("asks-payment");
   });
   it("WhatsApp-only contact", () => {
-    expect(scamFlags({ ...ad, description: "Contattaci solo su WhatsApp al 333 1234567" }).map((f) => f.id)).toContain("chat-only");
+    expect(scamFlags({ ...ad, description: "Contattaci solo su WhatsApp al 333 000 0000" }).map((f) => f.id)).toContain("chat-only");
   });
   it("easy money from home", () => {
     expect(scamFlags({ ...ad, description: "Lavoro da casa, guadagna subito!" }).map((f) => f.id)).toContain("easy-money");
@@ -112,11 +112,11 @@ describe("scam rules", () => {
     expect(scamFlags({ ...ad, title: "Addetta pulizie", maxAnnualGross: 80000 }).map((f) => f.id)).toContain("unrealistic-pay");
   });
   it("free-mail address not matching the company", () => {
-    expect(scamFlags({ ...ad, applicationEmail: "mario.lavoro88@gmail.com" }).map((f) => f.id)).toContain("freemail-mismatch");
-    expect(scamFlags({ ...ad, applicationEmail: "rossisrl.selezione@gmail.com" })).toEqual([]);
-    expect(scamFlags({ ...ad, applicationEmail: "hr@rossisrl.it" })).toEqual([]);
+    expect(scamFlags({ ...ad, applicationEmail: "mario.esempio88@gmail.com" }).map((f) => f.id)).toContain("freemail-mismatch");
+    expect(scamFlags({ ...ad, applicationEmail: "rossisrl.selezione.demo@gmail.com" })).toEqual([]);
+    expect(scamFlags({ ...ad, applicationEmail: "hr@rossisrl.example" })).toEqual([]);
   });
   it("a normal ad has no flags", () => {
-    expect(scamFlags({ ...ad, description: "Contratto a tempo indeterminato, RAL 26.000 €. Inviare CV a hr@rossisrl.it" })).toEqual([]);
+    expect(scamFlags({ ...ad, description: "Contratto a tempo indeterminato, RAL 26.000 €. Inviare CV a hr@rossisrl.example" })).toEqual([]);
   });
 });
