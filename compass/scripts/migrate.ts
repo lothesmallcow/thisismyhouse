@@ -2,9 +2,12 @@
 // (hand-made list, then the listed companies and NACE industries of data/world/).
 import "./load-env";
 import { getDb, migrateDb } from "../src/lib/db";
-import { ensureCatalog, ensureDirectory } from "../src/lib/server/catalog";
+import { ensureCatalog, ensureDirectory, ensureRegisters } from "../src/lib/server/catalog";
 
 await migrateDb(getDb());
 await ensureCatalog(getDb());
 const dir = await ensureDirectory(getDb());
-console.log(dir.skipped ? "Database ready." : `Database ready (added ${dir.companies} listed companies and ${dir.sectors} NACE industries).`);
+// ~950,000 register companies (a few minutes the first time). REGISTERS=IT,GB limits them; REGISTERS=none skips (CI, tests).
+const which = (process.env.REGISTERS ?? "IT,GB,DE,FR").toUpperCase();
+const reg = which === "NONE" ? 0 : await ensureRegisters(getDb(), which.split(",").map((s) => s.trim()).filter(Boolean), (s) => console.log(s));
+console.log(dir.skipped && !reg ? "Database ready." : `Database ready (added ${dir.companies} listed companies, ${dir.sectors} NACE industries, ${reg} register companies).`);

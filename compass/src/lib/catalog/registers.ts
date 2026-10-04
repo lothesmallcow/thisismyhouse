@@ -74,6 +74,48 @@ export function tidyRegisterName(raw: string): string {
     .replace(/\b(Ltd|Plc|Llp|Gmbh|Ag|Se|Sa|Sas|Sarl|Srl|Spa|Snc|Sas|Kg|Ug|Ohg|Eurl)\b\.?/gi, (m) => m.toUpperCase().replace("GMBH", "GmbH").replace("SARL", "SARL"));
 }
 
+/** UK accounts categories → a lower bound of employees (large: 250+, medium: 50+, small: 10+). */
+const CH_ACCOUNTS: Record<string, number> = { FULL: 250, GROUP: 250, MEDIUM: 50, "AUDIT EXEMPTION SUBSIDIARY": 50, SMALL: 10 };
+
+const XML_ENTITIES: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&apos;": "'" };
+const unxml = (s: string) => s.replace(/&(amp|lt|gt|quot|apos);|&#(\d+);/g, (m, _n, d) => (d ? String.fromCharCode(Number(d)) : XML_ENTITIES[m]));
+const tag = (xml: string, name: string) => xml.match(new RegExp(`<lei:${name}(?: [^>]*)?>([^<]*)</lei:${name}>`))?.[1];
+
+/**
+ * GLEIF concatenated file (LEI-CDF 3.1 XML, one <lei:LEIRecord> per company), read in chunks:
+ * active companies of the four countries, no funds, no branches.
+ */
+export async function* gleifXmlRecords(chunks: AsyncIterable<string | Buffer>): AsyncIterable<RegisterRecord> {
+  let buf = "";
+  for await (const chunk of chunks) {
+    buf += chunk.toString();
+    let end: number;
+    while ((end = buf.indexOf("</lei:LEIRecord>")) >= 0) {
+      const start = buf.indexOf("<lei:LEIRecord");
+      const rec = buf.slice(start >= 0 && start < end ? start : 0, end);
+      buf = copy(buf.slice(end + 16)); // flat copy: the processed part can be freed
+      const r = gleifRecord(rec);
+      if (r) yield r;
+    }
+    if (buf.length > 1_000_000 && buf.indexOf("<lei:LEIRecord") < 0) buf = ""; // header, no record yet
+  }
+}
+
+export function gleifRecord(xml: string): RegisterRecord | null {
+  const legal = xml.match(/<lei:LegalAddress[^>]*>([\s\S]*?)<\/lei:LegalAddress>/)?.[1] ?? "";
+  const country = countryOf(tag(legal, "Country"));
+  if (!country) return null;
+  if (tag(xml, "EntityStatus") !== "ACTIVE") return null;
+  const category = tag(xml, "EntityCategory");
+  if (category && category !== "GENERAL") return null; // funds, branches, sole proprietors
+  const name = tag(xml, "LegalName");
+  if (!name) return null;
+  // Copies, not slices: a slice would keep the whole chunk of the file in memory.
+  return { name: copy(tidyRegisterName(unxml(name))), id: copy(tag(xml, "LEI") ?? ""), country, city: copy(tidyRegisterName(unxml(tag(legal, "City") ?? ""))) || null, nace: null, industry: null, employees: null, website: null };
+}
+
+const copy = (s: string) => Buffer.from(s, "utf8").toString("utf8");
+
 export interface Reader {
   /** Called with the header line first. */
   header(line: string): void;
@@ -100,7 +142,9 @@ export function readerFor(format: RegisterFormat): Reader {
           const nace = naceFromCode(sic.split(" - ")[0]);
           if (!nace) return null; // dormant or no activity
           const name = col(c, "CompanyName");
-          return name ? { name: tidyRegisterName(name), id: col(c, "CompanyNumber"), country: "GB", city: tidyRegisterName(col(c, "RegAddress.PostTown")) || null, nace, industry: sic.split(" - ")[1]?.trim() || null, employees: null, website: null } : null;
+          // No head count in the register: the accounts a company must file say roughly how big it is.
+          const employees = CH_ACCOUNTS[col(c, "Accounts.AccountCategory").toUpperCase()] ?? null;
+          return name ? { name: tidyRegisterName(name), id: col(c, "CompanyNumber"), country: "GB", city: tidyRegisterName(col(c, "RegAddress.PostTown")) || null, nace, industry: sic.split(" - ")[1]?.trim() || null, employees, website: null } : null;
         },
       };
     case "sirene":

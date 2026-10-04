@@ -6,6 +6,7 @@ const PORT = 3100;
 const env = {
   DEMO_MODE: "true",
   DATABASE_URL: "file:data/local/e2e.db",
+  REGISTERS: "none", // the ~950,000 register companies are not needed for the flows
   SESSION_SECRET: "e2e-session-secret-0123456789abcdef",
   CRON_SECRET: "e2e-cron-secret",
   APP_URL: `http://localhost:${PORT}`,

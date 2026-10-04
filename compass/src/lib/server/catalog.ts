@@ -474,3 +474,30 @@ export function naceLabel(code: string): string | null {
   }
   return null;
 }
+
+/**
+ * The register companies shipped with Compass (data/world/registers, built by
+ * scripts/build-register-data.ts): ~950,000 live employers of Italy, the UK, Germany and France.
+ * Loaded once per database (version stamp); `countries` limits it (e.g. ["IT"]).
+ */
+export async function ensureRegisters(db: DB, countries: string[] = ["IT", "GB", "DE", "FR"], log: (s: string) => void = () => {}): Promise<number> {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const zlib = await import("node:zlib");
+  let total = 0;
+  for (const cc of countries) {
+    const file = path.join(process.cwd(), "data/world/registers", `${cc.toLowerCase()}.json.gz`);
+    if (!fs.existsSync(file)) continue;
+    const version = `${cc}-${fs.statSync(file).size}`;
+    const stampKey = `registers_${cc}`;
+    const stamp = await db.query.settings.findFirst({ where: eq(schema.settings.key, stampKey) });
+    if (stamp?.value === version) continue;
+    const rows = JSON.parse(zlib.gunzipSync(fs.readFileSync(file)).toString("utf8")) as [string, string, string, string, number][];
+    const records: RegisterRecord[] = rows.map(([name, id, city, nace, employees]) => ({ name, id, country: cc as RegisterRecord["country"], city: city || null, nace: nace || null, industry: null, employees: employees >= 0 ? employees : null, website: null }));
+    const r = await importRegister(db, records);
+    total += r.added;
+    log(`${cc}: ${r.added} companies from the official registers`);
+    await db.insert(schema.settings).values({ key: stampKey, value: version }).onConflictDoUpdate({ target: schema.settings.key, set: { value: version } });
+  }
+  return total;
+}

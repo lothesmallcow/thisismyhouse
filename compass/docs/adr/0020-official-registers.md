@@ -23,6 +23,14 @@ environment can reach only npm, PyPI and GitHub, so the generated catalog (ADR 0
 - **Positions**: `scripts/import-esco.ts` imports every ESCO occupation (~3,000, EU) in four
   languages into `data/world/positions-esco.json`, used by the questionnaire and the searches.
 
+## Update (October 2026): loaded
+With the download hosts allowed, the registers were read and **951,647 live companies** ship in
+`data/world/registers/`: UK 367,124 (Companies House with small/medium/large accounts, plus GLEIF),
+Germany 228,040, Italy 206,517, France 149,966 (GLEIF: every active company with an LEI). France's
+SIRENE (sizes and activities of SMEs) and ESCO (job titles) still need `www.data.gouv.fr` and
+`ec.europa.eu` allowed. Search over the full set takes 0.3-0.6 s (SQLite `LIKE`); a full-text
+index is the next step if it grows.
+
 ## Consequences
 Size is the trade-off: all active UK companies are ~5 million rows, so import by region, sector
 or size (the free Turso tier holds a few million rows, search slows down past ~1 million). The

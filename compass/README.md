@@ -60,8 +60,8 @@ ever touching anyone's platform accounts.
   questionnaire; ~3,100 listed companies and all 1,047 NACE industries (four languages) browsable
   and searchable; ~180 roles searched in each country's language. Searches go only where people
   want to work, best-fitting companies first and the rest in rotation, so free quotas last.
-  Every company of a country can be added from the official registers (Companies House, SIRENE,
-  OffeneRegister, GLEIF, CSV) and every ESCO occupation in four languages (docs/setup.md §4b).
+  About 950,000 live companies from the official registers ship with it (Companies House, GLEIF),
+  and more can be imported (SIRENE, OffeneRegister, CSV, ESCO occupations: docs/setup.md §4b).
 - **Fit score out of 100**: seven readable parts (role, experience, requirements, place, pay,
   conditions, choices), weights you can change, hard limits; each offer lists its requirements
   against your CV with tips for the gaps; role sheets with pay by employer size for your area;
@@ -202,4 +202,4 @@ MIT licensed. See [CHANGELOG.md](CHANGELOG.md) and the decisions in [docs/adr/](
 against synthetic alert e-mails and are marked "needs real sample" until real (anonymized)
 samples are added (see `fixtures/emails/README.md`).
 
-Contains data from GeoNames (CC BY 4.0), Eurostat (NACE Rev. 2.1) and FinanceDatabase (MIT); see `data/world/README.md`.
+Contains data from GeoNames (CC BY 4.0), Eurostat (NACE Rev. 2.1), FinanceDatabase (MIT), the GLEIF Global LEI Index (CC0) and Companies House (public sector information licensed under the Open Government Licence v3.0); see `data/world/README.md`.

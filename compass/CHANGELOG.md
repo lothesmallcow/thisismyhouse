@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 · 2026-10-04
+
+- **951,647 real companies loaded** from the official registers: UK (Companies House + GLEIF)
+  367,124, Germany 228,040, Italy 206,517, France 149,966. Live companies only (no dormant, funds,
+  branches); loaded by `npm run db:migrate` once (about 90 s), searchable and browsable on Aziende.
+
 ## 0.6.0 · 2026-10-04
 
 Every company and every job title, as far as the open data goes.

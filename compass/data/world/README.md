@@ -9,6 +9,11 @@ committed). Nothing here is fetched at runtime.
 | `nace.json` | Every NACE Rev. 2.1 code (sections, divisions, groups, classes) in Italian, English, German and French | Eurostat classification via `@financica/nace-codes` (MIT); Eurostat reuse policy, attribution required |
 | `companies.json` | Listed companies headquartered in Italy, the UK, Germany and France: name, country, city, GICS sector and industry, website, size band | [FinanceDatabase](https://github.com/JerBouma/FinanceDatabase) by Jeroen Bouma, **MIT** |
 
+| `registers/{it,gb,de,fr}.json.gz` | ~950,000 live companies: UK Companies House companies filing small, medium or large accounts (roughly 10+ employees) with their activity (SIC → NACE); every active company with an LEI in Italy, the UK, Germany and France (GLEIF; no funds, no branches) | Companies House (contains public sector information licensed under the **Open Government Licence v3.0**); GLEIF Global LEI Index (**CC0**) |
+
+Built by `scripts/build-register-data.ts` from the downloaded files (October 2026) and loaded by
+`npm run db:migrate` (about 90 seconds the first time; `REGISTERS=IT,GB` limits it, `REGISTERS=none` skips it).
+
 Optional, generated on your machine (ADR 0020): `positions-esco.json` from the ESCO occupations
 (`scripts/import-esco.ts`, ESCO by the European Commission); companies from official registers go
 straight into the database (`scripts/import-register.ts`).

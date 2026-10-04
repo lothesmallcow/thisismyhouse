@@ -75,7 +75,8 @@ Build **Compass** (the brief calls it "Bussola"), a boomer-proof Italian job fin
 - [x] All listed companies of IT/UK/DE/FR reachable from here (~3,300)
 - [x] Importers for the official registers (Companies House, SIRENE, OffeneRegister, GLEIF, CSV) with filters; tested on fake samples in the official layouts
 - [x] ESCO occupations importer (four languages) wired into the questionnaire and searches
-- [ ] Run the importers on the real files: needs the files (not reachable from this environment; see Waiting on you 18)
+- [x] Real registers loaded: 951,647 live companies (Companies House + GLEIF) shipped in data/world/registers
+- [ ] SIRENE (French SMEs with sizes) and ESCO (job titles): need www.data.gouv.fr and ec.europa.eu allowed
 
 ## Plan
 - [x] M0 research + ADRs
