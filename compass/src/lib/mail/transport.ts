@@ -10,7 +10,7 @@ import { schema } from "../db";
 import { env, mailboxConfig, type MailboxConfig } from "../env";
 
 export interface OutgoingEmail {
-  kind: "application" | "digest" | "admin-alert";
+  kind: "application" | "digest" | "admin-alert" | "account";
   to: string; // exactly one recipient
   subject: string;
   text: string; // plain text first

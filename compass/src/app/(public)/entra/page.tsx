@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 async function entraAction(f: FormData) {
   "use server";
   const r = await signIn(String(f.get("email") ?? ""), String(f.get("password") ?? ""), "user");
-  redirect(r === "ok" ? "/offerte" : r === "locked" ? "/entra?errore=attesa" : "/entra?errore=1");
+  redirect(r === "ok" ? "/offerte" : r === "locked" ? "/entra?errore=attesa" : r === "pending" ? "/entra?errore=richiesta" : "/entra?errore=1");
 }
 
 export default async function EntraPage({ searchParams }: { searchParams: Promise<{ errore?: string }> }) {
@@ -21,7 +21,9 @@ export default async function EntraPage({ searchParams }: { searchParams: Promis
       <p className="mt-1.5 text-[14px] text-muted">Resti collegato su questo dispositivo.</p>
       {sp.errore && (
         <div className="mt-5">
-          <Notice tone="warn">{sp.errore === "attesa" ? "Troppi tentativi: riprova tra 15 minuti." : "E-mail o password non corrette."}</Notice>
+          <Notice tone={sp.errore === "richiesta" ? "info" : "warn"}>
+            {sp.errore === "attesa" ? "Troppi tentativi: riprova tra 15 minuti." : sp.errore === "richiesta" ? "La tua richiesta di accesso è in attesa: riceverai un'e-mail quando l'amministratore la approva." : "E-mail o password non corrette."}
+          </Notice>
         </div>
       )}
       <form action={entraAction} className="mt-6 space-y-4">

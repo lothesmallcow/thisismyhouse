@@ -23,6 +23,8 @@ export const users = sqliteTable("users", {
   /** Where the morning e-mail goes. Null: the sign-in address. */
   digestEmail: text("digest_email"),
   lastLoginAt: ts("last_login_at"),
+  /** Asked for access from the public page and waits for the admin (inactive until approved). */
+  pendingSince: ts("pending_since"),
   createdAt: createdAt(),
 });
 
@@ -295,7 +297,15 @@ export const catalogCompanies = sqliteTable("catalog_companies", {
   /** 0 nano ... 5 mega (market value), null = unknown. */
   size: integer("size"),
   createdAt: createdAt(),
-}, (t) => [index("catalog_companies_source_idx").on(t.source, t.country)]);
+}, (t) => [
+  index("catalog_companies_source_idx").on(t.source, t.country),
+  // Browsing and suggestions read only the rows they show, not the ~950,000 of the registers (online
+  // databases bill by rows read). Name search uses the full-text table catalog_companies_fts (0008).
+  index("catalog_companies_browse_idx").on(t.source, t.country, sql`${t.size} desc`, t.name),
+  index("catalog_companies_sector_idx").on(t.sectorId, t.country, sql`${t.size} desc`),
+  index("catalog_companies_author_idx").on(t.createdByUserId),
+  index("catalog_companies_ats_idx").on(t.ats),
+]);
 
 /** One person's experience timeline: work, studies, volunteering. From the CV, a LinkedIn data export, or typed in. */
 export const experiences = sqliteTable(
@@ -546,7 +556,7 @@ export const settings = sqliteTable("settings", {
 export const outbox = sqliteTable("outbox", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
-  kind: text("kind", { enum: ["application", "digest", "admin-alert"] }).notNull(),
+  kind: text("kind", { enum: ["application", "digest", "admin-alert", "account"] }).notNull(),
   toEmail: text("to_email").notNull(),
   subject: text("subject").notNull(),
   text: text("text").notNull(),

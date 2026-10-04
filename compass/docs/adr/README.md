@@ -28,3 +28,4 @@ what to re-verify.
 | [0020](0020-official-registers.md) | Every company: importers for Companies House, SIRENE, OffeneRegister, GLEIF, CSV; ESCO positions |
 | [0021](0021-search-codes.md) | Search codes: one cached, shared batch of searches per set of answers; alert links for the big sites |
 | [0022](0022-precise-positions-and-priority.md) | Precise positions for generic roles, quick/complete questionnaire, positions from the CV, job priority |
+| [0023](0023-online-scale-and-access-requests.md) | Online at register scale (full-text and indexed queries), access on request approved by the admin |

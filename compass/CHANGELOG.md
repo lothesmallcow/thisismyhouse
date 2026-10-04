@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.0 · 2026-10-04
+
+Ready to go online, invite or request only.
+
+- **Access on request** (now the default): anyone with the link asks for access, the admin gets an
+  e-mail and approves or rejects in Admin → Persone; the person is told by e-mail. An invitation
+  still lets someone in at once.
+- **Built for an online database billed by rows read**: company search through a full-text index,
+  browsing and suggestions through indexes, counts capped or stored; no page reads the ~950,000
+  register rows any more (each now reads about what it shows, measured on the full data).
+- **Going online** (`docs/online.md`, in Italian): Turso + Vercel (EU region) + GitHub Actions,
+  with a one-click `setup` job; registers loaded online default to Italy (`REGISTERS`).
+- Privacy notice at `/privacy` (owner from `PRIVACY_OWNER`), linked from sign-up.
+- Real mode refuses to seed an admin without its own password (the demo one is public).
+- Try it in a GitHub Codespace in one click (`.devcontainer`).
+
 ## 0.8.0 · 2026-10-04
 
 - **Precise positions**: generic roles ("venditrice moda") become the titles listings use, by

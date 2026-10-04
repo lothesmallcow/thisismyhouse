@@ -12,6 +12,7 @@ const good = {
   MAILBOX_USER: "x@example.com",
   MAILBOX_APP_PASSWORD: "p",
   ADMIN_ALERT_EMAIL: "io@example.com",
+  PRIVACY_OWNER: "Persona Esempio",
 };
 
 describe("startup configuration check", () => {
@@ -24,6 +25,9 @@ describe("startup configuration check", () => {
     expect(() => assertEnv({ ...good, MAILBOX_APP_PASSWORD: "" })).toThrow(/MAILBOX_APP_PASSWORD/);
     expect(() => assertEnv({ ...good, DATABASE_AUTH_TOKEN: "" })).toThrow(/DATABASE_AUTH_TOKEN/);
     expect(() => assertEnv({ ...good, CONTACT_EMAIL: "" })).toThrow(/CONTACT_EMAIL/);
+  });
+  it("a missing privacy owner is a warning, not a stop", () => {
+    expect(checkEnv({ ...good, PRIVACY_OWNER: "" })).toEqual([expect.objectContaining({ variable: "PRIVACY_OWNER", fatal: false })]);
   });
   it("demo mode only warns (nothing leaves the machine anyway)", () => {
     expect(() => assertEnv({ DEMO_MODE: "true" })).not.toThrow();

@@ -1,6 +1,6 @@
 // Catalog of sectors and companies, each person's choices ("Mi interessa" / "Da evitare"),
 // entries added with "Altro", and rule-based suggestions ("Suggeriti per te").
-import { and, desc, eq, inArray, ne, notInArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import listedData from "../../../data/world/companies.json";
 import naceData from "../../../data/world/nace.json";
 import { COMPANIES, SECTORS, companyTrack } from "../catalog/data";
@@ -48,7 +48,10 @@ export async function ensureCatalog(db: DB): Promise<void> {
     track: companyTrack(c),
     ...placeOf(c.city ?? null),
   });
-  const haveCompanies = new Map((await db.select().from(schema.catalogCompanies)).map((r) => [r.slug, r]));
+  // Only the curated slugs: never a read of the whole table (the registers add ~950,000 rows).
+  const slugs = COMPANIES.map((c) => slugify(c.name));
+  const haveCompanies = new Map<string, typeof schema.catalogCompanies.$inferSelect>();
+  for (let i = 0; i < slugs.length; i += 400) for (const r of await db.select().from(schema.catalogCompanies).where(inArray(schema.catalogCompanies.slug, slugs.slice(i, i + 400)))) haveCompanies.set(r.slug, r);
   const newCompanies = COMPANIES.filter((c) => !haveCompanies.has(slugify(c.name)));
   if (newCompanies.length) await db.insert(schema.catalogCompanies).values(newCompanies.map((c) => ({ slug: slugify(c.name), ...values(c), shared: true })));
   for (const c of COMPANIES) {
@@ -160,16 +163,34 @@ export async function searchCompanies(db: DB, userId: number, q: string, scope: 
   const c = schema.catalogCompanies;
   const visible = or(eq(c.shared, true), eq(c.createdByUserId, userId));
   const text = or(sql`lower(${c.name}) like ${like}`, sql`lower(${c.aliases}) like ${like}`, sql`lower(coalesce(${c.industry}, '')) like ${like}`, sql`lower(coalesce(${c.city}, '')) like ${like}`);
-  const where = [visible, text];
+  const where = [visible, text, inArray(c.source, ["curato", "altro", "borsa"])];
   if (scope.countries?.length) where.push(inArray(c.country, scope.countries));
-  const rows = await db
-    .select()
-    .from(c)
-    .where(and(...where))
-    .orderBy(sql`lower(${c.name}) like ${`${term}%`} desc`, sql`${c.source} in ('borsa', 'registro')`, sql`${c.size} is null`, desc(c.size), c.name)
-    .limit(200);
+  // The hand-made and listed companies (a few thousand rows): a plain scan.
+  const small = await db.select().from(c).where(and(...where)).limit(200);
+  // The registers (~950,000 rows): through the full-text index, reading only the matches.
+  const reg = await searchRegisters(db, term, scope.countries ?? []);
+  const prefix = (r: Company) => (fold(r.name).startsWith(fold(term)) ? 0 : 1);
+  const tier = (r: Company) => (r.source === "borsa" || r.source === "registro" ? 1 : 0);
+  const rows = [...small, ...reg].sort((a, b) => prefix(a) - prefix(b) || tier(a) - tier(b) || (a.size == null ? 1 : 0) - (b.size == null ? 1 : 0) || (b.size ?? 0) - (a.size ?? 0) || a.name.localeCompare(b.name));
   const inRegion = (r: Company) => !scope.regions?.length || !scope.regions.some((x) => x.startsWith(`${r.country}:`)) || scope.regions.includes(`${r.country}:${r.region}`);
   return rows.filter(inRegion).slice(0, scope.limit ?? 20);
+}
+
+/** "sartoria esempio" → '"sartoria"* "esempio"*': every word, as a prefix, in name, aliases, city or industry. */
+export function ftsQuery(term: string): string | null {
+  const words = fold(term).split(/[^a-z0-9]+/).filter((w) => w.length >= 2).slice(0, 6);
+  return words.length ? words.map((w) => `"${w}"*`).join(" ") : null;
+}
+
+async function searchRegisters(db: DB, term: string, countries: string[]): Promise<Company[]> {
+  const match = ftsQuery(term);
+  if (!match) return [];
+  const c = schema.catalogCompanies;
+  const ids = await db.all<{ id: number }>(sql`select rowid as id from catalog_companies_fts where catalog_companies_fts match ${match} order by rank limit 400`);
+  if (ids.length === 0) return [];
+  const where = [inArray(c.id, ids.map((r) => r.id)), eq(c.source, "registro"), eq(c.shared, true)];
+  if (countries.length) where.push(inArray(c.country, countries));
+  return db.select().from(c).where(and(...where));
 }
 
 /** Search every industry (hand-made sectors first, then NACE) in Italian, English, German or French. */
@@ -190,12 +211,31 @@ export async function searchSectors(db: DB, userId: number, q: string, limit = 1
 export async function directoryPool(db: DB, sectorIds: number[], scope: SearchScope & { limit: number }): Promise<Company[]> {
   if (sectorIds.length === 0) return [];
   const c = schema.catalogCompanies;
-  const where = [inArray(c.source, ["borsa", "registro"]), eq(c.shared, true), inArray(c.sectorId, sectorIds)];
-  if (scope.countries?.length) where.push(inArray(c.country, scope.countries));
-  const rows = await db.select().from(c).where(and(...where)).orderBy(desc(c.size), c.name).limit(scope.limit * 4);
   const regions = scope.regions ?? [];
   const inRegion = (r: Company) => !regions.some((x) => x.startsWith(`${r.country}:`)) || regions.includes(`${r.country}:${r.region}`);
-  return rows.filter(inRegion).slice(0, scope.limit);
+  // One query per sector and country, in the order of the index (sector, country, size desc): each
+  // reads about the rows it returns, even when a sector has tens of thousands of register companies.
+  // "+source" keeps SQLite on that index rather than the source one (the whole register).
+  const countries = scope.countries?.length ? scope.countries : [null];
+  const parts = await Promise.all(
+    sectorIds.slice(0, 20).flatMap((id) =>
+      countries.map((cc) =>
+        db
+          .select()
+          .from(c)
+          .where(and(eq(c.sectorId, id), cc ? eq(c.country, cc) : undefined, sql`+${c.source} in ('borsa', 'registro')`, eq(c.shared, true)))
+          .orderBy(desc(c.size))
+          .limit(scope.limit * 4),
+      ),
+    ),
+  );
+  const seen = new Set<number>();
+  return parts
+    .flat()
+    .filter((r) => !seen.has(r.id) && seen.add(r.id))
+    .sort((a, b) => (b.size ?? -1) - (a.size ?? -1) || a.name.localeCompare(b.name))
+    .filter(inRegion)
+    .slice(0, scope.limit);
 }
 
 /** The countries a profile looks at: those chosen, else the home country (Italy). */
@@ -218,14 +258,21 @@ export async function listSectors(db: DB, userId: number, track: Track | "all" =
 }
 
 export async function listCompanies(db: DB, userId: number, track: Track | "all" = "all"): Promise<Company[]> {
+  const c = schema.catalogCompanies;
   const mine = db.select({ id: schema.userPrefs.refId }).from(schema.userPrefs).where(and(eq(schema.userPrefs.userId, userId), eq(schema.userPrefs.kind, "company")));
-  // Listed companies are thousands: only shown when searched for or chosen.
-  const visible = or(and(eq(schema.catalogCompanies.shared, true), notInArray(schema.catalogCompanies.source, ["borsa", "registro"])), eq(schema.catalogCompanies.createdByUserId, userId), inArray(schema.catalogCompanies.id, mine));
-  return db
-    .select()
-    .from(schema.catalogCompanies)
-    .where(track === "all" ? visible : and(visible, trackFilter(schema.catalogCompanies.track, track)))
-    .orderBy(sql`lower(${schema.catalogCompanies.name})`);
+  const onTrack = track === "all" ? undefined : trackFilter(c.track, track);
+  // Listed and register companies are many: only shown when searched for or chosen. Three indexed
+  // reads (hand-made list, their own entries, their choices) instead of one scan of every row.
+  const parts = await Promise.all([
+    db.select().from(c).where(and(inArray(c.source, ["curato", "altro"]), eq(c.shared, true), onTrack)),
+    db.select().from(c).where(and(eq(c.createdByUserId, userId), onTrack)),
+    db.select().from(c).where(and(inArray(c.id, mine), onTrack)),
+  ]);
+  const seen = new Set<number>();
+  return parts
+    .flat()
+    .filter((r) => !seen.has(r.id) && seen.add(r.id))
+    .sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0));
 }
 
 export interface Prefs {
@@ -344,32 +391,47 @@ export function careersSearchUrl(name: string, track: Track): string {
   return `https://duckduckgo.com/?q=${encodeURIComponent(q)}`;
 }
 
-/** Browse the whole company list page by page (listed companies included), in the person's countries and regions. */
+/** Register rows counted at most up to here when browsing ("più di 10.000"): counting them all would read them all. */
+export const BROWSE_COUNT_CAP = 10_000;
+
+/**
+ * Browse the whole company list page by page, in the person's countries and regions: first the
+ * hand-made and listed companies, then the register ones (biggest first, through an index, so a page
+ * reads about the rows it shows).
+ */
 export async function browseCompanies(
   db: DB,
   userId: number,
   opts: SearchScope & { sectorId?: number | null; page?: number; perPage?: number },
-): Promise<{ rows: Company[]; total: number }> {
+): Promise<{ rows: Company[]; total: number; capped: boolean }> {
   const c = schema.catalogCompanies;
-  const where = [or(eq(c.shared, true), eq(c.createdByUserId, userId))];
-  if (opts.countries?.length) where.push(inArray(c.country, opts.countries));
-  if (opts.sectorId) where.push(or(eq(c.sectorId, opts.sectorId), sql`exists (select 1 from json_each(${c.extraSectorIds}) where value = ${opts.sectorId})`));
+  const common = [];
+  if (opts.countries?.length) common.push(inArray(c.country, opts.countries));
+  if (opts.sectorId) common.push(or(eq(c.sectorId, opts.sectorId), sql`exists (select 1 from json_each(${c.extraSectorIds}) where value = ${opts.sectorId})`));
   // Regions: within a country that has chosen regions, only those regions (companies with no known region stay).
   for (const cc of new Set((opts.regions ?? []).map((r) => r.split(":")[0]))) {
     const names = (opts.regions ?? []).filter((r) => r.startsWith(`${cc}:`)).map((r) => r.slice(cc.length + 1));
-    where.push(or(ne(c.country, cc), inArray(c.region, names), sql`${c.region} is null`));
+    common.push(or(ne(c.country, cc), inArray(c.region, names), sql`${c.region} is null`));
   }
+  const smallWhere = and(or(eq(c.shared, true), eq(c.createdByUserId, userId)), inArray(c.source, ["curato", "altro", "borsa"]), ...common);
+  const regWhere = and(eq(c.source, "registro"), eq(c.shared, true), ...common);
   const perPage = Math.min(100, opts.perPage ?? 30);
   const page = Math.max(1, opts.page ?? 1);
-  const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(c).where(and(...where));
-  const rows = await db
-    .select()
-    .from(c)
-    .where(and(...where))
-    .orderBy(sql`${c.source} in ('borsa', 'registro')`, sql`${c.size} is null`, desc(c.size), sql`lower(${c.name})`)
-    .limit(perPage)
-    .offset((page - 1) * perPage);
-  return { rows, total: Number(n) };
+  const offset = (page - 1) * perPage;
+
+  const [{ n: nSmall }] = await db.select({ n: sql<number>`count(*)` }).from(c).where(smallWhere);
+  const [{ n: nReg }] = await db.select({ n: sql<number>`count(*)` }).from(sql`(select 1 from ${c} where ${regWhere} limit ${BROWSE_COUNT_CAP + 1})`);
+  const rows: Company[] = [];
+  if (offset < Number(nSmall)) {
+    rows.push(...(await db.select().from(c).where(smallWhere).orderBy(sql`${c.source} = 'borsa'`, sql`${c.size} is null`, desc(c.size), sql`lower(${c.name})`).limit(perPage).offset(offset)));
+  }
+  const left = perPage - rows.length;
+  if (left > 0 && Number(nReg) > 0) {
+    // Same order as the index (source, country, size desc, name): no sort of the whole register.
+    rows.push(...(await db.select().from(c).where(regWhere).orderBy(c.country, desc(c.size), c.name).limit(left).offset(Math.max(0, offset - Number(nSmall)))));
+  }
+  const capped = Number(nReg) > BROWSE_COUNT_CAP;
+  return { rows, total: Number(nSmall) + Math.min(Number(nReg), BROWSE_COUNT_CAP), capped };
 }
 
 /** Can this person see (and so choose) this entry? Shared entries, their own, and those they already chose. */
@@ -462,6 +524,11 @@ export async function importRegister(db: DB, records: AsyncIterable<RegisterReco
     if (batch.length >= 500) await flush();
   }
   await flush();
+  if (added > 0) {
+    // Remembered once here, so pages never count the register rows (that would read them all).
+    const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(schema.catalogCompanies).where(eq(schema.catalogCompanies.source, "registro"));
+    await db.insert(schema.settings).values({ key: "register_companies", value: String(n) }).onConflictDoUpdate({ target: schema.settings.key, set: { value: String(n) } });
+  }
   return { added, skipped };
 }
 
@@ -473,6 +540,15 @@ export function naceLabel(code: string): string | null {
     if (l) return l;
   }
   return null;
+}
+
+/** How many companies the catalog has, and how many are listed or from the registers (indexed counts only). */
+export async function catalogCounts(db: DB): Promise<{ total: number; listed: number }> {
+  const c = schema.catalogCompanies;
+  const [{ n: own }] = await db.select({ n: sql<number>`count(*)` }).from(c).where(inArray(c.source, ["curato", "altro"]));
+  const [{ n: borsa }] = await db.select({ n: sql<number>`count(*)` }).from(c).where(eq(c.source, "borsa"));
+  const reg = Number((await db.query.settings.findFirst({ where: eq(schema.settings.key, "register_companies") }))?.value ?? 0);
+  return { total: Number(own) + Number(borsa) + reg, listed: Number(borsa) + reg };
 }
 
 /**

@@ -49,6 +49,8 @@ const MESSAGES: Record<string, { tone: "success" | "info" | "warn" | "danger"; t
   registrato: { tone: "success", text: "Account creato. Rispondi a qualche domanda per iniziare." },
   "account-creato": { tone: "success", text: "Account creato." },
   "invito-creato": { tone: "success", text: "Invito creato: copia il codice qui sotto, non verrà mostrato di nuovo." },
+  "richiesta-approvata": { tone: "success", text: "Richiesta approvata: la persona può entrare e ha ricevuto un'e-mail." },
+  "richiesta-rifiutata": { tone: "success", text: "Richiesta rifiutata e cancellata." },
   "account-eliminato": { tone: "success", text: "Account eliminato con tutti i suoi dati." },
   "nessun-utente": { tone: "info", text: "Non ci sono ancora persone: crea il primo account." },
   "email-esistente": { tone: "warn", text: "Esiste già un account con questa e-mail." },

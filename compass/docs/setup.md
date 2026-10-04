@@ -64,7 +64,9 @@ letter templates, no fake data in real mode). Change both passwords afterwards.
 
 **More people.** Admin → Persone: create an account directly, or create an invitation link
 (valid 14 days, shown once). Admin → Fonti → "Registrazione" decides who can sign up:
-`chiuso`, `solo con invito` (default) or `aperto` (at most 20 new accounts a day). Each person
+`su richiesta` (default: anyone asks, the admin approves each request in Admin → Persone and is
+told by e-mail at `ADMIN_ALERT_EMAIL`; an invitation skips the wait), `chiuso`, `solo con invito`
+or `aperto` (at most 20 new accounts a day; requests count towards the same cap). Each person
 has their own profile, CV, companies, applications and morning e-mail; the admin can open any
 person's app ("Apri la sua app") to help them.
 

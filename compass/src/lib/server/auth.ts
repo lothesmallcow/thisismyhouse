@@ -26,7 +26,7 @@ export interface AppUser extends SessionUser {
 
 export const VIEW_AS_COOKIE = "compass_view_as";
 
-export type SignInResult = "ok" | "wrong" | "locked";
+export type SignInResult = "ok" | "wrong" | "locked" | "pending";
 
 export const MAX_FAILURES = 5;
 export const LOCK_MINUTES = 15;
@@ -40,7 +40,10 @@ export async function signIn(email: string, password: string, role: Role): Promi
   const user = await db.query.users.findFirst({
     where: and(eq(schema.users.email, email.trim().toLowerCase()), eq(schema.users.role, role)),
   });
-  if (!user || !user.active || !(await verifyPassword(password, user.passwordHash))) {
+  const passwordOk = user ? await verifyPassword(password, user.passwordHash) : false;
+  // A request not yet approved: say so, but only to whoever knows the password.
+  if (user && passwordOk && !user.active && user.pendingSince) return "pending";
+  if (!user || !user.active || !passwordOk) {
     const fresh = !attempt || now.getTime() - attempt.firstAt.getTime() > LOCK_MINUTES * 60000;
     const failures = fresh ? 1 : attempt.failures + 1;
     const row = { key, failures, firstAt: fresh ? now : attempt.firstAt, lockedUntil: failures >= MAX_FAILURES ? new Date(now.getTime() + LOCK_MINUTES * 60000) : null };

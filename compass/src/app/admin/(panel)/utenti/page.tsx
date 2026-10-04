@@ -5,9 +5,9 @@ import { Button, Card, Chip, Field, SectionTitle } from "@/components/ui";
 import { formatWhen } from "@/lib/core/time";
 import { getDb, schema } from "@/lib/db";
 import { env } from "@/lib/env";
-import { listPeople, MIN_PASSWORD } from "@/lib/server/accounts";
+import { listPeople, listRequests, MIN_PASSWORD } from "@/lib/server/accounts";
 import { getSettings } from "@/lib/server/settings";
-import { changePasswordAction, createInviteAction, createPersonAction, deletePersonAction, revokeInviteAction, setActiveAction, setPersonAction, viewAsAction } from "../../actions";
+import { changePasswordAction, createInviteAction, createPersonAction, decideRequestAction, deletePersonAction, revokeInviteAction, setActiveAction, setPersonAction, viewAsAction } from "../../actions";
 import { AdminTitle } from "../person";
 
 export const metadata = { title: "Persone" };
@@ -15,7 +15,8 @@ export const metadata = { title: "Persone" };
 export default async function UtentiPage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
   const sp = await searchParams;
   const db = getDb();
-  const ppl = await listPeople(db);
+  const ppl = (await listPeople(db)).filter((p) => !p.user.pendingSince);
+  const requests = await listRequests(db);
   const admins = await db.select({ id: schema.users.id, email: schema.users.email }).from(schema.users).where(eq(schema.users.role, "admin"));
   const invites = await db.select().from(schema.invites).where(isNull(schema.invites.usedAt)).orderBy(desc(schema.invites.createdAt));
   const settings = await getSettings(db);
@@ -33,6 +34,35 @@ export default async function UtentiPage({ searchParams }: { searchParams: Promi
           <p className="mt-1 font-mono text-[22px] font-semibold tracking-[0.15em]">{code}</p>
           <p className="mt-1 text-[12.5px] text-faint">Link: {env.appUrl}/registrati?invito={code}</p>
         </Card>
+      )}
+
+      {requests.length > 0 && (
+        <section aria-label="Richieste di accesso" className="mb-8">
+          <SectionTitle className="!mt-0">Richieste di accesso ({requests.length})</SectionTitle>
+          <div className="space-y-2">
+            {requests.map((r) => (
+              <Card key={r.id} className="!p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[15px] font-semibold">{r.name || r.email}</p>
+                    <p className="text-[13px] text-muted">
+                      {r.email} · chiesto {formatWhen(r.pendingSince!, now)}
+                    </p>
+                  </div>
+                  <form action={decideRequestAction} className="flex gap-2">
+                    <input type="hidden" name="u" value={r.id} />
+                    <Button name="decision" value="approve" size="sm">
+                      Approva
+                    </Button>
+                    <Button name="decision" value="reject" variant="danger" size="sm">
+                      Rifiuta
+                    </Button>
+                  </form>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
       )}
 
       <div className="space-y-3">
@@ -153,7 +183,7 @@ export default async function UtentiPage({ searchParams }: { searchParams: Promi
           <SectionTitle className="!mt-0">Inviti</SectionTitle>
           <Card className="!p-4">
             <p className="text-[13px] text-muted">
-              Registrazione: <strong className="text-ink">{settings.registration === "open" ? "aperta a tutti" : settings.registration === "invite" ? "solo con invito" : "chiusa"}</strong> (si cambia in Fonti e impostazioni).
+              Registrazione: <strong className="text-ink">{settings.registration === "open" ? "aperta a tutti" : settings.registration === "invite" ? "solo con invito" : settings.registration === "approval" ? "su richiesta, approvata da te" : "chiusa"}</strong> (si cambia in Fonti e impostazioni).
             </p>
             <form action={createInviteAction} className="mt-3 flex flex-wrap items-end gap-2">
               <Field label="Nota (per chi è)" htmlFor="inv-note">

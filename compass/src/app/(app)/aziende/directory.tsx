@@ -111,6 +111,7 @@ export async function Directory({
       {result.total > 0 && (
         <nav aria-label="Pagine del catalogo" className="mt-3 flex items-center justify-between text-[13px] text-muted">
           <span>
+            {"capped" in result && result.capped ? "Più di " : ""}
             {result.total.toLocaleString("it-IT")} aziende · pagina {page} di {pages}
           </span>
           <span className="flex gap-2">

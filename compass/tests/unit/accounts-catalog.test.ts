@@ -6,7 +6,7 @@ import { extractDurationMonths, extractEligibility, extractJobType } from "@/lib
 import { NO_CHOICES, rankJob, type RankJob, type RankProfile } from "@/lib/core/rank";
 import { schema, type DB } from "@/lib/db";
 import { OutboxTransport } from "@/lib/mail/transport";
-import { createAccount, createInvite, OPEN_SIGNUPS_PER_DAY, register, setActive } from "@/lib/server/accounts";
+import { approveRequest, createAccount, createInvite, listRequests, OPEN_SIGNUPS_PER_DAY, register, setActive } from "@/lib/server/accounts";
 import { approveApplication, cancelApplication, getApplication, prepareEmailApplication, processQueue, updateDraft } from "@/lib/server/applications";
 import { addCustomCompany, addCustomSector, ensureCatalog, getPrefs, listCompanies, listSectors, rankPrefs, setPref, setPrefs, slugify, suggestCompanies } from "@/lib/server/catalog";
 import { canSee, getJob, listJobs, rerankUser, setApplicationEmail, upsertRawJob } from "@/lib/server/jobs";
@@ -91,7 +91,28 @@ describe("isolation between people", () => {
 describe("accounts and invitations", () => {
   const input = { email: "nuova@example.com", password: "una-password-lunga", name: "Nuova Persona", track: "stage" as const };
 
-  it("by default sign-up needs a valid, unused invitation", async () => {
+  it("by default anyone can ask: the account waits for the admin, who is told by e-mail and approves it", async () => {
+    const r = await register(db, input, NOW);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.pending).toBe(true);
+    expect(await db.query.users.findFirst({ where: eq(schema.users.id, r.userId) })).toMatchObject({ active: false, pendingSince: NOW });
+    expect((await listRequests(db)).map((u) => u.email)).toEqual(["nuova@example.com"]);
+    const toAdmin = (await db.select().from(schema.outbox)).filter((m) => m.kind === "account");
+    expect(toAdmin.map((m) => m.subject)).toEqual(["Compass: nuova richiesta di accesso"]);
+    expect(await approveRequest(db, r.userId)).toBe(true);
+    expect(await db.query.users.findFirst({ where: eq(schema.users.id, r.userId) })).toMatchObject({ active: true, pendingSince: null });
+    expect((await db.select().from(schema.outbox)).some((m) => m.kind === "account" && /approvato/.test(m.subject))).toBe(true);
+    expect(await approveRequest(db, r.userId)).toBe(false); // only requests can be approved
+    expect(await approveRequest(db, M)).toBe(false); // a deactivated person is not a request
+    // With a valid invitation there is no wait; a wrong code is an error, not a request.
+    const code = await createInvite(db, "", NOW);
+    const invited = await register(db, { ...input, email: "invitata@example.com", invite: code }, NOW);
+    expect(invited.ok && !invited.pending).toBe(true);
+    expect(await register(db, { ...input, email: "sbagliata@example.com", invite: "NOPE" }, NOW)).toEqual({ ok: false, error: "invite" });
+  });
+
+  it("invitation only: sign-up needs a valid, unused invitation", async () => {
+    await setSetting(db, "registration", "invite");
     expect(await register(db, input, NOW)).toEqual({ ok: false, error: "invite" });
     const code = await createInvite(db, "per Nuova", NOW);
     const r = await register(db, { ...input, invite: code.toLowerCase() }, NOW);

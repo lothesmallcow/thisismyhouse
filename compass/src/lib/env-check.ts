@@ -31,6 +31,7 @@ export function checkEnv(e: Env = process.env): EnvProblem[] {
     const m = k.match(/^MAILBOX_([A-Z0-9]+)_USER$/);
     if (m) need(`MAILBOX_${m[1]}_APP_PASSWORD`, Boolean(e[`MAILBOX_${m[1]}_APP_PASSWORD`]), `is required because ${k} is set`);
   }
+  need("PRIVACY_OWNER", Boolean(e.PRIVACY_OWNER?.trim()), "should name who runs this Compass (shown on /privacy, the privacy notice)", false);
   need("ADMIN_ALERT_EMAIL", /@/.test(e.ADMIN_ALERT_EMAIL ?? ""), "should be your inbox for alerts when a source breaks", false);
   return out;
 }

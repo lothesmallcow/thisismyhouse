@@ -14,7 +14,7 @@ import { getDb, schema } from "@/lib/db";
 import { COMPANY_KINDS, type CompanyKind } from "@/lib/db/schema";
 import { env, mailboxConfig } from "@/lib/env";
 import { JOB_NAMES, runJob, type JobName } from "@/lib/pipeline/jobs";
-import { createAccount, createInvite, MIN_PASSWORD, setActive } from "@/lib/server/accounts";
+import { approveRequest, createAccount, createInvite, MIN_PASSWORD, setActive } from "@/lib/server/accounts";
 import { processQueue, setKillSwitch } from "@/lib/server/applications";
 import { requireAdmin, setViewAs, signIn, signOut } from "@/lib/server/auth";
 import { rerankAll, rerankUser, setAdjustmentActive } from "@/lib/server/jobs";
@@ -103,7 +103,7 @@ export async function saveSourcesAction(f: FormData) {
   await setSetting(db, "joobleEnabled", str(f, "joobleEnabled") === "1");
   await setSetting(db, "digestEnabled", str(f, "digestEnabled") === "1");
   await setSetting(db, "geocoderEnabled", str(f, "geocoderEnabled") === "1");
-  await setSetting(db, "registration", (["closed", "invite", "open"].includes(str(f, "registration")) ? str(f, "registration") : "invite") as RegistrationMode);
+  await setSetting(db, "registration", (["closed", "invite", "approval", "open"].includes(str(f, "registration")) ? str(f, "registration") : "approval") as RegistrationMode);
   back("/admin/fonti");
 }
 
@@ -279,6 +279,20 @@ export async function setActiveAction(f: FormData) {
   await requireAdmin();
   await setActive(getDb(), await person(f), str(f, "active") === "1");
   back("/admin/utenti");
+}
+
+/** An access request: approved (the person gets an e-mail) or rejected (the request and its data are deleted). */
+export async function decideRequestAction(f: FormData) {
+  await requireAdmin();
+  const userId = await person(f);
+  const db = getDb();
+  if (str(f, "decision") === "approve") {
+    await approveRequest(db, userId);
+    back("/admin/utenti", "richiesta-approvata");
+  }
+  const u = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
+  if (u?.pendingSince) await deleteAccount(db, userId);
+  back("/admin/utenti", "richiesta-rifiutata");
 }
 
 export async function deletePersonAction(f: FormData) {

@@ -6,7 +6,8 @@ import { DEFAULT_GUARDRAILS, type GuardrailSettings } from "../core/guardrails";
 import type { DB } from "../db";
 import { schema } from "../db";
 
-export type RegistrationMode = "closed" | "invite" | "open";
+/** approval = anyone can ask, the admin approves each request (an invitation skips the wait). */
+export type RegistrationMode = "closed" | "invite" | "approval" | "open";
 
 export interface AppSettings {
   /** Caps, window, spacing, cooldowns and the admin's stop. Per-person fields are overridden by UserSettings. */
@@ -38,7 +39,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   geocoderEnabled: false,
   joobleEnabled: false,
   digestEnabled: true,
-  registration: "invite",
+  registration: "approval",
   lastIngestAt: null,
 };
 

@@ -1,4 +1,5 @@
-import { asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
+import { catalogCounts } from "@/lib/server/catalog";
 import { Flash } from "@/components/flash";
 import { Button, Chip, SectionTitle } from "@/components/ui";
 import { KIND_LABELS } from "@/lib/catalog/data";
@@ -21,15 +22,19 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Pro
     .leftJoin(schema.users, eq(schema.users.id, schema.catalogCompanies.createdByUserId))
     // "Tutte": the hand-made list and what people added; listed companies only once someone chose them
     // (thousands of edit forms would not help anyone).
-    .where(onlyCustom ? eq(schema.catalogCompanies.shared, false) : or(notInArray(schema.catalogCompanies.source, ["borsa", "registro"]), sql`${likes} > 0`))
+    // Indexed terms only (author, source, chosen ids): the registers hold ~950,000 rows.
+    .where(
+      onlyCustom
+        ? and(sql`${schema.catalogCompanies.createdByUserId} > 0`, eq(schema.catalogCompanies.shared, false)) // "> 0", not "is not null": SQLite then uses the author index
+        : or(inArray(schema.catalogCompanies.source, ["curato", "altro"]), inArray(schema.catalogCompanies.id, db.select({ id: schema.userPrefs.refId }).from(schema.userPrefs).where(and(eq(schema.userPrefs.kind, "company"), eq(schema.userPrefs.stance, "like"))))),
+    )
     .orderBy(asc(schema.catalogCompanies.kind), asc(schema.catalogCompanies.name));
   const sectors = await db
     .select({ s: schema.catalogSectors, author: schema.users.name, authorEmail: schema.users.email })
     .from(schema.catalogSectors)
     .leftJoin(schema.users, eq(schema.users.id, schema.catalogSectors.createdByUserId))
     .where(eq(schema.catalogSectors.shared, false));
-  const [{ n: total }] = await db.select({ n: sql<number>`count(*)` }).from(schema.catalogCompanies);
-  const [{ n: listed }] = await db.select({ n: sql<number>`count(*)` }).from(schema.catalogCompanies).where(inArray(schema.catalogCompanies.source, ["borsa", "registro"]));
+  const { total, listed } = await catalogCounts(db);
 
   return (
     <>

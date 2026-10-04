@@ -31,6 +31,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link href="/entra" className="text-faint">
               Entra
             </Link>
+            <Link href="/privacy" className="text-faint">
+              Privacy
+            </Link>
             <Link href="/admin/entra" className="text-faint">
               Amministrazione
             </Link>

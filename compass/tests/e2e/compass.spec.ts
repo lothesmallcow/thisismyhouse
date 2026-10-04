@@ -3,7 +3,7 @@ import { assertUiBasics, login, loginAsAdmin, loginAsFashion, loginAsHer, loginA
 
 test.describe.configure({ mode: "serial" });
 
-test("public pages: landing, prices, sign-up needs an invitation by default", async ({ page }) => {
+test("public pages: landing, prices, sign-up is a request the admin approves by default", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Le offerte giuste, dalle aziende che scegli/ })).toBeVisible();
   await assertUiBasics(page);
@@ -14,7 +14,12 @@ test("public pages: landing, prices, sign-up needs an invitation by default", as
   await page.getByRole("link", { name: /Prova Compass/ }).click();
   await expect(page.getByText(/nessun addebito/)).toBeVisible();
   await page.getByRole("link", { name: "Crea un account" }).last().click();
-  await expect(page.getByLabel("Codice di invito")).toBeVisible();
+  await expect(page.getByLabel("Codice di invito (se ce l'hai)")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Chiedi l'accesso" })).toBeVisible();
+  // The privacy notice, linked from the sign-up form, open to everyone.
+  await page.getByRole("link", { name: "informativa privacy" }).click();
+  await expect(page.getByRole("heading", { name: "Informativa privacy" })).toBeVisible();
+  await assertUiBasics(page);
 });
 
 test("wrong password gives one clear sentence", async ({ page }) => {
@@ -408,13 +413,43 @@ test("admin: people, invitation, view-as, catalog, rules, metrics, cron endpoint
   await page.getByLabel("Nome e cognome").fill("Giulia Prova");
   await page.getByLabel("E-mail").fill("giulia@example.com");
   await page.getByLabel("Password").fill("una-password-lunga");
-  await page.getByRole("button", { name: "Crea account" }).click();
+  await page.getByRole("button", { name: "Chiedi l'accesso" }).click(); // with a code: no wait
   // First thing in the app: the questionnaire, quick or complete.
   await expect(page).toHaveURL(/benvenuto\/inizio/);
   await assertUiBasics(page);
   await expect(page.getByRole("button", { name: "Inizia la versione veloce" })).toBeVisible();
   await page.getByRole("button", { name: "Inizia la versione completa" }).click();
   await expect(page.getByText("Passo 1 di 12")).toBeVisible();
+});
+
+test("access request: waits, the admin approves, then the person signs in", async ({ page }) => {
+  await page.goto("/registrati");
+  await page.getByLabel("Nome e cognome").fill("Paola Richiesta");
+  await page.getByLabel("E-mail").fill("paola@example.com");
+  await page.getByLabel("Password").fill("una-password-lunga");
+  await page.getByRole("button", { name: "Chiedi l'accesso" }).click();
+  await expect(page.getByText("Richiesta inviata")).toBeVisible();
+  await assertUiBasics(page);
+  await page.goto("/entra");
+  await page.getByLabel("E-mail").fill("paola@example.com");
+  await page.getByLabel("Password").fill("una-password-lunga");
+  await page.getByRole("button", { name: "Entra" }).click();
+  await expect(page.getByText(/in attesa/)).toBeVisible();
+  // A wrong password says nothing about the request.
+  await page.getByLabel("E-mail").fill("paola@example.com");
+  await page.getByLabel("Password").fill("password-sbagliata");
+  await page.getByRole("button", { name: "Entra" }).click();
+  await expect(page.getByText("E-mail o password non corrette.")).toBeVisible();
+
+  await loginAsAdmin(page);
+  await page.goto("/admin/utenti");
+  await expect(page.getByText("Richieste di accesso (1)")).toBeVisible();
+  await assertUiBasics(page);
+  await page.getByRole("button", { name: "Approva" }).click();
+  await expect(page.getByText(/Richiesta approvata/)).toBeVisible();
+  await page.context().clearCookies();
+  await login(page, "paola@example.com", "una-password-lunga");
+  await expect(page).toHaveURL(/benvenuto\/inizio/);
 });
 
 test("quick questionnaire for a new account: 5 questions, a generic role becomes precise positions, complete later", async ({ page }) => {

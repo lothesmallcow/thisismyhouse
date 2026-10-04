@@ -13,6 +13,11 @@ if (args.includes("--if-empty") && !(await isEmpty(db))) {
   console.log("Database already has data: seed skipped.");
   process.exit(0);
 }
+// Online the demo admin password (written in this public repository) must never be used.
+if (!env.demoMode && (!process.env.SEED_ADMIN_EMAIL || (process.env.SEED_ADMIN_PASSWORD ?? "").length < 12 || process.env.SEED_ADMIN_PASSWORD === "admin-compass")) {
+  console.error("Real mode: set SEED_ADMIN_EMAIL and a SEED_ADMIN_PASSWORD of at least 12 characters (in .env or the host's secrets). Nothing seeded.");
+  process.exit(1);
+}
 const admin = { email: process.env.SEED_ADMIN_EMAIL || "admin@example.com", password: process.env.SEED_ADMIN_PASSWORD || "admin-compass" };
 if (env.demoMode) {
   const [lucia, marco, chiara] = await seedAccounts(db, {

@@ -15,6 +15,7 @@ async function registerAction(f: FormData) {
   if (s("website")) redirect("/registrati?errore=email"); // honeypot: people never see this field
   const r = await register(getDb(), { email: s("email"), password: String(f.get("password") ?? ""), name: s("name"), track: s("track") === "stage" ? "stage" : "lavoro", invite: s("invito") });
   if (!r.ok) redirect(`/registrati?errore=${r.error}${s("invito") ? `&invito=${encodeURIComponent(s("invito"))}` : ""}`);
+  if (r.pending) redirect("/registrati?inviata=1");
   await startSession(r.userId);
   redirect("/benvenuto/1?msg=registrato");
 }
@@ -28,7 +29,7 @@ const ERRORS: Record<string, string> = {
   limit: "Troppe registrazioni oggi. Riprova domani.",
 };
 
-export default async function RegistratiPage({ searchParams }: { searchParams: Promise<{ errore?: string; invito?: string; piano?: string }> }) {
+export default async function RegistratiPage({ searchParams }: { searchParams: Promise<{ errore?: string; invito?: string; piano?: string; inviata?: string }> }) {
   if ((await currentUser())?.role === "user") redirect("/offerte");
   const sp = await searchParams;
   const mode = (await getSettings(getDb())).registration;
@@ -43,7 +44,13 @@ export default async function RegistratiPage({ searchParams }: { searchParams: P
           <Notice tone="warn">{ERRORS[sp.errore]}</Notice>
         </div>
       )}
-      {mode === "closed" ? (
+      {sp.inviata ? (
+        <div className="mt-6">
+          <Notice tone="success" title="Richiesta inviata">
+            L&apos;amministratore la controlla a mano: quando la approva ricevi un&apos;e-mail e puoi entrare con l&apos;e-mail e la password che hai scelto.
+          </Notice>
+        </div>
+      ) : mode === "closed" ? (
         <div className="mt-6">
           <Notice tone="info">Le registrazioni sono chiuse: gli account li crea l&apos;amministratore.</Notice>
         </div>
@@ -74,11 +81,19 @@ export default async function RegistratiPage({ searchParams }: { searchParams: P
               <input id="invito" name="invito" type="text" autoComplete="off" defaultValue={sp.invito ?? ""} required />
             </Field>
           )}
+          {mode === "approval" && (
+            <Field label="Codice di invito (se ce l'hai)" htmlFor="invito" hint="Senza codice la tua richiesta viene approvata a mano dall'amministratore.">
+              <input id="invito" name="invito" type="text" autoComplete="off" defaultValue={sp.invito ?? ""} />
+            </Field>
+          )}
           <div aria-hidden="true" className="hidden">
             <label htmlFor="website">Sito web</label>
             <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
           </div>
-          <Button wide>Crea account</Button>
+          <Button wide>{mode === "approval" ? "Chiedi l'accesso" : "Crea account"}</Button>
+          <p className="text-[12.5px] text-faint">
+            Creando l&apos;account accetti l&apos;<Link href="/privacy">informativa privacy</Link>.
+          </p>
           <p className="text-[12.5px] text-faint">I tuoi dati restano tuoi: puoi cancellarli in ogni momento da Profilo. Compass non entra mai nei tuoi account LinkedIn, Indeed o InfoJobs.</p>
         </form>
       )}

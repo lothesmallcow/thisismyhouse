@@ -106,6 +106,7 @@ export default async function FontiPage({ searchParams }: { searchParams: Promis
           <label className="block space-y-1.5">
             <span className="text-[13px] font-medium">Chi può creare un account</span>
             <select name="registration" defaultValue={s.registration}>
+              <option value="approval">Su richiesta: approvo io ogni persona (o con codice di invito)</option>
               <option value="invite">Solo con codice di invito</option>
               <option value="open">Chiunque (massimo 20 al giorno)</option>
               <option value="closed">Nessuno: solo l&apos;amministratore</option>
