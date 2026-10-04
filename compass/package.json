@@ -1,0 +1,61 @@
+{
+  "name": "compass",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Compass: a calm, rule-based job finder for one person in Italy. Email alerts first, legal web discovery second, guarded email applications.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "demo": "npm run db:setup && next dev",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:setup": "tsx scripts/migrate.ts && tsx scripts/seed.ts --if-empty",
+    "job:ingest": "tsx scripts/run-job.ts ingest",
+    "job:discover": "tsx scripts/run-job.ts discover",
+    "job:queue": "tsx scripts/run-job.ts queue",
+    "job:replies": "tsx scripts/run-job.ts replies",
+    "job:digest": "tsx scripts/run-job.ts digest",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "scan": "node scripts/scan-personal-data.mjs",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run scan"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource/atkinson-hyperlegible": "^5.3.0",
+    "@libsql/client": "^0.18.0",
+    "drizzle-orm": "^0.45.3",
+    "imapflow": "^2.2.4",
+    "mailparser": "^3.9.34",
+    "next": "^16.3.8",
+    "nodemailer": "^10.0.14",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/mailparser": "^3.9.0",
+    "@types/node": "^26.6.4",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.8",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
