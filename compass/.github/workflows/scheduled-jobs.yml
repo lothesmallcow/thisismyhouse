@@ -1,0 +1,64 @@
+# Scheduled jobs (free on GitHub Actions). Times are UTC; comments give Italian time (CEST).
+# Needs repository secrets: DATABASE_URL, DATABASE_AUTH_TOKEN, SESSION_SECRET and, for real mode,
+# MAILBOX_USER, MAILBOX_APP_PASSWORD, CONTACT_EMAIL, ADZUNA_APP_ID, ADZUNA_APP_KEY,
+# TAVILY_API_KEY. A second mailbox (key "studente"): MAILBOX_STUDENTE_USER, MAILBOX_STUDENTE_APP_PASSWORD;
+# for another key, add its two lines below. Repository variable DEMO_MODE must be set to "false" for real mode.
+# Logs are public on a public repo: the job runner prints counts only, never personal data.
+name: Scheduled jobs
+on:
+  schedule:
+    - cron: "30 4 * * *" # 06:30 ingest (mailbox, APIs, ATS, W2)
+    - cron: "45 4 * * *" # 06:45 W1 discovery
+    - cron: "0 5 * * *" # 07:00 daily digest to her inbox
+    - cron: "*/15 6-17 * * 1-5" # every 15 min, 06:00-17:45 UTC covers 08:30-18:00 Rome in summer AND winter time; the code enforces the exact window
+    - cron: "5 */2 * * *" # every 2 hours: replies
+  workflow_dispatch:
+    inputs:
+      job: { description: "ingest | discover | queue | replies | digest", required: true, default: "ingest" }
+permissions:
+  contents: read
+concurrency: { group: compass-jobs, cancel-in-progress: false }
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DEMO_MODE: ${{ vars.DEMO_MODE || 'true' }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
+      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      APP_URL: ${{ vars.APP_URL }}
+      MAILBOX_USER: ${{ secrets.MAILBOX_USER }}
+      MAILBOX_APP_PASSWORD: ${{ secrets.MAILBOX_APP_PASSWORD }}
+      MAILBOX_STUDENTE_USER: ${{ secrets.MAILBOX_STUDENTE_USER }}
+      MAILBOX_STUDENTE_APP_PASSWORD: ${{ secrets.MAILBOX_STUDENTE_APP_PASSWORD }}
+      CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+      ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+      ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+      TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+    steps:
+      - name: Skip when not configured
+        id: cfg
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "No DATABASE_URL secret: nothing to do."; echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.skip != '1'
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.skip != '1'
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+        if: steps.cfg.outputs.skip != '1'
+      - name: Pick job
+        if: steps.cfg.outputs.skip != '1'
+        id: pick
+        run: |
+          case "${{ github.event.schedule }}" in
+            "30 4 * * *") echo "job=ingest" >> "$GITHUB_OUTPUT" ;;
+            "45 4 * * *") echo "job=discover" >> "$GITHUB_OUTPUT" ;;
+            "0 5 * * *") echo "job=digest" >> "$GITHUB_OUTPUT" ;;
+            "*/15 6-17 * * 1-5") echo "job=queue" >> "$GITHUB_OUTPUT" ;;
+            "5 */2 * * *") echo "job=replies" >> "$GITHUB_OUTPUT" ;;
+            *) echo "job=${{ github.event.inputs.job }}" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - run: npx tsx scripts/migrate.ts && npx tsx scripts/run-job.ts ${{ steps.pick.outputs.job }}
+        if: steps.cfg.outputs.skip != '1'

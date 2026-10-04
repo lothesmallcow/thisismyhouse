@@ -1,0 +1,4 @@
+{"apiVersion":"1","jobs":[
+ {"id":"a-1","title":"Amministrazione e contabilità","location":"Torino","jobUrl":"https://jobs.ashbyhq.com/esempioashby/a-1","descriptionPlain":"Gestione contabilità fornitori. Part-time.","publishedAt":"2026-10-01T08:00:00.000Z","isRemote":false,"workplaceType":"OnSite","employmentType":"PartTime"},
+ {"id":"a-2","title":"Account Executive","location":"London, UK","jobUrl":"https://jobs.ashbyhq.com/esempioashby/a-2","descriptionPlain":"UK role.","publishedAt":"2026-10-01T08:00:00.000Z","isRemote":false,"employmentType":"FullTime"}
+]}

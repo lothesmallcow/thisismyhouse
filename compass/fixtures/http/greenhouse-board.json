@@ -1,0 +1,21 @@
+{
+  "jobs": [
+    {
+      "id": 5550001,
+      "title": "Office Administrator - Torino",
+      "absolute_url": "https://boards.greenhouse.io/esempiotech/jobs/5550001",
+      "location": { "name": "Torino, Italy" },
+      "updated_at": "2026-10-01T09:00:00Z",
+      "first_published": "2026-09-30T09:00:00Z",
+      "content": "&lt;p&gt;We are looking for an Office Administrator for our Turin office. Italian native, good English (B2). Full-time, permanent contract.&lt;/p&gt;"
+    },
+    {
+      "id": 5550002,
+      "title": "Senior Backend Engineer",
+      "absolute_url": "https://boards.greenhouse.io/esempiotech/jobs/5550002",
+      "location": { "name": "Berlin, Germany" },
+      "updated_at": "2026-10-01T09:00:00Z",
+      "content": "&lt;p&gt;Berlin office.&lt;/p&gt;"
+    }
+  ]
+}

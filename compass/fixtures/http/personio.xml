@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workzag-jobs>
+  <position>
+    <id>1500001</id>
+    <subcompany>Esempio Personio Srl</subcompany>
+    <office>Torino</office>
+    <department>Amministrazione</department>
+    <name>Impiegata amministrativa</name>
+    <jobDescriptions>
+      <jobDescription><name>Il ruolo</name><value><![CDATA[<p>Prima nota e fatturazione.</p>]]></value></jobDescription>
+    </jobDescriptions>
+    <employmentType>permanent</employmentType>
+    <schedule>part-time</schedule>
+    <createdAt>2026-09-28T09:00:00+00:00</createdAt>
+  </position>
+  <position>
+    <id>1500002</id>
+    <office>München</office>
+    <name>Sachbearbeiter</name>
+    <employmentType>permanent</employmentType>
+    <schedule>full-time</schedule>
+    <createdAt>2026-09-28T09:00:00+00:00</createdAt>
+  </position>
+</workzag-jobs>

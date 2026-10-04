@@ -1,0 +1,4 @@
+{"offset":0,"limit":100,"totalFound":2,"content":[
+ {"id":"744000011111","name":"Impiegata Back Office","releasedDate":"2026-09-29T10:00:00.000Z","location":{"city":"Moncalieri","country":"it","remote":false},"typeOfEmployment":{"label":"Full-time"}},
+ {"id":"744000022222","name":"Store Manager","releasedDate":"2026-09-29T10:00:00.000Z","location":{"city":"Lyon","country":"fr","remote":false},"typeOfEmployment":{"label":"Full-time"}}
+]}

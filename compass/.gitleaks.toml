@@ -1,0 +1,7 @@
+# gitleaks config: default rules + allowlist for the synthetic fixtures and docs.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Synthetic fixtures and example config"
+paths = ['''fixtures/''', '''\.env\.example$''', '''package-lock\.json$''']

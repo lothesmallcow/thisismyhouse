@@ -1,0 +1,4 @@
+conceptType,conceptUri,iscoGroup,preferredLabel,altLabels,status
+Occupation,http://data.europa.eu/esco/occupation/demo-1,5223,assistente alle vendite,"commesso
+commessa",released
+Occupation,http://data.europa.eu/esco/occupation/demo-2,7311,orologiaio,,released

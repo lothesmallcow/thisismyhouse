@@ -1,0 +1,21 @@
+APP  jobsTotal 47 | SQL 47
+APP  bySource [{"source":"email:linkedin","jobs":12},{"source":"api:adzuna","jobs":9},{"source":"email:indeed","jobs":8},{"source":"email:generic","jobs":6},{"source":"email:infojobs","jobs":6},{"source":"w1","jobs":4},{"source":"ats:greenhouse","jobs":1},{"source":"ats:lever","jobs":1},{"source":"manual","jobs":1},{"source":"w2","jobs":1}]
+SQL  bySource [{"source":"email:linkedin","jobs":12},{"source":"api:adzuna","jobs":9},{"source":"email:indeed","jobs":8},{"source":"email:infojobs","jobs":6},{"source":"email:generic","jobs":6},{"source":"w1","jobs":4},{"source":"w2","jobs":1},{"source":"manual","jobs":1},{"source":"ats:lever","jobs":1},{"source":"ats:greenhouse","jobs":1}]
+APP  byLane [{"lane":"email","total":2},{"lane":"site","total":1}] real 0 simulated 2
+SQL  byLane [{"lane":"email","n":2,"sim":2},{"lane":"site","n":1,"sim":0}]
+APP  replyRate(real) null simulated 0.5 replies(real) 0
+SQL  replies [{"simulated":1,"sent":2,"replied":1}]
+APP  median posting->application (h) 76.0
+SQL  per-application hours [{"h":26},{"h":76},{"h":221}]
+
+TOP 10 (demo profile):
+molto   86  Impiegata amministrativa part-time | Studio Merlo & Associati | role+40 distance+20 salary+10 contract+8 recency+8
+molto   86  Impiegata amministrativa | Ferramenta Colombo Srl | role+40 distance+20 salary+10 contract+8 recency+8
+molto   83  Addetta contabilità generale | Edilnord Costruzioni Spa | role+40 distance+20 salary+10 contract+5 recency+8
+molto   79  Addetta contabilità fornitori | Meccanica Ferraris Srl | role+40 distance+20 contract+8 recency+8 lang-inglese+3
+molto   76  Assistente amministrativa | Lombardi Impianti Srl | role+40 distance+20 contract+8 recency+8
+molto   68  Impiegata amministrativa | Studio Bassi | role+40 distance+20 recency+8
+molto   68  Impiegata amministrativa | Ottica Vigna | role+40 distance+20 recency+8
+molto   68  Segretaria di studio medico | Poliambulatorio San Carlo | role+40 distance+20 recency+8
+molto   68  Receptionist part-time | Hotel Belvedere Torino | role+40 distance+20 recency+8
+molto   63  Impiegata contabile | Gruppo Fontana Srl | role+20 distance+20 salary+10 contract+5 recency+8

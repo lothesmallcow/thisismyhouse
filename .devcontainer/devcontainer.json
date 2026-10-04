@@ -1,0 +1,10 @@
+{
+  // Try Compass in a GitHub Codespace: demo mode (fake people and jobs, no real e-mails), no keys needed.
+  "name": "Compass (demo)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "hostRequirements": { "cpus": 2, "memory": "4gb" },
+  "postCreateCommand": "cd compass && npm ci && npm run db:setup && npx tsx scripts/run-job.ts ingest",
+  "postAttachCommand": "cd compass && npm run dev",
+  "forwardPorts": [3000],
+  "portsAttributes": { "3000": { "label": "Compass", "onAutoForward": "openBrowser" } }
+}

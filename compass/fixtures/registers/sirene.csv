@@ -1,0 +1,5 @@
+siren,nic,siret,etablissementSiege,trancheEffectifsEtablissement,libelleCommuneEtablissement,etatAdministratifEtablissement,activitePrincipaleEtablissement,denominationUsuelleEtablissement,enseigne1Etablissement
+000000001,00011,00000000100011,true,22,PARIS 8,A,47.71Z,MAISON EXEMPLE COUTURE,
+000000002,00012,00000000200012,true,01,LYON,A,56.10A,BRASSERIE EXEMPLE,
+000000002,00020,00000000200020,false,01,LYON,A,56.10A,BRASSERIE EXEMPLE,
+000000003,00013,00000000300013,true,32,PARIS,F,47.77Z,BIJOUTERIE FERMEE,

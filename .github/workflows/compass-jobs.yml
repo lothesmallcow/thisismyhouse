@@ -1,0 +1,80 @@
+# Compass online: first setup and scheduled jobs (free on GitHub Actions for a public repository).
+# Runs only when the secret DATABASE_URL exists; scheduled runs start once this file is on the
+# default branch. Times are UTC (Italy is UTC+2 in summer, UTC+1 in winter).
+# Secrets (Settings → Secrets and variables → Actions → Secrets): DATABASE_URL, DATABASE_AUTH_TOKEN,
+#   SESSION_SECRET, CONTACT_EMAIL, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, and when you have them
+#   MAILBOX_USER, MAILBOX_APP_PASSWORD, ADZUNA_APP_ID, ADZUNA_APP_KEY, TAVILY_API_KEY.
+# Variables (same page → Variables): DEMO_MODE=false, APP_URL, and optionally REGISTERS (default IT).
+# Logs are public on a public repository: the job runner prints counts only, never personal data.
+name: Compass jobs
+on:
+  schedule:
+    - cron: "30 4 * * *" # ingest (mailbox, APIs, ATS, career pages)
+    - cron: "45 4 * * *" # web discovery
+    - cron: "0 5 * * *" # morning e-mail
+    - cron: "*/15 6-17 * * 1-5" # send queue; the code enforces the exact Rome-time window
+    - cron: "5 */2 * * *" # replies
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "setup (first time: tables, companies, admin account) | ingest | discover | queue | replies | digest"
+        required: true
+        default: setup
+permissions:
+  contents: read
+concurrency: { group: compass-jobs, cancel-in-progress: false }
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: compass
+    env:
+      DEMO_MODE: ${{ vars.DEMO_MODE || 'true' }}
+      REGISTERS: ${{ vars.REGISTERS || 'IT' }}
+      APP_URL: ${{ vars.APP_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
+      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+      SEED_ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
+      SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+      MAILBOX_USER: ${{ secrets.MAILBOX_USER }}
+      MAILBOX_APP_PASSWORD: ${{ secrets.MAILBOX_APP_PASSWORD }}
+      ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+      ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+      TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+    steps:
+      - name: Skip when not configured
+        id: cfg
+        working-directory: .
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "No DATABASE_URL secret: nothing to do."; echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.skip != '1'
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.skip != '1'
+        with: { node-version: 22, cache: npm, cache-dependency-path: compass/package-lock.json }
+      - run: npm ci
+        if: steps.cfg.outputs.skip != '1'
+      - name: Pick job
+        if: steps.cfg.outputs.skip != '1'
+        id: pick
+        working-directory: .
+        run: |
+          case "${{ github.event.schedule }}" in
+            "30 4 * * *") echo "job=ingest" >> "$GITHUB_OUTPUT" ;;
+            "45 4 * * *") echo "job=discover" >> "$GITHUB_OUTPUT" ;;
+            "0 5 * * *") echo "job=digest" >> "$GITHUB_OUTPUT" ;;
+            "*/15 6-17 * * 1-5") echo "job=queue" >> "$GITHUB_OUTPUT" ;;
+            "5 */2 * * *") echo "job=replies" >> "$GITHUB_OUTPUT" ;;
+            *) echo "job=${{ github.event.inputs.job }}" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - name: First setup (tables, companies, admin account)
+        if: steps.cfg.outputs.skip != '1' && steps.pick.outputs.job == 'setup'
+        run: npx tsx scripts/migrate.ts && npx tsx scripts/seed.ts --if-empty
+      - name: Run job
+        if: steps.cfg.outputs.skip != '1' && steps.pick.outputs.job != 'setup'
+        run: npx tsx scripts/migrate.ts && npx tsx scripts/run-job.ts ${{ steps.pick.outputs.job }}

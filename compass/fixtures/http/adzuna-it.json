@@ -1,0 +1,66 @@
+{
+  "count": 5,
+  "results": [
+    {
+      "id": "4901000001",
+      "title": "<strong>Impiegata</strong> amministrativa part-time",
+      "description": "Studio professionale in Torino centro cerca impiegata amministrativa part-time (25 ore settimanali) per gestione prima nota, scadenziario e archivio. Contratto a tempo indeterminato. Per candidarsi inviare il CV a curriculum@studio-merlo.example ...",
+      "created": "2026-10-04T09:00:00Z",
+      "redirect_url": "https://www.adzuna.it/details/4901000001?utm_medium=api",
+      "company": { "display_name": "Studio Merlo & Associati" },
+      "location": { "display_name": "Torino, Piemonte", "area": ["Italia", "Piemonte", "Torino"] },
+      "salary_min": 22000,
+      "salary_max": 24000,
+      "salary_is_predicted": "0",
+      "contract_type": "permanent",
+      "contract_time": "part_time"
+    },
+    {
+      "id": "4901000002",
+      "title": "Addetta contabilità fornitori",
+      "description": "Azienda metalmeccanica di Grugliasco ricerca addetta alla contabilità fornitori. Richiesta buona conoscenza di Excel e del gestionale. Inglese base. Orario full time 8:30-17:30.",
+      "created": "2026-10-03T10:00:00Z",
+      "redirect_url": "https://www.adzuna.it/details/4901000002",
+      "company": { "display_name": "Meccanica Ferraris Srl" },
+      "location": { "display_name": "Grugliasco, Torino" },
+      "salary_min": 31000,
+      "salary_max": 33000,
+      "salary_is_predicted": "1",
+      "contract_type": "permanent",
+      "contract_time": "full_time"
+    },
+    {
+      "id": "4901000003",
+      "title": "Impiegato amministrativo - Studio Rinaldi Commercialisti",
+      "description": "Studio Rinaldi Commercialisti cerca impiegato/a amministrativo/a per gestione prima nota e fatturazione. Contratto a tempo indeterminato, CCNL Studi professionali 3 livello. Inviare il curriculum a selezione@studio-rinaldi.example",
+      "created": "2026-10-04T07:30:00Z",
+      "redirect_url": "https://www.adzuna.it/details/4901000003",
+      "company": { "display_name": "Studio Rinaldi Commercialisti" },
+      "location": { "display_name": "Torino, Piemonte" },
+      "contract_type": "permanent",
+      "contract_time": "full_time"
+    },
+    {
+      "id": "4901000004",
+      "title": "Back office amministrativo - lingua inglese fluente",
+      "description": "Per multinazionale settore logistica ricerchiamo back office amministrativo con inglese fluente (C1). Sede a Settimo Torinese, modalità ibrida 2 giorni a settimana da remoto.",
+      "created": "2026-09-28T08:00:00Z",
+      "redirect_url": "https://www.adzuna.it/details/4901000004",
+      "company": { "display_name": "Translog Italia Spa" },
+      "location": { "display_name": "Settimo Torinese, Torino" },
+      "contract_type": "contract",
+      "contract_time": "full_time"
+    },
+    {
+      "id": "4901000005",
+      "title": "Segretaria amministrativa",
+      "description": "Concessionaria auto di Asti cerca segretaria amministrativa per accoglienza clienti e pratiche auto. Tempo determinato 12 mesi con possibilità di proroga.",
+      "created": "2026-10-02T08:00:00Z",
+      "redirect_url": "https://www.adzuna.it/details/4901000005",
+      "company": { "display_name": "Auto Langhe Srl" },
+      "location": { "display_name": "Asti, Piemonte" },
+      "contract_type": "contract",
+      "contract_time": "full_time"
+    }
+  ]
+}
