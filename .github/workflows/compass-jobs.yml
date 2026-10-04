@@ -9,7 +9,7 @@
 name: Compass jobs
 on:
   schedule:
-    - cron: "30 4 * * *" # ingest (mailbox, APIs, ATS, career pages)
+    - cron: "30 4-22/3 * * *" # ingest every 3 hours (mailbox, APIs, job boards, career pages): offers arrive through the day
     - cron: "45 4 * * *" # web discovery
     - cron: "0 5 * * *" # morning e-mail
     - cron: "*/15 6-17 * * 1-5" # send queue; the code enforces the exact Rome-time window
@@ -65,7 +65,7 @@ jobs:
         working-directory: .
         run: |
           case "${{ github.event.schedule }}" in
-            "30 4 * * *") echo "job=ingest" >> "$GITHUB_OUTPUT" ;;
+            "30 4-22/3 * * *") echo "job=ingest" >> "$GITHUB_OUTPUT" ;;
             "45 4 * * *") echo "job=discover" >> "$GITHUB_OUTPUT" ;;
             "0 5 * * *") echo "job=digest" >> "$GITHUB_OUTPUT" ;;
             "*/15 6-17 * * 1-5") echo "job=queue" >> "$GITHUB_OUTPUT" ;;

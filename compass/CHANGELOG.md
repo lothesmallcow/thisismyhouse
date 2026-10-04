@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0 · 2026-10-04
+
+- **Offers arrive rolling**: during "Fai web scraping" each site's offers are saved as soon as that
+  site is done and the page refreshes every 5 seconds with the running count; the automatic run
+  now goes every 3 hours (not only in the morning), reading different job boards and sites each time.
+
 ## 0.12.0 · 2026-10-04
 
 - **Every company of the sector**: "Fai web scraping" and the daily run read the chosen companies
