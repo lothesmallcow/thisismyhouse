@@ -87,7 +87,6 @@ const firstWord = (c) => `${c.cc}|${c.name.split(/[\s,]+/)[0].toLowerCase()}`;
 const full = new Set([...best.values()].filter((c) => c.city || c.website).map(firstWord));
 const junk = /-,|\d{2,}\s*$|rn( |$)|\bBkg\b|\b(Ls|Rg|Vz|Inh)\b/;
 const companies = [...best.values()]
-  .filter((c) => c.industry || c.sector)
   .filter((c) => !junk.test(c.name))
   .filter((c) => c.city || c.website || !full.has(firstWord(c)))
   .sort((a, b) => b.cap - a.cap || a.name.localeCompare(b.name));

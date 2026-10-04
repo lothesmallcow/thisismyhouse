@@ -9,5 +9,9 @@ committed). Nothing here is fetched at runtime.
 | `nace.json` | Every NACE Rev. 2.1 code (sections, divisions, groups, classes) in Italian, English, German and French | Eurostat classification via `@financica/nace-codes` (MIT); Eurostat reuse policy, attribution required |
 | `companies.json` | Listed companies headquartered in Italy, the UK, Germany and France: name, country, city, GICS sector and industry, website, size band | [FinanceDatabase](https://github.com/JerBouma/FinanceDatabase) by Jeroen Bouma, **MIT** |
 
+Optional, generated on your machine (ADR 0020): `positions-esco.json` from the ESCO occupations
+(`scripts/import-esco.ts`, ESCO by the European Commission); companies from official registers go
+straight into the database (`scripts/import-register.ts`).
+
 Italian municipalities stay in `../comuni.json` (ADR 0007). Attribution: "Contains data from GeoNames
 (CC BY 4.0), Eurostat (NACE Rev. 2.1) and FinanceDatabase (MIT)." See ADR 0018.

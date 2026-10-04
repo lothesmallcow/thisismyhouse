@@ -1,4 +1,4 @@
-import { asc, eq, ne, or, sql } from "drizzle-orm";
+import { asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import { Flash } from "@/components/flash";
 import { Button, Chip, SectionTitle } from "@/components/ui";
 import { KIND_LABELS } from "@/lib/catalog/data";
@@ -21,7 +21,7 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Pro
     .leftJoin(schema.users, eq(schema.users.id, schema.catalogCompanies.createdByUserId))
     // "Tutte": the hand-made list and what people added; listed companies only once someone chose them
     // (thousands of edit forms would not help anyone).
-    .where(onlyCustom ? eq(schema.catalogCompanies.shared, false) : or(ne(schema.catalogCompanies.source, "borsa"), sql`${likes} > 0`))
+    .where(onlyCustom ? eq(schema.catalogCompanies.shared, false) : or(notInArray(schema.catalogCompanies.source, ["borsa", "registro"]), sql`${likes} > 0`))
     .orderBy(asc(schema.catalogCompanies.kind), asc(schema.catalogCompanies.name));
   const sectors = await db
     .select({ s: schema.catalogSectors, author: schema.users.name, authorEmail: schema.users.email })
@@ -29,14 +29,14 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Pro
     .leftJoin(schema.users, eq(schema.users.id, schema.catalogSectors.createdByUserId))
     .where(eq(schema.catalogSectors.shared, false));
   const [{ n: total }] = await db.select({ n: sql<number>`count(*)` }).from(schema.catalogCompanies);
-  const [{ n: listed }] = await db.select({ n: sql<number>`count(*)` }).from(schema.catalogCompanies).where(eq(schema.catalogCompanies.source, "borsa"));
+  const [{ n: listed }] = await db.select({ n: sql<number>`count(*)` }).from(schema.catalogCompanies).where(inArray(schema.catalogCompanies.source, ["borsa", "registro"]));
 
   return (
     <>
       <Flash code={sp.msg} />
       <AdminTitle
         title="Catalogo"
-        description={`${Number(total)} aziende, di cui ${Number(listed)} quotate (Italia, Regno Unito, Germania, Francia: le vedi qui quando qualcuno le sceglie). Le voci aggiunte con “Altro” restano private a chi le ha create finché non le rendi visibili a tutti. Qui puoi anche collegare il feed ATS pubblico di un'azienda (dopo averlo verificato): le sue offerte verranno lette ogni giorno per chi l'ha scelta.`}
+        description={`${Number(total)} aziende, di cui ${Number(listed)} quotate o dai registri delle imprese (Italia, Regno Unito, Germania, Francia: le vedi qui quando qualcuno le sceglie). Le voci aggiunte con “Altro” restano private a chi le ha create finché non le rendi visibili a tutti. Qui puoi anche collegare il feed ATS pubblico di un'azienda (dopo averlo verificato): le sue offerte verranno lette ogni giorno per chi l'ha scelta.`}
       />
       <div role="group" aria-label="Vista" className="mb-4 inline-flex rounded-lg border border-line bg-surface p-0.5 text-[13px]">
         {[

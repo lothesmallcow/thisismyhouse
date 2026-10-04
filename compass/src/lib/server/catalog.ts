@@ -1,10 +1,11 @@
 // Catalog of sectors and companies, each person's choices ("Mi interessa" / "Da evitare"),
 // entries added with "Altro", and rule-based suggestions ("Suggeriti per te").
-import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, notInArray, or, sql } from "drizzle-orm";
 import listedData from "../../../data/world/companies.json";
 import naceData from "../../../data/world/nace.json";
 import { COMPANIES, SECTORS, companyTrack } from "../catalog/data";
 import { gicsSector, listedAliases, naceKeywords, naceSector, type ListedRow, type NaceRow } from "../catalog/world";
+import { sizeBand, type RegisterRecord } from "../catalog/registers";
 import { findPlace, homeCountries, type CountryCode } from "../core/geo";
 import { companyNameMatches } from "../core/rank";
 import { fold } from "../core/text";
@@ -113,7 +114,7 @@ export async function ensureDirectory(db: DB): Promise<{ companies: number; sect
     if (slugs.has(slug) || slugs.has(slugify(name))) continue;
     if (names.some((n) => companyNameMatches(name, n))) continue;
     slugs.add(slug);
-    const map = gicsSector(sector, industry);
+    const map = sector || industry ? gicsSector(sector, industry) : { slug: "", kind: "azienda" as const };
     const p = city ? findPlace(city, {}) : null;
     newCompanies.push({
       slug,
@@ -165,7 +166,7 @@ export async function searchCompanies(db: DB, userId: number, q: string, scope: 
     .select()
     .from(c)
     .where(and(...where))
-    .orderBy(sql`lower(${c.name}) like ${`${term}%`} desc`, sql`${c.source} = 'borsa'`, desc(c.size), c.name)
+    .orderBy(sql`lower(${c.name}) like ${`${term}%`} desc`, sql`${c.source} in ('borsa', 'registro')`, sql`${c.size} is null`, desc(c.size), c.name)
     .limit(200);
   const inRegion = (r: Company) => !scope.regions?.length || !scope.regions.some((x) => x.startsWith(`${r.country}:`)) || scope.regions.includes(`${r.country}:${r.region}`);
   return rows.filter(inRegion).slice(0, scope.limit ?? 20);
@@ -189,7 +190,7 @@ export async function searchSectors(db: DB, userId: number, q: string, limit = 1
 export async function directoryPool(db: DB, sectorIds: number[], scope: SearchScope & { limit: number }): Promise<Company[]> {
   if (sectorIds.length === 0) return [];
   const c = schema.catalogCompanies;
-  const where = [eq(c.source, "borsa"), eq(c.shared, true), inArray(c.sectorId, sectorIds)];
+  const where = [inArray(c.source, ["borsa", "registro"]), eq(c.shared, true), inArray(c.sectorId, sectorIds)];
   if (scope.countries?.length) where.push(inArray(c.country, scope.countries));
   const rows = await db.select().from(c).where(and(...where)).orderBy(desc(c.size), c.name).limit(scope.limit * 4);
   const regions = scope.regions ?? [];
@@ -219,7 +220,7 @@ export async function listSectors(db: DB, userId: number, track: Track | "all" =
 export async function listCompanies(db: DB, userId: number, track: Track | "all" = "all"): Promise<Company[]> {
   const mine = db.select({ id: schema.userPrefs.refId }).from(schema.userPrefs).where(and(eq(schema.userPrefs.userId, userId), eq(schema.userPrefs.kind, "company")));
   // Listed companies are thousands: only shown when searched for or chosen.
-  const visible = or(and(eq(schema.catalogCompanies.shared, true), ne(schema.catalogCompanies.source, "borsa")), eq(schema.catalogCompanies.createdByUserId, userId), inArray(schema.catalogCompanies.id, mine));
+  const visible = or(and(eq(schema.catalogCompanies.shared, true), notInArray(schema.catalogCompanies.source, ["borsa", "registro"])), eq(schema.catalogCompanies.createdByUserId, userId), inArray(schema.catalogCompanies.id, mine));
   return db
     .select()
     .from(schema.catalogCompanies)
@@ -365,7 +366,7 @@ export async function browseCompanies(
     .select()
     .from(c)
     .where(and(...where))
-    .orderBy(sql`${c.source} = 'borsa'`, desc(c.size), sql`lower(${c.name})`)
+    .orderBy(sql`${c.source} in ('borsa', 'registro')`, sql`${c.size} is null`, desc(c.size), sql`lower(${c.name})`)
     .limit(perPage)
     .offset((page - 1) * perPage);
   return { rows, total: Number(n) };
@@ -379,4 +380,97 @@ export async function canChoose(db: DB, userId: number, kind: "sector" | "compan
   if (row.shared || row.by === userId) return true;
   const pref = await db.query.userPrefs.findFirst({ where: and(eq(schema.userPrefs.userId, userId), eq(schema.userPrefs.kind, kind), eq(schema.userPrefs.refId, id)) });
   return pref != null;
+}
+
+// --- Official company registers (ADR 0020) ----------------------------------------------------------
+
+export interface RegisterFilters {
+  /** Only these regions ("IT:Lombardia") or cities; empty = the whole country. */
+  regions?: string[];
+  cities?: string[];
+  /** Only these NACE prefixes ("47", "14.1", "32.12"). */
+  nace?: string[];
+  /** Minimum head count (when the register gives it: SIRENE, plain CSV). */
+  minEmployees?: number;
+  /** Stop after this many companies. */
+  limit?: number;
+}
+
+/**
+ * Add companies from an official register to the catalog (source "registro"), in batches.
+ * Same company twice (same register id) is skipped; companies already in the catalog under the
+ * same name in the same country are skipped too (the hand-made or listed entry wins).
+ */
+export async function importRegister(db: DB, records: AsyncIterable<RegisterRecord> | Iterable<RegisterRecord>, f: RegisterFilters = {}): Promise<{ added: number; skipped: number }> {
+  const ids = new Map((await db.select({ id: schema.catalogSectors.id, slug: schema.catalogSectors.slug }).from(schema.catalogSectors)).map((r) => [r.slug, r.id]));
+  const known = new Set((await db.select({ name: schema.catalogCompanies.name, country: schema.catalogCompanies.country }).from(schema.catalogCompanies)).map((r) => `${r.country}|${fold(r.name).replace(/[^a-z0-9]/g, "")}`));
+  const cities = new Set((f.cities ?? []).map((c) => fold(c)));
+  const englishName: Record<string, string> = { IT: "Italy", GB: "United Kingdom", DE: "Germany", FR: "France" };
+  let batch: (typeof schema.catalogCompanies.$inferInsert)[] = [];
+  let added = 0;
+  let skipped = 0;
+  const flush = async () => {
+    if (!batch.length) return;
+    const rows = await db.insert(schema.catalogCompanies).values(batch).onConflictDoNothing().returning({ id: schema.catalogCompanies.id });
+    added += rows.length;
+    skipped += batch.length - rows.length;
+    batch = [];
+  };
+  for await (const r of records) {
+    if (f.limit && added + batch.length >= f.limit) break;
+    if (f.minEmployees && (r.employees ?? 0) < f.minEmployees) {
+      skipped++;
+      continue;
+    }
+    if (f.nace?.length && !(r.nace && f.nace.some((p) => r.nace!.startsWith(p)))) {
+      skipped++;
+      continue;
+    }
+    const key = `${r.country}|${fold(r.name).replace(/[^a-z0-9]/g, "")}`;
+    if (known.has(key)) {
+      skipped++;
+      continue;
+    }
+    const place = r.city ? findPlace(r.country === "IT" ? r.city : `${r.city}, ${englishName[r.country]}`) : null;
+    const inCountry = place?.country === r.country ? place : null;
+    if (cities.size && !(r.city && cities.has(fold(inCountry?.name ?? r.city)))) {
+      skipped++;
+      continue;
+    }
+    if (f.regions?.length && !(inCountry && f.regions.includes(`${r.country}:${inCountry.region}`))) {
+      skipped++;
+      continue;
+    }
+    known.add(key);
+    const near = r.nace ? naceSector(r.nace) : null;
+    batch.push({
+      slug: `${slugify(r.name).slice(0, 60)}-${r.country.toLowerCase()}-${slugify(r.id || String(added + batch.length)).slice(0, 16)}`,
+      name: r.name.slice(0, 120),
+      aliases: [],
+      kind: "azienda",
+      sectorId: (near && ids.get(near)) || null,
+      city: inCountry?.name ?? r.city,
+      country: r.country,
+      region: inCountry?.region ?? null,
+      website: r.website,
+      industry: r.industry ?? (r.nace ? naceLabel(r.nace) : null),
+      size: sizeBand(r.employees),
+      track: "tutti",
+      shared: true,
+      source: "registro",
+    });
+    if (batch.length >= 500) await flush();
+  }
+  await flush();
+  return { added, skipped };
+}
+
+const NACE_LABELS = new Map((naceData as NaceRow[]).map(([code, , it]) => [code, it]));
+/** Italian label of a NACE code, from the most precise level we know. */
+export function naceLabel(code: string): string | null {
+  for (let n = code.length; n >= 2; n--) {
+    const l = NACE_LABELS.get(code.slice(0, n));
+    if (l) return l;
+  }
+  return null;
 }

@@ -158,7 +158,8 @@ export async function suggestCompanies(db: DB, userId: number, limit = 8, ip?: I
   const countries = homeCountries(p.profile.countries, p.profile.city);
   const topSectors = [...p.sectors.entries()].sort((a, b) => b[1].weight - a[1].weight).slice(0, 6).map(([id]) => id);
   const pool = await directoryPool(db, topSectors, { countries, regions: p.profile.regions, limit: 120 });
-  const inScope = (c: Company) => c.source !== "borsa" || countries.includes(c.country as CountryCode);
+  const generated = (c: Company) => c.source === "borsa" || c.source === "registro";
+  const inScope = (c: Company) => !generated(c) || countries.includes(c.country as CountryCode);
   const companies = [...curated, ...pool.filter((c) => !curated.some((x) => x.id === c.id))].filter(inScope);
   const out: Suggestion[] = [];
   for (const c of companies) {
@@ -192,7 +193,7 @@ export async function suggestCompanies(db: DB, userId: number, limit = 8, ip?: I
     if (score < 1.5) continue;
     if (c.city && p.profile.city && fold(c.city) === fold(p.profile.city)) score += 1;
     if (c.region && p.profile.regions.includes(`${c.country}:${c.region}`)) score += 1;
-    if (c.source === "borsa") score += (c.size ?? 0) * 0.2 - 0.5; // hand-picked entries first at equal fit
+    if (generated(c)) score += (c.size ?? 0) * 0.2 - 0.5; // hand-picked entries first at equal fit
     out.push({ company: c, score, reason: bestReason });
   }
   out.sort((a, b) => b.score - a.score || a.company.name.localeCompare(b.company.name));
@@ -425,7 +426,7 @@ export async function outreachTargets(db: DB, userId: number, limit = 12): Promi
     !seen.has(c.id) &&
     prefs.companies.get(c.id) !== "avoid" &&
     !current.some((n) => companyNameMatches(c.name, { name: n, aliases: [] })) &&
-    (c.source !== "borsa" || countries.includes(c.country as CountryCode));
+    ((c.source !== "borsa" && c.source !== "registro") || countries.includes(c.country as CountryCode));
   const homeRegion = profile.city ? findPlace(profile.city)?.region : undefined;
   // Hand-picked brands first (they are the employers people mean), then place, then size.
   const rank = (c: Company) => (c.source === "curato" ? 4 : 0) + (c.region && profile.regions.includes(`${c.country}:${c.region}`) ? 2 : 0) + (c.region && c.region === homeRegion ? 1 : 0) + (countries.includes(c.country as CountryCode) ? 1 : 0) + (c.size ?? 1) * 0.5;

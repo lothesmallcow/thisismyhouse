@@ -68,6 +68,30 @@ letter templates, no fake data in real mode). Change both passwords afterwards.
 has their own profile, CV, companies, applications and morning e-mail; the admin can open any
 person's app ("Apri la sua app") to help them.
 
+### 4b. Every company and every job title (optional, open data)
+
+The demo catalog has the ~3,300 listed companies of Italy, the UK, Germany and France. To add the
+whole registers (ADR 0020), download the files on your computer and import them:
+
+| Country | File | Where | Licence |
+|---|---|---|---|
+| UK | `BasicCompanyDataAsOneFile-*.zip` (unzip) | download.companieshouse.gov.uk/en_output.html | Open Government Licence |
+| France | `StockEtablissement_utf8.zip` (unzip) | data.gouv.fr, "Base Sirene des entreprises" | Licence Ouverte |
+| Germany | `de_companies_ocdata.jsonl.bz2` (bunzip2) | offeneregister.de | CC0 |
+| Any (LEI) | GLEIF golden copy, level 1 CSV | gleif.org/en/lei-data/gleif-golden-copy | CC0 |
+| Italy | your own CSV: `name,country,city,industry,nace,website,employees` | e.g. exported from a provider you have rights to | yours |
+
+```bash
+npx tsx scripts/import-register.ts --format companies-house --file BasicCompanyDataAsOneFile.csv --dry-run
+npx tsx scripts/import-register.ts --format companies-house --file BasicCompanyDataAsOneFile.csv --regions GB:England --nace 47,46,64,70
+npx tsx scripts/import-register.ts --format sirene --file StockEtablissement_utf8.csv --min-employees 10
+npx tsx scripts/import-register.ts --format offeneregister --file de_companies_ocdata.jsonl --cities München,Berlin,Hamburg,Frankfurt am Main
+npx tsx scripts/import-register.ts --format gleif --file gleif-level1.csv
+```
+Filter by region, sector (`--nace`) or size: all UK companies are ~5 million rows. Every job title
+in four languages: download the ESCO CSV for it, en, de, fr (esco.ec.europa.eu → Download), put the
+four `occupations_<lang>.csv` in a folder and run `npx tsx scripts/import-esco.ts --dir <folder>`.
+
 ## 5. Hosting (Vercel Hobby, free)
 
 1. Import the repository in Vercel (root directory `compass/` while it lives in `thisismyhouse`).

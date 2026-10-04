@@ -189,12 +189,41 @@ export interface Position {
   track: "lavoro" | "stage" | "tutti";
 }
 
-export const POSITIONS: Position[] = RAW.trim()
+const CURATED: Position[] = RAW.trim()
   .split("\n")
   .map((line) => {
     const [it, en, de, fr, sector, t] = line.split("|");
     return { it, en, de, fr, sector, track: t === "l" ? "lavoro" : t === "s" ? "stage" : "tutti" };
   });
+
+/** "Verkaufsassistent/Verkaufsassistentin" → "Verkaufsassistent": the first form is searched. */
+const firstForm = (s: string) => s.split("/")[0].trim();
+
+/**
+ * Every ESCO occupation in four languages, when imported (scripts/import-esco.ts writes
+ * data/world/positions-esco.json; ESCO, European Commission). Read once, server side.
+ */
+function escoPositions(): Position[] {
+  if (typeof window !== "undefined") return [];
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require("node:fs") as typeof import("node:fs");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require("node:path") as typeof import("node:path");
+    const file = path.join(process.cwd(), "data/world/positions-esco.json");
+    if (!fs.existsSync(file)) return [];
+    const rows = JSON.parse(fs.readFileSync(file, "utf8")) as [string, string, string, string, string, string[]][];
+    return rows.map(([it, en, de, fr]) => ({ it: firstForm(it), en: firstForm(en), de: firstForm(de), fr: firstForm(fr), sector: "", track: "tutti" as const }));
+  } catch {
+    return [];
+  }
+}
+
+/** The hand-made positions first (they carry a sector), then ESCO's, without repeats. */
+export const POSITIONS: Position[] = (() => {
+  const seen = new Set(CURATED.map((p) => p.it.toLowerCase()));
+  return [...CURATED, ...escoPositions().filter((p) => !seen.has(p.it.toLowerCase()))];
+})();
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 const BY_NAME = new Map(POSITIONS.flatMap((p) => [p.it, p.en, p.de, p.fr].map((n) => [norm(n), p] as const)));
@@ -206,8 +235,12 @@ export function findPosition(role: string): Position | undefined {
 
 /** Positions for the questionnaire suggestions of one track. */
 export function positionsFor(track: "lavoro" | "stage"): Position[] {
+  // The questionnaire suggests the hand-made roles plus, when imported, every ESCO occupation.
   return POSITIONS.filter((p) => p.track === track || p.track === "tutti");
 }
+
+/** How many positions are known (hand-made + ESCO). */
+export const positionCount = () => POSITIONS.length;
 
 /** The same role in the languages of the chosen countries ("Contabile" → "Accountant", "Buchhalter"). */
 export function translations(role: string, langs: ("it" | "en" | "de" | "fr")[]): string[] {

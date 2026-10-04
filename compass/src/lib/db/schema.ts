@@ -275,7 +275,8 @@ export const catalogCompanies = sqliteTable("catalog_companies", {
   createdByUserId: integer("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
   shared: integer("shared", { mode: "boolean" }).notNull().default(true),
   /** curato = hand-made list; altro = added by a person; borsa = listed companies (shown when searched or chosen). */
-  source: text("source").$type<"curato" | "altro" | "borsa">().notNull().default("curato"),
+  /** + registro = imported from an official company register (scripts/import-register.ts). */
+  source: text("source").$type<"curato" | "altro" | "borsa" | "registro">().notNull().default("curato"),
   country: text("country").notNull().default("IT"),
   region: text("region"),
   website: text("website"),

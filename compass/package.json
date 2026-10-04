@@ -12,6 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
+    "import:register": "tsx scripts/import-register.ts",
+    "import:esco": "tsx scripts/import-esco.ts",
     "db:setup": "tsx scripts/migrate.ts && tsx scripts/seed.ts --if-empty",
     "job:ingest": "tsx scripts/run-job.ts ingest",
     "job:discover": "tsx scripts/run-job.ts discover",

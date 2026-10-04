@@ -1,0 +1,5 @@
+CompanyName, CompanyNumber,RegAddress.CareOf,RegAddress.POBox,RegAddress.AddressLine1, RegAddress.AddressLine2,RegAddress.PostTown,RegAddress.County,RegAddress.Country,RegAddress.PostCode,CompanyCategory,CompanyStatus,CountryOfOrigin,DissolutionDate,IncorporationDate,SICCode.SicText_1
+"EXAMPLE LUXURY RETAIL LTD",00000001,,,"1 EXAMPLE STREET",,"LONDON",,"ENGLAND","W1A 0AA","Private Limited Company","Active","United Kingdom",,"01/01/2010","47710 - Retail sale of clothing in specialised stores"
+"EXAMPLE DORMANT LTD",00000002,,,"2 EXAMPLE STREET",,"LEEDS",,"ENGLAND","LS1 0AA","Private Limited Company","Active","United Kingdom",,"01/01/2015","99999 - Dormant Company"
+"EXAMPLE CLOSED LTD",00000003,,,"3 EXAMPLE STREET",,"BATH",,"ENGLAND","BA1 0AA","Private Limited Company","Dissolved","United Kingdom","01/01/2020","01/01/2012","47770 - Retail sale of watches and jewellery in specialised stores"
+"EXAMPLE WATCHES, JEWELLERS LTD",00000004,,,"4 EXAMPLE STREET",,"MANCHESTER",,"ENGLAND","M1 0AA","Private Limited Company","Active","United Kingdom",,"01/01/2018","47770 - Retail sale of watches and jewellery in specialised stores"

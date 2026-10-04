@@ -1,0 +1,3 @@
+conceptType,conceptUri,iscoGroup,preferredLabel,altLabels,status
+Occupation,http://data.europa.eu/esco/occupation/demo-1,5223,sales assistant,"shop assistant",released
+Occupation,http://data.europa.eu/esco/occupation/demo-2,7311,watchmaker,,released

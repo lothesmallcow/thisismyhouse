@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 · 2026-10-04
+
+Every company and every job title, as far as the open data goes.
+
+- **Official registers**: importers for Companies House (UK), INSEE SIRENE (France),
+  OffeneRegister (Germany), the GLEIF golden copy (any country) and a plain CSV (e.g. Italy); only
+  live companies, SIC/NAF → NACE sectors, city → region; filters by region, city, sector, size and
+  limit; dry run. Register companies are searchable, browsable, and used in suggestions.
+- **ESCO**: every EU occupation (~3,000) in Italian, English, German and French, imported from the
+  official files, used by the questionnaire and by the searches in each country's language.
+- **Listed companies**: now all ~3,300 of the four countries, also those without an industry tag.
+- Tested on fake samples in each official layout (`fixtures/registers/`, `fixtures/esco/`).
+
 ## 0.5.0 · 2026-10-04
 
 Tested against a persona: a store manager in high fashion in Milan, open to watches, still employed.

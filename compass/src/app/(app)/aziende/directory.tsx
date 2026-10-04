@@ -84,9 +84,10 @@ export async function Directory({
                 <div className="min-w-0">
                   <p className="text-[14px] font-medium">
                     {c.name} {c.source === "borsa" && <Chip>quotata</Chip>}
+                    {c.source === "registro" && <Chip>registro imprese</Chip>}
                   </p>
                   <p className="text-[12.5px] text-faint">
-                    {[c.industry, c.city, c.region && c.region !== c.city ? c.region : null, c.city || c.source === "borsa" ? countryName(c.country) : null, c.size != null ? `dimensione ${SIZE_LABELS[c.size]}` : null].filter(Boolean).join(" · ")}
+                    {[c.industry, c.city, c.region && c.region !== c.city ? c.region : null, c.city || c.source === "borsa" || c.source === "registro" ? countryName(c.country) : null, c.size != null ? `dimensione ${SIZE_LABELS[c.size]}` : null].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 {stance ? (

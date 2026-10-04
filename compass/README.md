@@ -60,6 +60,8 @@ ever touching anyone's platform accounts.
   questionnaire; ~3,100 listed companies and all 1,047 NACE industries (four languages) browsable
   and searchable; ~180 roles searched in each country's language. Searches go only where people
   want to work, best-fitting companies first and the rest in rotation, so free quotas last.
+  Every company of a country can be added from the official registers (Companies House, SIRENE,
+  OffeneRegister, GLEIF, CSV) and every ESCO occupation in four languages (docs/setup.md §4b).
 - **Fit score out of 100**: seven readable parts (role, experience, requirements, place, pay,
   conditions, choices), weights you can change, hard limits; each offer lists its requirements
   against your CV with tips for the gaps; role sheets with pay by employer size for your area;
