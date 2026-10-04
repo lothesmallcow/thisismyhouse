@@ -66,11 +66,13 @@ export function recommendPositions(i: CvPositionInput): CvPosition[] {
 
   // 3. Job titles written in the CV (hand-made positions only: clear titles, not every ESCO word).
   const text = ` ${fold(i.cvText).replace(/[^a-z0-9]+/g, " ")} `;
+  // A title that names a study, a sport or a volunteer role in the CV is not a job ("Portiere" in football).
+  const notJobs = new Set(i.experiences.filter((e) => e.kind !== "lavoro").map((e) => fold(tidy(e.title))));
   if (text.trim()) {
     for (const p of POSITIONS) {
       if (!p.sector || (p.track !== "tutti" && p.track !== i.track)) continue;
       const hit = [p.it, p.en].find((n) => n.length >= 6 && text.includes(` ${fold(n).replace(/[^a-z0-9]+/g, " ").trim()} `));
-      if (hit) add(p.it, "Compare nel tuo CV", "nel-cv");
+      if (hit && !notJobs.has(fold(hit)) && !notJobs.has(fold(p.it))) add(p.it, "Compare nel tuo CV", "nel-cv");
     }
   }
   return out;

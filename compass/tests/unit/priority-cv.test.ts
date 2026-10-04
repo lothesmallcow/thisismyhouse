@@ -83,3 +83,18 @@ describe("posizioni consigliate dal CV", () => {
     expect(recommendPositions({ ...base, experiences: [], cvText: "" })).toEqual([]);
   });
 });
+
+describe("CVs as designed PDFs print them", () => {
+  it("letter-spaced headings are still sections; a sport or volunteer title is not proposed as a job", async () => {
+    const { parseCvTimeline } = await import("@/lib/core/timeline");
+    const text = ["I S T R U Z I O N E", "2026 – oggi Laurea in Economia, Università Esempio, Milano", "E S P E R I E N Z E", "2023 – oggi Allenatore di calcio giovanile, Società Esempio", "AT T I V I T À E X T R A C U R R I C O L A R I", "2014 – 2026 Portiere, calcio dilettantistico", "L I N G U E", "2020 Inglese"].join("\n");
+    const t = parseCvTimeline(text);
+    expect(t.map((e) => [e.kind, e.title])).toEqual([
+      ["studio", "Laurea in Economia"],
+      ["lavoro", "Allenatore di calcio giovanile"],
+      ["volontariato", "Portiere"],
+    ]);
+    const r = recommendPositions({ track: "stage", experiences: t, cvText: text, years: 3, sectors: [], roles: [], priority: "media" });
+    expect(r.map((x) => x.title)).toEqual(["Allenatore di calcio giovanile"]);
+  });
+});
