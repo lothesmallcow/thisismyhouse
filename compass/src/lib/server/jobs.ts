@@ -175,13 +175,20 @@ export async function rerankAll(db: DB, now = new Date()): Promise<number> {
   const adj = await activeAdjustments(db);
   const all = await db.select().from(schema.jobs);
   const { distanceKm } = await import("../core/geo");
+  // Only rows whose values change are written, in batches of 200 statements per round trip
+  // (on Turso one batch = one HTTP request instead of one per job).
+  const updates = [];
   for (const job of all) {
     const dist = home && job.lat != null && job.lng != null ? distanceKm(home, { lat: job.lat, lng: job.lng }) : null;
     const r = rankRow({ ...job, distanceKm: dist }, rp, adj, now);
-    await db
-      .update(schema.jobs)
-      .set({ distanceKm: dist, score: r.score, level: r.level, reasons: r.reasons, factors: r.factors })
-      .where(eq(schema.jobs.id, job.id));
+    if (dist === job.distanceKm && r.score === job.score && r.level === job.level && JSON.stringify(r.reasons) === JSON.stringify(job.reasons) && JSON.stringify(r.factors) === JSON.stringify(job.factors)) continue;
+    updates.push(
+      db.update(schema.jobs).set({ distanceKm: dist, score: r.score, level: r.level, reasons: r.reasons, factors: r.factors }).where(eq(schema.jobs.id, job.id)),
+    );
+  }
+  for (let i = 0; i < updates.length; i += 200) {
+    const chunk = updates.slice(i, i + 200);
+    await db.batch(chunk as [(typeof chunk)[0], ...typeof chunk]);
   }
   return all.length;
 }
