@@ -103,3 +103,18 @@ export function hitToRawJob(h: SearchHit): RawJob {
     thin: true,
   };
 }
+
+const SPONTANEOUS_CUE = /(lavora con noi|candidature spontanee|candidatura spontanea|invia(?:re)? (?:il tuo |il )?(?:cv|curriculum)|manda(?:re)? (?:il tuo )?(?:cv|curriculum))/i;
+
+/**
+ * A "lavora con noi" result on a company's own site that publishes an address for applications:
+ * a CANDIDATE for the spontaneous-applications list (the admin approves it before any use).
+ */
+export function spontaneousSuggestion(h: SearchHit): { name: string; email: string; sourceUrl: string } | null {
+  if (PLATFORM_DOMAINS.some((d) => new URL(h.url).hostname.endsWith(d))) return null;
+  if (!SPONTANEOUS_CUE.test(h.snippet) && !SPONTANEOUS_CUE.test(h.title)) return null;
+  const email = h.snippet.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)?.[0]?.replace(/\.$/, "").toLowerCase();
+  if (!email || /^(no-?reply|privacy|dpo)@/.test(email)) return null;
+  const name = h.title.replace(/^(lavora con noi|careers?|carriere|candidature)\s*[-–|:]\s*/i, "").split(/\s+[-–|]\s+/)[0].trim() || new URL(h.url).hostname;
+  return { name, email, sourceUrl: h.url };
+}

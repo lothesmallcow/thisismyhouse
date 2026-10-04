@@ -187,9 +187,11 @@ describe("applying", () => {
     for (const j of await db.select().from(schema.jobs).where(sql`${schema.jobs.applicationEmail} is not null and ${schema.jobs.status} != 'applied'`)) {
       await prepareEmailApplication(db, j.id);
     }
-    const drafts = (await listDrafts(db)).length;
+    const all = await listDrafts(db);
+    const bulk = all.filter((d) => d.app.warnings.length === 0);
+    expect(bulk.length).toBeLessThan(all.length); // drafts with a warning are left out of "Invia tutte"
     const r = await approveAll(db, NOW, rng);
-    expect(r.queued + r.blocked).toBe(drafts);
+    expect(r.queued + r.blocked).toBe(bulk.length);
     const queued = await db.select().from(schema.applications).where(eq(schema.applications.status, "queued"));
     const perDay = new Map<string, number>();
     for (const q of queued) perDay.set(q.sendAt!.toISOString().slice(0, 10), (perDay.get(q.sendAt!.toISOString().slice(0, 10)) ?? 0) + 1);
@@ -267,8 +269,9 @@ describe("digest, metrics, privacy", () => {
     const m = await computeMetrics(db);
     expect(m.jobsTotal).toBeGreaterThan(20);
     expect(m.applicationsByLane.find((l) => l.lane === "email")?.total).toBe(2);
-    expect(m.replies).toBe(1);
-    expect(m.replyRate).toBeCloseTo(0.5);
+    expect(m.replies).toBe(0); // the seeded reply is on a simulated send
+    expect(m.replyRate).toBeNull(); // no real sends yet
+    expect(m.simulatedReplyRate).toBeCloseTo(0.5);
     expect(m.emailSent).toBe(0); // demo sends are simulated, never counted as real
     expect(m.emailSimulated).toBe(2);
   });

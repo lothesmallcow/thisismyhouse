@@ -9,7 +9,7 @@ on:
     - cron: "30 4 * * *" # 06:30 ingest (mailbox, APIs, ATS, W2)
     - cron: "45 4 * * *" # 06:45 W1 discovery
     - cron: "0 5 * * *" # 07:00 daily digest to her inbox
-    - cron: "*/15 6-16 * * 1-5" # every 15 min in the send window: queue
+    - cron: "*/15 6-17 * * 1-5" # every 15 min, 06:00-17:45 UTC covers 08:30-18:00 Rome in summer AND winter time; the code enforces the exact window
     - cron: "5 */2 * * *" # every 2 hours: replies
   workflow_dispatch:
     inputs:
@@ -54,7 +54,7 @@ jobs:
             "30 4 * * *") echo "job=ingest" >> "$GITHUB_OUTPUT" ;;
             "45 4 * * *") echo "job=discover" >> "$GITHUB_OUTPUT" ;;
             "0 5 * * *") echo "job=digest" >> "$GITHUB_OUTPUT" ;;
-            "*/15 6-16 * * 1-5") echo "job=queue" >> "$GITHUB_OUTPUT" ;;
+            "*/15 6-17 * * 1-5") echo "job=queue" >> "$GITHUB_OUTPUT" ;;
             "5 */2 * * *") echo "job=replies" >> "$GITHUB_OUTPUT" ;;
             *) echo "job=${{ github.event.inputs.job }}" >> "$GITHUB_OUTPUT" ;;
           esac

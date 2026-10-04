@@ -25,6 +25,14 @@ export const sessions = sqliteTable("sessions", {
   createdAt: createdAt(),
 });
 
+/** Sign-in throttling: 5 failures in 15 minutes lock that account for 15 minutes. */
+export const loginAttempts = sqliteTable("login_attempts", {
+  key: text("key").primaryKey(), // role:email
+  failures: integer("failures").notNull().default(0),
+  firstAt: ts("first_at").notNull(),
+  lockedUntil: ts("locked_until"),
+});
+
 // --- Her profile (single row, id = 1) ------------------------------------------------------
 
 export type ProfileLanguage = { language: string; level: "base" | "buono" | "fluente" };
@@ -161,6 +169,8 @@ export const approvedSites = sqliteTable("approved_sites", {
   startUrl: text("start_url").notNull(),
   termsSummary: text("terms_summary").notNull().default(""),
   approved: integer("approved", { mode: "boolean" }).notNull().default(false),
+  approvedAt: ts("approved_at"),
+  robotsSummary: text("robots_summary").notNull().default(""),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   createdAt: createdAt(),
 });
@@ -227,6 +237,7 @@ export const spontaneousCompanies = sqliteTable("spontaneous_companies", {
 export type ApplicationStatus =
   | "draft" // prepared, waiting for her (Da inviare)
   | "queued" // approved, waiting for the undo window / send window
+  | "sending" // claimed by one queue runner (prevents double sends)
   | "sent"
   | "cancelled" // "Annulla" during the undo window
   | "skipped" // "Salta"

@@ -3,7 +3,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { romeDateKey } from "../core/time";
 import type { DB } from "../db";
 import { schema } from "../db";
-import { buildQueries, hitToRawJob, isJobPage, type SearchProvider } from "../sources/web/w1";
+import { buildQueries, hitToRawJob, isJobPage, spontaneousSuggestion, type SearchProvider } from "../sources/web/w1";
 import { dedupeCandidates, upsertRawJob } from "../server/jobs";
 import { getProfile } from "../server/profile";
 import { getSettings } from "../server/settings";
@@ -26,9 +26,9 @@ async function bump(db: DB, counter: string, now: Date): Promise<void> {
     .onConflictDoUpdate({ target: [schema.usageCounters.counter, schema.usageCounters.day], set: { count: sql`${schema.usageCounters.count} + 1` } });
 }
 
-export async function runDiscover(db: DB, provider: SearchProvider | null, now = new Date()): Promise<{ queries: number; found: number; created: number; capReached: boolean }> {
+export async function runDiscover(db: DB, provider: SearchProvider | null, now = new Date()): Promise<{ queries: number; found: number; created: number; suggested: number; capReached: boolean }> {
   const settings = await getSettings(db);
-  const out = { queries: 0, found: 0, created: 0, capReached: false };
+  const out = { queries: 0, found: 0, created: 0, suggested: 0, capReached: false };
   if (!settings.w1Enabled || !provider) return out;
   const cap = Math.min(settings.w1DailyCap, W1_HARD_MAX);
   const profile = await getProfile(db);
@@ -46,7 +46,17 @@ export async function runDiscover(db: DB, provider: SearchProvider | null, now =
       }
       await bump(db, "w1-queries", now);
       out.queries++;
-      const hits = (await provider.search(q)).filter((h) => isJobPage(h.url));
+      const all = await provider.search(q);
+      for (const h of all) {
+        const sug = spontaneousSuggestion(h);
+        if (!sug) continue;
+        const known = await db.query.spontaneousCompanies.findFirst({ where: eq(schema.spontaneousCompanies.email, sug.email) });
+        if (!known) {
+          await db.insert(schema.spontaneousCompanies).values({ ...sug, status: "suggested" });
+          out.suggested++;
+        }
+      }
+      const hits = all.filter((h) => isJobPage(h.url));
       for (const h of hits) {
         out.found++;
         if ((await upsertRawJob(db, hitToRawJob(h), now, cache)).created) out.created++;
@@ -54,5 +64,6 @@ export async function runDiscover(db: DB, provider: SearchProvider | null, now =
     }
     return { items: out.found, failures: 0 };
   }, now);
+  if ((await usageToday(db, "w1-queries", now)) >= cap) out.capReached = true;
   return out;
 }

@@ -1,0 +1,4 @@
+{"name":"Esempio Workable","jobs":[
+ {"title":"Receptionist","shortcode":"ABC123","url":"https://apply.workable.com/j/ABC123","city":"Torino","country":"Italy","telecommuting":false,"employment_type":"Part-time","description":"<p>Accoglienza clienti e centralino.</p>","published_on":"2026-09-30"},
+ {"title":"Engineer","shortcode":"XYZ999","city":"Berlin","country":"Germany","telecommuting":false,"employment_type":"Full-time","description":"<p>Berlin</p>","published_on":"2026-09-30"}
+]}

@@ -17,12 +17,28 @@ export interface SessionUser {
   email: string;
 }
 
-export async function signIn(email: string, password: string, role: Role): Promise<boolean> {
+export type SignInResult = "ok" | "wrong" | "locked";
+
+export const MAX_FAILURES = 5;
+export const LOCK_MINUTES = 15;
+
+export async function signIn(email: string, password: string, role: Role): Promise<SignInResult> {
   const db = getDb();
+  const key = `${role}:${email.trim().toLowerCase()}`;
+  const now = new Date();
+  const attempt = await db.query.loginAttempts.findFirst({ where: eq(schema.loginAttempts.key, key) });
+  if (attempt?.lockedUntil && attempt.lockedUntil > now) return "locked";
   const user = await db.query.users.findFirst({
     where: and(eq(schema.users.email, email.trim().toLowerCase()), eq(schema.users.role, role)),
   });
-  if (!user || !(await verifyPassword(password, user.passwordHash))) return false;
+  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    const fresh = !attempt || now.getTime() - attempt.firstAt.getTime() > LOCK_MINUTES * 60000;
+    const failures = fresh ? 1 : attempt.failures + 1;
+    const row = { key, failures, firstAt: fresh ? now : attempt.firstAt, lockedUntil: failures >= MAX_FAILURES ? new Date(now.getTime() + LOCK_MINUTES * 60000) : null };
+    await db.insert(schema.loginAttempts).values(row).onConflictDoUpdate({ target: schema.loginAttempts.key, set: row });
+    return failures >= MAX_FAILURES ? "locked" : "wrong";
+  }
+  await db.delete(schema.loginAttempts).where(eq(schema.loginAttempts.key, key));
   const token = newToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000);
   await db.insert(schema.sessions).values({ id: tokenId(token), userId: user.id, expiresAt });
@@ -34,7 +50,7 @@ export async function signIn(email: string, password: string, role: Role): Promi
     path: "/",
     expires: expiresAt,
   });
-  return true;
+  return "ok";
 }
 
 async function userFromCookie(name: string): Promise<SessionUser | null> {

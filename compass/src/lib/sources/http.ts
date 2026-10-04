@@ -16,25 +16,48 @@ export class HttpError extends Error {
   }
 }
 
-export async function request(fetchImpl: FetchLike, url: string, init: RequestInit = {}, timeoutMs = 20000): Promise<Response> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetchImpl(url, {
-      ...init,
-      headers: { "User-Agent": userAgent(), Accept: "application/json, text/html;q=0.9, */*;q=0.5", ...(init.headers ?? {}) },
-      signal: ctrl.signal,
-      redirect: "follow",
-    });
-    if (res.status === 403 || res.status === 429) throw new BlockedError(res.status, url);
-    return res;
-  } finally {
-    clearTimeout(t);
-  }
+export interface RequestOptions {
+  timeoutMs?: number;
+  /** Retries for network errors, timeouts and 5xx. Never for 403/429 (we stop instead). */
+  retries?: number;
+  backoffMs?: number;
+  sleep?: (ms: number) => Promise<void>;
 }
 
-export async function getJson<T>(fetchImpl: FetchLike, url: string, init: RequestInit = {}): Promise<T> {
-  const res = await request(fetchImpl, url, init);
+const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+export async function request(fetchImpl: FetchLike, url: string, init: RequestInit = {}, opts: RequestOptions = {}): Promise<Response> {
+  const { timeoutMs = 20000, retries = 2, backoffMs = 2000, sleep = defaultSleep } = opts;
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) await sleep(backoffMs * 2 ** (attempt - 1)); // 2 s, 4 s
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetchImpl(url, {
+        ...init,
+        headers: { "User-Agent": userAgent(), Accept: "application/json, text/html;q=0.9, */*;q=0.5", ...(init.headers ?? {}) },
+        signal: ctrl.signal,
+        redirect: init.redirect ?? "follow",
+      });
+      if (res.status === 403 || res.status === 429) throw new BlockedError(res.status, url);
+      if (res.status >= 500 && attempt < retries) {
+        lastError = new HttpError(res.status, url);
+        continue;
+      }
+      return res;
+    } catch (e) {
+      if (e instanceof BlockedError) throw e;
+      lastError = e;
+    } finally {
+      clearTimeout(t);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("network error");
+}
+
+export async function getJson<T>(fetchImpl: FetchLike, url: string, init: RequestInit = {}, opts: RequestOptions = {}): Promise<T> {
+  const res = await request(fetchImpl, url, init, opts);
   if (!res.ok) throw new HttpError(res.status, url);
   return (await res.json()) as T;
 }

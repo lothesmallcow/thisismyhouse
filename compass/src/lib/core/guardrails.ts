@@ -5,7 +5,7 @@ import { emailDomain, isValidEmail } from "./extract";
 import { normalizeCompany } from "./dedupe";
 import type { ScamFlag } from "./scam-rules";
 import { fold } from "./text";
-import { formatDate, minutesOfDay, romeDateKey, romeParts, romeToUtc } from "./time";
+import { formatDate, isItalianHoliday, minutesOfDay, romeDateKey, romeParts, romeToUtc } from "./time";
 
 export interface GuardrailSettings {
   dailyCap: number; // default 10
@@ -18,7 +18,8 @@ export interface GuardrailSettings {
   undoMinutes: number; // 15
   companyCooldownDays: number; // 60
   spontaneousCooldownDays: number; // 182 (6 months)
-  killSwitch: boolean;
+  killSwitch: boolean; // her "Ferma tutti gli invii"
+  adminKillSwitch: boolean; // the admin's stop: only the admin can lift it
   autopilot: boolean;
 }
 
@@ -38,6 +39,7 @@ export const DEFAULT_GUARDRAILS: GuardrailSettings = {
   companyCooldownDays: 60,
   spontaneousCooldownDays: 182,
   killSwitch: false,
+  adminKillSwitch: false,
   autopilot: false,
 };
 
@@ -78,6 +80,11 @@ export interface CheckResult {
   warnings: Check[];
 }
 
+/** Either stop (hers or the admin's) blocks every send. */
+export function isStopped(s: Pick<GuardrailSettings, "killSwitch" | "adminKillSwitch">): boolean {
+  return Boolean(s.killSwitch || s.adminKillSwitch);
+}
+
 export function effectiveDailyCap(s: GuardrailSettings, now: Date): number {
   const inFirstWeek = s.goLiveAt != null && now.getTime() - s.goLiveAt.getTime() < 7 * 86400000;
   const cap = inFirstWeek ? Math.min(s.firstWeekCap, s.dailyCap) : s.dailyCap;
@@ -92,7 +99,7 @@ export function checkSend(
   const blockers: Check[] = [];
   const warnings: Check[] = [];
 
-  if (s.killSwitch) blockers.push({ code: "kill-switch", message: "Gli invii sono fermi. Per ripartire serve riattivarli." });
+  if (isStopped(s)) blockers.push({ code: "kill-switch", message: "Gli invii sono fermi. Per ripartire serve riattivarli." });
   if (!isValidEmail(c.recipient)) blockers.push({ code: "no-recipient", message: "Manca un indirizzo e-mail valido a cui scrivere." });
 
   if (c.jobId != null && history.some((h) => h.jobId === c.jobId)) {
@@ -151,12 +158,15 @@ export function scheduleSend(
   settings: GuardrailSettings,
   scheduled: Date[], // queued + sent times
   rng: () => number = Math.random,
+  /** Minimum delay from now. New approvals: the undo window. Re-scheduling an already-approved e-mail: 0. */
+  minDelayMinutes: number = settings.undoMinutes,
 ): Date | null {
   const spacing = () =>
     (settings.spacingMinMinutes + rng() * (settings.spacingMaxMinutes - settings.spacingMinMinutes)) * 60000;
   const last = scheduled.reduce<Date | null>((m, d) => (m && m > d ? m : d), null);
-  let t = new Date(now.getTime() + settings.undoMinutes * 60000);
-  if (last && last.getTime() + spacing() > t.getTime()) t = new Date(last.getTime() + spacing());
+  let t = new Date(now.getTime() + minDelayMinutes * 60000);
+  const gap = spacing();
+  if (last && last.getTime() + gap > t.getTime()) t = new Date(last.getTime() + gap);
 
   const perDay = new Map<string, number>();
   for (const d of scheduled) perDay.set(romeDateKey(d), (perDay.get(romeDateKey(d)) ?? 0) + 1);
@@ -165,7 +175,7 @@ export function scheduleSend(
     const p = romeParts(t);
     const mins = minutesOfDay(p);
     const cap = effectiveDailyCap(settings, t);
-    const weekend = p.weekday >= 6;
+    const weekend = p.weekday >= 6 || isItalianHoliday(p);
     const full = (perDay.get(romeDateKey(t)) ?? 0) >= cap;
     if (weekend || mins >= settings.windowEndMin || full) {
       t = nextWindowStart(t, settings, rng);
@@ -192,5 +202,5 @@ function nextWindowStart(t: Date, s: GuardrailSettings, rng: () => number): Date
 export function inSendWindow(t: Date, s: GuardrailSettings): boolean {
   const p = romeParts(t);
   const m = minutesOfDay(p);
-  return p.weekday <= 5 && m >= s.windowStartMin && m < s.windowEndMin;
+  return p.weekday <= 5 && !isItalianHoliday(p) && m >= s.windowStartMin && m < s.windowEndMin;
 }

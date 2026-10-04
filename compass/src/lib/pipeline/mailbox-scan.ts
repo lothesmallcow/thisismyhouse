@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { parseAlert, isJobAlert } from "../sources/alerts";
+import { looksLikeAlert } from "../sources/alerts/generic";
 import type { Mailbox } from "../sources/mail/types";
 import { upsertRawJob, dedupeCandidates } from "../server/jobs";
 import { matchReply, recordReply } from "../server/replies";
@@ -27,7 +28,9 @@ export async function scanMailbox(db: DB, mailbox: Mailbox, now = new Date(), lo
     if (done) continue;
 
     const reply = await matchReply(db, e);
-    if (reply && !isJobAlertStrict(e)) {
+    // A thread match is always a reply. A sender-domain match is only trusted when the e-mail
+    // does not look like a job newsletter (an agency she wrote to may also send alerts).
+    if (reply && !isJobAlertStrict(e) && (reply.matchedBy === "thread" || !looksLikeAlert(e))) {
       if (await recordReply(db, e, reply)) summary.replies++;
       await db.insert(schema.processedMessages).values({ messageId: e.messageId, kind: "reply", parser: reply.matchedBy, processedAt: now });
       continue;

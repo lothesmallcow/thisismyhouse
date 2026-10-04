@@ -2,6 +2,7 @@
 // Usage: tsx scripts/run-job.ts <ingest|discover|queue|replies|digest>
 import "./load-env";
 import { getDb } from "../src/lib/db";
+import { assertEnv } from "../src/lib/env-check";
 import { JOB_NAMES, runJob, type JobName } from "../src/lib/pipeline/jobs";
 
 const name = process.argv[2] as JobName;
@@ -10,6 +11,7 @@ if (!JOB_NAMES.includes(name)) {
   process.exit(1);
 }
 try {
+  assertEnv();
   const result = await runJob(getDb(), name);
   // Only counts are printed: CI logs are public, so no personal data ever goes to stdout.
   console.log(JSON.stringify(result, (k, v) => (typeof v === "string" && v.includes("@") ? "[redacted]" : v)));

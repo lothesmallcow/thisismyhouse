@@ -69,7 +69,10 @@ export async function runWithHealth(db: DB, source: string, fn: () => Promise<So
       pausedUntil: blocked ? endOfRomeDay(now) : null,
     };
     await db.insert(schema.sourceHealth).values(row).onConflictDoUpdate({ target: schema.sourceHealth.source, set: row });
-    if (blocked || consecutive === 3) {
+    const authProblem = /auth|credential|password|login|LOGIN|invalid user/i.test(e instanceof Error ? e.message : String(e));
+    if (authProblem) {
+      await notifyAdmin(db, `Fonte "${source}": accesso rifiutato. La password (o la chiave) non funziona più: va rigenerata e aggiornata nei segreti.`, "/admin/fonti");
+    } else if (blocked || consecutive === 3) {
       await notifyAdmin(db, `Fonte "${source}": ${row.lastError}.`, "/admin/fonti");
     }
     return null;

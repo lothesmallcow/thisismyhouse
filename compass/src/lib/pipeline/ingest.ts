@@ -1,21 +1,23 @@
 // Scheduled ingestion: mailbox (alerts + replies), job APIs, ATS watchlist, W2 approved sites.
 // Each source runs inside runWithHealth(), so one broken source never stops the others.
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull, isNull } from "drizzle-orm";
+import { distanceKm } from "../core/geo";
+import { geocode, GEOCODE_MAX_PER_RUN } from "../sources/geocode";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { env } from "../env";
 import { fetchAdzuna } from "../sources/api/adzuna";
 import { fetchJooble } from "../sources/api/jooble";
-import { fetchAts, type AtsType } from "../sources/ats";
+import { atsEndpoint, fetchAts, type AtsType } from "../sources/ats";
 import { BlockedError, type FetchLike } from "../sources/http";
 import type { Mailbox } from "../sources/mail/types";
 import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
-import { dedupeCandidates, upsertRawJob } from "../server/jobs";
-import { getProfile } from "../server/profile";
+import { dedupeCandidates, rerankJob, upsertRawJob } from "../server/jobs";
+import { getProfile, homeOf } from "../server/profile";
 import { getSettings, setSetting } from "../server/settings";
 import type { RawJob } from "../core/normalize";
-import { runWithHealth } from "./health";
+import { isPaused, runWithHealth } from "./health";
 import { scanMailbox, type MailboxSummary } from "./mailbox-scan";
 
 export interface IngestDeps {
@@ -91,11 +93,23 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
   }
 
   // 4. ATS watchlist
+  // 403/429 pauses the whole HOST (e.g. boards-api.greenhouse.io), not just one company.
   const watch = await db.select().from(schema.companyWatchlist).where(eq(schema.companyWatchlist.active, true));
   for (const w of watch) {
     const key = `ats:${w.ats}:${w.slug}`;
+    const host = new URL(atsEndpoint(w.ats as AtsType, w.slug)).host;
+    if (await isPaused(db, `host:${host}`, now)) {
+      summary.sources[key] = null;
+      continue;
+    }
     const r = await runWithHealth(db, key, async () => {
-      const jobs = await fetchAts(fetchImpl, w.ats as AtsType, w.slug, w.name);
+      let jobs;
+      try {
+        jobs = await fetchAts(fetchImpl, w.ats as AtsType, w.slug, w.name);
+      } catch (e) {
+        if (e instanceof BlockedError) await runWithHealth(db, `host:${host}`, async () => { throw e; }, now);
+        throw e;
+      }
       const s = await store(db, jobs, now);
       summary.newJobs += s.created;
       return { items: s.total, failures: 0 };
@@ -133,6 +147,27 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
       }, now);
       summary.sources[`w2:${host}`] = r?.items ?? null;
     }
+  }
+
+  // 6. Geocoder fallback for jobs whose city is not in the offline dataset (off by default)
+  if (settings.geocoderEnabled) {
+    const home = homeOf(profile);
+    const missing = await db
+      .select()
+      .from(schema.jobs)
+      .where(and(isNotNull(schema.jobs.city), isNull(schema.jobs.lat)))
+      .limit(GEOCODE_MAX_PER_RUN);
+    await runWithHealth(db, "geocoder", async () => {
+      let found = 0;
+      for (const j of missing) {
+        const p = await geocode(db, fetchImpl, j.city!, deps.politeSleep ?? ((ms) => new Promise((r) => setTimeout(r, ms))));
+        if (!p) continue;
+        found++;
+        await db.update(schema.jobs).set({ lat: p.lat, lng: p.lng, distanceKm: home ? distanceKm(home, p) : null }).where(eq(schema.jobs.id, j.id));
+        await rerankJob(db, j.id, now);
+      }
+      return { items: found, failures: 0 };
+    }, now);
   }
 
   await setSetting(db, "lastIngestAt", now.toISOString());

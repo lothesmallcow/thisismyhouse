@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 
 async function entraAction(f: FormData) {
   "use server";
-  const ok = await signIn(String(f.get("email") ?? ""), String(f.get("password") ?? ""), "user");
-  redirect(ok ? "/offerte" : "/entra?errore=1");
+  const r = await signIn(String(f.get("email") ?? ""), String(f.get("password") ?? ""), "user");
+  redirect(r === "ok" ? "/offerte" : r === "locked" ? "/entra?errore=attesa" : "/entra?errore=1");
 }
 
 export default async function EntraPage({ searchParams }: { searchParams: Promise<{ errore?: string }> }) {
@@ -18,10 +18,16 @@ export default async function EntraPage({ searchParams }: { searchParams: Promis
     <div className="mx-auto max-w-md px-4 pt-6">
       <Card className="rise !p-8">
         <h1 className="text-[2.2rem] font-semibold">Entra</h1>
-        <p className="mt-2 text-ink-soft">Scrivi la tua e-mail e la parola d&apos;accesso. Resterai dentro su questo dispositivo, non serve rifarlo ogni volta.</p>
+        <p className="mt-2 text-ink-soft">
+          <strong className="text-navy">Cosa faccio qui?</strong> Scrivi la tua e-mail e la parola d&apos;accesso. Resterai dentro su questo dispositivo, non serve rifarlo ogni volta.
+        </p>
         {sp.errore && (
           <div className="mt-5">
-            <Notice tone="warn">E-mail o parola d&apos;accesso non corrette. Controlla e riprova.</Notice>
+            <Notice tone="warn">
+              {sp.errore === "attesa"
+                ? "Troppi tentativi. Per sicurezza aspetta 15 minuti, poi riprova."
+                : "E-mail o parola d'accesso non corrette. Controlla e riprova."}
+            </Notice>
           </div>
         )}
         <form action={entraAction} className="mt-6 space-y-5">

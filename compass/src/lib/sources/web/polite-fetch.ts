@@ -13,6 +13,14 @@ export class RobotsDisallowed extends Error {
   }
 }
 
+export const PLATFORM_HOST = /(^|\.)(linkedin\.com|indeed\.[a-z.]+|infojobs\.(it|net)|glassdoor\.[a-z.]+)$/i;
+
+export class PlatformNotAllowed extends Error {
+  constructor(public url: string) {
+    super("job platforms are not fetched by W2");
+  }
+}
+
 export interface PoliteOptions {
   minIntervalMs?: number;
   sleep?: (ms: number) => Promise<void>;
@@ -66,9 +74,12 @@ export class PoliteFetcher {
     return rules;
   }
 
-  /** GET a page as text. Returns null when unchanged since last time (304). */
-  async get(url: string): Promise<{ body: string; fromCache: boolean }> {
+  /** GET a page as text. Redirects are followed by hand (max 3), so the target host's robots.txt,
+   *  rate limit and block list apply to it too. */
+  async get(url: string, hops = 0): Promise<{ body: string; fromCache: boolean }> {
     const u = new URL(url);
+    // Job platforms are never fetched by W2, not even through a redirect (W3 is a separate, off module).
+    if (PLATFORM_HOST.test(u.host)) throw new PlatformNotAllowed(url);
     if (this.blocked.has(u.host)) throw new BlockedError(0, url);
     const rules = await this.rules(u.origin, u.host);
     if (!isAllowed(rules, u.pathname + u.search)) throw new RobotsDisallowed(url);
@@ -80,12 +91,16 @@ export class PoliteFetcher {
     if (cached?.lastModified) headers["If-Modified-Since"] = cached.lastModified;
     let res: Response;
     try {
-      res = await request(this.fetchImpl, url, { headers });
+      res = await request(this.fetchImpl, url, { headers, redirect: "manual" });
     } catch (e) {
       if (e instanceof BlockedError) this.blocked.add(u.host);
       throw e;
     }
     if (res.status === 304 && cached?.body != null) return { body: cached.body, fromCache: true };
+    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
+      if (hops >= 3) throw new HttpError(res.status, url);
+      return this.get(new URL(res.headers.get("location")!, url).href, hops + 1);
+    }
     if (!res.ok) throw new HttpError(res.status, url);
     const body = await res.text();
     const row = { url, etag: res.headers.get("etag"), lastModified: res.headers.get("last-modified"), body, status: res.status, fetchedAt: new Date() };

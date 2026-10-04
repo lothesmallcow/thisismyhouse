@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { extractApplicationEmails } from "@/lib/core/extract";
 import { findSalaryText } from "@/lib/core/salary";
+import { guessFromUrl } from "@/lib/core/url-guess";
 
 function guessTitle(text: string): string {
   const first = text.split(/\n/).map((l) => l.trim()).find((l) => l.length > 3 && l.length < 90);
@@ -12,7 +13,15 @@ function guessTitle(text: string): string {
 export function ManualPrefill() {
   const [text, setText] = useState("");
   const [f, setF] = useState({ title: "", company: "", city: "", salary: "", email: "", url: "" });
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    if (k === "url") {
+      const g = guessFromUrl(v);
+      setF((old) => ({ ...old, url: v, title: old.title || g.title || "", company: old.company || g.company || "", city: old.city || g.city || "" }));
+      return;
+    }
+    setF({ ...f, [k]: v });
+  };
 
   function onText(v: string) {
     setText(v);
@@ -47,7 +56,7 @@ export function ManualPrefill() {
         <p className="text-[0.98rem] text-ink-soft">Incolla tutto il testo. Va bene anche se è lungo.</p>
         <textarea id="text" name="text" rows={8} value={text} onChange={(e) => onText(e.target.value)} />
       </div>
-      {input("url", "Link dell'annuncio (se ce l'hai)", undefined, "url")}
+      {input("url", "Indirizzo della pagina dell'annuncio (se ce l'hai)", "Puoi anche incollare solo questo: provo a leggere titolo e città.", "url")}
       {input("title", "Che lavoro è?")}
       {input("company", "Azienda")}
       {input("city", "Città")}

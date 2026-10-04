@@ -3,19 +3,22 @@
 
 import { and, asc, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import { pickCv } from "../core/cv-pick";
-import { checkSend, inSendWindow, scheduleSend, type Blocklist, type CheckResult, type SendHistoryItem } from "../core/guardrails";
+import { checkSend, effectiveDailyCap, inSendWindow, isStopped, scheduleSend, type Blocklist, type CheckResult, type SendHistoryItem } from "../core/guardrails";
 import { SOURCE_LABELS } from "../core/normalize";
+import { scamFlags } from "../core/scam-rules";
 import { merge } from "../core/templates";
+import { romeDateKey } from "../core/time";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { notifyAdmin, notifyUser } from "../pipeline/notify";
 import type { Transport } from "../mail/transport";
+import { env } from "../env";
 import { getProfile } from "./profile";
 import { getSettings } from "./settings";
 
 export type Application = typeof schema.applications.$inferSelect;
 
-const COMMITTED = ["queued", "sent", "replied", "interview", "rejected", "offer"] as const;
+const COMMITTED = ["queued", "sending", "sent", "replied", "interview", "rejected", "offer"] as const;
 
 export async function sendHistory(db: DB, excludeId?: number): Promise<SendHistoryItem[]> {
   const rows = await db
@@ -63,7 +66,15 @@ export async function evaluate(db: DB, app: Application, mode: "manual" | "autop
       recipient: app.toEmail ?? "",
       spontaneous: app.spontaneousCompanyId != null,
       level: job?.level ?? null,
-      scamFlags: job?.scamFlags ?? [],
+      // Recomputed now from the current ad and the actual recipient (the stored flags may predate
+      // an e-mail address added later by another source, by hand, or a spontaneous application).
+      scamFlags: scamFlags({
+        title: app.role ?? job?.title ?? "",
+        company: app.company,
+        description: job?.description ?? "",
+        applicationEmail: app.toEmail,
+        maxAnnualGross: job?.salaryMax ?? null,
+      }),
       attachmentBytes: cv?.size ?? null,
     },
     { mode, settings: settings.guardrails, history: await sendHistory(db, app.id), blocklist: await getBlocklist(db), now },
@@ -186,9 +197,10 @@ export async function approveApplication(db: DB, appId: number, now = new Date()
   return { ok: true, sendAt };
 }
 
-/** "Invia tutte (N)": approve every ready draft, best matches first. */
-export async function approveAll(db: DB, now = new Date(), rng: () => number = Math.random): Promise<{ queued: number; blocked: number }> {
-  const drafts = await listDrafts(db);
+/** "Invia tutte (N)": approve exactly the drafts she saw on the confirmation screen.
+ *  Drafts with a scam warning are never part of a bulk send: they need their own "Invia". */
+export async function approveAll(db: DB, now = new Date(), rng: () => number = Math.random, ids?: number[]): Promise<{ queued: number; blocked: number }> {
+  const drafts = (await bulkSendable(db)).filter((d) => !ids || ids.includes(d.app.id));
   let queued = 0;
   let blocked = 0;
   for (const d of drafts) {
@@ -197,6 +209,11 @@ export async function approveAll(db: DB, now = new Date(), rng: () => number = M
     else blocked++;
   }
   return { queued, blocked };
+}
+
+/** Drafts that can go in "Invia tutte": no blocker and no scam warning. */
+export async function bulkSendable(db: DB) {
+  return (await listDrafts(db)).filter((d) => d.app.warnings.length === 0);
 }
 
 /** "Annulla" during the undo window: back to "Da inviare". */
@@ -225,9 +242,9 @@ export async function updateDraft(db: DB, appId: number, patch: { subject?: stri
 }
 
 /** Kill switch: stop everything, and pull queued e-mails back to "Da inviare". */
-export async function setKillSwitch(db: DB, on: boolean): Promise<number> {
+export async function setKillSwitch(db: DB, on: boolean, by: "user" | "admin" = "user"): Promise<number> {
   const { updateGuardrails } = await import("./settings");
-  await updateGuardrails(db, { killSwitch: on });
+  await updateGuardrails(db, by === "admin" ? { adminKillSwitch: on } : { killSwitch: on });
   if (!on) return 0;
   const queued = await db.select({ id: schema.applications.id }).from(schema.applications).where(eq(schema.applications.status, "queued"));
   if (queued.length) {
@@ -255,7 +272,7 @@ export async function listMine(db: DB) {
     .select({ app: schema.applications, job: schema.jobs })
     .from(schema.applications)
     .leftJoin(schema.jobs, eq(schema.jobs.id, schema.applications.jobId))
-    .where(inArray(schema.applications.status, ["sent", "applied_site", "replied", "interview", "rejected", "offer", "failed"]))
+    .where(inArray(schema.applications.status, ["sending", "sent", "applied_site", "replied", "interview", "rejected", "offer", "failed"]))
     .orderBy(desc(sql`coalesce(${schema.applications.sentAt}, ${schema.applications.updatedAt}, ${schema.applications.createdAt})`));
 }
 
@@ -268,18 +285,39 @@ export interface QueueSummary {
 }
 
 /** Send every queued e-mail whose time has come. Re-checks every guardrail first. */
-export async function processQueue(db: DB, transport: Transport, now = new Date(), rng: () => number = Math.random): Promise<QueueSummary> {
-  const settings = await getSettings(db);
+export async function processQueue(
+  db: DB,
+  transport: Transport,
+  now = new Date(),
+  rng: () => number = Math.random,
+  opts: { allowSimulated?: boolean } = {},
+): Promise<QueueSummary> {
+  let settings = await getSettings(db);
   const out: QueueSummary = { sent: 0, failed: 0, held: 0 };
-  if (settings.guardrails.killSwitch) return out;
+  await recoverStaleSending(db, now);
+  // The "first week at 3 per day" starts with the first REAL send, whatever happened in demo mode.
+  if (transport.real && !settings.guardrails.goLiveAt) {
+    const { updateGuardrails } = await import("./settings");
+    await updateGuardrails(db, { goLiveAt: now });
+    settings = await getSettings(db);
+  }
+  if (isStopped(settings.guardrails)) return out;
+  // Real mode with real sending switched off: hold everything (never pretend to send).
+  const allowSimulated = opts.allowSimulated ?? env.demoMode;
+  if (!transport.real && !allowSimulated) return out;
   const due = await db
     .select()
     .from(schema.applications)
     .where(and(eq(schema.applications.status, "queued"), lte(schema.applications.sendAt, now)))
     .orderBy(asc(schema.applications.sendAt));
+  let sentThisRun = false;
   for (const app of due) {
-    if (!inSendWindow(now, settings.guardrails)) {
-      const sendAt = scheduleSend(now, settings.guardrails, [], rng);
+    const history = () => sendHistory(db, app.id).then((h) => h.map((x) => x.at).filter((d) => d.getTime() <= now.getTime() + 7 * 86400000));
+    // Outside the window, over the cap, or one already sent in this run: move it to the next free,
+    // properly spaced slot (never a burst at 08:30).
+    const overCap = (await sentTodayCount(db, now)) >= effectiveDailyCap(settings.guardrails, now);
+    if (!inSendWindow(now, settings.guardrails) || overCap || sentThisRun) {
+      const sendAt = scheduleSend(now, settings.guardrails, [...(await history()), ...(sentThisRun ? [now] : [])], rng, 0);
       await db.update(schema.applications).set({ sendAt }).where(eq(schema.applications.id, app.id));
       out.held++;
       continue;
@@ -290,6 +328,13 @@ export async function processQueue(db: DB, transport: Transport, now = new Date(
       out.held++;
       continue;
     }
+    // Atomic claim: only one runner can move it from "queued" to "sending" (no double sends).
+    const claimed = await db
+      .update(schema.applications)
+      .set({ status: "sending", updatedAt: now })
+      .where(and(eq(schema.applications.id, app.id), eq(schema.applications.status, "queued")))
+      .returning({ id: schema.applications.id });
+    if (claimed.length === 0) continue;
     const cv = app.cvId ? await db.query.cvs.findFirst({ where: eq(schema.cvs.id, app.cvId) }) : null;
     const tpl = app.templateId ? await db.query.templates.findFirst({ where: eq(schema.templates.id, app.templateId) }) : null;
     try {
@@ -317,6 +362,7 @@ export async function processQueue(db: DB, transport: Transport, now = new Date(
         at: now,
       });
       out.sent++;
+      sentThisRun = true;
     } catch (e) {
       const msg = e instanceof Error ? e.message.slice(0, 160) : "errore";
       await db.update(schema.applications).set({ status: "failed", lastError: msg, updatedAt: now }).where(eq(schema.applications.id, app.id));
@@ -336,7 +382,7 @@ export async function processQueue(db: DB, transport: Transport, now = new Date(
 /** Mode B: queue "Molto adatta" jobs with an application e-mail that pass every guardrail. */
 export async function runAutopilot(db: DB, now = new Date(), rng: () => number = Math.random): Promise<{ queued: number; held: number }> {
   const settings = await getSettings(db);
-  if (!settings.guardrails.autopilot || settings.guardrails.killSwitch) return { queued: 0, held: 0 };
+  if (!settings.guardrails.autopilot || isStopped(settings.guardrails)) return { queued: 0, held: 0 };
   const candidates = await db
     .select()
     .from(schema.jobs)
@@ -382,12 +428,23 @@ export async function saveCurated(db: DB, jobId: number, input: { subject: strin
   return "queued-for-approval";
 }
 
-export async function setStatus(db: DB, appId: number, status: Application["status"]): Promise<void> {
-  await db.update(schema.applications).set({ status, updatedAt: new Date() }).where(eq(schema.applications.id, appId));
+
+/** A row stuck in "sending" (crash or timeout after the claim) becomes "failed" and the admin is told. */
+export async function recoverStaleSending(db: DB, now = new Date(), staleMinutes = 10): Promise<number> {
+  const stale = await db
+    .update(schema.applications)
+    .set({ status: "failed", lastError: "Invio interrotto (processo fermato a metà): controllare se è partita", updatedAt: now })
+    .where(and(eq(schema.applications.status, "sending"), lte(schema.applications.updatedAt, new Date(now.getTime() - staleMinutes * 60000))))
+    .returning({ id: schema.applications.id, company: schema.applications.company });
+  for (const r of stale) await notifyAdmin(db, `Un invio a ${r.company ?? "un'azienda"} si è interrotto a metà: controlla nella casella se è partito.`, "/admin/registro");
+  return stale.length;
 }
 
+/** E-mails actually sent (or being sent) today, Rome time. Replies keep counting: the send happened. */
 export async function sentTodayCount(db: DB, now = new Date()): Promise<number> {
-  const { romeDateKey } = await import("../core/time");
-  const rows = await db.select({ at: schema.applications.sentAt }).from(schema.applications).where(eq(schema.applications.status, "sent"));
-  return rows.filter((r) => r.at && romeDateKey(r.at) === romeDateKey(now)).length;
+  const rows = await db
+    .select({ at: schema.applications.sentAt, status: schema.applications.status, updated: schema.applications.updatedAt })
+    .from(schema.applications)
+    .where(and(inArray(schema.applications.status, ["sending", "sent", "replied", "interview", "rejected", "offer"]), inArray(schema.applications.lane, ["email", "curated"])));
+  return rows.filter((r) => (r.status === "sending" && r.updated && romeDateKey(r.updated) === romeDateKey(now)) || (r.at && romeDateKey(r.at) === romeDateKey(now))).length;
 }

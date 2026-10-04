@@ -60,16 +60,30 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
             Regole di invio
           </Link>
         </Card>
-        <Card className={s.guardrails.killSwitch ? "border-rose-ink/40 bg-rose/50" : ""}>
+        <Card className={s.guardrails.adminKillSwitch || s.guardrails.killSwitch ? "border-rose-ink/40 bg-rose/50" : ""}>
           <p className="font-bold">Ferma tutti gli invii</p>
-          <p className="mt-1 text-ink-soft">Blocca subito ogni invio, anche quelli in coda (tornano in &ldquo;Da inviare&rdquo;).</p>
+          <p className="mt-1 text-ink-soft">Blocca subito ogni invio, anche quelli in coda (tornano in &ldquo;Da inviare&rdquo;). Lei non può togliere questo blocco.</p>
+          {s.guardrails.killSwitch && <p className="mt-2 font-bold text-rose-ink">Anche lei ha fermato gli invii dalla sua app.</p>}
           <form action={adminKillSwitchAction} className="mt-4">
-            <input type="hidden" name="on" value={s.guardrails.killSwitch ? "0" : "1"} />
-            <Button variant={s.guardrails.killSwitch ? "primary" : "danger"} wide>
-              <IconStop /> {s.guardrails.killSwitch ? "Riattiva gli invii" : "Ferma tutti gli invii"}
+            <input type="hidden" name="on" value={s.guardrails.adminKillSwitch ? "0" : "1"} />
+            <Button variant={s.guardrails.adminKillSwitch ? "primary" : "danger"} wide>
+              <IconStop /> {s.guardrails.adminKillSwitch ? "Togli il blocco dell'amministratore" : "Ferma tutti gli invii"}
             </Button>
           </form>
         </Card>
+      </div>
+
+      <SectionTitle>Backup</SectionTitle>
+      <div className="flex flex-wrap gap-3">
+        {[
+          ["jobs", "Offerte (CSV)"],
+          ["applications", "Candidature (CSV)"],
+          ["sendlog", "Registro invii (CSV)"],
+        ].map(([k, l]) => (
+          <a key={k} href={`/api/export/${k}`} download className="inline-flex min-h-[48px] items-center rounded-xl border-2 border-navy px-4 font-bold no-underline">
+            Scarica {l}
+          </a>
+        ))}
       </div>
 
       <SectionTitle>Avvisi per te</SectionTitle>

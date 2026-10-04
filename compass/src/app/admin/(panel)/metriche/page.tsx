@@ -26,7 +26,7 @@ export default async function MetrichePage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpi("Offerte trovate", String(m.jobsTotal))}
         {kpi("Candidature e-mail reali", String(m.emailSent), `${m.emailSimulated} simulate`)}
-        {kpi("Tasso di risposta", m.replyRate == null ? "-" : `${Math.round(m.replyRate * 100)}%`, `${m.replies} risposte, ${m.interviews} colloqui`)}
+        {kpi("Tasso di risposta (invii reali)", m.replyRate == null ? "-" : `${Math.round(m.replyRate * 100)}%`, `${m.replies} risposte, ${m.interviews} colloqui${m.simulatedReplyRate != null ? ` · in prova: ${Math.round(m.simulatedReplyRate * 100)}%` : ""}`)}
         {kpi("Dalla pubblicazione alla candidatura", h(m.medianHoursPostingToApplication), `mediana · da quando l'ha trovata: ${h(m.medianHoursFirstSeenToApplication)}`)}
       </div>
 

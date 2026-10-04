@@ -11,6 +11,7 @@ const ROUTES: [RegExp, string, string][] = [
   [/boards-api\.greenhouse\.io/, "greenhouse-board.json", "application/json"],
   [/api\.lever\.co\/v0\/postings/, "lever-postings.json", "application/json"],
   [/robots\.txt$/, "robots.txt", "text/plain"],
+  [/nominatim\.openstreetmap\.org\/search/, "nominatim.json", "application/json"],
   [/careers\.esempio-demo\.example\/lavora-con-noi\/?$/, "site-careers-list.html", "text/html"],
   [/careers\.esempio-demo\.example\/lavora-con-noi\/.+/, "site-job-detail.html", "text/html"],
 ];

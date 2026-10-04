@@ -13,6 +13,7 @@ import { confirmReplyAction, dismissReplyAction } from "../actions";
 export const metadata = { title: "Le mie candidature" };
 
 const STATUS_WORDS: Partial<Record<ApplicationStatus, { text: string; tone: string }>> = {
+  sending: { text: "Sta partendo adesso", tone: "bg-navy-soft text-navy" },
   sent: { text: "Inviata, in attesa di risposta", tone: "bg-navy-soft text-navy" },
   applied_site: { text: "Candidata sul sito", tone: "bg-navy-soft text-navy" },
   replied: { text: "Ti hanno risposto", tone: "bg-amber text-amber-ink" },

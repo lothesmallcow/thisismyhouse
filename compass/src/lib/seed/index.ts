@@ -58,8 +58,10 @@ export async function seedDemo(db: DB, now = new Date(), opts: { onboarded?: boo
   await db.insert(schema.approvedSites).values({
     name: "Esempio Demo Spa (sito carriere)",
     startUrl: "https://careers.esempio-demo.example/lavora-con-noi",
-    termsSummary: "Sito di prova per la modalità demo. robots.txt consente /lavora-con-noi/.",
+    termsSummary: "Sito di prova per la modalità demo (non esiste davvero).",
+    robotsSummary: "User-agent: * · Disallow: /area-riservata/ · Allow: /",
     approved: true,
+    approvedAt: now,
   });
   await db.insert(schema.spontaneousCompanies).values(DEMO_SPONTANEOUS.map((c) => ({ ...c, status: "approved" as const })));
   await db.insert(schema.blocklist).values([

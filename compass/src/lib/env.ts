@@ -11,7 +11,9 @@ export const env = {
     return process.env.DATABASE_AUTH_TOKEN || undefined;
   },
   get sessionSecret(): string {
-    return process.env.SESSION_SECRET || "dev-only-insecure-secret";
+    const s = process.env.SESSION_SECRET;
+    if (!s && !env.demoMode) throw new Error("SESSION_SECRET is required when DEMO_MODE=false");
+    return s || "dev-only-insecure-secret";
   },
   get cronSecret(): string | undefined {
     return process.env.CRON_SECRET || undefined;
@@ -38,6 +40,9 @@ export const env = {
     get configured() {
       return Boolean(process.env.MAILBOX_USER && process.env.MAILBOX_APP_PASSWORD);
     },
+  },
+  get adminAlertEmail(): string {
+    return process.env.ADMIN_ALERT_EMAIL || "";
   },
   get digestTo(): string {
     return process.env.DIGEST_TO || "";

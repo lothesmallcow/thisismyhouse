@@ -22,7 +22,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <div className="flex flex-wrap gap-5">
             <Link href="/abbonamento">Prezzi</Link>
             <Link href="/entra">Entra</Link>
-            <Link href="/admin/entra">Area amministratore</Link>
           </div>
         </div>
       </footer>

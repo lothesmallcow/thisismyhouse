@@ -12,7 +12,8 @@ export interface Metrics {
   emailSent: number;
   emailSimulated: number;
   replies: number;
-  replyRate: number | null; // replies / e-mail applications actually sent
+  replyRate: number | null; // replies / REAL e-mail applications (demo sends excluded)
+  simulatedReplyRate: number | null; // same, demo mode only
   medianHoursPostingToApplication: number | null;
   medianHoursFirstSeenToApplication: number | null;
   interviews: number;
@@ -53,8 +54,9 @@ export async function computeMetrics(db: DB): Promise<Metrics> {
     applicationsByLane: [...lanes].map(([lane, total]) => ({ lane, total })),
     emailSent: emailReal.length,
     emailSimulated: emailDone.length - emailReal.length,
-    replies: replied.length,
-    replyRate: emailDone.length ? replied.length / emailDone.length : null,
+    replies: replied.filter((a) => !a.simulated).length,
+    replyRate: emailReal.length ? emailReal.filter((a) => a.replyAt).length / emailReal.length : null,
+    simulatedReplyRate: emailDone.length > emailReal.length ? replied.filter((a) => a.simulated).length / (emailDone.length - emailReal.length) : null,
     medianHoursPostingToApplication: median(done.filter((a) => a.postedAt).map((a) => hrs(a.postedAt!, a.sentAt!))),
     medianHoursFirstSeenToApplication: median(done.filter((a) => a.firstSeenAt).map((a) => hrs(a.firstSeenAt!, a.sentAt!))),
     interviews: apps.filter((a) => a.status === "interview" || a.status === "offer").length,

@@ -90,3 +90,20 @@ export function daysAgoLabel(d: Date, now = new Date()): string {
   if (days < 31) return `${Math.floor(days / 7)} settimane fa`;
   return "più di un mese fa";
 }
+
+/** Easter Sunday (Gregorian, anonymous algorithm). */
+function easter(year: number): { month: number; day: number } {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4;
+  const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  return { month: Math.floor((h + l - 7 * m + 114) / 31), day: ((h + l - 7 * m + 114) % 31) + 1 };
+}
+
+/** Italian national public holidays (no sends on these days). Local patron saints are not included. */
+export function isItalianHoliday(p: { year: number; month: number; day: number }): boolean {
+  const fixed = ["1-1", "1-6", "4-25", "5-1", "6-2", "8-15", "11-1", "12-8", "12-25", "12-26"];
+  if (fixed.includes(`${p.month}-${p.day}`)) return true;
+  const e = easter(p.year);
+  const monday = new Date(Date.UTC(p.year, e.month - 1, e.day + 1));
+  return monday.getUTCMonth() + 1 === p.month && monday.getUTCDate() === p.day;
+}

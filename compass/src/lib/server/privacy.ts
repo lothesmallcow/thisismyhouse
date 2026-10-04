@@ -1,23 +1,28 @@
-// "Cancella tutti i miei dati": one click (plus a confirmation) removes everything about her.
-// Accounts stay so she can still sign in; the profile is reset to empty.
-import { eq } from "drizzle-orm";
+// "Cancella tutti i miei dati": one click (plus a confirmation) removes everything about her,
+// in one transaction. Kept on purpose: the two accounts (so she can sign in again), the admin's
+// own lists (company watchlist, W2 sites, spontaneous-company list, blocklist, settings) and the
+// list of already-processed Message-IDs (so the next run does not re-import the same e-mails).
+import { DEFAULT_TEMPLATES } from "../core/templates";
 import type { DB } from "../db";
 import { schema } from "../db";
 
 export async function deleteAllMyData(db: DB): Promise<void> {
-  await db.delete(schema.replies);
-  await db.delete(schema.sendLog);
-  await db.delete(schema.applications);
-  await db.delete(schema.cvs);
-  await db.delete(schema.jobSources);
-  await db.delete(schema.jobs);
-  await db.delete(schema.rankAdjustments);
-  await db.delete(schema.processedMessages);
-  await db.delete(schema.outbox);
-  await db.delete(schema.demoInbox);
-  await db.delete(schema.notifications);
-  await db.delete(schema.httpCache);
-  await db.delete(schema.spontaneousCompanies);
-  await db.delete(schema.profile).where(eq(schema.profile.id, 1));
-  await db.insert(schema.profile).values({ id: 1 });
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.replies);
+    await tx.delete(schema.sendLog);
+    await tx.delete(schema.applications);
+    await tx.delete(schema.cvs);
+    await tx.delete(schema.jobSources);
+    await tx.delete(schema.jobs);
+    await tx.delete(schema.rankAdjustments);
+    await tx.delete(schema.outbox);
+    await tx.delete(schema.demoInbox);
+    await tx.delete(schema.notifications);
+    await tx.delete(schema.httpCache);
+    // Letter templates may contain her name or phone after editing: back to the defaults.
+    await tx.delete(schema.templates);
+    await tx.insert(schema.templates).values(DEFAULT_TEMPLATES.map((t, i) => ({ ...t, isDefault: i === 0 || t.kind === "spontaneous" })));
+    await tx.delete(schema.profile);
+    await tx.insert(schema.profile).values({ id: 1 });
+  });
 }

@@ -29,7 +29,7 @@ export default async function PostaPage({ searchParams }: { searchParams: Promis
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <p className="font-bold">Invia subito la coda ({queued.length})</p>
-              <p className="mt-1 text-ink-soft">Salta l&apos;attesa: le candidature in coda partono adesso (fuori orario, l&apos;invio simulato viene datato alle 10:00 del prossimo giorno feriale).</p>
+              <p className="mt-1 text-ink-soft">Salta l&apos;attesa: un orologio simulato avanza fino all&apos;orario di ogni invio, quindi le e-mail restano distanziate e dentro la finestra lun-ven 8:30-18 (le date nel registro sono quelle simulate).</p>
               <form action={flushQueueDemoAction} className="mt-4">
                 <Button variant="secondary" disabled={queued.length === 0}>
                   Invia la coda adesso

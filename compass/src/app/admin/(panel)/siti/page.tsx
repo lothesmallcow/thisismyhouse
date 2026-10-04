@@ -1,5 +1,6 @@
 import { Flash } from "@/components/flash";
 import { Button, Card, Field, Notice, SectionTitle } from "@/components/ui";
+import { formatDate } from "@/lib/core/time";
 import { getDb, schema } from "@/lib/db";
 import { addSiteAction, approveSiteAction, deleteSiteAction } from "../../actions";
 
@@ -18,14 +19,17 @@ export default async function SitiPage({ searchParams }: { searchParams: Promise
           <Card key={r.id}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="font-bold">{r.name}</p>
-              <span className={`rounded-full px-3 py-1 font-bold ${r.approved ? "bg-sage text-sage-ink" : "bg-amber text-amber-ink"}`}>{r.approved ? "Approvato" : "Da approvare"}</span>
+              <span className={`rounded-full px-3 py-1 font-bold ${r.approved ? "bg-sage text-sage-ink" : "bg-amber text-amber-ink"}`}>{r.approved ? `Approvato${r.approvedAt ? " il " + formatDate(r.approvedAt) : ""}` : "Da approvare"}</span>
             </div>
             <p className="break-all text-ink-soft">{r.startUrl}</p>
             <form action={approveSiteAction} className="mt-4 space-y-3">
               <input type="hidden" name="id" value={r.id} />
               <input type="hidden" name="approved" value={r.approved ? "0" : "1"} />
-              <Field label="Riassunto di termini d'uso e robots.txt" htmlFor={`terms-${r.id}`}>
+              <Field label="Riassunto dei termini d'uso" htmlFor={`terms-${r.id}`}>
                 <textarea id={`terms-${r.id}`} name="terms" rows={3} defaultValue={r.termsSummary} />
+              </Field>
+              <Field label="Riassunto di robots.txt (percorsi consentiti / vietati)" htmlFor={`robots-${r.id}`}>
+                <textarea id={`robots-${r.id}`} name="robots" rows={2} defaultValue={r.robotsSummary} />
               </Field>
               <div className="flex flex-wrap gap-3">
                 <Button variant={r.approved ? "secondary" : "primary"}>{r.approved ? "Revoca l'approvazione" : "Ho controllato: approva"}</Button>

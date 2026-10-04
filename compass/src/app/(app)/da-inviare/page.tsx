@@ -23,13 +23,27 @@ export default async function DaInviarePage({ searchParams }: { searchParams: Pr
   const sentSpont = await db.select({ c: schema.applications.spontaneousCompanyId, at: schema.applications.sentAt }).from(schema.applications);
   const recent = new Set(sentSpont.filter((s) => s.c && s.at && nowMs() - s.at.getTime() < 182 * 86400000).map((s) => s.c));
   const openSpont = new Set(drafts.filter((d) => d.app.spontaneousCompanyId).map((d) => d.app.spontaneousCompanyId));
-  const sendable = drafts.filter((d) => !d.app.warnings.some((w) => isBlocker(w.code)));
+  const sendable = drafts.filter((d) => d.app.warnings.length === 0);
 
   return (
     <>
       <Flash code={sp.msg} />
       <PageHeader title="Da inviare" help="Qui ci sono le candidature pronte da mandare via e-mail. Leggile, poi premi Invia oppure Salta." />
 
+      {shell.sendingPaused && (
+        <div className="mb-6">
+          <Notice tone="info" title="Gli invii non sono ancora attivi">
+            Puoi preparare e approvare le candidature: partiranno quando chi ti aiuta con Compass avrà attivato l&apos;invio.
+          </Notice>
+        </div>
+      )}
+      {shell.adminStop && (
+        <div className="mb-6">
+          <Notice tone="warn" title="Gli invii sono in pausa">
+            Li ha fermati chi ti aiuta con Compass. Nessuna candidatura partirà finché non li riattiva.
+          </Notice>
+        </div>
+      )}
       {shell.killSwitch && (
         <div className="mb-6">
           <Notice tone="warn" title="Gli invii sono fermi">
@@ -70,7 +84,7 @@ export default async function DaInviarePage({ searchParams }: { searchParams: Pr
         <Empty title="Nessuna candidatura da inviare">Quando un&apos;offerta accetta candidature via e-mail, apri l&apos;offerta e premi &ldquo;Prepara la candidatura&rdquo;.</Empty>
       ) : (
         <>
-          {sendable.length > 1 && !shell.killSwitch && (
+          {sendable.length > 1 && !shell.killSwitch && !shell.adminStop && (
             <LinkButton href="/da-inviare/tutte" wide className="mb-5">
               <IconSend /> Invia tutte ({sendable.length})
             </LinkButton>
@@ -112,7 +126,7 @@ export default async function DaInviarePage({ searchParams }: { searchParams: Pr
                   ))}
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    {blockers.length === 0 && !shell.killSwitch ? (
+                    {blockers.length === 0 && !shell.killSwitch && !shell.adminStop ? (
                       <LinkButton href={`/da-inviare/${app.id}/conferma`}>
                         <IconSend /> Invia
                       </LinkButton>

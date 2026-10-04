@@ -3,7 +3,7 @@
 import type { DB } from "../db";
 import { schema } from "../db";
 import { env } from "../env";
-import { getTransport } from "../mail/transport";
+import { getTransport, OutboxTransport, SmtpTransport } from "../mail/transport";
 import { demoFetch } from "../sources/demo-fetch";
 import { DemoMailbox } from "../sources/mail/demo";
 import { ImapMailbox } from "../sources/mail/imap";
@@ -17,7 +17,7 @@ import { runDiscover } from "./discover";
 import { runIngest } from "./ingest";
 import { scanMailbox } from "./mailbox-scan";
 import { runWithHealth } from "./health";
-import { eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 
 export const JOB_NAMES = ["ingest", "discover", "queue", "replies", "digest"] as const;
 export type JobName = (typeof JOB_NAMES)[number];
@@ -31,6 +31,7 @@ export async function runJob(db: DB, name: JobName, now = new Date()): Promise<u
   const [run] = await db.insert(schema.jobRuns).values({ job: name, startedAt: now }).returning();
   try {
     const result = await dispatch(db, name, now);
+    await emailNewAdminAlerts(db, run.startedAt);
     await db.update(schema.jobRuns).set({ finishedAt: new Date(), ok: true, summary: JSON.stringify(result).slice(0, 500) }).where(eq(schema.jobRuns.id, run.id));
     return result;
   } catch (e) {
@@ -69,9 +70,29 @@ async function dispatch(db: DB, name: JobName, now: Date): Promise<unknown> {
       return out;
     }
     case "digest": {
-      const settings = await getSettings(db);
+      // The morning e-mail is part of her interface: in real mode it goes out as soon as the mailbox
+      // is configured, independently of the switch for job applications.
       const profile = await getProfile(db);
-      return runDigest(db, getTransport(db, settings.realSending, profile.name), now);
+      const transport = !env.demoMode && env.mailbox.configured ? new SmtpTransport(profile.name) : new OutboxTransport(db);
+      return runDigest(db, transport, now);
     }
   }
+}
+
+/** New admin notifications from this run are also e-mailed (one e-mail per run, demo: outbox). */
+async function emailNewAdminAlerts(db: DB, since: Date): Promise<void> {
+  const to = env.adminAlertEmail || (env.demoMode ? "admin@example.com" : "");
+  if (!to) return;
+  const rows = await db
+    .select()
+    .from(schema.notifications)
+    .where(and(eq(schema.notifications.audience, "admin"), gte(schema.notifications.createdAt, since)));
+  if (rows.length === 0) return;
+  const transport = !env.demoMode && env.mailbox.configured ? new SmtpTransport("Compass") : new OutboxTransport(db);
+  await transport.send({
+    kind: "admin-alert",
+    to,
+    subject: `Compass: ${rows.length === 1 ? "un avviso" : `${rows.length} avvisi`} sulle fonti`,
+    text: rows.map((r) => `- ${r.text}`).join("\n") + `\n\nDettagli: ${env.appUrl}/admin/fonti`,
+  });
 }

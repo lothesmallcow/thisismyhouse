@@ -5,6 +5,7 @@ import { and, desc, eq, gte, inArray, isNull, lte, ne, or, sql, type SQL } from 
 import { findDuplicate, dedupeKey, type DedupeCandidate } from "../core/dedupe";
 import { normalizeJob, type RawJob } from "../core/normalize";
 import { rankJob, type Level, type RankAdjustment } from "../core/rank";
+import { scamFlags } from "../core/scam-rules";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { getProfile, homeOf, toRankProfile } from "./profile";
@@ -87,6 +88,14 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), cache?
       patch.applicationEmail = n.applicationEmail;
       patch.applicationEmailEvidence = n.applicationEmailEvidence;
     }
+    // Scam rules see the merged ad (new text, new e-mail address).
+    patch.scamFlags = scamFlags({
+      title: existing.title,
+      company: patch.company ?? existing.company,
+      description: [existing.description, n.description].filter(Boolean).join("\n"),
+      applicationEmail: patch.applicationEmail ?? existing.applicationEmail,
+      maxAnnualGross: patch.salaryMax ?? existing.salaryMax,
+    });
     if (!existing.postedAt && n.postedAt) patch.postedAt = n.postedAt;
     await db.update(schema.jobs).set(patch).where(eq(schema.jobs.id, dupId));
     await addSource(db, dupId, raw, n.url, now);
@@ -291,4 +300,13 @@ export async function setAdjustmentActive(db: DB, adjId: number, active: boolean
 export async function sectorsInUse(db: DB): Promise<string[]> {
   const rows = await db.selectDistinct({ s: schema.jobs.sector }).from(schema.jobs).where(sql`${schema.jobs.sector} is not null`);
   return rows.map((r) => r.s!).sort();
+}
+
+/** Set the application e-mail by hand and refresh the scam flags and ranking. */
+export async function setApplicationEmail(db: DB, jobId: number, email: string, evidence: string): Promise<void> {
+  const job = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, jobId) });
+  if (!job) return;
+  const flags = scamFlags({ title: job.title, company: job.company, description: job.description, applicationEmail: email, maxAnnualGross: job.salaryMax });
+  await db.update(schema.jobs).set({ applicationEmail: email, applicationEmailEvidence: evidence, scamFlags: flags }).where(eq(schema.jobs.id, jobId));
+  await rerankJob(db, jobId);
 }

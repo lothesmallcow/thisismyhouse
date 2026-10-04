@@ -7,8 +7,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isValidEmail } from "@/lib/core/extract";
-import { HARD_MAX_PER_DAY, inSendWindow } from "@/lib/core/guardrails";
-import { romeParts, romeToUtc } from "@/lib/core/time";
+import { HARD_MAX_PER_DAY } from "@/lib/core/guardrails";
 import { OutboxTransport } from "@/lib/mail/transport";
 import { getDb, schema } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -32,8 +31,8 @@ function back(path: string, msg = "salvato"): never {
 }
 
 export async function adminSignInAction(f: FormData) {
-  const ok = await signIn(str(f, "email"), str(f, "password"), "admin");
-  redirect(ok ? "/admin" : "/admin/entra?errore=1");
+  const r = await signIn(str(f, "email"), str(f, "password"), "admin");
+  redirect(r === "ok" ? "/admin" : r === "locked" ? "/admin/entra?errore=attesa" : "/admin/entra?errore=1");
 }
 
 export async function adminSignOutAction() {
@@ -62,18 +61,14 @@ export async function saveGuardrailsAction(f: FormData) {
 
 export async function realSendingAction(f: FormData) {
   await requireAdmin();
-  const db = getDb();
-  const on = str(f, "on") === "1";
-  const s = await getSettings(db);
-  await setSetting(db, "realSending", on);
-  // First switch-on starts the "first week" (3 per day).
-  if (on && !s.guardrails.goLiveAt) await updateGuardrails(db, { goLiveAt: new Date() });
+  // The "first week at 3 per day" starts with the first real send (see processQueue).
+  await setSetting(getDb(), "realSending", str(f, "on") === "1");
   back("/admin/invii");
 }
 
 export async function adminKillSwitchAction(f: FormData) {
   await requireAdmin();
-  await setKillSwitch(getDb(), str(f, "on") === "1");
+  await setKillSwitch(getDb(), str(f, "on") === "1", "admin");
   back("/admin");
 }
 
@@ -85,6 +80,7 @@ export async function saveSourcesAction(f: FormData) {
   await setSetting(db, "adzunaEnabled", str(f, "adzunaEnabled") === "1");
   await setSetting(db, "joobleEnabled", str(f, "joobleEnabled") === "1");
   await setSetting(db, "digestEnabled", str(f, "digestEnabled") === "1");
+  await setSetting(db, "geocoderEnabled", str(f, "geocoderEnabled") === "1");
   back("/admin/fonti");
 }
 
@@ -132,9 +128,10 @@ export async function approveSiteAction(f: FormData) {
   await requireAdmin();
   const approved = str(f, "approved") === "1";
   if (approved && !str(f, "terms")) back("/admin/siti", "serve-riassunto");
+  if (approved && !str(f, "robots")) back("/admin/siti", "serve-riassunto");
   await getDb()
     .update(schema.approvedSites)
-    .set({ approved, termsSummary: str(f, "terms") || undefined })
+    .set({ approved, approvedAt: approved ? new Date() : null, termsSummary: str(f, "terms") || undefined, robotsSummary: str(f, "robots") || undefined })
     .where(eq(schema.approvedSites.id, num(f, "id")));
   back("/admin/siti");
 }
@@ -231,28 +228,18 @@ export async function simulateReplyAction(f: FormData) {
   back("/admin/posta", "risposta-simulata");
 }
 
-/** Demo only: make every queued e-mail due now and run the queue (skips the waiting). */
+/** Demo only: skip the waiting. Simulated clock jumps to each scheduled time and runs the queue,
+ *  so the e-mails still go out one at a time, spaced, inside the send window. */
 export async function flushQueueDemoAction() {
   await requireAdmin();
   if (!env.demoMode) back("/admin/posta", "errore");
   const db = getDb();
-  const settings = await getSettings(db);
-  const now = new Date();
-  // Outside the send window the queue would (correctly) wait; the demo pretends it is 10:00 on a weekday.
-  const at = inSendWindow(now, settings.guardrails) ? now : nextWeekdayTen(now);
-  await db.update(schema.applications).set({ sendAt: new Date(at.getTime() - 1000) }).where(eq(schema.applications.status, "queued"));
-  await processQueue(db, new OutboxTransport(db), at);
-  back("/admin/posta", "coda-svuotata");
-}
-
-function nextWeekdayTen(now: Date): Date {
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(now.getTime() + i * 86400000);
-    const p = romeParts(d);
-    if (p.weekday <= 5) {
-      const t = romeToUtc(p.year, p.month, p.day, 10, 0);
-      if (t > now || i > 0) return t;
-    }
+  let at = new Date();
+  for (let i = 0; i < 40; i++) {
+    const next = await db.query.applications.findFirst({ where: eq(schema.applications.status, "queued"), orderBy: (a, { asc }) => [asc(a.sendAt)] });
+    if (!next?.sendAt) break;
+    at = new Date(Math.max(at.getTime(), next.sendAt.getTime()) + 1000);
+    await processQueue(db, new OutboxTransport(db), at, Math.random, { allowSimulated: true });
   }
-  return now;
+  back("/admin/posta", "coda-svuotata");
 }

@@ -5,6 +5,9 @@
 import type { Contract, Hours, LanguageReq, Remote } from "./extract";
 import { normalizeCompany } from "./dedupe";
 import { fold, keyTokens } from "./text";
+import { RANK_WEIGHTS as W, THRESHOLDS } from "./rank-config";
+
+export { THRESHOLDS };
 
 export type Level = "molto" | "adatta" | "poco";
 
@@ -65,7 +68,6 @@ export interface RankResult {
   factors: Factor[]; // full breakdown for admin
 }
 
-export const THRESHOLDS = { molto: 45, adatta: 15 };
 
 /** Words too generic to count as "similar role" on their own. */
 const GENERIC_ROLE_WORDS = new Set(["addett", "operat", "operator", "assistent", "responsabil", "collaborator", "junior", "senior", "stagist", "tirocinant", "specialist", "figura", "risorsa"]);
@@ -91,13 +93,13 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
   const wanted = [...profile.roles, ...profile.synonyms].filter(Boolean);
   if (wanted.length > 0) {
     const exact = wanted.find((r) => containsPhrase(titleT, r));
-    if (exact) f.push({ key: "role", points: 40, reason: `È il lavoro che cerchi (${exact.toLowerCase()})` });
+    if (exact) f.push({ key: "role", points: W.roleExact, reason: `È il lavoro che cerchi (${exact.toLowerCase()})` });
     else {
       const words = new Set(wanted.flatMap((r) => keyTokens(r)).filter((w) => w.length > 3 && !GENERIC_ROLE_WORDS.has(w)));
       const overlap = titleT.filter((w) => words.has(w)).length;
-      if (overlap > 0) f.push({ key: "role", points: 20, reason: "Simile al lavoro che cerchi" });
-      else if (wanted.some((r) => containsPhrase(descT, r))) f.push({ key: "role", points: 8, reason: "Il tuo lavoro è citato nell'annuncio" });
-      else f.push({ key: "role", points: -10, reason: "Non è proprio il lavoro che cerchi" });
+      if (overlap > 0) f.push({ key: "role", points: W.roleSimilar, reason: "Simile al lavoro che cerchi" });
+      else if (wanted.some((r) => containsPhrase(descT, r))) f.push({ key: "role", points: W.roleInDescription, reason: "Il tuo lavoro è citato nell'annuncio" });
+      else f.push({ key: "role", points: W.roleMismatch, reason: "Non è proprio il lavoro che cerchi" });
     }
   }
 
@@ -106,13 +108,13 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     profile.maxKm,
     ...adjustments.filter((a) => a.kind === "distance").map((a) => Number(a.value)).filter((n) => n > 0),
   );
-  if (job.remote === "remote" && profile.remoteOk) f.push({ key: "distance", points: 18, reason: "Si lavora da casa" });
+  if (job.remote === "remote" && profile.remoteOk) f.push({ key: "distance", points: W.remoteAccepted, reason: "Si lavora da casa" });
   else if (job.distanceKm != null) {
     const km = Math.round(job.distanceKm);
-    if (km <= Math.max(3, kmCap / 2)) f.push({ key: "distance", points: 20, reason: km <= 1 ? "Vicinissima a casa" : `A ${km} km da casa` });
-    else if (km <= kmCap) f.push({ key: "distance", points: 10, reason: `A ${km} km da casa` });
-    else f.push({ key: "distance", points: -25, reason: `Lontana: ${km} km da casa` });
-    if (job.remote === "hybrid" && profile.remoteOk) f.push({ key: "remote", points: 5, reason: "In parte da casa" });
+    if (km <= Math.max(3, kmCap / 2)) f.push({ key: "distance", points: W.distanceNear, reason: km <= 1 ? "Vicinissima a casa" : `A ${km} km da casa` });
+    else if (km <= kmCap) f.push({ key: "distance", points: W.distanceOk, reason: `A ${km} km da casa` });
+    else f.push({ key: "distance", points: W.distanceFar, reason: `Lontana: ${km} km da casa` });
+    if (job.remote === "hybrid" && profile.remoteOk) f.push({ key: "remote", points: W.hybridBonus, reason: "In parte da casa" });
   }
 
   // 3. Salary vs floor (unknown = neutral)
@@ -121,27 +123,27 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     ...adjustments.filter((a) => a.kind === "salary").map((a) => Number(a.value)).filter((n) => n > 0),
   );
   if (floor > 0 && job.maxAnnualGross != null) {
-    if (job.maxAnnualGross >= floor) f.push({ key: "salary", points: 10, reason: "Stipendio in linea con quello che chiedi" });
-    else f.push({ key: "salary", points: -20, reason: "Stipendio sotto il tuo minimo" });
+    if (job.maxAnnualGross >= floor) f.push({ key: "salary", points: W.salaryAtLeastFloor, reason: "Stipendio in linea con quello che chiedi" });
+    else f.push({ key: "salary", points: W.salaryBelowFloor, reason: "Stipendio sotto il tuo minimo" });
   }
 
   // 4. Hours
   if (profile.hours !== "any" && job.hours !== "unknown") {
-    if (job.hours === profile.hours) f.push({ key: "hours", points: 10, reason: job.hours === "part" ? "Part-time come vuoi tu" : "Tempo pieno come vuoi tu" });
-    else f.push({ key: "hours", points: -15, reason: job.hours === "part" ? "È part-time" : "È a tempo pieno" });
+    if (job.hours === profile.hours) f.push({ key: "hours", points: W.hoursMatch, reason: job.hours === "part" ? "Part-time come vuoi tu" : "Tempo pieno come vuoi tu" });
+    else f.push({ key: "hours", points: W.hoursMismatch, reason: job.hours === "part" ? "È part-time" : "È a tempo pieno" });
   }
 
   // 5. Contract
   if (profile.contracts.length > 0 && job.contract !== "unknown") {
-    if (profile.contracts.includes(job.contract)) f.push({ key: "contract", points: job.contract === "indeterminato" ? 8 : 5, reason: job.contract === "indeterminato" ? "Contratto a tempo indeterminato" : "Contratto che accetti" });
-    else f.push({ key: "contract", points: -15, reason: "Tipo di contratto che non cerchi" });
+    if (profile.contracts.includes(job.contract)) f.push({ key: "contract", points: job.contract === "indeterminato" ? W.contractPermanent : W.contractAccepted, reason: job.contract === "indeterminato" ? "Contratto a tempo indeterminato" : "Contratto che accetti" });
+    else f.push({ key: "contract", points: W.contractNotAccepted, reason: "Tipo di contratto che non cerchi" });
   }
 
   // 6. Recency
   if (job.postedAt) {
     const days = (now.getTime() - job.postedAt.getTime()) / 86400000;
-    if (days <= 3) f.push({ key: "recency", points: 8, reason: "Pubblicata da poco" });
-    else if (days > 30) f.push({ key: "recency", points: -10, reason: "Annuncio vecchio di oltre un mese" });
+    if (days <= W.recentDays) f.push({ key: "recency", points: W.recent, reason: "Pubblicata da poco" });
+    else if (days > W.oldDays) f.push({ key: "recency", points: W.old, reason: "Annuncio vecchio di oltre un mese" });
   }
 
   // 7. Languages
@@ -149,30 +151,30 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     const mine = profile.languages.find((l) => l.language === req.language);
     const need = LANGUAGE_RANK[req.level];
     const have = mine ? LANGUAGE_RANK[mine.level] : -1;
-    if (have >= need) f.push({ key: `lang-${req.language}`, points: 3, reason: `Chiede ${req.language}, che conosci` });
+    if (have >= need) f.push({ key: `lang-${req.language}`, points: W.languageKnown, reason: `Chiede ${req.language}, che conosci` });
     else if (req.level === "base") continue;
-    else f.push({ key: `lang-${req.language}`, points: req.level === "fluente" ? -15 : -8, reason: `Chiede ${req.language}${req.level === "fluente" ? " fluente" : ""}` });
+    else f.push({ key: `lang-${req.language}`, points: req.level === "fluente" ? W.languageMissingFluent : W.languageMissing, reason: `Chiede ${req.language}${req.level === "fluente" ? " fluente" : ""}` });
   }
 
   // 8. Things to avoid
   const avoidKw = [...profile.avoidKeywords, ...adjustments.filter((a) => a.kind === "keyword").map((a) => a.value)].filter(Boolean);
   const hitKw = avoidKw.find((k) => titleAndDesc.includes(fold(k)));
-  if (hitKw) f.push({ key: "avoid-keyword", points: -40, reason: `Contiene "${hitKw}", che vuoi evitare` });
+  if (hitKw) f.push({ key: "avoid-keyword", points: W.avoidKeyword, reason: `Contiene "${hitKw}", che vuoi evitare` });
 
   const avoidRoleWords = adjustments.filter((a) => a.kind === "role").map((a) => a.value);
   const hitRole = avoidRoleWords.find((w) => containsPhrase(titleT, w));
-  if (hitRole) f.push({ key: "avoid-role", points: -30, reason: "Ruolo che hai scartato prima" });
+  if (hitRole) f.push({ key: "avoid-role", points: W.avoidRoleWord, reason: "Ruolo che hai scartato prima" });
 
   const comp = normalizeCompany(job.company);
   const avoidCo = [...profile.avoidCompanies, ...adjustments.filter((a) => a.kind === "company").map((a) => a.value)];
-  if (comp && avoidCo.some((c) => normalizeCompany(c) === comp)) f.push({ key: "avoid-company", points: -100, reason: "Azienda che vuoi evitare" });
+  if (comp && avoidCo.some((c) => normalizeCompany(c) === comp)) f.push({ key: "avoid-company", points: W.avoidCompany, reason: "Azienda che vuoi evitare" });
 
   if (job.sector && profile.avoidSectors.some((s) => fold(s) === fold(job.sector!))) {
-    f.push({ key: "avoid-sector", points: -30, reason: "Settore che vuoi evitare" });
+    f.push({ key: "avoid-sector", points: W.avoidSector, reason: "Settore che vuoi evitare" });
   }
 
   // 9. Scam
-  if (job.scamFlagCount > 0) f.push({ key: "scam", points: -40, reason: "Attenzione: potrebbe essere una truffa" });
+  if (job.scamFlagCount > 0) f.push({ key: "scam", points: W.scam, reason: "Attenzione: potrebbe essere una truffa" });
 
   const score = f.reduce((s, x) => s + x.points, 0);
   const level: Level = score >= THRESHOLDS.molto ? "molto" : score >= THRESHOLDS.adatta ? "adatta" : "poco";

@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { readNotificationsAction } from "./actions";
 import { BottomNav } from "@/components/bottom-nav";
 import { Brand } from "@/components/brand";
 import { IconClock } from "@/components/icons";
@@ -33,6 +35,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <IconClock size={20} /> {s.lastUpdate}
         </p>
       </header>
+      {s.notes.length > 0 && (
+        <aside aria-label="Novità" className="mx-auto mt-3 max-w-3xl px-4 sm:px-6">
+          <div className="rounded-2xl border border-sage-ink/25 bg-sage px-4 py-3 text-sage-ink">
+            <ul className="space-y-1 font-bold">
+              {s.notes.map((n) => (
+                <li key={n.id}>{n.href ? <Link href={n.href} className="text-sage-ink">{n.text}</Link> : n.text}</li>
+              ))}
+            </ul>
+            <form action={readNotificationsAction} className="mt-2">
+              <button className="min-h-[48px] rounded-xl border-2 border-sage-ink px-4 font-bold">Ho visto</button>
+            </form>
+          </div>
+        </aside>
+      )}
       <main className="mx-auto max-w-3xl px-4 pt-4 sm:px-6">{children}</main>
       <BottomNav badges={s.badges} />
     </div>

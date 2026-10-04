@@ -101,6 +101,7 @@ export default async function FontiPage({ searchParams }: { searchParams: Promis
             <span className="font-bold">Limite ricerche W1 al giorno (max 100)</span>
             <input name="w1DailyCap" type="number" min={0} max={100} defaultValue={s.w1DailyCap} />
           </label>
+          {toggle("geocoderEnabled", "Geocoder online (OpenStreetMap Nominatim) per le località fuori dall'elenco dei comuni", "Spento finché non lo approvi: 1 richiesta al secondo, massimo 10 per raccolta, risultati memorizzati.")}
           {toggle("digestEnabled", "E-mail del mattino a lei", env.digestTo || env.demoMode ? undefined : "Manca DIGEST_TO nel file .env.")}
           <Button>Salva</Button>
         </Card>

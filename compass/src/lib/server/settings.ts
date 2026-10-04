@@ -13,6 +13,8 @@ export interface AppSettings {
   /** W3 single-page enrichment. Off by default; enabling is the admin's call after the terms review. */
   w3Enabled: boolean;
   adzunaEnabled: boolean;
+  /** Online geocoder fallback (Nominatim) for places outside the offline dataset. Off by default. */
+  geocoderEnabled: boolean;
   joobleEnabled: boolean;
   /** Daily e-mail to her normal inbox. */
   digestEnabled: boolean;
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   w1DailyCap: 25,
   w3Enabled: false,
   adzunaEnabled: true,
+  geocoderEnabled: false,
   joobleEnabled: false,
   digestEnabled: true,
   lastIngestAt: null,

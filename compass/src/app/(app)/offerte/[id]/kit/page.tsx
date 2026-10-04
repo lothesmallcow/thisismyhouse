@@ -67,7 +67,7 @@ export default async function KitPage({ params, searchParams }: { params: Promis
             <p className="text-[0.92rem] font-bold uppercase tracking-wide text-ink-soft">{a.label}</p>
             <p className="mt-1 text-[1.05rem]">{a.value}</p>
             <div className="mt-3">
-              <CopyButton text={a.value} label={`Copia ${a.label.toLowerCase()}`} wide />
+              <CopyButton text={a.value} label={`Copia ${a.label[0].toLowerCase()}${a.label.slice(1)}`} wide />
             </div>
           </Card>
         ))}

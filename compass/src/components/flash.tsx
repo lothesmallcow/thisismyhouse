@@ -24,7 +24,7 @@ const MESSAGES: Record<string, { tone: "success" | "info" | "warn" | "danger"; t
   "dati-cancellati": { tone: "success", text: "Ho cancellato tutti i tuoi dati." },
   bloccata: { tone: "warn", text: "Questa candidatura non può partire. Trovi il motivo sulla scheda." },
   importati: { tone: "success", text: "Importazione completata." },
-  "serve-riassunto": { tone: "warn", text: "Prima di approvare un sito scrivi il riassunto dei termini d'uso e di robots.txt." },
+  "serve-riassunto": { tone: "warn", text: "Prima di approvare un sito scrivi il riassunto dei termini d'uso e quello di robots.txt." },
   "password-corta": { tone: "warn", text: "La parola d'accesso deve avere almeno 8 caratteri." },
   "risposta-simulata": { tone: "success", text: "Risposta simulata ricevuta: guarda \u201cLe mie candidature\u201d." },
   "coda-svuotata": { tone: "success", text: "Coda inviata (in modalità prova, nell'outbox qui sotto)." },

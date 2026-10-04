@@ -68,9 +68,12 @@ export async function recordReply(db: DB, e: InboundEmail, m: ReplyMatch): Promi
 }
 
 /** One tap: accept the suggested status (or pick another). */
+const REPLY_STATUSES: ApplicationStatus[] = ["replied", "interview", "rejected", "offer"];
+
 export async function confirmReply(db: DB, replyId: number, status?: ApplicationStatus): Promise<void> {
   const r = await db.query.replies.findFirst({ where: eq(schema.replies.id, replyId) });
   if (!r?.applicationId) return;
+  if (status && !REPLY_STATUSES.includes(status)) status = undefined; // only reply outcomes, never "queued" etc.
   await db.update(schema.applications).set({ status: status ?? r.suggestedStatus ?? "replied", updatedAt: new Date() }).where(eq(schema.applications.id, r.applicationId));
   await db.update(schema.replies).set({ confirmed: true }).where(eq(schema.replies.id, replyId));
 }

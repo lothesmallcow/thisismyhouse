@@ -18,12 +18,11 @@ import {
   prepareSpontaneous,
   saveCurated,
   setKillSwitch,
-  setStatus,
   skipApplication,
   updateDraft,
 } from "@/lib/server/applications";
 import { requireUser, signOut } from "@/lib/server/auth";
-import { dismissJob, markSeen, restoreJob, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
+import { dismissJob, markSeen, restoreJob, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
 import { deleteAllMyData } from "@/lib/server/privacy";
 import { confirmReply, dismissReply } from "@/lib/server/replies";
 
@@ -96,10 +95,7 @@ export async function manualAddAction(f: FormData) {
   });
   const email = str(f, "email");
   if (email && isValidEmail(email)) {
-    await getDb()
-      .update(schema.jobs)
-      .set({ applicationEmail: email.toLowerCase(), applicationEmailEvidence: "Indirizzo aggiunto a mano" })
-      .where(eq(schema.jobs.id, res.jobId));
+    await setApplicationEmail(getDb(), res.jobId, email.toLowerCase(), "Indirizzo aggiunto a mano");
   }
   done(`/offerte/${res.jobId}`, "aggiunta");
 }
@@ -112,9 +108,10 @@ export async function approveAction(f: FormData) {
   done("/da-inviare", r.ok ? "in-coda" : "bloccata");
 }
 
-export async function approveAllAction() {
+export async function approveAllAction(f: FormData) {
   await requireUser();
-  await approveAll(getDb());
+  const ids = f.getAll("appId").map(Number).filter((n) => n > 0);
+  await approveAll(getDb(), new Date(), Math.random, ids);
   done("/da-inviare", "tutte-in-coda");
 }
 
@@ -150,12 +147,19 @@ export async function prepareSpontaneousAction(f: FormData) {
   done(app ? `/da-inviare#candidatura-${app.id}` : "/da-inviare", app ? "preparata" : "errore");
 }
 
+export async function readNotificationsAction() {
+  await requireUser();
+  await getDb().update(schema.notifications).set({ read: true }).where(eq(schema.notifications.audience, "user"));
+  revalidatePath("/", "layout");
+}
+
 // --- Candidature -------------------------------------------------------------------------------
 
 export async function confirmReplyAction(f: FormData) {
   await requireUser();
-  const status = str(f, "status") as ApplicationStatus | "";
-  await confirmReply(getDb(), num(f, "replyId"), status || undefined);
+  const status = str(f, "status");
+  const allowed: ApplicationStatus[] = ["replied", "interview", "rejected", "offer"];
+  await confirmReply(getDb(), num(f, "replyId"), allowed.includes(status as ApplicationStatus) ? (status as ApplicationStatus) : undefined);
   done("/candidature", "stato-aggiornato");
 }
 
@@ -163,12 +167,6 @@ export async function dismissReplyAction(f: FormData) {
   await requireUser();
   await dismissReply(getDb(), num(f, "replyId"));
   done("/candidature", "salvato");
-}
-
-export async function setStatusAction(f: FormData) {
-  await requireUser();
-  await setStatus(getDb(), num(f, "appId"), str(f, "status") as ApplicationStatus);
-  done("/candidature", "stato-aggiornato");
 }
 
 // --- Aiuto: CV, lettere, dati ------------------------------------------------------------------

@@ -1,13 +1,13 @@
 import { IconArrowLeft, IconSend } from "@/components/icons";
 import { Button, Card, HelpBox, LinkButton } from "@/components/ui";
 import { getDb } from "@/lib/db";
-import { listDrafts } from "@/lib/server/applications";
+import { bulkSendable } from "@/lib/server/applications";
 import { approveAllAction } from "../../actions";
 
 export const metadata = { title: "Invia tutte" };
 
 export default async function TuttePage() {
-  const drafts = (await listDrafts(getDb())).filter((d) => !d.app.warnings.some((w) => !w.code.startsWith("scam-")));
+  const drafts = await bulkSendable(getDb());
   return (
     <div className="mx-auto max-w-xl pt-6">
       <HelpBox text="Controlla l'elenco: se va bene premi Sì, invia tutte." />
@@ -23,7 +23,11 @@ export default async function TuttePage() {
           ))}
         </ul>
         <p className="mt-4 text-ink-soft">Partiranno una alla volta, a qualche minuto di distanza, nei giorni feriali dalle 8:30 alle 18. Ognuna si può annullare.</p>
+        <p className="mt-2 text-[0.98rem] text-ink-soft">Le candidature con un avviso (per esempio un annuncio sospetto) non sono in questo elenco: vanno inviate una per una.</p>
         <form action={approveAllAction} className="mt-7">
+          {drafts.map((d) => (
+            <input key={d.app.id} type="hidden" name="appId" value={d.app.id} />
+          ))}
           <Button wide>
             <IconSend /> Sì, invia tutte
           </Button>
