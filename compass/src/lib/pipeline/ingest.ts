@@ -148,7 +148,8 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
   // Every person's targets in order of fit (chosen first, then their sectors), then any other chosen feed.
   const chosenFeeds = [...ordered, ...chosen.map((c) => ({ name: c.name, ats: c.ats!, slug: c.slug! }))];
   const unique = <T extends { ats: string; slug: string }>(l: T[]) => l.filter((w, i, all) => all.findIndex((x) => x.ats === w.ats && x.slug === w.slug) === i);
-  const day = Math.floor(now.getTime() / 86_400_000);
+  // Rotation by 3-hour slot: the run every 3 hours reads different boards and sites each time.
+  const day = Math.floor(now.getTime() / (3 * 3_600_000));
   const watch = unique([...listed.map((w) => ({ name: w.name, ats: w.ats, slug: w.slug })), ...todaysPicks(unique(chosenFeeds), Math.max(0, ATS_PER_RUN - listed.length), day)]);
   for (const w of watch) {
     const key = `ats:${w.ats}:${w.slug}`;

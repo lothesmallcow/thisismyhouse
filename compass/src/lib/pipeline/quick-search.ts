@@ -75,11 +75,18 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
   const countries = homeCountries(profile.countries, profile.city);
   const contexts = (await rankContexts(db)).filter((c) => c.userId === userId);
   const cache = await dedupeCandidates(db);
+  // Progress is saved as it goes, so the offers page shows them arriving (no finishedAt yet).
+  const progress = async (final = false) => {
+    const v = JSON.stringify(final ? { ...out, finishedAt: new Date().toISOString() } : out);
+    await db.insert(schema.settings).values({ key: `quick_search_result_${userId}`, value: v }).onConflictDoUpdate({ target: schema.settings.key, set: { value: v } });
+  };
+  await progress();
   const save = async (jobs: Parameters<typeof upsertRawJob>[1][]) => {
     for (const j of jobs) {
       out.found++;
       if ((await upsertRawJob(db, j, now, { cache, contexts })).created) out.created++;
     }
+    await progress();
   };
 
   // The companies to read: those chosen, then every company of the sectors of the positions searched.
@@ -118,8 +125,9 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
     .slice(0, SITES);
   if (sites.length && Date.now() < deadline) {
     const polite = new PoliteFetcher(db, deps.fetchImpl, { sleep: deps.politeSleep });
-    const results = await Promise.all(sites.map(async (c) => ({ c, r: await scrapeCareers(polite, c, now, deadline) })));
-    for (const { c, r } of results) {
+    // Each site's offers are saved as soon as that site is done, not when all are.
+    await Promise.all(sites.map(async (c) => {
+      const r = await scrapeCareers(polite, c, now, deadline);
       out.pages += r.pages;
       if (r.pages > 0) out.sites++;
       await db
@@ -132,7 +140,7 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
         out.boardsFound++;
         await readFeed({ ...c, ats: r.ats.ats, atsSlug: r.ats.slug });
       }
-    }
+    }));
   }
 
   // 2. Web search on the job sites (its key set): this person's searches, within the shared daily cap.
@@ -172,8 +180,7 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
   }
 
   await rerankUser(db, userId, now);
-  const summary = JSON.stringify({ ...out, finishedAt: new Date().toISOString() });
-  await db.insert(schema.settings).values({ key: `quick_search_result_${userId}`, value: summary }).onConflictDoUpdate({ target: schema.settings.key, set: { value: summary } });
+  await progress(true);
   return out;
 }
 

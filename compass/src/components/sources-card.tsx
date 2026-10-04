@@ -46,7 +46,7 @@ export async function SourcesCard({ userId }: { userId: number }) {
           <p className="text-[15px] font-semibold">Da dove arrivano le tue offerte</p>
           <p className="text-[13px] text-faint" aria-live="polite">
             {running
-              ? "Web scraping in corso: la pagina si aggiorna da sola."
+              ? `Web scraping in corso: ${result?.sites ?? 0} siti e ${result?.feeds ?? 0} pagine lavoro letti finora, ${result?.found ?? 0} offerte trovate (${result?.created ?? 0} nuove). Le offerte compaiono qui man mano.`
               : last && result
                 ? `Ultimo web scraping ${formatWhen(last, now)}: ${result.sites} siti di aziende e ${result.feeds} pagine lavoro letti${result.web ? `, ${result.web} ricerche sul web` : ""}; ${result.found} offerte trovate, ${result.created} nuove.`
                 : "Nessuna ricerca ancora."}{" "}
@@ -59,7 +59,7 @@ export async function SourcesCard({ userId }: { userId: number }) {
           </Button>
         </form>
       </div>
-      {running && <AutoRefresh />}
+      {running && <AutoRefresh everyMs={5000} times={24} />}
       <ul className="mt-4 space-y-3 text-[13.5px]">
         {row(
           Boolean(box),
