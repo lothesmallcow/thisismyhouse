@@ -58,3 +58,35 @@ describe("career pages", () => {
     expect(calls.some((u) => u.includes("linkedin"))).toBe(false);
   });
 });
+
+describe("every company of the sector, and the official boards a site links to", () => {
+  it("recognises Greenhouse, Lever, SmartRecruiters, Workable and Personio links", async () => {
+    const { atsFromHtml } = await import("@/lib/sources/web/careers");
+    expect(atsFromHtml(`<a href="https://boards.greenhouse.io/bancaesempio/jobs/123">Apply</a>`)).toEqual({ ats: "greenhouse", slug: "bancaesempio" });
+    expect(atsFromHtml(`<iframe src="https://boards.greenhouse.io/embed/job_board?for=esempio"></iframe>`)).toEqual({ ats: "greenhouse", slug: "esempio" });
+    expect(atsFromHtml(`<a href="https://jobs.lever.co/esempio">Jobs</a>`)).toEqual({ ats: "lever", slug: "esempio" });
+    expect(atsFromHtml(`<a href="https://esempio.jobs.personio.de/">Jobs</a>`)).toEqual({ ats: "personio", slug: "esempio" });
+    expect(atsFromHtml(`<a href="https://www.linkedin.com/company/esempio/jobs">LinkedIn</a>`)).toBeNull();
+  });
+
+  it("an investment banking position: every investment bank of the catalog with a website, minus the avoided one", async () => {
+    const { searchTargets } = await import("@/lib/pipeline/targets");
+    const { ensureCatalog, setPref } = await import("@/lib/server/catalog");
+    const { updateProfile } = await import("@/lib/server/profile");
+    const { seedPeople } = await import("./helpers/db");
+    const { schema } = await import("@/lib/db");
+    const { eq } = await import("drizzle-orm");
+    const db = await freshDb();
+    const { L } = await seedPeople(db, new Date("2026-10-05T07:00:00Z"));
+    await ensureCatalog(db);
+    await updateProfile(db, L, { roles: ["Investment banking analyst"], synonyms: [], city: "Milano", countries: ["IT"] });
+    const lazard = (await db.query.catalogCompanies.findFirst({ where: eq(schema.catalogCompanies.name, "Lazard") }))!;
+    expect(lazard.website).toBe("lazard.com");
+    const mediobanca = (await db.query.catalogCompanies.findFirst({ where: eq(schema.catalogCompanies.name, "Mediobanca") }))!;
+    await setPref(db, L, "company", mediobanca.id, "avoid");
+    const names = (await searchTargets(db, L)).map((c) => c.name);
+    expect(names).toEqual(expect.arrayContaining(["Lazard", "Goldman Sachs", "Houlihan Lokey", "UniCredit"]));
+    expect(names.length).toBeGreaterThanOrEqual(25);
+    expect(names).not.toContain("Mediobanca");
+  });
+});

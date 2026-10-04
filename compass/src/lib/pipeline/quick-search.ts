@@ -11,8 +11,8 @@ import { fetchAts, type AtsType } from "../sources/ats";
 import { discoverAts } from "../sources/ats/discover";
 import type { FetchLike } from "../sources/http";
 import { hitToRawJob, isJobPage, type SearchProvider } from "../sources/web/w1";
-import { prioritizedCompanies } from "../server/career";
-import { directoryPool, getPrefs } from "../server/catalog";
+import type { Company } from "../server/catalog";
+import { searchTargets } from "./targets";
 import { scrapeCareers } from "../sources/web/careers";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { dedupeCandidates, rankContexts, rerankUser, upsertRawJob } from "../server/jobs";
@@ -24,11 +24,11 @@ import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
 /** At most one quick search per person in this many minutes ("Cerca ora" can be pressed often). */
 export const QUICK_SEARCH_EVERY_MIN = 10;
 /** Company websites read per click (in parallel; each site at its own polite pace). */
-const SITES = 6;
+const SITES = 12;
 /** Stop starting new page requests after this long, so a click answers within a minute. */
 const BUDGET_MS = 45_000;
 const COMPANIES = 12; // chosen companies looked at, best fits first
-const FEEDS = 8; // job boards read
+const FEEDS = 15; // job boards read
 const RECHECK_DAYS = 30; // a company without a public board is looked for again after this
 const WEB = 5; // web searches on the job sites (from the shared daily cap)
 const API = 2; // job API calls
@@ -82,12 +82,23 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
     }
   };
 
-  // 1. The chosen companies' own job boards: found once on their own, then read.
-  const picks = (await prioritizedCompanies(db, userId)).slice(0, COMPANIES).map((p) => p.company);
-  const stale = (d: Date | null) => !d || now.getTime() - d.getTime() > RECHECK_DAYS * 86_400_000;
+  // The companies to read: those chosen, then every company of the sectors of the positions searched.
+  const targets = await searchTargets(db, userId);
+  const stale = (d: Date | null | undefined) => !d || now.getTime() - d.getTime() > RECHECK_DAYS * 86_400_000;
+  const readFeed = async (c: Company) => {
+    try {
+      await save(await fetchAts(deps.fetchImpl, c.ats as AtsType, c.atsSlug!, c.name, countries));
+      out.feeds++;
+    } catch {
+      // One board down never stops the others; the daily run tries again.
+    }
+  };
+
+  // 1. Official job boards: looked for by name (best fits first), then read.
   await Promise.all(
-    picks
-      .filter((c) => !c.ats && stale(c.atsCheckedAt ?? null))
+    targets
+      .filter((c) => !c.ats && stale(c.atsCheckedAt))
+      .slice(0, COMPANIES)
       .map(async (c) => {
         const found = await discoverAts(deps.fetchImpl, c.name);
         await db.update(schema.catalogCompanies).set({ atsCheckedAt: now, ...(found ? { ats: found.ats, atsSlug: found.slug } : {}) }).where(eq(schema.catalogCompanies.id, c.id));
@@ -97,26 +108,12 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
         }
       }),
   );
-  for (const c of picks.filter((x) => x.ats && x.atsSlug).slice(0, FEEDS)) {
-    try {
-      await save(await fetchAts(deps.fetchImpl, c.ats as AtsType, c.atsSlug!, c.name, countries));
-      out.feeds++;
-    } catch {
-      // One board down never stops the others; the daily run tries again.
-    }
-  }
+  for (const c of targets.filter((x) => x.ats && x.atsSlug).slice(0, FEEDS)) await readFeed(c);
 
-  // 1b. Web scraping of the companies' own career pages: chosen companies first, then the listed
-  // companies of the chosen sectors (in their countries), those not read recently first.
-  const prefs = await getPrefs(db, userId);
-  const likedSectors = [...prefs.sectors.entries()].filter(([, v]) => v === "like").map(([id]) => id);
-  const pool = await directoryPool(db, likedSectors, { countries, regions: profile.regions, limit: 20 });
-  const seenIds = new Set<number>();
-  const recent = (d: Date | null | undefined) => d != null && now.getTime() - d.getTime() < RECHECK_DAYS * 86_400_000;
-  const sites = [...picks, ...pool]
-    .filter((c) => !seenIds.has(c.id) && seenIds.add(c.id))
+  // 1b. Web scraping of the companies' own career pages: those never read first, then the oldest.
+  const sites = targets
     .filter((c) => !(c.ats && c.atsSlug)) // their job board was read above
-    .filter((c) => c.careersUrl || (c.website && !recent(c.careersCheckedAt)))
+    .filter((c) => c.careersUrl || (c.website && stale(c.careersCheckedAt)))
     .sort((a, b) => (a.careersCheckedAt?.getTime() ?? 0) - (b.careersCheckedAt?.getTime() ?? 0))
     .slice(0, SITES);
   if (sites.length && Date.now() < deadline) {
@@ -125,8 +122,16 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
     for (const { c, r } of results) {
       out.pages += r.pages;
       if (r.pages > 0) out.sites++;
-      await db.update(schema.catalogCompanies).set({ careersCheckedAt: now, careersUrl: r.careersUrl }).where(eq(schema.catalogCompanies.id, c.id));
+      await db
+        .update(schema.catalogCompanies)
+        .set({ careersCheckedAt: now, careersUrl: r.careersUrl, ...(r.ats ? { ats: r.ats.ats, atsSlug: r.ats.slug, atsCheckedAt: now } : {}) })
+        .where(eq(schema.catalogCompanies.id, c.id));
       await save(r.jobs.map((j) => ({ ...j, company: j.company || c.name })));
+      // The site links to an official job board: read its feed now.
+      if (r.ats && Date.now() < deadline) {
+        out.boardsFound++;
+        await readFeed({ ...c, ats: r.ats.ats, atsSlug: r.ats.slug });
+      }
     }
   }
 

@@ -15,7 +15,8 @@ import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { scrapeCareers } from "../sources/web/careers";
 import { dedupeCandidates, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
-import { prioritizedCompanies, todaysPicks } from "../server/career";
+import { todaysPicks } from "../server/career";
+import { searchTargets } from "./targets";
 import { getSettings, setSetting } from "../server/settings";
 import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
 import type { CodeQuery } from "../core/search-code";
@@ -33,7 +34,7 @@ export interface MailboxRun {
 
 /** Job API calls per run, whatever the number of people (free quotas are small). */
 /** Company career feeds read per run (the admin's watchlist always; chosen companies by fit, in rotation). */
-export const ATS_PER_RUN = 25;
+export const ATS_PER_RUN = 40;
 export const API_CALLS_PER_RUN = 9;
 /** Company career pages scraped per daily run. */
 export const CAREER_SITES_PER_RUN = 15;
@@ -138,11 +139,14 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
   // Chosen companies in order of fit for each person, people interleaved; at most ATS_PER_RUN feeds a
   // run (best fits every day, the rest in rotation), so hundreds of choices never mean hundreds of calls.
   const byPerson = [];
-  for (const ctx of contexts) byPerson.push((await prioritizedCompanies(db, ctx.userId)).map((x) => x.company).filter((c) => c.ats && c.atsSlug));
+  // Each person's targets: chosen companies, then every company of their positions' sectors.
+  const targetsOf = new Map<number, Awaited<ReturnType<typeof searchTargets>>>();
+  for (const ctx of contexts) if (ctx.profile.onboardedAt) targetsOf.set(ctx.userId, await searchTargets(db, ctx.userId));
+  for (const ctx of contexts) byPerson.push((targetsOf.get(ctx.userId) ?? []).filter((c) => c.ats && c.atsSlug));
   const ordered: { name: string; ats: string; slug: string }[] = [];
   for (let i = 0; byPerson.some((l) => l[i]); i++) for (const l of byPerson) if (l[i]) ordered.push({ name: l[i].name, ats: l[i].ats!, slug: l[i].atsSlug! });
-  const known = new Set(chosen.map((c) => `${c.ats}:${c.slug}`));
-  const chosenFeeds = [...ordered.filter((o) => known.has(`${o.ats}:${o.slug}`)), ...chosen.map((c) => ({ name: c.name, ats: c.ats!, slug: c.slug! }))];
+  // Every person's targets in order of fit (chosen first, then their sectors), then any other chosen feed.
+  const chosenFeeds = [...ordered, ...chosen.map((c) => ({ name: c.name, ats: c.ats!, slug: c.slug! }))];
   const unique = <T extends { ats: string; slug: string }>(l: T[]) => l.filter((w, i, all) => all.findIndex((x) => x.ats === w.ats && x.slug === w.slug) === i);
   const day = Math.floor(now.getTime() / 86_400_000);
   const watch = unique([...listed.map((w) => ({ name: w.name, ats: w.ats, slug: w.slug })), ...todaysPicks(unique(chosenFeeds), Math.max(0, ATS_PER_RUN - listed.length), day)]);
@@ -172,7 +176,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
   // people interleaved, in rotation: a few sites a day, each at its polite pace.
   const careers: { id: number; name: string; careersUrl: string }[] = [];
   const perPerson = [];
-  for (const ctx of contexts) perPerson.push((await prioritizedCompanies(db, ctx.userId)).map((x) => x.company).filter((c) => c.careersUrl && !(c.ats && c.atsSlug)));
+  for (const ctx of contexts) perPerson.push((targetsOf.get(ctx.userId) ?? []).filter((c) => c.careersUrl && !(c.ats && c.atsSlug)));
   for (let i = 0; perPerson.some((l) => l[i]); i++) for (const l of perPerson) if (l[i] && !careers.some((c) => c.id === l[i].id)) careers.push({ id: l[i].id, name: l[i].name, careersUrl: l[i].careersUrl! });
   const todaysSites = todaysPicks(careers, CAREER_SITES_PER_RUN, day);
   if (todaysSites.length) {

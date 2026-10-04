@@ -4,6 +4,7 @@ import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import listedData from "../../../data/world/companies.json";
 import naceData from "../../../data/world/nace.json";
 import { COMPANIES, SECTORS, companyTrack } from "../catalog/data";
+import { CURATED_WEBSITES } from "../catalog/websites";
 import { gicsSector, listedAliases, naceKeywords, naceSector, type ListedRow, type NaceRow } from "../catalog/world";
 import { sizeBand, type RegisterRecord } from "../catalog/registers";
 import { findPlace, homeCountries, type CountryCode } from "../core/geo";
@@ -46,6 +47,7 @@ export async function ensureCatalog(db: DB): Promise<void> {
     themes: c.themes ?? [],
     city: c.city ?? null,
     track: companyTrack(c),
+    website: CURATED_WEBSITES[c.name] ?? null,
     ...placeOf(c.city ?? null),
   });
   // Only the curated slugs: never a read of the whole table (the registers add ~950,000 rows).
@@ -58,11 +60,11 @@ export async function ensureCatalog(db: DB): Promise<void> {
     const row = haveCompanies.get(slugify(c.name));
     if (!row || row.createdByUserId != null) continue;
     const v = values(c);
-    if (JSON.stringify([row.extraSectorIds, row.themes, row.aliases, row.sectorId]) !== JSON.stringify([v.extraSectorIds, v.themes, v.aliases, v.sectorId]) || row.region == null) {
+    if (JSON.stringify([row.extraSectorIds, row.themes, row.aliases, row.sectorId]) !== JSON.stringify([v.extraSectorIds, v.themes, v.aliases, v.sectorId]) || row.region == null || (v.website && !row.website)) {
       // City and ATS may have been edited by the admin: keep them (country and region follow the city).
       await db
         .update(schema.catalogCompanies)
-        .set({ extraSectorIds: v.extraSectorIds, themes: v.themes, aliases: v.aliases, sectorId: v.sectorId, kind: v.kind, ...placeOf(row.city) })
+        .set({ extraSectorIds: v.extraSectorIds, themes: v.themes, aliases: v.aliases, sectorId: v.sectorId, kind: v.kind, ...(v.website && !row.website ? { website: v.website } : {}), ...placeOf(row.city) })
         .where(eq(schema.catalogCompanies.id, row.id));
     }
   }
