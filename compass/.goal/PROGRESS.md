@@ -35,7 +35,7 @@ Build **Compass** (the brief calls it "Bussola"), a boomer-proof Italian job fin
 - [x] Secret + personal-data scanning in pre-commit and CI; CI runs lint, typecheck, unit tests, build, e2e
 - [x] Scheduled jobs (GitHub Actions workflow + protected /api/cron routes)
 - [x] Deployment prepared at EUR 0 (docs/setup.md, vercel.json), not deployed (permission point)
-- [x] Tests, lint and typecheck pass (146 unit/integration, 10 e2e)
+- [x] Tests, lint and typecheck pass (245 unit/integration, 15 e2e, CI green)
 - [x] Every user-facing feature exercised in the running app (Playwright e2e on the production build)
 - [x] README, CHANGELOG, ADRs, Italian guide (docs/come-si-usa.md)
 
@@ -48,23 +48,26 @@ Build **Compass** (the brief calls it "Bussola"), a boomer-proof Italian job fin
 - [x] Admin area, metrics, landing, subscription page
 - [x] PWA, docs, CI, scanning, screenshots
 - [x] Full e2e verification
-- [ ] Independent review against the Definition of Done (in progress at the time of writing)
+- [x] Independent review against the Definition of Done (15 findings, all fixed with tests)
+- [x] Full audit checklist answered with evidence: `.goal/AUDIT.md`
 
 ## Waiting on you
-Ordered by what unblocks the most. None of this is needed to try the demo.
+Ordered by what unblocks the most. None of this is needed to try the demo (`npm run demo`).
 
-1. **Mailbox**: create the dedicated Gmail, turn on 2-Step Verification, create an app password, put `MAILBOX_USER` / `MAILBOX_APP_PASSWORD` / `DIGEST_TO` / `CONTACT_EMAIL` in `.env` (never in chat). Then set up alert forwarding from her inbox. Steps: `docs/setup.md` §1-2. Unblocks: real alerts, replies, sending.
-2. **Real alert samples**: after alerts start arriving, export 2-3 per platform, anonymize, add to `fixtures/emails/`. All three parsers are built on synthetic samples and marked "needs real sample".
-3. **Adzuna terms**: their terms mention a 14-day evaluation period and a possible licence after that. Ask them (or read the current terms) whether ongoing personal, non-commercial use is fine. Until then keep it as is or switch it off in admin → Fonti.
-4. **Free API keys** (no card): Adzuna (`ADZUNA_APP_ID/KEY`), Tavily (`TAVILY_API_KEY`). Jooble optional (500 requests lifetime).
-5. **Permission points (I did not do these)**: create the dedicated public GitHub repo for Compass and move `compass/` there; create the Turso database and the Vercel project; deploy; add GitHub Actions secrets; switch on real sending. Steps: `docs/setup.md` §4-7.
-6. **W2 site approvals**: no real site is approved (only a fake demo one). Candidates worth reviewing: inPA (inpa.gov.it, public-sector), local staffing agencies' "offerte" pages, target companies' "Lavora con noi" pages. Each needs its terms + robots.txt read and summarized before approval (admin → Siti).
-7. **Company watchlist**: tell me (or add in admin → Aziende) which target companies she'd like; for each, find which ATS they use (look at their careers page URL: boards.greenhouse.io, jobs.lever.co, jobs.ashbyhq.com, jobs.smartrecruiters.com, apply.workable.com, *.jobs.personio.de).
-8. **W3 decision**: read LinkedIn/Indeed/InfoJobs current terms on automated access (including for logged-out visitors) and decide. My view: not worth the risk for a modest benefit (ADR 0009). If yes, it should live in a private repo.
-9. **Geodata licence**: `data/comuni.json` comes from opendatasicilia/comuni-italiani, whose coordinates file has no stated licence. Confirm or swap for the ODbL OpenStreetMap-derived dataset before the repo goes fully public (ADR 0007).
-10. **Usability test (human)**: watch her use "Offerte" for 15 minutes without helping, then again after the applying screens; note where she hesitates.
-11. **Subscription page**: prices are invented. If you ever charge real money, Vercel Hobby (non-commercial only) is no longer allowed, and you'd need a payment provider + Italian invoicing/VAT handling: talk to an accountant first.
-12. **Her real profile**: when you set it up, she (or you) runs the onboarding wizard; CVs should not contain her codice fiscale or full home address.
+1. **Mailbox** (unblocks real alerts, replies, sending): create the dedicated Gmail, 2-Step Verification, app password; set `MAILBOX_USER`, `MAILBOX_APP_PASSWORD`, `DIGEST_TO`, `CONTACT_EMAIL`, `ADMIN_ALERT_EMAIL` in `.env` (never in chat). Then forward the platform alerts to it. `docs/setup.md` §1-2.
+2. **Real alert samples** (unblocks trustworthy parsers): after alerts start arriving, export 2-3 per platform, anonymize, add to `fixtures/emails/`. All three parsers are built on synthetic samples.
+3. **Free API keys** (no card): Adzuna (`ADZUNA_APP_ID/KEY`) and Tavily (`TAVILY_API_KEY`). And **confirm Adzuna's terms** allow ongoing personal non-commercial use (their terms mention a 14-day evaluation).
+4. **Permission points I did not do**: create the dedicated public repo and move `compass/` there; Turso database; Vercel project; GitHub Actions secrets; deploy; switch real sending on. `docs/setup.md` §4-7.
+5. **W2 sites**: choose real sites (inPA, local agencies, target companies' "Lavora con noi"), write the terms + robots.txt summaries in admin → Siti, approve.
+6. **Company watchlist**: which target companies, and which ATS they use (admin → Aziende; how-to in `docs/guida-admin.md`).
+7. **W3 decision**: read LinkedIn/Indeed/InfoJobs terms on automated access and decide. The safety gate exists; the fetcher does not (ADR 0009). My recommendation: don't.
+8. **Geocoder**: OK to switch on OpenStreetMap Nominatim as a fallback for places outside the comuni list? (admin → Fonti, off by default.)
+9. **Geodata licence**: confirm the opendatasicilia coordinates can be used publicly, or I swap to the ODbL OpenStreetMap dataset (ADR 0007).
+10. **On her phone, once live**: install the PWA ("Aggiungi a schermata Home"), check the morning e-mail looks right in Gmail, try airplane mode once.
+11. **Usability test**: watch her use "Offerte" for 15 minutes without helping, then again after the applying screens.
+12. **Small decisions**: MIT licence OK? Lane 2 paste-only (no file upload back) OK? Delete `.goal/` notes before publishing?
+13. **Subscription page**: prices are invented. If you ever charge, Vercel Hobby (non-commercial) is no longer allowed and you need payments + Italian invoicing/VAT: talk to an accountant first.
+14. **Keep the schedule alive**: GitHub disables scheduled workflows after 60 days without commits on a public repo.
 
 ## Decisions
 - Project name is **Compass** (your instruction); UI copy stays Italian.
@@ -89,3 +92,8 @@ Ordered by what unblocks the most. None of this is needed to try the demo.
 - 2026-10-04 09:45 UI: her app, wizard, admin, landing, subscription | next build + screenshots | bb74dfc
 - 2026-10-04 10:00 E2E suite (10 flows), fixes: lost flash after #anchor redirect, missing help lines, CSS layer bug (white button text) | playwright 10/10 | 913bd33
 - 2026-10-04 10:10 Scanning (personal-data script + gitleaks), CI, scheduled-jobs workflow, vercel.json, README, ADRs, setup guide, Italian guide, CHANGELOG | scan clean, gitleaks clean on repo files, lint/types clean
+- 2026-10-04 10:20 Independent review (subagent): 15 findings incl. 3 high (silent fake sends in real mode, scam flags not recomputed, her "Riattiva" lifting the admin stop) | all fixed + regression tests | 98f8bf7
+- 2026-10-04 10:40 UI audit: axe on 98 screens (0 violations after fixes), 320 px reflow, keyboard focus; security e2e (auth matrix, XSS, throttling) | CI green | bba2764
+- 2026-10-04 10:50 Load test 5,000 jobs (rerank 7.5 s -> 0.8 s), demo-week simulation | aa7470a
+- 2026-10-04 11:00 Docs (admin guide, Italian guide with screenshots, LICENSE, ADR 0013), first-time-user walkthrough fixes | 271a1b1
+- 2026-10-04 11:15 Audit checklist answered in `.goal/AUDIT.md` with evidence; stricter PDF check, Salta test | this commit

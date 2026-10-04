@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/core/guardrails";
+import { looksLikePdf } from "@/lib/core/pdf-check";
 import { isValidEmail } from "@/lib/core/extract";
 import { getDb, schema } from "@/lib/db";
 import type { ApplicationStatus } from "@/lib/db/schema";
@@ -178,7 +179,7 @@ export async function uploadCvAction(f: FormData) {
   if (!(file instanceof File) || file.size === 0) done(back, "errore");
   if (file.size > MAX_ATTACHMENT_BYTES) done(back, "cv-troppo-grande");
   const buf = Buffer.from(await file.arrayBuffer());
-  if (buf.subarray(0, 5).toString("latin1") !== "%PDF-") done(back, "cv-non-pdf");
+  if (!looksLikePdf(buf)) done(back, "cv-non-pdf");
   const db = getDb();
   const existing = await db.select({ id: schema.cvs.id }).from(schema.cvs);
   if (existing.length >= 3) done(back, "cv-troppi");

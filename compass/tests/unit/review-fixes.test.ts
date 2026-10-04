@@ -3,7 +3,9 @@ import { eq, sql } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { schema, type DB } from "@/lib/db";
 import { OutboxTransport } from "@/lib/mail/transport";
-import { approveApplication, prepareEmailApplication, prepareSpontaneous, processQueue, recoverStaleSending, runAutopilot, setKillSwitch } from "@/lib/server/applications";
+import { approveApplication, prepareEmailApplication, prepareSpontaneous, processQueue, recoverStaleSending, runAutopilot, setKillSwitch, skipApplication } from "@/lib/server/applications";
+import { looksLikePdf } from "@/lib/core/pdf-check";
+import { textPdf } from "@/lib/seed/pdf";
 import { setApplicationEmail, upsertRawJob } from "@/lib/server/jobs";
 import { deleteAllMyData } from "@/lib/server/privacy";
 import { confirmReply } from "@/lib/server/replies";
@@ -104,6 +106,22 @@ describe("queue: spacing at send time, no bursts", () => {
     expect(out.sent).toBe(0);
     expect((await db.query.applications.findFirst({ where: eq(schema.applications.id, a.id) }))!.status).toBe("queued");
     expect(await db.select().from(schema.outbox)).toHaveLength(0);
+  });
+});
+
+describe("Salta and CV files", () => {
+  it("'Salta' puts it aside: never sent by the queue, not in Da inviare", async () => {
+    const a = (await prepareEmailApplication(db, (await emailJobs())[0].id))!;
+    await skipApplication(db, a.id);
+    expect((await db.query.applications.findFirst({ where: eq(schema.applications.id, a.id) }))!.status).toBe("skipped");
+    expect((await processQueue(db, new OutboxTransport(db), new Date(NOW.getTime() + 86400000), rng)).sent).toBe(0);
+    expect(await approveApplication(db, a.id, NOW, rng)).toMatchObject({ ok: false });
+  });
+  it("only real-looking PDFs are accepted as CVs", () => {
+    expect(looksLikePdf(textPdf(["CV"]))).toBe(true);
+    expect(looksLikePdf(Buffer.from("%PDF-1.4 but then nothing"))).toBe(false); // truncated / fake
+    expect(looksLikePdf(Buffer.from("PK\u0003\u0004 word document..........................."))).toBe(false); // .docx renamed
+    expect(looksLikePdf(Buffer.from(""))).toBe(false);
   });
 });
 
