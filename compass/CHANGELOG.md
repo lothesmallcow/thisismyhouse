@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.0 · 2026-10-04
+
+- **Every company of the sector**: "Fai web scraping" and the daily run read the chosen companies
+  and every company of the sectors of the positions searched ("Investment banking analyst" → every
+  investment bank and boutique in the person's countries), biggest first, new ones at each click;
+  avoided companies and the current employer never.
+- Official websites of the catalog's banks, boutiques, funds, consultancies and startups.
+- A career page that links to Greenhouse, Lever, Ashby, SmartRecruiters, Workable or Personio is
+  read through that official feed.
+- Up to 12 sites and 15 job boards per click; 40 boards a day in the daily run.
+
 ## 0.11.0 · 2026-10-04
 
 - **"Fai web scraping"** on Offerte: one click reads, in the background and within a minute, the

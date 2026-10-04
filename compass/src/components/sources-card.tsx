@@ -7,7 +7,7 @@ import { env, mailboxConfig } from "@/lib/env";
 import { lastQuickResult, lastQuickSearch } from "@/lib/pipeline/quick-search";
 import { AutoRefresh } from "./auto-refresh";
 import { searchCodeFor } from "@/lib/pipeline/search-terms";
-import { prioritizedCompanies } from "@/lib/server/career";
+import { searchTargets } from "@/lib/pipeline/targets";
 import { getSettings } from "@/lib/server/settings";
 import { IconExternal } from "./icons";
 import { Button, Card, Chip } from "./ui";
@@ -17,14 +17,14 @@ export async function SourcesCard({ userId }: { userId: number }) {
   const db = getDb();
   const [user, picks, settings, code, last, result] = await Promise.all([
     db.query.users.findFirst({ where: eq(schema.users.id, userId) }),
-    prioritizedCompanies(db, userId),
+    searchTargets(db, userId),
     getSettings(db),
     searchCodeFor(db, userId),
     lastQuickSearch(db, userId),
     lastQuickResult(db, userId),
   ]);
   const box = env.demoMode ? { user: "la casella demo" } : mailboxConfig(user?.mailboxKey);
-  const withBoard = picks.filter((p) => (p.company.ats && p.company.atsSlug) || p.company.careersUrl).length;
+  const withBoard = picks.filter((c) => (c.ats && c.atsSlug) || c.careersUrl).length;
   const web = env.demoMode || (Boolean(env.tavilyKey) && settings.w1Enabled);
   const api = env.demoMode || (Boolean(env.adzuna.appId && env.adzuna.appKey) && settings.adzunaEnabled);
   const now = new Date();
@@ -76,7 +76,7 @@ export async function SourcesCard({ userId }: { userId: number }) {
           true, // no key needed: always on
           "Siti delle aziende (web scraping)",
           <>
-            Leggo le pagine &quot;lavora con noi&quot; delle aziende che scegli e delle quotate dei tuoi settori, rispettando le regole di ogni sito. Per {withBoard} delle {picks.length} aziende scelte ho già trovato la pagina. <Link href="/aziende">Scegli altre aziende</Link>.
+            Leggo le pagine lavoro di {picks.length} aziende: quelle che scegli e tutte quelle del settore delle tue posizioni (per esempio tutte le banche d&apos;investimento), rispettando le regole di ogni sito. Pagina trovata per {withBoard}; a ogni clic ne provo altre. <Link href="/aziende">Aggiungi aziende</Link>.
           </>,
         )}
         {row(

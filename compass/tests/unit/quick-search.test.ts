@@ -46,7 +46,7 @@ describe("finding a company's job board", () => {
     const [acme] = await db.insert(schema.catalogCompanies).values({ slug: "acme-esempio", name: "Acme Esempio", city: "Milano", country: "IT", region: "Lombardia", source: "altro", shared: true }).returning();
     await setPref(db, M, "company", acme.id, "like");
     const calls: string[] = [];
-    const r = await runQuickSearch(db, M, { fetchImpl: fakeNet(calls), web: null, adzuna: null, now: NOW });
+    const r = await runQuickSearch(db, M, { fetchImpl: fakeNet(calls), web: null, adzuna: null, now: NOW, politeSleep: async () => {} });
     expect(r).toMatchObject({ boardsFound: 1, feeds: 1, found: 1, created: 1 });
     expect(await db.query.catalogCompanies.findFirst({ where: eq(schema.catalogCompanies.id, acme.id) })).toMatchObject({ ats: "greenhouse", atsSlug: "acmeesempio", atsCheckedAt: NOW });
     expect((await db.select().from(schema.jobs)).some((j) => j.title === "Stage corporate finance")).toBe(true);
