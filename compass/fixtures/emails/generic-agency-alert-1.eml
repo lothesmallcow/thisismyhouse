@@ -1,0 +1,17 @@
+From: Agenzia Lavoro Sereno <newsletter@lavorosereno.example>
+To: lucia.ferraro.lavoro@example.com
+Subject: Le nuove offerte di lavoro della settimana
+Date: Mon, 05 Oct 2026 10:00:00 +0200
+Message-ID: <alert-gen-4001@lavorosereno.example>
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body>
+<h2>Offerte della settimana</h2>
+<ul>
+<li><a href="https://www.lavorosereno.example/offerte/1201?utm_source=newsletter">Impiegata ufficio acquisti</a><div>Grugliasco (TO)</div></li>
+<li><a href="https://www.lavorosereno.example/offerte/1202?utm_source=newsletter">Centralinista</a><div>Torino (TO)</div></li>
+<li><a href="https://www.lavorosereno.example/offerte/1203">Addetta paghe e contributi</a><div>Chieri (TO)</div></li>
+</ul>
+<p><a href="https://www.lavorosereno.example/privacy">Privacy</a> | <a href="https://www.lavorosereno.example/unsubscribe">Disiscriviti</a></p>
+</body></html>

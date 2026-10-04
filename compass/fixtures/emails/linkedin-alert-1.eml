@@ -1,0 +1,57 @@
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+To: lucia.ferraro.lavoro@example.com
+Subject: "impiegata amministrativa": 4 nuove offerte a Torino
+Date: Mon, 05 Oct 2026 07:12:00 +0200
+Message-ID: <alert-li-1001@linkedin.example>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="b1"
+
+--b1
+Content-Type: text/plain; charset=utf-8
+
+Le tue offerte di lavoro
+
+Impiegata amministrativa
+Studio Rinaldi Commercialisti
+Torino, Piemonte, Italia
+Visualizza offerta: https://www.linkedin.com/comm/jobs/view/4012345601/?trackingId=AbC1&refId=x1
+
+--b1
+Content-Type: text/html; charset=utf-8
+
+<html><body style="font-family:Arial">
+<table width="100%"><tr><td><h2>Le tue offerte di lavoro</h2><p>In base alle tue preferenze: impiegata amministrativa, Torino</p></td></tr></table>
+<table width="100%" class="job">
+  <tr><td><img src="https://media.example/logo1.png" alt="Studio Rinaldi Commercialisti"></td>
+  <td>
+    <a href="https://www.linkedin.com/comm/jobs/view/4012345601/?trackingId=AbC1&amp;refId=x1&amp;lipi=urn%3Ali">Impiegata amministrativa</a>
+    <p>Studio Rinaldi Commercialisti · Torino, Piemonte, Italia</p>
+    <p>Candidatura semplice</p>
+  </td></tr>
+</table>
+<table width="100%" class="job">
+  <tr><td><img src="https://media.example/logo2.png" alt="Bianchi Logistica"></td>
+  <td>
+    <a href="https://www.linkedin.com/comm/jobs/view/4012345602/?trackingId=AbC2&amp;refId=x2">Addetta amministrazione e contabilità part-time</a>
+    <p>Bianchi Logistica Srl · Moncalieri, Piemonte, Italia</p>
+    <p>1.300 €/mese - 1.500 €/mese netti</p>
+  </td></tr>
+</table>
+<table width="100%" class="job">
+  <tr><td><img src="https://media.example/logo3.png" alt="Colombo"></td>
+  <td>
+    <a href="https://www.linkedin.com/comm/jobs/view/4012345603/?trackingId=AbC3&amp;refId=x3">Back office amministrativo</a>
+    <p>Colombo Ferramenta S.p.A. · Rivoli, Piemonte, Italia (Ibrido)</p>
+    <p>Promossa</p>
+  </td></tr>
+</table>
+<table width="100%" class="job">
+  <tr><td><img src="https://media.example/logo4.png" alt="Acme"></td>
+  <td>
+    <a href="https://www.linkedin.com/comm/jobs/view/4012345604/?trackingId=AbC4&amp;refId=x4">Accounting Assistant (English speaker)</a>
+    <p>Acme Europe · Milano, Lombardia, Italia</p>
+  </td></tr>
+</table>
+<p><a href="https://www.linkedin.com/comm/jobs/search/?keywords=impiegata">Vedi tutte le offerte</a> · <a href="https://www.linkedin.com/comm/psettings/email-unsubscribe?x=1">Annulla iscrizione</a></p>
+</body></html>
+--b1--

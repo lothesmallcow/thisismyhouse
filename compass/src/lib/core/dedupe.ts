@@ -84,12 +84,19 @@ export function findDuplicate(
   const key = dedupeKey(incoming);
   const exact = existing.find((e) => dedupeKey(e) === key);
   if (exact) return exact.id;
-  const tt = normalizeTitle(incoming.title).split(" ");
+  // Titles sometimes carry the company name ("Impiegato amministrativo - Rossi Srl"): drop it.
+  const compTokens = new Set(keyTokens(comp));
+  const titleTokens = (t: string) => normalizeTitle(t).split(" ").filter((w) => w && !compTokens.has(w));
+  const tt = titleTokens(incoming.title);
   for (const e of existing) {
     if (normalizeCompany(e.company) !== comp) continue;
     const ec = normalizeCity(e.city);
     if (city && ec && city !== ec) continue;
-    if (jaccard(tt, normalizeTitle(e.title).split(" ")) >= 0.6) return e.id;
+    const et = titleTokens(e.title);
+    if (jaccard(tt, et) >= 0.6) return e.id;
+    // One title fully contained in the other ("Impiegata amministrativa" / "... contabile part-time")
+    const [small, big] = tt.length <= et.length ? [tt, et] : [et, tt];
+    if (small.length >= 2 && small.every((w) => big.includes(w))) return e.id;
   }
   return null;
 }

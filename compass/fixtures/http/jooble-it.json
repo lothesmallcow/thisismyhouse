@@ -1,0 +1,17 @@
+{
+  "totalCount": 1,
+  "jobs": [
+    {
+      "id": 77001,
+      "title": "Impiegata ufficio personale",
+      "location": "Collegno",
+      "snippet": "Cerchiamo impiegata ufficio personale con esperienza in rilevazione presenze. <b>Part time</b> mattina.",
+      "salary": "1.200 € netti al mese",
+      "source": "lavoro.example",
+      "type": "Part-time",
+      "link": "https://jooble.org/desc/77001",
+      "company": "Cooperativa Sole",
+      "updated": "2026-10-03T08:00:00.0000000"
+    }
+  ]
+}

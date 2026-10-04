@@ -1,0 +1,29 @@
+{
+  "query": "\"impiegata amministrativa\" Torino",
+  "results": [
+    {
+      "title": "Studio Bassi sta assumendo Impiegata amministrativa a Torino | LinkedIn",
+      "url": "https://it.linkedin.com/jobs/view/impiegata-amministrativa-at-studio-bassi-4012399901",
+      "content": "Pubblicato 2 giorni fa. Studio Bassi cerca impiegata amministrativa con esperienza in contabilità ordinaria. Torino, Piemonte.",
+      "score": 0.82
+    },
+    {
+      "title": "Offerte di lavoro Impiegata Amministrativa Torino | Indeed",
+      "url": "https://it.indeed.com/q-impiegata-amministrativa-l-torino-offerte-lavoro.html",
+      "content": "234 offerte di lavoro per Impiegata Amministrativa a Torino.",
+      "score": 0.7
+    },
+    {
+      "title": "Impiegata amministrativa - Ottica Vigna - Moncalieri - Indeed",
+      "url": "https://it.indeed.com/viewjob?jk=ffee00112233aabb&from=serp",
+      "content": "Ottica Vigna cerca impiegata amministrativa part-time per la sede di Moncalieri.",
+      "score": 0.66
+    },
+    {
+      "title": "Lavora con noi - Panificio Gallo",
+      "url": "https://www.panificiogallo.example/lavora-con-noi",
+      "content": "Cerchiamo una persona per la segreteria e l'amministrazione del nostro laboratorio di Torino. Candidature spontanee a lavoro@panificiogallo.example",
+      "score": 0.51
+    }
+  ]
+}
