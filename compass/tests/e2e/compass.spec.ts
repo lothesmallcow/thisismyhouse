@@ -331,6 +331,12 @@ test("persona: luxury store manager in Milan, score, requirements, role sheet, f
   await expect(page.getByText("Pesi salvati: punteggi ricalcolati.")).toBeVisible();
   await page.getByRole("button", { name: "Torna ai valori di partenza" }).click();
 
+  // Her search code, its searches, and ready links to create the alerts on the big sites.
+  await page.goto("/profilo/codice");
+  await assertUiBasics(page);
+  await expect(page.getByText(/^L · IT:Milano/)).toBeVisible();
+  await expect(page.getByRole("link", { name: /LinkedIn · Store manager/ })).toHaveAttribute("href", /linkedin\.com\/jobs\/search\/\?keywords=Store%20manager&location=Milano/);
+
   // Discreet search and companies to write to without an ad.
   await page.goto("/profilo");
   await expect(page.getByText(/Ricerca riservata: Maison Esempio Moda/)).toBeVisible();

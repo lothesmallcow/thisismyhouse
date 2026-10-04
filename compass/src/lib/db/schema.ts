@@ -191,6 +191,13 @@ export const userJobs = sqliteTable(
   (t) => [primaryKey({ columns: [t.userId, t.jobId] }), index("user_jobs_list_idx").on(t.userId, t.level, t.status), index("user_jobs_fit_idx").on(t.userId, t.fit)],
 );
 
+/** Searches already made (by their key, see core/search-code.ts): shared by everyone, not repeated within a day. */
+export const searchCache = sqliteTable("search_cache", {
+  key: text("key").primaryKey(),
+  lastRunAt: ts("last_run_at").notNull(),
+  items: integer("items").notNull().default(0),
+});
+
 /** Named folders where a person saves offers ("Candidarsi presto", "Da tenere d'occhio"...). */
 export const folders = sqliteTable(
   "folders",

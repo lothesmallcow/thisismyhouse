@@ -106,6 +106,7 @@ const SCREENS = [
   ["moda", "/ruoli", "Ruoli e stipendi"],
   ["moda", "/ruoli/boutique-manager-gioielli", "Scheda ruolo: boutique manager orologi e gioielli"],
   ["moda", "/profilo/punteggio", "Punteggio: pesi"],
+  ["moda", "/profilo/codice", "Codice di ricerca"],
   ["moda", "/percorsi", "Retail lusso: percorsi e aziende a cui scrivere"],
   ["moda", "/profilo", "Retail lusso: profilo (ricerca riservata)"],
   ["her", "/benvenuto/risposte?ritorno=profilo", "Risposte pronte"],

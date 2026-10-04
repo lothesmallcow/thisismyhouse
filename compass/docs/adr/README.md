@@ -26,3 +26,4 @@ what to re-verify.
 | [0018](0018-world-reference-data.md) | Companies, industries and places for IT/UK/DE/FR; searches only where people want, best fits first |
 | [0019](0019-fit-score.md) | A fit score out of 100 in seven parts, optional weights, hard limits |
 | [0020](0020-official-registers.md) | Every company: importers for Companies House, SIRENE, OffeneRegister, GLEIF, CSV; ESCO positions |
+| [0021](0021-search-codes.md) | Search codes: one cached, shared batch of searches per set of answers; alert links for the big sites |

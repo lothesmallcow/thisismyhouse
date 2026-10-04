@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 · 2026-10-04
+
+- **Search codes**: the questionnaire becomes brackets (places, roles, level, sectors, hours and
+  contract) and a fixed batch of searches; shared between people with the same brackets, not
+  repeated within 20 hours, and only the affected searches change when an answer changes.
+  Profilo → Codice di ricerca shows the code, its searches and ready links to create the same
+  alerts on LinkedIn, Indeed and InfoJobs.
+
 ## 0.6.1 · 2026-10-04
 
 - **951,647 real companies loaded** from the official registers: UK (Companies House + GLEIF)

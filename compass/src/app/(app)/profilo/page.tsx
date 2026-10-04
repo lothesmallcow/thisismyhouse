@@ -87,6 +87,7 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
             {[
               { href: "/profilo/esperienze", label: "Esperienze", value: exps.length ? `${exps.length} nella tua timeline` : "Dal CV, da LinkedIn o a mano" },
               { href: "/percorsi", label: "Percorsi per te", value: "Settori e ruoli vicini al tuo profilo" },
+              { href: "/profilo/codice", label: "Codice di ricerca", value: "Le ricerche fatte per te e gli avvisi da creare" },
               { href: "/profilo/punteggio", label: "Punteggio", value: p.fitWeights ? "Pesi personalizzati" : "Valori di partenza" },
               { href: "/ruoli", label: "Ruoli e stipendi", value: "Cosa serve e quanto si guadagna, nella tua zona" },
               { href: "/aziende", label: "Aziende e settori", value: `${likedCompanies} aziende, ${likedSectors} settori scelti` },

@@ -43,6 +43,13 @@
       "when": 1791123275712,
       "tag": "0005_fit_folders",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791133431074,
+      "tag": "0006_search_cache",
+      "breakpoints": true
     }
   ]
 }

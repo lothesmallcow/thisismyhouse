@@ -14,10 +14,10 @@ import type { Mailbox } from "../sources/mail/types";
 import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { dedupeCandidates, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
-import { rankPrefs } from "../server/catalog";
 import { prioritizedCompanies, todaysPicks } from "../server/career";
 import { getSettings, setSetting } from "../server/settings";
-import { searchPlan, type ApiSearch } from "./search-terms";
+import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
+import type { CodeQuery } from "../core/search-code";
 import { homeCountries } from "../core/geo";
 import type { RawJob } from "../core/normalize";
 import { isPaused, runWithHealth } from "./health";
@@ -80,21 +80,16 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
     }
   }
 
-  // One search plan per person; identical searches are made once.
-  const plans = [];
+  // Each person's search code (ADR 0021): people with the same brackets share the same searches,
+  // and a search made in the last 20 hours (by anyone) is not made again.
+  const codes = [];
   for (const ctx of contexts) {
     if (!ctx.profile.onboardedAt) continue;
-    plans.push(searchPlan(ctx.profile, await rankPrefs(db, ctx.userId)));
+    codes.push((await searchCodeFor(db, ctx.userId, now)).queries.filter((q) => q.channel === "api"));
   }
-  // Interleave people (each one's best search first); only the countries each person chose.
-  const calls = new Map<string, ApiSearch>();
-  for (let i = 0; i < 9; i++) {
-    for (const p of plans) {
-      const c = p.searches[i];
-      if (c) calls.set(`${c.country}|${c.what.toLowerCase()}|${c.where.toLowerCase()}`, c);
-    }
-  }
-  const apiCalls = [...calls.values()].slice(0, API_CALLS_PER_RUN);
+  const calls = new Map<string, CodeQuery>();
+  for (let i = 0; i < 9; i++) for (const list of codes) if (list[i]) calls.set(list[i].key, list[i]);
+  const apiCalls = (await freshQueries(db, [...calls.values()], now)).slice(0, API_CALLS_PER_RUN);
   // Company career feeds: keep the offers located in any country someone chose.
   const atsCountries = [...new Set(contexts.flatMap((c) => homeCountries(c.profile.countries, c.profile.city)))];
 
@@ -105,6 +100,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
       let items = 0;
       for (const c of apiCalls) {
         const jobs = await fetchAdzuna(fetchImpl, adzuna, c);
+        await markSearched(db, c.key, jobs.length, now);
         const s = await store(db, jobs, now, contexts);
         items += s.total;
         summary.newJobs += s.created;
