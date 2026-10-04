@@ -21,7 +21,9 @@ const files = execSync("git ls-files --cached --others --exclude-standard", { en
 
 const findings = [];
 for (const f of files) {
-  const text = fs.readFileSync(f, "utf8");
+  const buf = fs.readFileSync(f);
+  if (buf.includes(0)) continue; // binary file
+  const text = buf.toString("utf8");
   for (const [name, re] of RULES) {
     for (const m of text.matchAll(re)) {
       if (name === "mobile phone" && /333[\s.]?000[\s.]?0000/.test(m[0])) continue; // documented fake number
