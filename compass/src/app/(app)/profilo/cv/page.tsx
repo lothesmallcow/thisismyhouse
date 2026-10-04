@@ -6,6 +6,8 @@ import { IconDoc } from "@/components/icons";
 import { Button, Card, Chip, Field, PageHeader, SectionTitle } from "@/components/ui";
 import { getDb, schema } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
+import { RecommendedPositions } from "@/components/recommended-positions";
+import { cvPositionsFor } from "@/lib/server/cv-positions";
 import { deleteCvAction, saveCvTextAction, setDefaultCvAction, uploadCvAction } from "../../actions";
 
 export const metadata = { title: "CV" };
@@ -17,6 +19,7 @@ export default async function CvPage({ searchParams }: { searchParams: Promise<{
     .select({ id: schema.cvs.id, label: schema.cvs.label, roleFamily: schema.cvs.roleFamily, filename: schema.cvs.filename, size: schema.cvs.size, isDefault: schema.cvs.isDefault, text: schema.cvs.text })
     .from(schema.cvs)
     .where(and(eq(schema.cvs.userId, user.id)));
+  const rec = await cvPositionsFor(getDb(), user.id);
   return (
     <div className="mx-auto max-w-3xl">
       <Flash code={sp.msg} />
@@ -71,6 +74,15 @@ export default async function CvPage({ searchParams }: { searchParams: Promise<{
           </Card>
         ))}
       </div>
+
+      {rec.recommended.length > 0 && (
+        <>
+          <SectionTitle>Posizioni consigliate dal tuo CV</SectionTitle>
+          <Card className="!p-4">
+            <RecommendedPositions roles={rec.roles} recommended={rec.recommended} back="/profilo/cv" />
+          </Card>
+        </>
+      )}
 
       {cvs.length < 3 && (
         <>

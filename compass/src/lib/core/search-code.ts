@@ -2,7 +2,7 @@
 // level, sectors, hours/contract), and from the code a fixed batch of searches, each with a stable
 // key. People with the same brackets share the same searches (made once), and changing one answer
 // changes only the searches that depend on it: the others stay cached (ADR 0021).
-import { translations } from "../catalog/positions";
+import { specificTitles, translations } from "../catalog/positions";
 import { COUNTRIES, type CountryCode } from "./geo";
 import { fold } from "./text";
 
@@ -20,6 +20,8 @@ export interface CodeInput {
   studyStage: "primi-anni" | "penultimo" | "ultimo" | null;
   hours: "full" | "part" | "any";
   contracts: string[];
+  /** alta: also the titles one step below (more offers); bassa: only the best title per role. */
+  priority?: "alta" | "media" | "bassa";
 }
 
 export type Channel = "api" | "web";
@@ -62,7 +64,8 @@ export function levelBracket(years: number | null): "junior" | "middle" | "senio
 
 export function buildSearchCode(i: CodeInput): SearchCode {
   const level = i.track === "stage" ? (i.studyStage ?? "?") : levelBracket(i.years);
-  const roleKeys = i.track === "stage" ? i.sectors.slice(0, 3).map((s) => s.slug) : i.roles.slice(0, 3).map(slug);
+  const lv = level === "junior" || level === "middle" || level === "senior" || level === "lead" ? level : "?";
+  const roleKeys = i.track === "stage" ? i.sectors.slice(0, 3).map((s) => s.slug) : [...new Set(i.roles.flatMap((r) => specificTitles(r, lv, i.sectors.map((s) => s.slug))))].slice(0, 3).map(slug);
   const placeKey = (p: CodeInput["places"][number]) => `${p.country}${p.where ? `:${p.where}` : ""}${p.distanceKm ? `(${p.distanceKm})` : ""}`;
   const brackets = [
     { label: "Percorso", value: i.track === "stage" ? "Stage" : "Lavoro" },
@@ -71,6 +74,7 @@ export function buildSearchCode(i: CodeInput): SearchCode {
     { label: "Livello", value: level },
     { label: "Settori scelti", value: i.sectors.slice(0, 3).map((s) => s.slug).join(" + ") || "-" },
     { label: "Orario e contratto", value: [i.hours, ...i.contracts].join(" + ") },
+    { label: "Priorità", value: i.priority ?? "media" },
   ];
   const code = [i.track === "stage" ? "S" : "L", brackets[1].value, brackets[2].value, level, brackets[4].value, brackets[5].value].join(" · ");
 
@@ -80,9 +84,15 @@ export function buildSearchCode(i: CodeInput): SearchCode {
       const t = i.sectors.slice(0, 3).map((s) => `${INTERNSHIP[lang]} ${s.term}`);
       return t.length ? t : [INTERNSHIP[lang]];
     }
-    const roles = i.roles.slice(0, 3).map((r) => (lang === "it" ? r : (translations(r, [lang])[0] ?? r)));
-    // Early careers: the junior form of the role is what the listings say.
-    return level === "junior" ? roles.map((r) => `${r} junior`) : roles;
+    // Generic roles ("venditrice moda") become the precise titles listings use, for this level.
+    const below: Record<string, "junior" | "middle" | "senior" | "lead" | "?"> = { lead: "senior", senior: "middle", middle: "junior", junior: "junior", "?": "?" };
+    const sectors = i.sectors.map((s) => s.slug);
+    const base = i.roles.flatMap((r) => specificTitles(r, lv, sectors));
+    const pool = i.priority === "alta" ? [...base, ...i.roles.flatMap((r) => specificTitles(r, below[lv], sectors))] : i.priority === "bassa" ? i.roles.map((r) => specificTitles(r, lv, sectors)[0]) : base;
+    const precise = [...new Set(pool)].slice(0, i.priority === "alta" ? 5 : 3);
+    const roles = precise.map((r) => (lang === "it" ? r : (translations(r, [lang])[0] ?? r)));
+    // Early careers: the junior form of the role is what the listings say (unless only the best is wanted).
+    return level === "junior" && i.priority !== "bassa" ? roles.map((r) => `${r} junior`) : roles;
   };
   const queries: CodeQuery[] = [];
   const add = (q: Omit<CodeQuery, "key">) => {
@@ -91,7 +101,7 @@ export function buildSearchCode(i: CodeInput): SearchCode {
   };
   // Every country gets its best search before any country gets a second one.
   const per = i.places.map((p) => ({ p, terms: termsFor(COUNTRIES.find((c) => c.code === p.country)!.lang) }));
-  for (let k = 0; k < 3; k++) for (const { p, terms } of per) if (terms[k]) add({ channel: "api", country: p.country, what: terms[k], where: p.where, distanceKm: p.distanceKm });
+  for (let k = 0; k < 5; k++) for (const { p, terms } of per) if (terms[k]) add({ channel: "api", country: p.country, what: terms[k], where: p.where, distanceKm: p.distanceKm });
   for (let k = 0; k < 3; k++) {
     for (const { p, terms } of per) {
       if (!terms[k]) continue;

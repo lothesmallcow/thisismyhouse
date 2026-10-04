@@ -1,5 +1,8 @@
+import { RecommendedPositions } from "@/components/recommended-positions";
+import { cvPositionsFor } from "@/lib/server/cv-positions";
+import { PriorityChoice } from "@/components/priority-choice";
 import { COUNTRIES, regionsOf } from "@/lib/core/geo";
-import { positionsFor } from "@/lib/catalog/positions";
+import { isGenericRole, positionsFor } from "@/lib/catalog/positions";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
@@ -21,7 +24,8 @@ import { listExperiences } from "@/lib/server/experiences";
 import { formatPeriod } from "@/lib/core/timeline";
 import { uploadCvAction } from "../../../(app)/actions";
 import { saveStepAction } from "../actions";
-import { HELP, STEPS, TITLES, stepAt, type StepId } from "../steps";
+import { HELP, QUICK_STEPS, STEPS, TITLES, stepsFor, type StepId } from "../steps";
+import { chooseModeAction } from "../actions";
 import { KmSlider, NetSalaryField } from "./fields";
 
 export const metadata = { title: "Questionario" };
@@ -33,7 +37,37 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
   const db = getDb();
   const p = await getProfile(db, user.id);
   const back = sp.ritorno === "profilo";
-  const total = STEPS[p.track].length;
+  const steps = back ? STEPS[p.track] : stepsFor(p.track, p.onboardingMode);
+  const total = steps.length;
+  // New accounts first choose the version of the questionnaire.
+  if (passo !== "inizio" && passo !== "fine" && passo !== "risposte" && !back && !p.onboardedAt && !p.onboardingMode) redirect(`/benvenuto/inizio${sp.msg ? `?msg=${encodeURIComponent(sp.msg)}` : ""}`);
+  if (passo === "inizio") {
+    return (
+      <div className="py-4">
+        <Flash code={sp.msg} />
+        <h1 className="text-[24px] font-semibold">Benvenuta, benvenuto in Compass</h1>
+        <p className="mt-2 text-[15px] text-muted">Qualche domanda per cercare le offerte giuste per te. Scegli quanto tempo hai: puoi sempre completare o cambiare le risposte dal Profilo.</p>
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <form action={chooseModeAction} className="flex flex-col rounded-[var(--radius-card)] border border-line bg-surface p-5">
+            <input type="hidden" name="mode" value="veloce" />
+            <p className="text-[16px] font-semibold">Veloce</p>
+            <p className="mt-1 text-[13px] text-faint">{QUICK_STEPS[p.track].length} domande · circa 2 minuti</p>
+            <p className="mt-3 flex-1 text-[14px] text-muted">
+              {p.track === "stage" ? "Studi, dove, settori e CV." : "Ruolo, dove, stipendio minimo e CV."} Le offerte arrivano subito; i dettagli li aggiungi quando vuoi.
+            </p>
+            <Button className="mt-4">Inizia la versione veloce</Button>
+          </form>
+          <form action={chooseModeAction} className="flex flex-col rounded-[var(--radius-card)] border border-accent bg-surface p-5">
+            <input type="hidden" name="mode" value="completo" />
+            <p className="text-[16px] font-semibold">Completo · consigliato</p>
+            <p className="mt-1 text-[13px] text-faint">{STEPS[p.track].length} domande · circa 8-10 minuti</p>
+            <p className="mt-3 flex-1 text-[14px] text-muted">Anche contratto, lingue, settori, gusti, aziende e cosa evitare: punteggi e ricerche molto più precisi fin dal primo giorno.</p>
+            <Button className="mt-4">Inizia la versione completa</Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (passo === "fine") {
     return (
@@ -56,7 +90,7 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
   }
 
   const n = Number(passo);
-  const id: StepId | "risposte" | null = passo === "risposte" ? "risposte" : stepAt(p.track, n);
+  const id: StepId | "risposte" | null = passo === "risposte" ? "risposte" : (steps[n - 1] ?? null);
   if (!id) notFound();
   if (id !== "risposte" && !back && !p.onboardedAt && n > p.onboardingStep + 1) redirect(`/benvenuto/${p.onboardingStep}`);
   const synonymsPhase = id === "ruolo" && sp.fase === "sinonimi";
@@ -120,6 +154,7 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
 async function CvStep({ p, userId, n, back }: { p: Profile; userId: number; n: number; back: boolean }) {
   const cvs = await getDb().select({ id: schema.cvs.id, label: schema.cvs.label }).from(schema.cvs).where(and(eq(schema.cvs.userId, userId)));
   const exps = await listExperiences(getDb(), userId);
+  const rec = await cvPositionsFor(getDb(), userId);
   return (
     <div className="mt-7 space-y-5">
       {cvs.map((c) => (
@@ -139,6 +174,12 @@ async function CvStep({ p, userId, n, back }: { p: Profile; userId: number; n: n
             ))}
           </ul>
           <p className="mt-1.5 text-[12.5px] text-faint">Le correggi o importi da LinkedIn in Profilo → Esperienze. Servono a suggerirti aziende e percorsi.</p>
+        </div>
+      )}
+      {rec.recommended.length > 0 && (
+        <div className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+          <p className="mb-3 text-[14px] font-semibold">Posizioni consigliate dal tuo CV</p>
+          <RecommendedPositions roles={rec.roles} recommended={rec.recommended} back={`/benvenuto/${n}${back ? "?ritorno=profilo" : ""}`} submit="Cerca queste posizioni" />
         </div>
       )}
       {cvs.length < 3 && (
@@ -193,6 +234,11 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
         return (
           <>
             <p className="text-[13.5px] text-muted">Hai scritto: {p.roles.join(", ") || "niente"}</p>
+            {p.roles.some(isGenericRole) && (
+              <Notice tone="info">
+                &quot;{p.roles.filter(isGenericRole).join('", "')}&quot; è molto generico: sui siti di lavoro porta tante offerte che non c&apos;entrano. Cerchiamo invece le posizioni precise qui sotto (togli quelle che non vuoi).
+              </Notice>
+            )}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {suggestions.map((s) => (
                 <ChoiceRow key={s} name="synonym" value={s} defaultChecked>
@@ -208,7 +254,7 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
       }
       return (
         <div className="space-y-3">
-          {[0, 1, 2].map((i) => (
+          {Array.from({ length: Math.min(5, Math.max(3, p.roles.length)) }, (_, i) => i).map((i) => (
             <Field key={i} label={i === 0 ? "Ruolo" : `Un altro ruolo (facoltativo)`} htmlFor={`role${i + 1}`} hint={i === 0 ? "Scrivi o scegli tra i suggerimenti. Lo cerchiamo anche in inglese, tedesco e francese se scegli quei paesi." : undefined}>
               <input id={`role${i + 1}`} name={`role${i + 1}`} type="text" list="positions" defaultValue={p.roles[i] ?? ""} placeholder={i === 0 ? "Es. Impiegata amministrativa" : ""} />
             </Field>
@@ -218,6 +264,7 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
               <option key={x.it} value={x.it} />
             ))}
           </datalist>
+          <PriorityChoice value={p.priority} />
         </div>
       );
     }
@@ -259,6 +306,7 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
               <input id="graduationYear" name="graduationYear" type="number" min={2024} max={2040} defaultValue={p.graduationYear ?? ""} />
             </Field>
           </div>
+          <PriorityChoice value={p.priority} />
         </>
       );
     case "dove":

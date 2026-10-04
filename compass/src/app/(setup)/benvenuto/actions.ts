@@ -8,13 +8,18 @@ import { requireUser } from "@/lib/server/auth";
 import { rerankUser } from "@/lib/server/jobs";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
 import { getProfile, suggestSynonyms, updateProfile, type ProfilePatch } from "@/lib/server/profile";
-import { STEPS, type StepId } from "./steps";
+import { STEPS, stepsFor, type Mode, type StepId } from "./steps";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const lines = (s: string) => s.split(/\n|,/).map((x) => x.trim()).filter(Boolean);
 const int = (s: string) => (Number.isInteger(Number(s)) && s !== "" ? Number(s) : null);
 
 /** Save one questionnaire step, then go to the next one (or back to the profile). */
+const priorityOf = (f: FormData, fallback: "alta" | "media" | "bassa") => {
+  const v = str(f, "priority");
+  return v === "alta" || v === "media" || v === "bassa" ? v : fallback;
+};
+
 export async function saveStepAction(f: FormData) {
   const user = await requireUser();
   const db = getDb();
@@ -22,7 +27,8 @@ export async function saveStepAction(f: FormData) {
   const skip = str(f, "skip") === "1";
   const back = str(f, "ritorno") === "profilo";
   const current = await getProfile(db, user.id);
-  const steps = STEPS[current.track];
+  // Editing from the profile uses the full list (its links point there); otherwise the chosen version.
+  const steps = back ? STEPS[current.track] : stepsFor(current.track, current.onboardingMode);
   const n = Number(str(f, "n")) || steps.indexOf(step as StepId) + 1;
   const patch: ProfilePatch = {};
 
@@ -35,8 +41,8 @@ export async function saveStepAction(f: FormData) {
         if (str(f, "fase") === "sinonimi") {
           patch.synonyms = [...f.getAll("synonym").map(String), ...lines(str(f, "extra"))];
         } else {
-          const roles = [str(f, "role1"), str(f, "role2"), str(f, "role3")].filter(Boolean);
-          await updateProfile(db, user.id, { roles });
+          const roles = [1, 2, 3, 4, 5].map((k) => str(f, `role${k}`)).filter(Boolean);
+          await updateProfile(db, user.id, { roles, priority: priorityOf(f, current.priority) });
           if (roles.length > 0 && suggestSynonyms(roles).length + current.synonyms.length > 0) {
             redirect(`/benvenuto/${n}?fase=sinonimi${back ? "&ritorno=profilo" : ""}`);
           }
@@ -52,6 +58,7 @@ export async function saveStepAction(f: FormData) {
           studyYear: year && year >= 1 && year <= 6 ? year : null,
           degreeYears: total && [2, 3, 5, 6].includes(total) ? total : null,
           graduationYear: int(str(f, "graduationYear")),
+          priority: priorityOf(f, current.priority),
         });
         break;
       }
@@ -131,4 +138,13 @@ export async function saveStepAction(f: FormData) {
   if (last) redirect("/benvenuto/fine");
   if (step === "risposte") redirect("/offerte?msg=salvato");
   redirect(`/benvenuto/${n + 1}`);
+}
+
+/** The version of the questionnaire chosen at the start (quick or complete). */
+export async function chooseModeAction(f: FormData) {
+  const user = await requireUser();
+  const mode: Mode = str(f, "mode") === "veloce" ? "veloce" : "completo";
+  await updateProfile(getDb(), user.id, { onboardingMode: mode, onboardingStep: 1 });
+  revalidatePath("/", "layout");
+  redirect("/benvenuto/1");
 }

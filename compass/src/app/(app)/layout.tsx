@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await requireUser();
   const db = getDb();
   const profile = await getProfile(db, user.id);
-  if (!profile.onboardedAt && user.viewer === "self") redirect(`/benvenuto/${Math.max(1, Math.min(profile.onboardingStep, 20))}`);
+  if (!profile.onboardedAt && user.viewer === "self") redirect(profile.onboardingMode ? `/benvenuto/${Math.max(1, Math.min(profile.onboardingStep, 20))}` : "/benvenuto/inizio");
   const s = await shellData(db, user.id);
   const initials = (profile.name || user.name || user.email).split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (

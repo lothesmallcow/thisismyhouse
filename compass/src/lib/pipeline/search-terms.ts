@@ -83,6 +83,7 @@ export async function searchCodeFor(db: DB, userId: number, now = new Date()): P
     studyStage: profile.track === "stage" ? careerStage(profile.studyYear, profile.degreeYears) : null,
     hours: profile.hours,
     contracts: profile.contracts,
+    priority: profile.priority,
   });
 }
 

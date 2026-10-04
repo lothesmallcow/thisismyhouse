@@ -8,6 +8,17 @@ export const STEPS: Record<Track, StepId[]> = {
   stage: ["nome", "studi", "dove", "quando", "paga", "lingue", "cv", "settori", "gusti", "aziende", "evitare", "focus"],
 };
 
+/** The quick version: only what the search needs to start (the rest can be added later). */
+export const QUICK_STEPS: Record<Track, StepId[]> = {
+  lavoro: ["nome", "ruolo", "dove", "paga", "cv"],
+  stage: ["nome", "studi", "dove", "settori", "cv"],
+};
+
+export type Mode = "veloce" | "completo";
+export function stepsFor(track: Track, mode: Mode | null | undefined): StepId[] {
+  return mode === "veloce" ? QUICK_STEPS[track] : STEPS[track];
+}
+
 export function stepIndex(track: Track, id: StepId | string): number {
   const i = STEPS[track].indexOf(id as StepId);
   return i < 0 ? 1 : i + 1;

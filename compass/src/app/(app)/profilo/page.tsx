@@ -73,6 +73,13 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
             <Row label="Da evitare" value={[...p.avoidCompanies, ...p.avoidKeywords].join(", ") || "Niente"} action={<Edit href={at("evitare")} />} />
             <Row label="Risposte pronte per i siti" value={p.presentation ? "Compilate" : "Da compilare"} action={<Edit href="/benvenuto/risposte?ritorno=profilo" />} />
           </List>
+          {p.onboardingMode === "veloce" && (
+            <form action={restartQuestionnaireAction} className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-accent bg-accent-soft px-4 py-3">
+              <input type="hidden" name="mode" value="completo" />
+              <span className="text-[13px]">Hai fatto il questionario veloce. Aggiungi contratto, lingue, settori e aziende per punteggi e ricerche più precisi: le risposte date restano.</span>
+              <Button size="sm">Completa il questionario</Button>
+            </form>
+          )}
           <form action={restartQuestionnaireAction} className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line px-4 py-3">
             <span className="text-[13px] text-muted">Hai cambiato idea su cosa cerchi? Rifai il questionario: le risposte restano compilate.</span>
             <Button variant="secondary" size="sm">
@@ -87,6 +94,7 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
             {[
               { href: "/profilo/esperienze", label: "Esperienze", value: exps.length ? `${exps.length} nella tua timeline` : "Dal CV, da LinkedIn o a mano" },
               { href: "/percorsi", label: "Percorsi per te", value: "Settori e ruoli vicini al tuo profilo" },
+              { href: "/profilo/posizioni", label: "Posizioni cercate", value: p.roles.length ? p.roles.join(", ") : "Consigliate dal tuo CV" },
               { href: "/profilo/codice", label: "Codice di ricerca", value: "Le ricerche fatte per te e gli avvisi da creare" },
               { href: "/profilo/punteggio", label: "Punteggio", value: p.fitWeights ? "Pesi personalizzati" : "Valori di partenza" },
               { href: "/ruoli", label: "Ruoli e stipendi", value: "Cosa serve e quanto si guadagna, nella tua zona" },

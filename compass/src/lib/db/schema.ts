@@ -109,6 +109,10 @@ export const profile = sqliteTable(
   /** Optional: countries (IT, GB, DE, FR) and regions ("IT:Lombardia") where they want to work. Empty = no limit. */
   countries: json<string[]>("countries").notNull().default([]),
   regions: json<string[]>("regions").notNull().default([]),
+  /** Questionnaire version chosen at the start: "veloce" (5 questions) or "completo"; null = not chosen yet. */
+  onboardingMode: text("onboarding_mode").$type<"veloce" | "completo">(),
+  /** How soon they need a job: alta = wider (also a step below), media = normal, bassa = only the best fits. */
+  priority: text("priority").$type<"alta" | "media" | "bassa">().notNull().default("media"),
   /** Their own weights for the fit score (Profilo → Punteggio); null = the defaults. */
   fitWeights: json<Record<string, number> | null>("fit_weights"),
   paidOnly: integer("paid_only", { mode: "boolean" }).notNull().default(false),

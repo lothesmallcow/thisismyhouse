@@ -5,7 +5,7 @@
 import type { Contract, Eligibility, Hours, JobType, LanguageReq, Remote } from "./extract";
 import { normalizeCompany } from "./dedupe";
 import { escapeRe, fold, keyTokens } from "./text";
-import { RANK_WEIGHTS as W, THRESHOLDS } from "./rank-config";
+import { PRIORITY_THRESHOLDS, RANK_WEIGHTS as W, THRESHOLDS } from "./rank-config";
 import { careerStage, titleSeniority } from "./career-stage";
 import { countryName, findPlace } from "./geo";
 import { computeFit, type FitArea, type FitWeights } from "./fit";
@@ -54,6 +54,8 @@ export interface RankProfile {
   weights: Partial<FitWeights> | null;
   /** Where they work now: a discreet search never puts it forward. */
   currentEmployers: string[];
+  /** How soon they need a job: alta = also a step below and gentler levels, bassa = only the best. */
+  priority: "alta" | "media" | "bassa";
 }
 
 /** A job seeker with no catalog choices and no student fields (handy defaults for tests and tools). */
@@ -72,6 +74,7 @@ export const NO_CHOICES = {
   experienceSectors: [],
   weights: null,
   currentEmployers: [],
+  priority: "media",
 } satisfies Partial<RankProfile>;
 
 export interface RankJob {
@@ -321,7 +324,7 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     const level = titleSeniority(job.title);
     if (level === "senior" && years < 3) f.push({ key: "exp-level", points: W.levelTooHigh, reason: "Ruolo di responsabilità: di solito chiede più anni" });
     else if (level === "senior" && years >= 5) f.push({ key: "exp-level", points: W.levelRight, reason: "Livello adatto alla tua esperienza" });
-    else if (level === "entry" && years >= 6) f.push({ key: "exp-level", points: W.levelTooLow, reason: "Probabilmente sotto il tuo livello" });
+    else if (level === "entry" && years >= 6 && profile.priority !== "alta") f.push({ key: "exp-level", points: profile.priority === "bassa" ? W.levelTooLow * 2 : W.levelTooLow, reason: "Probabilmente sotto il tuo livello" });
   }
 
   // 12. Requirements written in the listing, against the CV and the timeline.
@@ -348,7 +351,8 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
 
   const score = f.reduce((s, x) => s + x.points, 0);
   const { fit, parts } = computeFit(f, profile.weights, profile.track);
-  const level: Level = fit >= THRESHOLDS.molto ? "molto" : fit >= THRESHOLDS.adatta ? "adatta" : "poco";
+  const th = PRIORITY_THRESHOLDS[profile.priority] ?? THRESHOLDS;
+  const level: Level = fit >= th.molto ? "molto" : fit >= th.adatta ? "adatta" : "poco";
   return { score, level, reasons: pickReasons(f, level), factors: f, presetMatch, fit, parts };
 }
 

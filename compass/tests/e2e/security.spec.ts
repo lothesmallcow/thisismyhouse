@@ -5,7 +5,7 @@ import { loginAsAdmin, loginAsHer, loginAsStudent } from "./helpers";
 test.describe.configure({ mode: "serial" });
 
 const ADMIN_PAGES = ["/admin", "/admin/invii", "/admin/fonti", "/admin/catalogo", "/admin/aziende", "/admin/siti", "/admin/spontanee", "/admin/blocchi", "/admin/classifica", "/admin/registro", "/admin/metriche", "/admin/posta", "/admin/utenti"];
-const HER_PAGES = ["/offerte", "/offerte/cartelle", "/ruoli", "/ruoli/store-manager-lusso", "/profilo/punteggio", "/profilo/codice", "/percorsi/scrivi?azienda=1", "/da-inviare", "/candidature", "/aziende", "/percorsi", "/profilo", "/profilo/cv", "/profilo/esperienze", "/profilo/ricerca", "/offerte/aggiungi"];
+const HER_PAGES = ["/offerte", "/offerte/cartelle", "/ruoli", "/ruoli/store-manager-lusso", "/profilo/punteggio", "/profilo/codice", "/profilo/posizioni", "/percorsi/scrivi?azienda=1", "/da-inviare", "/candidature", "/aziende", "/percorsi", "/profilo", "/profilo/cv", "/profilo/esperienze", "/profilo/ricerca", "/offerte/aggiungi"];
 
 test("logged out: every private page and API is closed", async ({ page, request }) => {
   for (const p of [...ADMIN_PAGES]) {

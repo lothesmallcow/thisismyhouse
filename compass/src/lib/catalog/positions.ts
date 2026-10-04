@@ -248,3 +248,45 @@ export function translations(role: string, langs: ("it" | "en" | "de" | "fr")[])
   if (!p) return [];
   return [...new Set(langs.map((l) => p[l]).filter((t) => norm(t) !== norm(role)))];
 }
+
+// --- Generic roles → specific positions -------------------------------------------------------------
+// "Venditrice moda" on a job site brings back hundreds of unrelated listings. A generic role is turned
+// into the precise titles that listings use, for the person's sector and level (ADR 0021).
+
+const GENERIC_WORDS = new Set(
+  "venditrice venditore venditori commessa commesso addetta addetto addetti vendite vendita sales seller shop assistant impiegata impiegato impiegati lavoro ufficio operaia operaio generico generica varie qualsiasi negozio retail boutique moda lusso abbigliamento fashion luxury gioielli gioielleria orologi orologeria amministrazione amministrativa amministrativo nel nella di del della in e".split(" "),
+);
+const SALES = /vendit|commess|vendite|vendita|sales|seller|negozio|retail|boutique|shop/;
+const ADMIN = /impiegat|amministr|ufficio/;
+type Level = "junior" | "middle" | "senior" | "lead" | "?";
+const TITLES: Record<string, Partial<Record<string, Record<Level, string[]>>>> = {
+  sales: {
+    "moda-lusso": { junior: ["Sales associate lusso", "Client advisor"], middle: ["Client advisor", "Sales associate lusso"], senior: ["Store manager lusso", "Client advisor"], lead: ["Store manager lusso", "Responsabile di negozio"], "?": ["Client advisor", "Sales associate lusso", "Store manager lusso"] },
+    gioielli: { junior: ["Client advisor", "Sales associate lusso"], middle: ["Client advisor", "Personal shopper"], senior: ["Store manager lusso", "Client advisor"], lead: ["Store manager lusso", "Responsabile di negozio"], "?": ["Client advisor", "Store manager lusso"] },
+    default: { junior: ["Addetta vendite", "Commessa"], middle: ["Addetta vendite", "Visual merchandiser"], senior: ["Responsabile di negozio", "Addetta vendite"], lead: ["Responsabile di negozio", "Key account manager"], "?": ["Addetta vendite", "Responsabile di negozio"] },
+  },
+  admin: {
+    default: { junior: ["Impiegata amministrativa", "Addetta contabilità"], middle: ["Impiegata amministrativa", "Contabile"], senior: ["Contabile", "Responsabile amministrativo"], lead: ["Responsabile amministrativo", "Controller"], "?": ["Impiegata amministrativa", "Contabile"] },
+  },
+};
+
+/** Is this a generic role ("venditrice moda", "impiegata") rather than a job title? */
+export function isGenericRole(role: string): boolean {
+  if (findPosition(role) && !/^(commessa|commesso|addetta vendite)$/i.test(role.trim())) return false;
+  const words = norm(role).split(/[^a-z0-9]+/).filter(Boolean);
+  return words.length > 0 && words.every((w) => GENERIC_WORDS.has(w));
+}
+
+/**
+ * The precise titles for a role at a level. Specific roles stay as they are; generic ones become
+ * the 2-3 titles that listings in that sector actually use.
+ */
+export function specificTitles(role: string, level: Level = "?", likedSectors: string[] = []): string[] {
+  if (!isGenericRole(role)) return [role];
+  const t = norm(role);
+  const family = SALES.test(t) ? "sales" : ADMIN.test(t) ? "admin" : null;
+  if (!family) return [role];
+  const sector = /moda|lusso|abbigliamento|fashion|luxury/.test(t) ? "moda-lusso" : /gioiell|orolog/.test(t) ? "gioielli" : (likedSectors.find((s) => TITLES[family][s]) ?? "default");
+  const table = TITLES[family][sector] ?? TITLES[family].default!;
+  return table[level] ?? table["?"];
+}

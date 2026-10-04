@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 · 2026-10-04
+
+- **Precise positions**: generic roles ("venditrice moda") become the titles listings use, by
+  sector and level (Client advisor, Sales associate lusso, Store manager lusso); the questionnaire
+  explains why and the search code uses them.
+- **Quick or complete questionnaire**: new accounts choose at the start (5 or 12 questions); the
+  quick one can be completed later from the profile.
+- **Positions from the CV**: roles already done, the usual next step, and titles in the CV, each
+  with its reason; the person ticks what to search (CV step, CV page, Profilo → Posizioni cercate).
+- **Job priority** (alta, media, bassa): wider searches and gentler thresholds when a job is needed
+  soon, only the best titles and stricter thresholds when there is time.
+
 ## 0.7.0 · 2026-10-04
 
 - **Search codes**: the questionnaire becomes brackets (places, roles, level, sectors, hours and

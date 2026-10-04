@@ -328,7 +328,7 @@ test("persona: luxury store manager in Milan, score, requirements, role sheet, f
   await assertUiBasics(page);
   await page.getByLabel("Luogo").fill("10");
   await page.getByRole("button", { name: "Salva e ricalcola" }).click();
-  await expect(page.getByText("Pesi salvati: punteggi ricalcolati.")).toBeVisible();
+  await expect(page.getByText("Salvato: punteggi ricalcolati.")).toBeVisible();
   await page.getByRole("button", { name: "Torna ai valori di partenza" }).click();
 
   // Her search code, its searches, and ready links to create the alerts on the big sites.
@@ -350,6 +350,20 @@ test("persona: luxury store manager in Milan, score, requirements, role sheet, f
   await page.getByRole("button", { name: "Prepara la candidatura" }).click();
   await expect(page).toHaveURL(/da-inviare/);
   await expect(page.getByText(/Candidatura spontanea pronta/)).toBeVisible();
+
+  // Positions recommended from her CV: she ticks the next step and it is searched.
+  await page.goto("/profilo/posizioni");
+  await assertUiBasics(page);
+  await expect(page.getByRole("checkbox", { name: "Store manager", exact: true })).toBeChecked();
+  const area = page.getByRole("checkbox", { name: /^Area manager/ });
+  await expect(area).not.toBeChecked();
+  await expect(page.getByText(/Passo successivo · Il passo dopo "Store Manager"/).first()).toBeVisible();
+  await area.check();
+  await page.getByRole("button", { name: "Salva le posizioni" }).click();
+  await expect(page.getByText(/Posizioni salvate/)).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: /^Area manager/ })).toBeChecked();
+  await page.goto("/profilo/codice");
+  await expect(page.getByText(/area-manager/).first()).toBeVisible();
 });
 
 test("admin: people, invitation, view-as, catalog, rules, metrics, cron endpoint", async ({ page, request }) => {
@@ -395,8 +409,53 @@ test("admin: people, invitation, view-as, catalog, rules, metrics, cron endpoint
   await page.getByLabel("E-mail").fill("giulia@example.com");
   await page.getByLabel("Password").fill("una-password-lunga");
   await page.getByRole("button", { name: "Crea account" }).click();
-  await expect(page).toHaveURL(/benvenuto\/1/);
+  // First thing in the app: the questionnaire, quick or complete.
+  await expect(page).toHaveURL(/benvenuto\/inizio/);
+  await assertUiBasics(page);
+  await expect(page.getByRole("button", { name: "Inizia la versione veloce" })).toBeVisible();
+  await page.getByRole("button", { name: "Inizia la versione completa" }).click();
   await expect(page.getByText("Passo 1 di 12")).toBeVisible();
+});
+
+test("quick questionnaire for a new account: 5 questions, a generic role becomes precise positions, complete later", async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto("/admin/utenti");
+  await page.locator("#new-name").fill("Sara Prova");
+  await page.locator("#new-email").fill("sara@example.com");
+  await page.locator("#new-pw").fill("una-password-lunga");
+  await page.getByRole("button", { name: "Crea", exact: true }).click();
+  await page.context().clearCookies();
+  await login(page, "sara@example.com", "una-password-lunga");
+  await expect(page).toHaveURL(/benvenuto\/inizio/);
+  await page.getByRole("button", { name: "Inizia la versione veloce" }).click();
+  await expect(page.getByText("Passo 1 di 5")).toBeVisible();
+  await page.getByLabel("Nome e cognome").fill("Sara Prova");
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 2 di 5")).toBeVisible();
+  await page.getByLabel("Ruolo", { exact: true }).fill("venditrice moda");
+  await page.getByText("Alta: mi serve un lavoro presto").click();
+  await page.getByRole("button", { name: "Avanti" }).click();
+  // Too generic: the precise positions are proposed, ticked.
+  await expect(page.getByText(/è molto generico/)).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Client advisor" })).toBeChecked();
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 3 di 5")).toBeVisible();
+  await page.getByLabel("La tua città").fill("Milano");
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 4 di 5")).toBeVisible();
+  await page.getByRole("button", { name: "Salta" }).click();
+  await expect(page.getByText("Passo 5 di 5")).toBeVisible();
+  await page.getByRole("button", { name: "Lo carico più tardi" }).click();
+  await expect(page).toHaveURL(/benvenuto\/fine/);
+  // The search code uses the precise positions, not the generic words.
+  await page.goto("/profilo/codice");
+  await expect(page.getByText(/client-advisor/).first()).toBeVisible();
+  await expect(page.getByText("alta", { exact: true })).toBeVisible(); // her priority, in the brackets
+  // Details later: the complete questionnaire, answers kept.
+  await page.goto("/profilo");
+  await page.getByRole("button", { name: "Completa il questionario" }).click();
+  await expect(page.getByText("Passo 1 di 12")).toBeVisible();
+  await expect(page.getByLabel("Nome e cognome")).toHaveValue("Sara Prova");
 });
 
 test("student questionnaire: 12 steps, catalog, Altro, automatic focus", async ({ page }) => {
@@ -463,9 +522,10 @@ test("CV upload, then delete all data and redo the job questionnaire", async ({ 
   await page.getByRole("link", { name: /Cancella tutti i miei dati/ }).click();
   await expect(page.getByRole("heading", { name: "Cancellare tutti i tuoi dati?" })).toBeVisible();
   await page.getByRole("button", { name: "Sì, cancella tutto" }).click();
-  await expect(page).toHaveURL(/benvenuto\/1/);
+  // Like a new account: first the choice between the quick and the complete questionnaire.
+  await expect(page).toHaveURL(/benvenuto\/inizio/);
   await expect(page.getByText("Tutti i tuoi dati sono stati cancellati.")).toBeVisible();
-
+  await page.getByRole("button", { name: "Inizia la versione completa" }).click();
   await expect(page.getByText("Passo 1 di 12")).toBeVisible();
   await page.getByLabel("Nome e cognome").fill("Anna Prova");
   await page.getByRole("button", { name: "Avanti" }).click();

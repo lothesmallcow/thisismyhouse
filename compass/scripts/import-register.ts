@@ -49,6 +49,7 @@ async function* records(): AsyncIterable<RegisterRecord> {
 const filters = { regions: list("regions"), cities: list("cities"), nace: list("nace"), minEmployees: Number(opt("min-employees")) || undefined, limit: Number(opt("limit")) || undefined };
 if (args.includes("--dry-run")) {
   let n = 0;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for await (const _r of records()) n++;
   console.log(`${n} active companies readable in the file (before filters). Nothing written.`);
 } else {

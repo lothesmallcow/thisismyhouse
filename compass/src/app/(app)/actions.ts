@@ -5,6 +5,7 @@
 
 import { addToFolder, createFolder, deleteFolder, removeFromFolder, renameFolder } from "@/lib/server/folders";
 import { FIT_AREAS, parseWeights } from "@/lib/core/fit";
+import { MAX_ROLES } from "@/lib/core/cv-positions";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -412,16 +413,32 @@ export async function deleteExperienceAction(f: FormData) {
 }
 
 /** "Rifai il questionario": every answer stays prefilled; the app stays usable meanwhile. */
-export async function restartQuestionnaireAction() {
+export async function restartQuestionnaireAction(f?: FormData) {
   const u = await requireUser();
-  await updateProfile(getDb(), u.id, { onboardingStep: 1 });
+  // "Completa" after the quick version: the full questionnaire, answers kept.
+  const mode = f && str(f, "mode") === "completo" ? "completo" : undefined;
+  await updateProfile(getDb(), u.id, { onboardingStep: 1, ...(mode ? { onboardingMode: mode } : {}) });
   revalidatePath("/", "layout");
   redirect("/benvenuto/1?rifai=1");
+}
+
+/** The positions searched: the ticked ones (current and recommended from the CV) plus one typed. */
+export async function saveRolesAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const picked = [...f.getAll("role").map(String), str(f, "extraRole")].map((r) => r.replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean);
+  const roles = [...new Map(picked.map((r) => [r.toLowerCase(), r])).values()].slice(0, MAX_ROLES);
+  await updateProfile(db, u.id, { roles });
+  await rerankUser(db, u.id);
+  revalidatePath("/", "layout");
+  done(safeBack(f, "/profilo/posizioni"), roles.length ? "posizioni-salvate" : "posizioni-vuote");
 }
 
 export async function saveWeightsAction(f: FormData) {
   const u = await requireUser();
   const db = getDb();
+  const pr = str(f, "priority");
+  if (pr === "alta" || pr === "media" || pr === "bassa") await updateProfile(db, u.id, { priority: pr });
   if (str(f, "reset") === "1") await updateProfile(db, u.id, { fitWeights: null });
   else await updateProfile(db, u.id, { fitWeights: parseWeights(Object.fromEntries(FIT_AREAS.map((a) => [a, Number(str(f, a)) * 5]))) });
   await rerankUser(db, u.id);

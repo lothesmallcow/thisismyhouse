@@ -83,3 +83,5 @@ export const RANK_WEIGHTS = {
 
 /** Levels from the fit score out of 100 (core/fit.ts). */
 export const THRESHOLDS = { molto: 70, adatta: 52 } as const;
+/** Job priority (Profilo → Punteggio, questionnaire): in a hurry, more offers count as good; with time, only the best. */
+export const PRIORITY_THRESHOLDS = { alta: { molto: 64, adatta: 45 }, media: THRESHOLDS, bassa: { molto: 76, adatta: 60 } } as const;

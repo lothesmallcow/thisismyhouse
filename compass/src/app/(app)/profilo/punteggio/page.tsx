@@ -2,6 +2,8 @@ import { BackLink } from "@/components/back-link";
 import { Flash } from "@/components/flash";
 import { Button, Card, PageHeader } from "@/components/ui";
 import { WeightSliders } from "@/components/weight-sliders";
+import { PriorityChoice } from "@/components/priority-choice";
+import { PRIORITY_THRESHOLDS } from "@/lib/core/rank-config";
 import { AREA_LABELS, FIT_AREAS, defaultWeights } from "@/lib/core/fit";
 import { getDb } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
@@ -28,6 +30,7 @@ export default async function PunteggioPage({ searchParams }: { searchParams: Pr
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <Card>
           <form action={saveWeightsAction} className="space-y-6">
+            <PriorityChoice value={p.priority} />
             <WeightSliders areas={FIT_AREAS.map((a) => ({ key: a, name: AREA_LABELS[a].name, hint: AREA_LABELS[a].hint, value: Math.round(current[a] / 5) }))} />
             <div className="flex flex-wrap gap-2">
               <Button>Salva e ricalcola</Button>
@@ -45,7 +48,9 @@ export default async function PunteggioPage({ searchParams }: { searchParams: Pr
             <ul className="mt-2 list-disc space-y-1.5 pl-4">
               <li>Ogni parte va da 0 a 100; 50 vuol dire che l&apos;annuncio non lo dice.</li>
               <li>Alcune cose valgono sempre: un ruolo del tutto diverso, un annuncio sospetto o un&apos;azienda da evitare non arrivano mai in cima.</li>
-              <li>Molto adatta da 70 in su, Adatta da 52.</li>
+              <li>
+                Con la tua priorità: Molto adatta da {PRIORITY_THRESHOLDS[p.priority].molto} in su, Adatta da {PRIORITY_THRESHOLDS[p.priority].adatta}.
+              </li>
             </ul>
           </Card>
           <p>{custom ? "Stai usando i tuoi pesi." : "Stai usando i valori di partenza."}</p>

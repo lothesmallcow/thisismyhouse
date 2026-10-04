@@ -1,5 +1,6 @@
 // One profile per account. Also converts it (plus catalog choices) into the ranking profile.
-import { translations } from "../catalog/positions";
+import { isGenericRole, specificTitles, translations } from "../catalog/positions";
+import { levelBracket } from "../core/search-code";
 import { COUNTRIES } from "../core/geo";
 import { eq } from "drizzle-orm";
 import type { Contract } from "../core/extract";
@@ -35,10 +36,11 @@ export function toRankProfile(p: Profile, prefs: RankPrefs = NO_PREFS, bg: Pick<
   return {
     ...bg,
     weights: (p.fitWeights as RankProfile["weights"]) ?? null,
+    priority: p.priority ?? "media",
     track: p.track,
     roles: p.roles,
     // The same roles in the languages of the countries they chose (and English, common everywhere).
-    synonyms: [...new Set([...p.synonyms, ...p.roles.flatMap((r) => translations(r, roleLanguages(p.countries)))])],
+    synonyms: [...new Set([...p.synonyms, ...p.roles.flatMap((r) => (isGenericRole(r) ? specificTitles(r, levelBracket(bg.person?.years ?? null)) : [])), ...p.roles.flatMap((r) => translations(r, roleLanguages(p.countries)))])],
     maxKm: p.maxKm,
     remoteOk: p.remoteOk,
     hours: p.hours,
@@ -85,6 +87,8 @@ export const ROLE_SYNONYMS: Record<string, string[]> = {
 
 export function suggestSynonyms(roles: string[]): string[] {
   const out = new Set<string>();
+  // Generic roles first: the precise titles listings use ("venditrice moda" → "Client advisor"...).
+  for (const r of roles) if (isGenericRole(r)) for (const t of specificTitles(r)) out.add(t);
   for (const r of roles) for (const s of ROLE_SYNONYMS[r.trim().toLowerCase()] ?? []) out.add(s);
   for (const r of roles) out.delete(r);
   return [...out];

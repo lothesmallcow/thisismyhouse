@@ -1,0 +1,77 @@
+// Positions recommended from the CV: the roles the person already did (as listings name them, at
+// their level), where those roles usually lead next, and the job titles their CV mentions. The
+// person ticks the ones to search; nothing is added on their own.
+import { findPosition, POSITIONS, specificTitles, isGenericRole } from "../catalog/positions";
+import { sheetFor } from "../catalog/role-sheets";
+import { levelBracket } from "./search-code";
+import { fold } from "./text";
+
+export interface CvPositionInput {
+  track: "lavoro" | "stage";
+  /** The timeline, most recent first. */
+  experiences: { kind: string; title: string; organization: string; current: boolean }[];
+  cvText: string;
+  years: number | null;
+  /** Chosen sector slugs, best first. */
+  sectors: string[];
+  /** Roles already searched: not recommended again. */
+  roles: string[];
+  priority: "alta" | "media" | "bassa";
+}
+
+export interface CvPosition {
+  title: string;
+  why: string;
+  kind: "fatto" | "prossimo" | "nel-cv";
+}
+
+const MAX = 8;
+/** How many roles are searched at most (the first ticked). */
+export const MAX_ROLES = 5;
+const tidy = (s: string) => s.replace(/\s+/g, " ").trim();
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+export function recommendPositions(i: CvPositionInput): CvPosition[] {
+  const out: CvPosition[] = [];
+  // A role and its translations count once ("Store manager" = "Responsabile di negozio").
+  const seen = new Set<string>();
+  const names = (t: string) => {
+    const p = findPosition(t);
+    return [t, ...(p ? [p.it, p.en, p.de, p.fr] : [])].map(fold);
+  };
+  for (const r of i.roles) names(r).forEach((n) => seen.add(n));
+  const add = (title: string, why: string, kind: CvPosition["kind"]) => {
+    const t = cap(tidy(title));
+    if (t.length < 3 || names(t).some((n) => seen.has(n)) || out.length >= MAX) return;
+    names(t).forEach((n) => seen.add(n));
+    out.push({ title: t, why, kind });
+  };
+  const lv = levelBracket(i.years);
+  const work = i.experiences.filter((e) => (i.track === "stage" ? e.kind === "lavoro" || e.kind === "altro" : e.kind === "lavoro") && e.title.trim());
+
+  // 1. What they already did, as listings call it (a generic "commessa" becomes the precise titles).
+  for (const e of work.slice(0, 4)) {
+    const where = e.organization ? ` da ${tidy(e.organization)}` : "";
+    const why = `${e.current ? "Lo fai ora" : "L'hai fatto"}${where}`;
+    if (isGenericRole(e.title)) for (const t of specificTitles(e.title, lv, i.sectors)) add(t, why, "fatto");
+    else add(e.title, why, "fatto"); // as they wrote it: "Store manager" is what Italian listings say too
+  }
+
+  // 2. The usual next step from the latest role (not for those in a hurry: they want the same level or below).
+  const latest = work[0];
+  const sheet = latest ? sheetFor(latest.title) : undefined;
+  if (sheet && i.track === "lavoro" && i.priority !== "alta") {
+    for (const n of sheet.next.slice(0, i.priority === "bassa" ? 3 : 2)) add(n.split("/")[0], `Il passo dopo "${tidy(latest!.title)}"`, "prossimo");
+  }
+
+  // 3. Job titles written in the CV (hand-made positions only: clear titles, not every ESCO word).
+  const text = ` ${fold(i.cvText).replace(/[^a-z0-9]+/g, " ")} `;
+  if (text.trim()) {
+    for (const p of POSITIONS) {
+      if (!p.sector || (p.track !== "tutti" && p.track !== i.track)) continue;
+      const hit = [p.it, p.en].find((n) => n.length >= 6 && text.includes(` ${fold(n).replace(/[^a-z0-9]+/g, " ").trim()} `));
+      if (hit) add(p.it, "Compare nel tuo CV", "nel-cv");
+    }
+  }
+  return out;
+}
