@@ -1,6 +1,6 @@
 # Compass
 
-**A calm, rule-based job and internship finder for a few people in Italy.** Compass reads the
+**A calm, rule-based job and internship finder for a few people in Italy, the UK, Germany and France.** Compass reads the
 job-alert e-mails each person already receives, adds openings from free job APIs, company career
 feeds and a capped web search, ranks everything with explainable rules, and helps them apply in a
 few taps: by e-mail with strict guardrails, or on the company site with a copy-paste kit.
@@ -52,6 +52,10 @@ ever touching anyone's platform accounts.
   what you see: everything with your choices first, only your choices, or only your companies.
   Filters (minimum net pay, distance, type, contract...) start from the questionnaire and can be
   saved as your defaults.
+- **Four countries, the whole catalog**: optional countries, regions and cities in the
+  questionnaire; ~3,100 listed companies and all 1,047 NACE industries (four languages) browsable
+  and searchable; ~180 roles searched in each country's language. Searches go only where people
+  want to work, best-fitting companies first and the rest in rotation, so free quotas last.
 - **Career panel**: an experience timeline read from the CV (PDF text) or a LinkedIn data export,
   career paths and company suggestions built from shared themes, a gentle "might not be the best
   fit" note when a choice is far from everything else, advice for your year of study, and a
@@ -108,7 +112,8 @@ Code map:
 | Path | What |
 |---|---|
 | `src/lib/core/` | Pure rules: `salary`, `extract`, `geo`, `dedupe`, `rank` (+ `rank-config`), `career-stage`, `timeline`, `scam-rules`, `guardrails`, `templates`, `cv-pick`, `prompt`, `normalize`, `time` |
-| `src/lib/catalog/` | The curated catalog: sectors with themes, companies with extra sectors and themes, tastes |
+| `src/lib/catalog/` | The curated catalog (sectors with themes, companies with extra sectors and themes, tastes), positions in four languages, and the mapping of listed companies and NACE codes to it |
+| `data/world/` | Generated offline data: towns of UK/DE/FR, NACE codes, listed companies (sources and licences in its README) |
 | `src/lib/sources/` | Adapters: `mail/` (IMAP + demo mailbox), `alerts/` (per-template parsers), `api/`, `ats/`, `web/` (W1, robots, polite fetcher, JSON-LD) |
 | `src/lib/pipeline/` | Jobs: `ingest`, `discover`, `mailbox-scan`, `digest`, source `health`, `jobs` (runner) |
 | `src/lib/server/` | Services, all scoped by person: jobs, applications/queue, replies, profile, settings, auth, accounts, catalog, career, experiences, metrics, privacy |
@@ -136,13 +141,14 @@ npm run demo              # migrate + seed fake data + start on http://localhost
 |---|---|
 | `npm run demo` | one-command local start in demo mode |
 | `npm run check` | lint + typecheck + unit tests + personal-data scan |
-| `npm test` | Vitest: 287 unit and integration tests (rules, parsers, sources, pipeline, guardrails, accounts isolation, catalog, career, migration) |
-| `npm run build && npm run test:e2e` | Playwright: 19 end-to-end flows on a phone viewport (incl. two people, invitations, auth matrix, XSS, axe light and dark) |
+| `npm test` | Vitest: 302 unit and integration tests (rules, parsers, sources, pipeline, guardrails, accounts isolation, catalog, career, countries, migration) |
+| `npm run build && npm run test:e2e` | Playwright: 20 end-to-end flows on a phone viewport (incl. two people, invitations, auth matrix, XSS, axe light and dark) |
 | `npm run simulate:week` | a full demo week on a simulated clock, every step checked against the database |
 | `npm run audit:ui` | every screen at 360/1280 px, light and dark: axe, text and target sizes, keyboard focus, zoom (needs a running demo) |
 | `npm run job:<ingest\|discover\|queue\|replies\|digest>` | run a scheduled job by hand |
 | `npm run hooks:install` | install the pre-commit secret/personal-data scan |
 | `node scripts/screenshots.mjs` | regenerate the README screenshots from a running demo |
+| `node scripts/build-world-data.mjs` | rebuild `data/world/` (towns, NACE, listed companies) from the open datasets |
 
 Going live (real mailbox, real sending, hosting) is described step by step in
 [docs/setup.md](docs/setup.md). Day-to-day admin tasks: [docs/guida-admin.md](docs/guida-admin.md).
@@ -184,3 +190,5 @@ says plainly that online payments are not active; no payment provider is integra
 MIT licensed. See [CHANGELOG.md](CHANGELOG.md) and the decisions in [docs/adr/](docs/adr/). Parsers were built
 against synthetic alert e-mails and are marked "needs real sample" until real (anonymized)
 samples are added (see `fixtures/emails/README.md`).
+
+Contains data from GeoNames (CC BY 4.0), Eurostat (NACE Rev. 2.1) and FinanceDatabase (MIT); see `data/world/README.md`.

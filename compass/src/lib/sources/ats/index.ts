@@ -4,7 +4,7 @@
 
 import { parse } from "node-html-parser";
 import type { Contract, Hours, Remote } from "../../core/extract";
-import { findPlace } from "../../core/geo";
+import { findPlace, type CountryCode } from "../../core/geo";
 import type { RawJob, SourceKind } from "../../core/normalize";
 import { getJson, htmlToText, request, HttpError, type FetchLike } from "../http";
 
@@ -29,7 +29,7 @@ export const ATS_SLUG_HINT: Record<AtsType, string> = {
   personio: "<slug>.jobs.personio.de",
 };
 
-export function atsEndpoint(ats: AtsType, slug: string): string {
+export function atsEndpoint(ats: AtsType, slug: string, countries: CountryCode[] = ["IT"]): string {
   const s = encodeURIComponent(slug.trim());
   switch (ats) {
     case "greenhouse":
@@ -39,7 +39,7 @@ export function atsEndpoint(ats: AtsType, slug: string): string {
     case "ashby":
       return `https://api.ashbyhq.com/posting-api/job-board/${s}?includeCompensation=true`;
     case "smartrecruiters":
-      return `https://api.smartrecruiters.com/v1/companies/${s}/postings?country=it&limit=100`;
+      return `https://api.smartrecruiters.com/v1/companies/${s}/postings?${countries.length === 1 ? `country=${countries[0].toLowerCase()}&` : ""}limit=100`;
     case "workable":
       return `https://apply.workable.com/api/v1/widget/accounts/${s}?details=true`;
     case "personio":
@@ -47,21 +47,30 @@ export function atsEndpoint(ats: AtsType, slug: string): string {
   }
 }
 
-function inItaly(location: string | null | undefined, remote: boolean): boolean {
+const COUNTRY_WORDS: Record<CountryCode, RegExp> = {
+  IT: /\bital(y|ia|ien)\b/i,
+  GB: /\b(uk|united kingdom|england|scotland|wales)\b/i,
+  DE: /\b(germany|deutschland)\b/i,
+  FR: /\b(france)\b/i,
+};
+/** Offers located in the countries the people chose (Italy when nobody chose). */
+function inCountries(location: string | null | undefined, remote: boolean, countries: CountryCode[]): boolean {
   if (!location) return remote;
-  if (/ital(y|ia)/i.test(location)) return true;
-  return findPlace(location) != null && !/,\s*(usa|us|uk|germany|deutschland|france|spain|españa)\b/i.test(location);
+  if (countries.some((c) => COUNTRY_WORDS[c].test(location))) return true;
+  if (/,\s*(usa|us|spain|españa|netherlands|ireland|switzerland)\b/i.test(location)) return false;
+  const p = findPlace(location);
+  return p != null && countries.includes(p.country);
 }
 
 const src = (ats: AtsType) => `ats:${ats}` as SourceKind;
 
-export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string, company: string): Promise<RawJob[]> {
-  const url = atsEndpoint(ats, slug);
+export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string, company: string, countries: CountryCode[] = ["IT"]): Promise<RawJob[]> {
+  const url = atsEndpoint(ats, slug, countries);
   switch (ats) {
     case "greenhouse": {
       const d = await getJson<{ jobs: { id: number; title: string; absolute_url: string; location?: { name?: string }; updated_at?: string; first_published?: string; content?: string }[] }>(fetchImpl, url);
       return d.jobs
-        .filter((j) => inItaly(j.location?.name, /remote/i.test(j.location?.name ?? "")))
+        .filter((j) => inCountries(j.location?.name, /remote/i.test(j.location?.name ?? ""), countries))
         .map((j) => ({
           source: src(ats),
           externalId: String(j.id),
@@ -76,7 +85,7 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "lever": {
       const d = await getJson<{ id: string; text: string; hostedUrl: string; createdAt?: number; descriptionPlain?: string; additionalPlain?: string; workplaceType?: string; categories?: { location?: string; commitment?: string } }[]>(fetchImpl, url);
       return d
-        .filter((j) => inItaly(j.categories?.location, j.workplaceType === "remote"))
+        .filter((j) => inCountries(j.categories?.location, j.workplaceType === "remote", countries))
         .map((j) => ({
           source: src(ats),
           externalId: j.id,
@@ -92,7 +101,7 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "ashby": {
       const d = await getJson<{ jobs: { id?: string; title: string; location?: string; jobUrl: string; descriptionPlain?: string; publishedAt?: string; isRemote?: boolean; workplaceType?: string; employmentType?: string }[] }>(fetchImpl, url);
       return d.jobs
-        .filter((j) => inItaly(j.location, Boolean(j.isRemote)))
+        .filter((j) => inCountries(j.location, Boolean(j.isRemote), countries))
         .map((j) => ({
           source: src(ats),
           externalId: j.id ?? j.jobUrl,
@@ -108,7 +117,7 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "smartrecruiters": {
       const d = await getJson<{ content: { id: string; name: string; releasedDate?: string; location?: { city?: string; country?: string; remote?: boolean }; typeOfEmployment?: { label?: string } }[] }>(fetchImpl, url);
       return d.content
-        .filter((j) => (j.location?.country ?? "").toLowerCase() === "it" || inItaly(j.location?.city, Boolean(j.location?.remote)))
+        .filter((j) => countries.includes((j.location?.country ?? "").toUpperCase() as CountryCode) || inCountries(j.location?.city, Boolean(j.location?.remote), countries))
         .map((j) => ({
           source: src(ats),
           externalId: j.id,
@@ -125,7 +134,7 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "workable": {
       const d = await getJson<{ jobs: { title: string; shortcode: string; url?: string; shortlink?: string; city?: string; country?: string; telecommuting?: boolean; employment_type?: string; description?: string; published_on?: string }[] }>(fetchImpl, url);
       return d.jobs
-        .filter((j) => /ital/i.test(j.country ?? "") || inItaly(j.city, Boolean(j.telecommuting)))
+        .filter((j) => inCountries(j.country ?? "", false, countries) || inCountries(j.city, Boolean(j.telecommuting), countries))
         .map((j) => ({
           source: src(ats),
           externalId: j.shortcode,
@@ -141,12 +150,12 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "personio": {
       const res = await request(fetchImpl, url, { headers: { Accept: "application/xml" } });
       if (!res.ok) throw new HttpError(res.status, url);
-      return parsePersonioXml(await res.text(), slug, company);
+      return parsePersonioXml(await res.text(), slug, company, countries);
     }
   }
 }
 
-export function parsePersonioXml(xml: string, slug: string, company: string): RawJob[] {
+export function parsePersonioXml(xml: string, slug: string, company: string, countries: CountryCode[] = ["IT"]): RawJob[] {
   const root = parse(xml, { blockTextElements: { script: false, style: false } });
   return root
     .querySelectorAll("position")
@@ -166,7 +175,7 @@ export function parsePersonioXml(xml: string, slug: string, company: string): Ra
         hints: { hours: commitmentHours(get("schedule")), contract: personioContract(get("employmentType")) },
       };
     })
-    .filter((j) => j.title && inItaly(j.location, false));
+    .filter((j) => j.title && inCountries(j.location, false, countries));
 }
 
 function commitmentHours(s?: string | null): Hours | undefined {

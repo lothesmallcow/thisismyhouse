@@ -15,8 +15,10 @@ import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { dedupeCandidates, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
 import { rankPrefs } from "../server/catalog";
+import { prioritizedCompanies, todaysPicks } from "../server/career";
 import { getSettings, setSetting } from "../server/settings";
-import { searchPlan } from "./search-terms";
+import { searchPlan, type ApiSearch } from "./search-terms";
+import { homeCountries } from "../core/geo";
 import type { RawJob } from "../core/normalize";
 import { isPaused, runWithHealth } from "./health";
 import { scanMailbox, type MailboxSummary } from "./mailbox-scan";
@@ -29,6 +31,8 @@ export interface MailboxRun {
 }
 
 /** Job API calls per run, whatever the number of people (free quotas are small). */
+/** Company career feeds read per run (the admin's watchlist always; chosen companies by fit, in rotation). */
+export const ATS_PER_RUN = 25;
 export const API_CALLS_PER_RUN = 9;
 
 export interface IngestDeps {
@@ -82,14 +86,17 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
     if (!ctx.profile.onboardedAt) continue;
     plans.push(searchPlan(ctx.profile, await rankPrefs(db, ctx.userId)));
   }
-  const calls = new Map<string, { what: string; where: string; distanceKm: number }>();
-  for (let i = 0; i < 3; i++) {
+  // Interleave people (each one's best search first); only the countries each person chose.
+  const calls = new Map<string, ApiSearch>();
+  for (let i = 0; i < 9; i++) {
     for (const p of plans) {
-      const what = p.apiTerms[i];
-      if (what) calls.set(`${what.toLowerCase()}|${p.city.toLowerCase()}`, { what, where: p.city, distanceKm: p.radiusKm });
+      const c = p.searches[i];
+      if (c) calls.set(`${c.country}|${c.what.toLowerCase()}|${c.where.toLowerCase()}`, c);
     }
   }
   const apiCalls = [...calls.values()].slice(0, API_CALLS_PER_RUN);
+  // Company career feeds: keep the offers located in any country someone chose.
+  const atsCountries = [...new Set(contexts.flatMap((c) => homeCountries(c.profile.countries, c.profile.city)))];
 
   // 2. Adzuna
   const adzuna = demo ? { appId: "demo", appKey: "demo" } : env.adzuna;
@@ -111,7 +118,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
   const joobleKey = demo ? "demo" : env.joobleKey;
   if (settings.joobleEnabled && joobleKey && apiCalls.length) {
     const r = await runWithHealth(db, "api:jooble", async () => {
-      const c = apiCalls[0];
+      const c = apiCalls.find((x) => x.country === "IT") ?? apiCalls[0]; // Jooble's key is for Italy
       const jobs = await fetchJooble(fetchImpl, joobleKey, { keywords: c.what, location: c.where, radiusKm: c.distanceKm });
       const s = await store(db, jobs, now, contexts);
       summary.newJobs += s.created;
@@ -129,9 +136,17 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
     .innerJoin(schema.userPrefs, and(eq(schema.userPrefs.kind, "company"), eq(schema.userPrefs.refId, schema.catalogCompanies.id), eq(schema.userPrefs.stance, "like")))
     .innerJoin(schema.users, and(eq(schema.users.id, schema.userPrefs.userId), eq(schema.users.active, true)))
     .where(and(isNotNull(schema.catalogCompanies.ats), isNotNull(schema.catalogCompanies.atsSlug), sql`${schema.catalogCompanies.atsSlug} != ''`));
-  const watch = [...listed.map((w) => ({ name: w.name, ats: w.ats, slug: w.slug })), ...chosen.map((c) => ({ name: c.name, ats: c.ats!, slug: c.slug! }))].filter(
-    (w, i, all) => all.findIndex((x) => x.ats === w.ats && x.slug === w.slug) === i,
-  );
+  // Chosen companies in order of fit for each person, people interleaved; at most ATS_PER_RUN feeds a
+  // run (best fits every day, the rest in rotation), so hundreds of choices never mean hundreds of calls.
+  const byPerson = [];
+  for (const ctx of contexts) byPerson.push((await prioritizedCompanies(db, ctx.userId)).map((x) => x.company).filter((c) => c.ats && c.atsSlug));
+  const ordered: { name: string; ats: string; slug: string }[] = [];
+  for (let i = 0; byPerson.some((l) => l[i]); i++) for (const l of byPerson) if (l[i]) ordered.push({ name: l[i].name, ats: l[i].ats!, slug: l[i].atsSlug! });
+  const known = new Set(chosen.map((c) => `${c.ats}:${c.slug}`));
+  const chosenFeeds = [...ordered.filter((o) => known.has(`${o.ats}:${o.slug}`)), ...chosen.map((c) => ({ name: c.name, ats: c.ats!, slug: c.slug! }))];
+  const unique = <T extends { ats: string; slug: string }>(l: T[]) => l.filter((w, i, all) => all.findIndex((x) => x.ats === w.ats && x.slug === w.slug) === i);
+  const day = Math.floor(now.getTime() / 86_400_000);
+  const watch = unique([...listed.map((w) => ({ name: w.name, ats: w.ats, slug: w.slug })), ...todaysPicks(unique(chosenFeeds), Math.max(0, ATS_PER_RUN - listed.length), day)]);
   for (const w of watch) {
     const key = `ats:${w.ats}:${w.slug}`;
     const host = new URL(atsEndpoint(w.ats as AtsType, w.slug)).host;
@@ -142,7 +157,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
     const r = await runWithHealth(db, key, async () => {
       let jobs;
       try {
-        jobs = await fetchAts(fetchImpl, w.ats as AtsType, w.slug, w.name);
+        jobs = await fetchAts(fetchImpl, w.ats as AtsType, w.slug, w.name, atsCountries);
       } catch (e) {
         if (e instanceof BlockedError) await runWithHealth(db, `host:${host}`, async () => { throw e; }, now);
         throw e;

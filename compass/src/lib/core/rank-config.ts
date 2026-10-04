@@ -33,7 +33,8 @@ export const RANK_WEIGHTS = {
   avoidSector: -30,
   scam: -40,
   // Choices from the catalog ("Mi interessa")
-  companyLiked: 25, // a company they chose
+  companyLiked: 25, // a company they chose, for a position that fits
+  companyLikedOtherRole: 6, // a company they chose, but the listing's position is not what they want
   sectorLiked: 15, // a sector they chose, in the title or the detected sector
   sectorLikedText: 6, // a sector they chose, only in the text
   outsideInterests: -12, // students who chose sectors: an ad outside all of them
@@ -50,6 +51,8 @@ export const RANK_WEIGHTS = {
   unpaid: -15, // unpaid, and they asked for paid only
   paid: 3,
   extraPlaceMatch: 18, // in one of the other cities they chose (e.g. Londra)
+  regionMatch: 14, // in one of the regions they chose (e.g. Lombardia), farther than their radius
+  outsideCountries: -25, // in a country they did not choose (and not remote)
   // Students, by year of study (see core/career-stage.ts)
   programmeFirstYears: 32, // spring week / insight day: the best fit in the first years
   programmeLate: 5, // programmes are mostly for earlier years

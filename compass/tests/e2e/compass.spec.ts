@@ -254,6 +254,34 @@ test("career: timeline from the CV, LinkedIn export, percorsi by year, fit warni
   await expect(page.getByText(/Il tuo anno: penultimo anno/i)).toBeVisible(); // updated without finishing the questionnaire
 });
 
+test("countries and regions, the full company database, NACE industries", async ({ page }) => {
+  await loginAsStudent(page);
+  // Questionnaire "dove": optional countries and regions.
+  await page.goto("/benvenuto/3?ritorno=profilo");
+  await assertUiBasics(page);
+  await page.getByRole("checkbox", { name: "Italia" }).check();
+  await page.getByRole("checkbox", { name: "Regno Unito" }).check();
+  await page.locator("summary", { hasText: "Regno Unito" }).click();
+  await page.getByRole("checkbox", { name: "England" }).check();
+  await page.getByRole("button", { name: /Salva|Avanti/ }).first().click();
+
+  // Browse everything, page by page, then search a listed UK bank and choose it.
+  await page.goto("/aziende");
+  await expect(page.getByRole("heading", { name: "Tutte le aziende" })).toBeVisible();
+  await expect(page.getByText(/aziende · pagina 1 di \d+/)).toBeVisible();
+  await page.getByLabel("Cerca per nome, città o attività").fill("lloyds");
+  await page.getByRole("button", { name: "Cerca" }).first().click();
+  await expect(page).toHaveURL(/cerca=lloyds/);
+  await assertUiBasics(page);
+  await page.getByRole("button", { name: /Mi interessa Lloyds Banking Group/ }).click();
+  await expect(page.locator("section[aria-labelledby=scelte]").getByText(/Lloyds Banking Group/)).toBeVisible();
+
+  // Industries beyond the hand-made list, in any of four languages.
+  await page.getByLabel("Cerca un settore").fill("imbarcazioni");
+  await page.getByRole("button", { name: "Cerca", exact: true }).last().click();
+  await expect(page.getByText(/NACE 30\.1/).first()).toBeVisible();
+});
+
 test("admin: people, invitation, view-as, catalog, rules, metrics, cron endpoint", async ({ page, request }) => {
   await loginAsAdmin(page);
   await page.goto("/admin/utenti");

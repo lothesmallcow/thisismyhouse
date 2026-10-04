@@ -24,7 +24,7 @@ import {
   updateDraft,
 } from "@/lib/server/applications";
 import { requireUser, signOut } from "@/lib/server/auth";
-import { listCompanies, listSectors, setPref } from "@/lib/server/catalog";
+import { canChoose, setPref } from "@/lib/server/catalog";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
 import { dismissJob, markSeen, rerankUser, restoreJob, setAdjustmentActive, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
 import { deleteAllMyData } from "@/lib/server/privacy";
@@ -223,7 +223,7 @@ export async function setPrefAction(f: FormData) {
   const db = getDb();
   const kind = str(f, "kind") === "sector" ? "sector" : "company";
   const id = num(f, "id");
-  const visible = kind === "sector" ? (await listSectors(db, u.id)).some((s) => s.id === id) : (await listCompanies(db, u.id)).some((c) => c.id === id);
+  const visible = await canChoose(db, u.id, kind, id);
   if (!visible) done(safeBack(f, "/aziende"), "errore");
   const stance = str(f, "stance");
   await setPref(db, u.id, kind, id, stance === "like" || stance === "avoid" ? stance : null);

@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { TASTES } from "@/lib/catalog/data";
 import { getDb } from "@/lib/db";
-import { findPlace } from "@/lib/core/geo";
+import { COUNTRIES, findPlace, regionsOf } from "@/lib/core/geo";
 import { requireUser } from "@/lib/server/auth";
 import { rerankUser } from "@/lib/server/jobs";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
@@ -65,7 +65,16 @@ export async function saveStepAction(f: FormData) {
           maxKm: Math.max(1, Math.min(100, Number(str(f, "km")) || 20)),
           remoteOk: str(f, "remote") === "1",
         });
-        if (current.track === "stage") patch.extraPlaces = lines(str(f, "places")).slice(0, 8);
+        patch.extraPlaces = lines(str(f, "places")).slice(0, 8);
+        const countries = f.getAll("country").map(String).filter((c) => COUNTRIES.some((x) => x.code === c));
+        patch.countries = countries;
+        patch.regions = f
+          .getAll("region")
+          .map(String)
+          .filter((r) => COUNTRIES.some((c) => r.startsWith(`${c.code}:`) && regionsOf(c.code).includes(r.slice(3))))
+          .slice(0, 40);
+        // A region chosen in a country not ticked: that country counts as chosen too.
+        for (const r of patch.regions) if (countries.length && !countries.includes(r.slice(0, 2))) countries.push(r.slice(0, 2));
         break;
       }
       case "quando":

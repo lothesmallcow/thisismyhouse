@@ -6,6 +6,8 @@ import type { FetchLike } from "./http";
 
 const ROUTES: [RegExp, string, string][] = [
   [/api\.adzuna\.com\/v1\/api\/jobs\/it\/search/, "adzuna-it.json", "application/json"],
+  [/api\.adzuna\.com\/v1\/api\/jobs\/gb\/search/, "adzuna-gb.json", "application/json"],
+  [/api\.adzuna\.com\/v1\/api\/jobs\/(de|fr)\/search/, "adzuna-empty.json", "application/json"],
   [/jooble\.org\/api\//, "jooble-it.json", "application/json"],
   [/api\.tavily\.com\/search/, "tavily-search.json", "application/json"],
   [/boards-api\.greenhouse\.io/, "greenhouse-board.json", "application/json"],

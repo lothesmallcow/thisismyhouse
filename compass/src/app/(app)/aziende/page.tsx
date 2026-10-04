@@ -9,12 +9,15 @@ import { careersSearchUrl, getPrefs, listCompanies, listSectors } from "@/lib/se
 import { fitWarnings, interestProfile, suggestCompanies } from "@/lib/server/career";
 import { IconAlert } from "@/components/icons";
 import { LinkButton } from "@/components/ui";
+import { countryName } from "@/lib/core/geo";
 import { getProfile } from "@/lib/server/profile";
+import { profileCountries } from "@/lib/server/catalog";
+import { Directory } from "./directory";
 import { saveFocusAction, savePrefsAction, setPrefAction } from "../actions";
 
 export const metadata = { title: "Aziende e settori" };
 
-export default async function AziendePage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
+export default async function AziendePage({ searchParams }: { searchParams: Promise<{ msg?: string; cerca?: string; paese?: string; pagina?: string; settore?: string }> }) {
   const sp = await searchParams;
   const user = await requireUser();
   const db = getDb();
@@ -69,7 +72,7 @@ export default async function AziendePage({ searchParams }: { searchParams: Prom
                       <p className="text-[14px] font-medium">
                         {c.name} {!c.shared && <Chip>aggiunta da te</Chip>}
                       </p>
-                      <p className="text-[12.5px] text-faint">{[c.city, c.ats ? "offerte lette dal sito aziendale" : null].filter(Boolean).join(" · ") || " "}</p>
+                      <p className="text-[12.5px] text-faint">{[c.city, c.city && c.country !== "IT" ? countryName(c.country) : null, c.industry, c.ats ? "offerte lette dal sito aziendale" : null].filter(Boolean).join(" · ") || " "}</p>
                       {warnings.has(c.id) && (
                         <p className="mt-1 flex items-start gap-1.5 rounded-md bg-warn-soft px-2 py-1 text-[12.5px] text-warn">
                           <IconAlert size={14} className="mt-0.5 shrink-0" /> {warnings.get(c.id)}
@@ -110,6 +113,8 @@ export default async function AziendePage({ searchParams }: { searchParams: Prom
               <Button>Salva aziende</Button>
             </form>
           </section>
+
+          <Directory db={db} userId={user.id} prefs={prefs} countries={profileCountries(p)} regions={p.regions} sp={sp} />
 
           {/* Sectors */}
           <section aria-labelledby="settori">

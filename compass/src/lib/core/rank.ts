@@ -7,6 +7,7 @@ import { normalizeCompany } from "./dedupe";
 import { escapeRe, fold, keyTokens } from "./text";
 import { RANK_WEIGHTS as W, THRESHOLDS } from "./rank-config";
 import { careerStage, titleSeniority } from "./career-stage";
+import { countryName, findPlace } from "./geo";
 
 export { THRESHOLDS };
 
@@ -40,6 +41,9 @@ export interface RankProfile {
   degreeYears: number | null;
   extraPlaces: string[];
   paidOnly: boolean;
+  /** Countries and regions ("IT:Lombardia") they chose; empty = no limit. */
+  countries: string[];
+  regions: string[];
 }
 
 /** A job seeker with no catalog choices and no student fields (handy defaults for tests and tools). */
@@ -52,6 +56,8 @@ export const NO_CHOICES = {
   degreeYears: null,
   extraPlaces: [],
   paidOnly: false,
+  countries: [],
+  regions: [],
 } satisfies Partial<RankProfile>;
 
 export interface RankJob {
@@ -136,8 +142,16 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     profile.maxKm,
     ...adjustments.filter((a) => a.kind === "distance").map((a) => Number(a.value)).filter((n) => n > 0),
   );
-  const extraPlace = job.city ? profile.extraPlaces.find((p) => fold(p) === fold(job.city!)) : undefined;
+  const jobPlace = job.city ? findPlace(job.city) : null;
+  // "Londra" chosen, ad in "London": compare the places, not the words.
+  const extraPlace = job.city ? profile.extraPlaces.find((p) => fold(p) === fold(job.city!) || (jobPlace != null && findPlace(p)?.name === jobPlace.name)) : undefined;
+  const inRegion = jobPlace && profile.regions.includes(`${jobPlace.country}:${jobPlace.region}`) ? jobPlace.region : null;
+  const kmTooFar = job.distanceKm != null && Math.round(job.distanceKm) > kmCap;
+  if (jobPlace && profile.countries.length > 0 && !profile.countries.includes(jobPlace.country) && job.remote !== "remote" && !extraPlace) {
+    f.push({ key: "country", points: W.outsideCountries, reason: `In ${countryName(jobPlace.country)}, fuori dai paesi che hai scelto` });
+  }
   if (job.remote === "remote" && profile.remoteOk) f.push({ key: "distance", points: W.remoteAccepted, reason: "Da remoto" });
+  else if (inRegion && kmTooFar && !extraPlace) f.push({ key: "distance", points: W.regionMatch, reason: `A ${job.city}, in ${inRegion}: una regione che hai scelto` });
   else if (extraPlace) f.push({ key: "distance", points: W.extraPlaceMatch, reason: `A ${job.city}, tra le città che hai scelto` });
   else if (job.distanceKm != null) {
     const km = Math.round(job.distanceKm);
@@ -211,20 +225,32 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
   // 9. Chosen companies and sectors
   let presetMatch: RankResult["presetMatch"] = null;
   const likedCo = profile.likedCompanies.find((c) => companyNameMatches(job.company, c));
-  if (likedCo) {
-    f.push({ key: "company-liked", points: W.companyLiked, reason: `${likedCo.name} è tra le aziende che hai scelto` });
-    presetMatch = "company";
-  }
   let bestSector: { name: string; where: "title" | "text" } | null = null;
   for (const s of profile.likedSectors) {
     const where = sectorHit(s, job, titleT, descT);
     if (where === "title" || (where === "text" && !bestSector)) bestSector = { name: s.name, where };
     if (where === "title") break;
   }
+  // The position is the listing's, not the company's: a chosen company can post a job that has
+  // nothing to do with what they want (IT helpdesk at an M&A boutique). Judge the title itself.
+  const roleInTitle = f.some((x) => x.key === "role" && (x.points === W.roleExact || x.points === W.roleSimilar));
+  const nothingToCompare = wanted.length === 0 && profile.likedSectors.length === 0;
+  const positionFits = nothingToCompare || roleInTitle || bestSector?.where === "title";
+  if (likedCo) {
+    f.push(
+      positionFits
+        ? { key: "company-liked", points: W.companyLiked, reason: `${likedCo.name} è tra le aziende che hai scelto` }
+        : { key: "company-liked", points: W.companyLikedOtherRole, reason: `${likedCo.name} è tra le tue aziende, ma questo ruolo è diverso da quello che cerchi` },
+    );
+    presetMatch = "company";
+  }
+  // At a chosen company, the description's words usually describe the company: they don't make
+  // an unrelated position fit.
+  if (likedCo && !positionFits && bestSector?.where === "text") bestSector = null;
   if (bestSector) {
     f.push({ key: "sector-liked", points: bestSector.where === "title" ? W.sectorLiked : W.sectorLikedText, reason: `Settore che ti interessa: ${bestSector.name.toLowerCase()}` });
     presetMatch ??= "sector";
-  } else if (!likedCo && profile.track === "stage" && profile.likedSectors.length > 0) {
+  } else if (profile.track === "stage" && profile.likedSectors.length > 0 && !(likedCo && positionFits)) {
     f.push({ key: "sector-liked", points: W.outsideInterests, reason: "Fuori dai settori che hai scelto" });
   }
 

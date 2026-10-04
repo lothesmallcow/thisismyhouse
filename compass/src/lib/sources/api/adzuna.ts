@@ -1,4 +1,4 @@
-// Adzuna job search API, Italy (country "it"). Free developer key, 250 calls/day.
+// Adzuna job search API: Italy, UK, Germany, France (country "it", "gb", "de", "fr"). Free developer key, 250 calls/day.
 // Docs: https://developer.adzuna.com/  (terms: see docs/adr/0003-job-apis.md)
 import type { Contract, Hours } from "../../core/extract";
 import type { RawJob } from "../../core/normalize";
@@ -20,6 +20,8 @@ interface AdzunaResult {
 }
 
 export interface AdzunaQuery {
+  /** IT, GB, DE or FR (default IT). */
+  country?: string;
   what: string;
   where: string;
   distanceKm: number;
@@ -31,19 +33,21 @@ export async function fetchAdzuna(fetchImpl: FetchLike, creds: { appId: string; 
     app_id: creds.appId,
     app_key: creds.appKey,
     what: q.what,
-    where: q.where,
-    distance: String(q.distanceKm),
+    ...(q.where ? { where: q.where } : {}),
+    ...(q.where && q.distanceKm > 0 ? { distance: String(q.distanceKm) } : {}),
     max_days_old: String(q.maxDaysOld ?? 7),
     results_per_page: "50",
     sort_by: "date",
     "content-type": "application/json",
   });
-  const data = await getJson<{ results: AdzunaResult[] }>(fetchImpl, `https://api.adzuna.com/v1/api/jobs/it/search/1?${params}`);
-  return (data.results ?? []).map(mapAdzuna);
+  const data = await getJson<{ results: AdzunaResult[] }>(fetchImpl, `https://api.adzuna.com/v1/api/jobs/${(q.country ?? "IT").toLowerCase()}/search/1?${params}`);
+  const pounds = (q.country ?? "IT").toUpperCase() === "GB";
+  return (data.results ?? []).map((r) => mapAdzuna(r, pounds));
 }
 
-export function mapAdzuna(r: AdzunaResult): RawJob {
-  const predicted = String(r.salary_is_predicted ?? "0") === "1";
+/** `pounds`: UK salaries are in GBP; Compass compares euros, so they are left out rather than misread. */
+export function mapAdzuna(r: AdzunaResult, pounds = false): RawJob {
+  const predicted = pounds || String(r.salary_is_predicted ?? "0") === "1";
   const contract: Contract | undefined = r.contract_type === "permanent" ? "indeterminato" : r.contract_type === "contract" ? "determinato" : undefined;
   const hours: Hours | undefined = r.contract_time === "full_time" ? "full" : r.contract_time === "part_time" ? "part" : undefined;
   return {

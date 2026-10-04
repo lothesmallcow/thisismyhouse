@@ -9,9 +9,10 @@ import { STAGE_ADVICE, careerStage, type CareerStage } from "../core/career-stag
 import { THEME_LABELS, TASTES } from "../catalog/data";
 import { extractSector } from "../core/extract";
 import { fold, keyTokens } from "../core/text";
+import { homeCountries, type CountryCode } from "../core/geo";
 import type { DB } from "../db";
 import { schema } from "../db";
-import { getPrefs, listCompanies, listSectors, type Company, type Sector } from "./catalog";
+import { directoryPool, getPrefs, listCompanies, listSectors, type Company, type Sector } from "./catalog";
 import { getProfile, type Profile } from "./profile";
 
 interface Weighted {
@@ -148,9 +149,15 @@ export interface Suggestion {
 export async function suggestCompanies(db: DB, userId: number, limit = 8, ip?: InterestProfile): Promise<Suggestion[]> {
   const p = ip ?? (await interestProfile(db, userId));
   const track = p.profile.track;
-  const [companies, sectors, prefs] = await Promise.all([listCompanies(db, userId, track), listSectors(db, userId, "all"), getPrefs(db, userId)]);
+  const [curated, sectors, prefs] = await Promise.all([listCompanies(db, userId, track), listSectors(db, userId, "all"), getPrefs(db, userId)]);
   const sectorsById = new Map(sectors.map((s) => [s.id, s]));
   const avoided = new Set([...prefs.sectors].filter(([, s]) => s === "avoid").map(([id]) => id));
+  // Listed companies too, but only in their sectors of interest and in the countries/regions they chose.
+  const countries = homeCountries(p.profile.countries, p.profile.city);
+  const topSectors = [...p.sectors.entries()].sort((a, b) => b[1].weight - a[1].weight).slice(0, 6).map(([id]) => id);
+  const pool = await directoryPool(db, topSectors, { countries, regions: p.profile.regions, limit: 120 });
+  const inScope = (c: Company) => c.source !== "borsa" || countries.includes(c.country as CountryCode);
+  const companies = [...curated, ...pool.filter((c) => !curated.some((x) => x.id === c.id))].filter(inScope);
   const out: Suggestion[] = [];
   for (const c of companies) {
     if (prefs.companies.has(c.id)) continue;
@@ -182,6 +189,8 @@ export async function suggestCompanies(db: DB, userId: number, limit = 8, ip?: I
     }
     if (score < 1.5) continue;
     if (c.city && p.profile.city && fold(c.city) === fold(p.profile.city)) score += 1;
+    if (c.region && p.profile.regions.includes(`${c.country}:${c.region}`)) score += 1;
+    if (c.source === "borsa") score += (c.size ?? 0) * 0.2 - 0.5; // hand-picked entries first at equal fit
     out.push({ company: c, score, reason: bestReason });
   }
   out.sort((a, b) => b.score - a.score || a.company.name.localeCompare(b.company.name));
@@ -258,6 +267,10 @@ export async function careerPaths(db: DB, userId: number, limit = 6, ip?: Intere
   const [sectors, companies, prefs] = await Promise.all([listSectors(db, userId, track), listCompanies(db, userId, track), getPrefs(db, userId)]);
   const sectorsById = new Map((await listSectors(db, userId, "all")).map((s) => [s.id, s]));
   const strong = [...p.themes.entries()].sort((a, b) => b[1].weight - a[1].weight);
+  // A few big listed employers per sector, in their countries and regions, as extra examples.
+  const pool = await directoryPool(db, sectors.map((s) => s.id), { countries: homeCountries(p.profile.countries, p.profile.city), regions: p.profile.regions, limit: 300 });
+  const poolBySector = new Map<number, Company[]>();
+  for (const c of pool) if (c.sectorId != null) poolBySector.set(c.sectorId, [...(poolBySector.get(c.sectorId) ?? []), c].slice(0, 4));
   const out: CareerPath[] = [];
   for (const s of sectors) {
     if (prefs.sectors.get(s.id) === "avoid") continue;
@@ -268,7 +281,8 @@ export async function careerPaths(db: DB, userId: number, limit = 6, ip?: Intere
     const reason = top
       ? `${cap(themeName(top))}${shared[1] ? ` · ${themeName(shared[1])}` : ""}: ${p.themes.get(top)!.why}`
       : p.sectors.get(s.id)?.why ?? "";
-    const examples = companies
+    const listed = poolBySector.get(s.id) ?? [];
+    const examples = [...companies, ...listed]
       .filter((c) => companySectorIds(c).includes(s.id) && prefs.companies.get(c.id) !== "avoid")
       .map((c) => ({ c, n: companyThemes(c, sectorsById).filter((t) => p.themes.has(t)).length + (c.city && p.profile.city && fold(c.city) === fold(p.profile.city) ? 1 : 0) }))
       .sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name))
@@ -328,4 +342,50 @@ export function topThemes(p: InterestProfile, n = 5): { theme: string; label: st
 
 export async function experienceCount(db: DB, userId: number): Promise<number> {
   return (await db.select({ id: schema.experiences.id }).from(schema.experiences).where(and(eq(schema.experiences.userId, userId)))).length;
+}
+
+// --- Search priority -----------------------------------------------------------------------------
+// A person may choose (or be suggested) hundreds of companies. The searches for open positions are
+// limited (free API quotas, one request at a time per site), so each run spends them on the best fits
+// first and rotates through the rest over the following days. Nothing is searched "in bulk".
+
+export interface PrioritizedCompany {
+  company: Company;
+  score: number;
+}
+
+/** Chosen companies ordered by how well they fit: place, experience and interests, size, a readable feed. */
+export async function prioritizedCompanies(db: DB, userId: number, ip?: InterestProfile): Promise<PrioritizedCompany[]> {
+  const p = ip ?? (await interestProfile(db, userId));
+  const prefs = await getPrefs(db, userId);
+  const liked = (await listCompanies(db, userId)).filter((c) => prefs.companies.get(c.id) === "like");
+  const sectorsById = new Map((await listSectors(db, userId)).map((s) => [s.id, s]));
+  const countries = homeCountries(p.profile.countries, p.profile.city);
+  const regions = p.profile.regions;
+  return liked
+    .map((c) => {
+      let score = 0;
+      for (const sid of companySectorIds(c)) score += p.baseSectors.get(sid)?.weight ?? 0;
+      for (const th of companyThemes(c, sectorsById)) score += (p.baseThemes.get(th)?.weight ?? 0) * 0.5;
+      if (countries.includes(c.country as CountryCode)) score += 4;
+      else score -= 6; // chosen, but outside the countries they look at: searched last
+      if (c.region && regions.includes(`${c.country}:${c.region}`)) score += 3;
+      score += (c.size ?? 2) * 0.5;
+      if (c.ats && c.atsSlug) score += 1;
+      return { company: c, score };
+    })
+    .sort((a, b) => b.score - a.score || a.company.name.localeCompare(b.company.name));
+}
+
+/**
+ * `n` items for today's run: the best half every day, the other slots rotating through the rest
+ * (a different slice each day), so over a few days every choice gets its turn.
+ */
+export function todaysPicks<T>(ordered: T[], n: number, day: number): T[] {
+  if (ordered.length <= n) return ordered;
+  const fixed = Math.ceil(n / 2);
+  const rest = ordered.slice(fixed);
+  const slots = n - fixed;
+  const start = (day * slots) % rest.length;
+  return [...ordered.slice(0, fixed), ...[...rest.slice(start), ...rest.slice(0, start)].slice(0, slots)];
 }

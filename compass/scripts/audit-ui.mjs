@@ -96,6 +96,8 @@ const SCREENS = [
   ["him", "/aziende", "Studente: aziende e settori"],
   ["him", "/profilo", "Studente: profilo"],
   ["him", "/percorsi", "Studente: percorsi"],
+  ["him", "/aziende?cerca=bank&paese=tutti", "Studente: cerca tra tutte le aziende"],
+  ["him", "/aziende?settore=abbigliamento", "Studente: cerca un settore NACE"],
   ["him", "/profilo/esperienze", "Studente: esperienze"],
   ...Array.from({ length: 12 }, (_, i) => ["him", `/benvenuto/${i + 1}?ritorno=profilo`, `Questionario stage passo ${i + 1}`]),
   ["her", "/benvenuto/risposte?ritorno=profilo", "Risposte pronte"],

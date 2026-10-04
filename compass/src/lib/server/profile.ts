@@ -1,4 +1,6 @@
 // One profile per account. Also converts it (plus catalog choices) into the ranking profile.
+import { translations } from "../catalog/positions";
+import { COUNTRIES } from "../core/geo";
 import { eq } from "drizzle-orm";
 import type { Contract } from "../core/extract";
 import type { RankProfile } from "../core/rank";
@@ -33,7 +35,8 @@ export function toRankProfile(p: Profile, prefs: RankPrefs = NO_PREFS): RankProf
   return {
     track: p.track,
     roles: p.roles,
-    synonyms: p.synonyms,
+    // The same roles in the languages of the countries they chose (and English, common everywhere).
+    synonyms: [...new Set([...p.synonyms, ...p.roles.flatMap((r) => translations(r, roleLanguages(p.countries)))])],
     maxKm: p.maxKm,
     remoteOk: p.remoteOk,
     hours: p.hours,
@@ -50,7 +53,14 @@ export function toRankProfile(p: Profile, prefs: RankPrefs = NO_PREFS): RankProf
     degreeYears: p.degreeYears,
     extraPlaces: p.extraPlaces,
     paidOnly: p.paidOnly,
+    countries: p.countries,
+    regions: p.regions,
   };
+}
+
+/** Languages to search a role in: Italian plus those of the chosen countries, and English. */
+export function roleLanguages(countries: string[]): ("it" | "en" | "de" | "fr")[] {
+  return [...new Set(["it" as const, "en" as const, ...COUNTRIES.filter((c) => countries.includes(c.code)).map((c) => c.lang)])];
 }
 
 export function homeOf(p: Profile): { lat: number; lng: number } | null {

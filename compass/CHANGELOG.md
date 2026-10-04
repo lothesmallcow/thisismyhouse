@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.4.0 · 2026-10-04
+
+Four countries, the whole catalog, and searches that spend the free quotas on the best fits.
+
+- **Where to work** (optional, in the questionnaire): countries (Italy, UK, Germany, France),
+  regions, other cities. Ranking pushes down other countries and treats a chosen region as near.
+  Foreign cities by Italian names too ("Londra", "Monaco di Baviera").
+- **Catalog**: ~3,100 listed companies of the four countries and all 1,047 NACE industries in four
+  languages, browsable and searchable on "Aziende" (by name, city, activity), filtered by the
+  person's countries and regions; suggestions and career paths use them too.
+- **Positions**: ~180 roles in Italian, English, German and French, suggested in the
+  questionnaire and searched in each country's language.
+- **Searches**: job APIs only in the chosen countries (Adzuna it/gb/de/fr); company feeds and web
+  searches capped per run, best fits first and the rest in rotation; feeds keep offers in the
+  chosen countries.
+- **The position is the listing's**: a chosen company boosts a listing fully only when the
+  listing's own title fits the roles or sectors wanted; otherwise a small boost and a clear reason
+  ("ruolo diverso"), and company boilerplate in the description no longer counts as a match.
+- **Fixes**: "Londra" now matches ads in "London"; UK pay in pounds is not read as euros.
+- **Tests**: 302 unit/integration, 20 end-to-end.
+
 ## 0.3.0 · 2026-10-04
 
 Several people, internships for students, a catalog of companies and a career panel.

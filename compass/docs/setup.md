@@ -47,6 +47,9 @@ to `fixtures/emails/` with a test (the parsers are marked "needs real sample" un
 - **Jooble** (optional): request a key at it.jooble.org/api/about → `JOOBLE_API_KEY`. Only about
   500 requests in total, so leave it off unless needed.
 
+Adzuna covers Italy, the UK, Germany and France with the same key; Compass only asks for the
+countries people chose in the questionnaire (Italy when nobody chose).
+
 ## 4. Database (Turso, free)
 
 ```bash
@@ -54,7 +57,8 @@ turso db create compass
 turso db show compass --url        # -> DATABASE_URL (libsql://...)
 turso db tokens create compass     # -> DATABASE_AUTH_TOKEN
 ```
-Then `npm run db:migrate` and `npm run db:seed` with `DEMO_MODE=false` and your own
+Then `npm run db:migrate` (it also loads the ~3,100 listed companies and the NACE industries
+from `data/world/`, once) and `npm run db:seed` with `DEMO_MODE=false` and your own
 `SEED_USER_*` / `SEED_ADMIN_*` passwords (seed creates the first person, the admin and the
 letter templates, no fake data in real mode). Change both passwords afterwards.
 

@@ -108,7 +108,7 @@ export function normalizeJob(raw: RawJob, home: { lat: number; lng: number } | n
   const description = (raw.description ?? "").replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").trim();
   const all = `${title}\n${raw.location ?? ""}\n${description}`;
 
-  const place = findPlace(raw.location) ?? (raw.location ? null : findPlace(description.slice(0, 300)));
+  const place = findPlace(raw.location) ?? (raw.location ? null : findPlace(description.slice(0, 300), { abroad: false }));
   const salaryText = raw.salaryText ?? findSalaryText(description);
   let salary = parseSalary(salaryText);
   if (salary.minAnnualGross == null && raw.hints?.minAnnualGross) {

@@ -106,6 +106,9 @@ export const profile = sqliteTable(
   graduationYear: integer("graduation_year"),
   periods: json<string[]>("periods").notNull().default([]), // "estate", "autunno", "inverno", "primavera", "part-time"
   extraPlaces: json<string[]>("extra_places").notNull().default([]), // other cities, e.g. "Londra"
+  /** Optional: countries (IT, GB, DE, FR) and regions ("IT:Lombardia") where they want to work. Empty = no limit. */
+  countries: json<string[]>("countries").notNull().default([]),
+  regions: json<string[]>("regions").notNull().default([]),
   paidOnly: integer("paid_only", { mode: "boolean" }).notNull().default(false),
   onboardingStep: integer("onboarding_step").notNull().default(1),
   onboardedAt: ts("onboarded_at"),
@@ -216,6 +219,9 @@ export const catalogSectors = sqliteTable("catalog_sectors", {
   /** Curated entries have no author. Entries added with "Altro" are private until the admin shares them. */
   createdByUserId: integer("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
   shared: integer("shared", { mode: "boolean" }).notNull().default(true),
+  /** curato = hand-made list; altro = added by a person; nace = the EU classification (shown when searched or chosen). */
+  source: text("source").$type<"curato" | "altro" | "nace">().notNull().default("curato"),
+  nace: text("nace"),
   createdAt: createdAt(),
 });
 
@@ -238,8 +244,16 @@ export const catalogCompanies = sqliteTable("catalog_companies", {
   atsSlug: text("ats_slug"),
   createdByUserId: integer("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
   shared: integer("shared", { mode: "boolean" }).notNull().default(true),
+  /** curato = hand-made list; altro = added by a person; borsa = listed companies (shown when searched or chosen). */
+  source: text("source").$type<"curato" | "altro" | "borsa">().notNull().default("curato"),
+  country: text("country").notNull().default("IT"),
+  region: text("region"),
+  website: text("website"),
+  industry: text("industry"),
+  /** 0 nano ... 5 mega (market value), null = unknown. */
+  size: integer("size"),
   createdAt: createdAt(),
-});
+}, (t) => [index("catalog_companies_source_idx").on(t.source, t.country)]);
 
 /** One person's experience timeline: work, studies, volunteering. From the CV, a LinkedIn data export, or typed in. */
 export const experiences = sqliteTable(

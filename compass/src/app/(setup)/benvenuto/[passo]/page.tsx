@@ -1,3 +1,5 @@
+import { COUNTRIES, regionsOf } from "@/lib/core/geo";
+import { positionsFor } from "@/lib/catalog/positions";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
@@ -207,10 +209,15 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
       return (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <Field key={i} label={i === 0 ? "Ruolo" : `Un altro ruolo (facoltativo)`} htmlFor={`role${i + 1}`}>
-              <input id={`role${i + 1}`} name={`role${i + 1}`} type="text" defaultValue={p.roles[i] ?? ""} placeholder={i === 0 ? "Es. Impiegata amministrativa" : ""} />
+            <Field key={i} label={i === 0 ? "Ruolo" : `Un altro ruolo (facoltativo)`} htmlFor={`role${i + 1}`} hint={i === 0 ? "Scrivi o scegli tra i suggerimenti. Lo cerchiamo anche in inglese, tedesco e francese se scegli quei paesi." : undefined}>
+              <input id={`role${i + 1}`} name={`role${i + 1}`} type="text" list="positions" defaultValue={p.roles[i] ?? ""} placeholder={i === 0 ? "Es. Impiegata amministrativa" : ""} />
             </Field>
           ))}
+          <datalist id="positions">
+            {positionsFor(p.track === "stage" ? "stage" : "lavoro").map((x) => (
+              <option key={x.it} value={x.it} />
+            ))}
+          </datalist>
         </div>
       );
     }
@@ -261,12 +268,43 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
             <input id="city" name="city" type="text" autoComplete="address-level2" defaultValue={p.city} />
           </Field>
           <KmSlider defaultValue={p.maxKm} />
-          {stage && (
-            <Field label="Altre città" htmlFor="places" hint="Separate da una virgola, anche all'estero. Es. Londra, Parigi.">
-              <input id="places" name="places" type="text" defaultValue={p.extraPlaces.join(", ")} />
-            </Field>
-          )}
-          <label className="flex items-center gap-2.5 text-[14px]">
+          <Field label="Altre città (facoltativo)" htmlFor="places" hint="Separate da una virgola, anche all'estero. Es. Londra, Parigi, Monaco di Baviera.">
+            <input id="places" name="places" type="text" defaultValue={p.extraPlaces.join(", ")} />
+          </Field>
+          <fieldset className="space-y-2">
+            <legend className="text-[13px] font-medium">In quali paesi? (facoltativo)</legend>
+            <p className="text-[12.5px] text-faint">Cerchiamo offerte, aziende e suggerimenti solo lì: liste più corte e ricerche che non sprecano richieste. Nessuna scelta = il paese della tua città.</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {COUNTRIES.map((c) => (
+                <ChoiceRow key={c.code} name="country" value={c.code} defaultChecked={p.countries.includes(c.code)}>
+                  {c.name}
+                </ChoiceRow>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="space-y-2">
+            <legend className="text-[13px] font-medium">Solo alcune regioni? (facoltativo)</legend>
+            <p className="text-[12.5px] text-faint">Se non scegli niente, va bene tutto il paese.</p>
+            {COUNTRIES.map((c) => {
+              const chosen = p.regions.filter((r) => r.startsWith(`${c.code}:`)).length;
+              return (
+                <details key={c.code} className="rounded-lg border border-line px-3 py-2" open={chosen > 0}>
+                  <summary className="cursor-pointer py-1 text-[13.5px]">
+                    {c.name}
+                    {chosen > 0 ? ` · ${chosen} scelte` : ""}
+                  </summary>
+                  <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                    {regionsOf(c.code).map((r) => (
+                      <label key={r} className="flex min-h-8 items-center gap-2 text-[13px]">
+                        <input type="checkbox" name="region" value={`${c.code}:${r}`} defaultChecked={p.regions.includes(`${c.code}:${r}`)} /> {r}
+                      </label>
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
+          </fieldset>
+          <label className="flex min-h-11 items-center gap-2.5 text-[14px]">
             <input type="checkbox" name="remote" value="1" defaultChecked={p.remoteOk} /> Va bene anche da remoto
           </label>
         </>
@@ -287,7 +325,7 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
               </ChoiceRow>
             ))}
           </div>
-          <label className="flex items-center gap-2.5 text-[14px]">
+          <label className="flex min-h-11 items-center gap-2.5 text-[14px]">
             <input type="checkbox" name="paidOnly" value="1" defaultChecked={p.paidOnly} /> Solo stage retribuiti (quelli non retribuiti scendono in fondo)
           </label>
         </>

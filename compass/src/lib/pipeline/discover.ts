@@ -9,6 +9,8 @@ import { rankPrefs } from "../server/catalog";
 import { getSettings } from "../server/settings";
 import { runWithHealth } from "./health";
 import { searchPlan } from "./search-terms";
+import { countryName } from "../core/geo";
+import { prioritizedCompanies, todaysPicks } from "../server/career";
 
 export const W1_HARD_MAX = 100; // even if the admin types more, never above this
 
@@ -28,15 +30,24 @@ async function bump(db: DB, counter: string, now: Date): Promise<void> {
 }
 
 /** Every person's queries, interleaved so one shared daily cap is split fairly. */
-async function plannedQueries(db: DB, max: number): Promise<{ q: SearchQuery; userId: number }[]> {
+async function plannedQueries(db: DB, max: number, now: Date): Promise<{ q: SearchQuery; userId: number }[]> {
   const per: { q: SearchQuery; userId: number }[][] = [];
   for (const ctx of await rankContexts(db)) {
     if (!ctx.profile.onboardedAt) continue;
     const plan = searchPlan(ctx.profile, await rankPrefs(db, ctx.userId));
-    const qs =
-      ctx.profile.track === "stage"
-        ? buildStudentQueries(plan.interests.length ? plan.interests : ["finance"], ctx.profile.focus === "preferite" || plan.companies.length ? plan.companies : [], plan.city, max)
-        : buildQueries([...ctx.profile.roles, ...ctx.profile.synonyms], plan.city, max);
+    // Companies to look at today: best fits first, the rest in rotation (ADR 0018).
+    const day = Math.floor(now.getTime() / 86_400_000);
+    const picks = todaysPicks((await prioritizedCompanies(db, ctx.userId)).map((x) => x.company.name), 4, day);
+    // One list per chosen place (home city, another city, a region, or the country), interleaved.
+    const lists = plan.places.map((pl) => {
+      const where = pl.where || countryName(pl.country);
+      const terms = pl.country === plan.places[0].country ? [...ctx.profile.roles, ...ctx.profile.synonyms] : plan.searches.filter((s) => s.country === pl.country).map((s) => s.what);
+      return ctx.profile.track === "stage"
+        ? buildStudentQueries(plan.interests.length ? plan.interests : ["finance"], picks, where, max)
+        : buildQueries(terms.length ? terms : ctx.profile.roles, where, max);
+    });
+    const qs: SearchQuery[] = [];
+    for (let i = 0; qs.length < max && lists.some((l) => l[i]); i++) for (const l of lists) if (l[i] && qs.length < max) qs.push(l[i]);
     per.push(qs.map((q) => ({ q, userId: ctx.userId })));
   }
   const out: { q: SearchQuery; userId: number }[] = [];
@@ -52,7 +63,7 @@ export async function runDiscover(db: DB, provider: SearchProvider | null, now =
   const used = await usageToday(db, "w1-queries", now);
   const remaining = Math.max(0, cap - used);
   if (remaining === 0) return { ...out, capReached: true };
-  const queries = await plannedQueries(db, remaining);
+  const queries = await plannedQueries(db, remaining, now);
   if (queries.length === 0) return out;
 
   await runWithHealth(db, "w1", async () => {

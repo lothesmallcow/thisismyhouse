@@ -1,7 +1,11 @@
 // Catalog of sectors and companies, each person's choices ("Mi interessa" / "Da evitare"),
 // entries added with "Altro", and rule-based suggestions ("Suggeriti per te").
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
+import listedData from "../../../data/world/companies.json";
+import naceData from "../../../data/world/nace.json";
 import { COMPANIES, SECTORS, companyTrack } from "../catalog/data";
+import { gicsSector, listedAliases, naceKeywords, naceSector, type ListedRow, type NaceRow } from "../catalog/world";
+import { findPlace, homeCountries, type CountryCode } from "../core/geo";
 import { companyNameMatches } from "../core/rank";
 import { fold } from "../core/text";
 import type { DB } from "../db";
@@ -41,6 +45,7 @@ export async function ensureCatalog(db: DB): Promise<void> {
     themes: c.themes ?? [],
     city: c.city ?? null,
     track: companyTrack(c),
+    ...placeOf(c.city ?? null),
   });
   const haveCompanies = new Map((await db.select().from(schema.catalogCompanies)).map((r) => [r.slug, r]));
   const newCompanies = COMPANIES.filter((c) => !haveCompanies.has(slugify(c.name)));
@@ -49,11 +54,152 @@ export async function ensureCatalog(db: DB): Promise<void> {
     const row = haveCompanies.get(slugify(c.name));
     if (!row || row.createdByUserId != null) continue;
     const v = values(c);
-    if (JSON.stringify([row.extraSectorIds, row.themes, row.aliases, row.sectorId]) !== JSON.stringify([v.extraSectorIds, v.themes, v.aliases, v.sectorId])) {
-      // City and ATS may have been edited by the admin: keep them.
-      await db.update(schema.catalogCompanies).set({ extraSectorIds: v.extraSectorIds, themes: v.themes, aliases: v.aliases, sectorId: v.sectorId, kind: v.kind }).where(eq(schema.catalogCompanies.id, row.id));
+    if (JSON.stringify([row.extraSectorIds, row.themes, row.aliases, row.sectorId]) !== JSON.stringify([v.extraSectorIds, v.themes, v.aliases, v.sectorId]) || row.region == null) {
+      // City and ATS may have been edited by the admin: keep them (country and region follow the city).
+      await db
+        .update(schema.catalogCompanies)
+        .set({ extraSectorIds: v.extraSectorIds, themes: v.themes, aliases: v.aliases, sectorId: v.sectorId, kind: v.kind, ...placeOf(row.city) })
+        .where(eq(schema.catalogCompanies.id, row.id));
     }
   }
+}
+
+/** Country and region of a city ("Milano" → IT, Lombardia; "London" → GB, England). */
+function placeOf(city: string | null): { country: string; region: string | null } {
+  const p = city ? findPlace(city) : null;
+  return { country: p?.country ?? "IT", region: p?.region ?? null };
+}
+
+const DIRECTORY_VERSION = `${(listedData as unknown[]).length}-${(naceData as unknown[]).length}-1`;
+
+/**
+ * The generated part of the catalog (ADR 0018): ~4,200 listed companies of Italy, the UK, Germany and
+ * France and every NACE industry. Shown only when someone searches for them or chooses them.
+ * Idempotent and fast to skip: a version stamp in settings says whether it is already loaded.
+ */
+export async function ensureDirectory(db: DB): Promise<{ companies: number; sectors: number; skipped: boolean }> {
+  const stamp = await db.query.settings.findFirst({ where: eq(schema.settings.key, "directory_version") });
+  if (stamp && stamp.value === DIRECTORY_VERSION) return { companies: 0, sectors: 0, skipped: true };
+  const sectorRows = await db.select().from(schema.catalogSectors);
+  const sectorBySlug = new Map(sectorRows.map((r) => [r.slug, r]));
+
+  // Industries: NACE divisions, groups and classes (sections are only headings).
+  const nace = (naceData as NaceRow[]).filter(([, level]) => level >= 2);
+  const newSectors = nace
+    .filter(([code]) => !sectorBySlug.has(`nace-${code}`))
+    .map(([code, , it, en, de, fr]) => {
+      const near = sectorBySlug.get(naceSector(code) ?? "");
+      return {
+        slug: `nace-${code}`,
+        name: it.length > 90 ? `${it.slice(0, 87)}…` : it,
+        track: "tutti" as const,
+        keywords: [...naceKeywords(it, en), en.toLowerCase(), de.toLowerCase(), fr.toLowerCase()].filter((k) => k.length <= 60),
+        themes: near?.themes ?? [],
+        shared: true,
+        source: "nace" as const,
+        nace: code,
+      };
+    });
+  for (let i = 0; i < newSectors.length; i += 200) await db.insert(schema.catalogSectors).values(newSectors.slice(i, i + 200));
+
+  // Listed companies: skip any already in the catalog under the same name (curated entries win).
+  const existing = await db.select({ slug: schema.catalogCompanies.slug, name: schema.catalogCompanies.name, aliases: schema.catalogCompanies.aliases }).from(schema.catalogCompanies);
+  const slugs = new Set(existing.map((e) => e.slug));
+  const names = existing.map((e) => ({ name: e.name, aliases: e.aliases }));
+  const ids = new Map((await db.select({ id: schema.catalogSectors.id, slug: schema.catalogSectors.slug }).from(schema.catalogSectors)).map((r) => [r.slug, r.id]));
+  const newCompanies = [];
+  for (const [name, cc, city, sector, industry, website, size] of listedData as ListedRow[]) {
+    const slug = slugify(`${name}-${cc}`);
+    if (slugs.has(slug) || slugs.has(slugify(name))) continue;
+    if (names.some((n) => companyNameMatches(name, n))) continue;
+    slugs.add(slug);
+    const map = gicsSector(sector, industry);
+    const p = city ? findPlace(city, {}) : null;
+    newCompanies.push({
+      slug,
+      name,
+      aliases: listedAliases(name),
+      kind: map.kind,
+      sectorId: ids.get(map.slug) ?? null,
+      city: p?.country === cc ? p.name : city || null,
+      country: cc,
+      region: p?.country === cc ? p.region : null,
+      website: website || null,
+      industry: industry || sector || null,
+      size: size >= 0 ? size : null,
+      track: "tutti" as const,
+      shared: true,
+      source: "borsa" as const,
+    });
+  }
+  for (let i = 0; i < newCompanies.length; i += 200) await db.insert(schema.catalogCompanies).values(newCompanies.slice(i, i + 200));
+  await db
+    .insert(schema.settings)
+    .values({ key: "directory_version", value: DIRECTORY_VERSION })
+    .onConflictDoUpdate({ target: schema.settings.key, set: { value: DIRECTORY_VERSION } });
+  return { companies: newCompanies.length, sectors: newSectors.length, skipped: false };
+}
+
+export interface SearchScope {
+  /** Only these countries (empty = anywhere). */
+  countries?: string[];
+  /** Only these regions, as "IT:Lombardia" (empty = the whole country). */
+  regions?: string[];
+  limit?: number;
+}
+
+/**
+ * Search the whole catalog, generated part included, by name, alias, city or industry. Results in the
+ * person's countries and regions only (that is what keeps the lists short and the searches cheap).
+ */
+export async function searchCompanies(db: DB, userId: number, q: string, scope: SearchScope = {}): Promise<Company[]> {
+  const term = q.trim().toLowerCase();
+  if (term.length < 2) return [];
+  const like = `%${term.replace(/[%_]/g, "")}%`;
+  const c = schema.catalogCompanies;
+  const visible = or(eq(c.shared, true), eq(c.createdByUserId, userId));
+  const text = or(sql`lower(${c.name}) like ${like}`, sql`lower(${c.aliases}) like ${like}`, sql`lower(coalesce(${c.industry}, '')) like ${like}`, sql`lower(coalesce(${c.city}, '')) like ${like}`);
+  const where = [visible, text];
+  if (scope.countries?.length) where.push(inArray(c.country, scope.countries));
+  const rows = await db
+    .select()
+    .from(c)
+    .where(and(...where))
+    .orderBy(sql`lower(${c.name}) like ${`${term}%`} desc`, sql`${c.source} = 'borsa'`, desc(c.size), c.name)
+    .limit(200);
+  const inRegion = (r: Company) => !scope.regions?.length || !scope.regions.some((x) => x.startsWith(`${r.country}:`)) || scope.regions.includes(`${r.country}:${r.region}`);
+  return rows.filter(inRegion).slice(0, scope.limit ?? 20);
+}
+
+/** Search every industry (hand-made sectors first, then NACE) in Italian, English, German or French. */
+export async function searchSectors(db: DB, userId: number, q: string, limit = 15): Promise<Sector[]> {
+  const term = q.trim().toLowerCase();
+  if (term.length < 2) return [];
+  const like = `%${term.replace(/[%_]/g, "")}%`;
+  const s = schema.catalogSectors;
+  return db
+    .select()
+    .from(s)
+    .where(and(or(eq(s.shared, true), eq(s.createdByUserId, userId)), or(sql`lower(${s.name}) like ${like}`, sql`lower(${s.keywords}) like ${like}`, sql`${s.nace} like ${`${term}%`}`)))
+    .orderBy(sql`${s.source} = 'nace'`, sql`length(coalesce(${s.nace}, ''))`, s.name)
+    .limit(limit);
+}
+
+/** Listed companies in some sectors and places, biggest first: the pool for suggestions and examples. */
+export async function directoryPool(db: DB, sectorIds: number[], scope: SearchScope & { limit: number }): Promise<Company[]> {
+  if (sectorIds.length === 0) return [];
+  const c = schema.catalogCompanies;
+  const where = [eq(c.source, "borsa"), eq(c.shared, true), inArray(c.sectorId, sectorIds)];
+  if (scope.countries?.length) where.push(inArray(c.country, scope.countries));
+  const rows = await db.select().from(c).where(and(...where)).orderBy(desc(c.size), c.name).limit(scope.limit * 4);
+  const regions = scope.regions ?? [];
+  const inRegion = (r: Company) => !regions.some((x) => x.startsWith(`${r.country}:`)) || regions.includes(`${r.country}:${r.region}`);
+  return rows.filter(inRegion).slice(0, scope.limit);
+}
+
+/** The countries a profile looks at: those chosen, else the home country (Italy). */
+export function profileCountries(p: { countries: string[]; city?: string | null }): CountryCode[] {
+  return homeCountries(p.countries, p.city);
 }
 
 const trackFilter = <T extends { track: unknown }>(col: T["track"], track: Track) => sql`${col} in (${track}, 'tutti')`;
@@ -61,7 +207,8 @@ const trackFilter = <T extends { track: unknown }>(col: T["track"], track: Track
 /** What one person can see: shared entries, their own "Altro" entries, and anything they already chose. */
 export async function listSectors(db: DB, userId: number, track: Track | "all" = "all"): Promise<Sector[]> {
   const mine = db.select({ id: schema.userPrefs.refId }).from(schema.userPrefs).where(and(eq(schema.userPrefs.userId, userId), eq(schema.userPrefs.kind, "sector")));
-  const visible = or(eq(schema.catalogSectors.shared, true), eq(schema.catalogSectors.createdByUserId, userId), inArray(schema.catalogSectors.id, mine));
+  // NACE industries are many: only shown when searched for or chosen.
+  const visible = or(and(eq(schema.catalogSectors.shared, true), ne(schema.catalogSectors.source, "nace")), eq(schema.catalogSectors.createdByUserId, userId), inArray(schema.catalogSectors.id, mine));
   return db
     .select()
     .from(schema.catalogSectors)
@@ -71,7 +218,8 @@ export async function listSectors(db: DB, userId: number, track: Track | "all" =
 
 export async function listCompanies(db: DB, userId: number, track: Track | "all" = "all"): Promise<Company[]> {
   const mine = db.select({ id: schema.userPrefs.refId }).from(schema.userPrefs).where(and(eq(schema.userPrefs.userId, userId), eq(schema.userPrefs.kind, "company")));
-  const visible = or(eq(schema.catalogCompanies.shared, true), eq(schema.catalogCompanies.createdByUserId, userId), inArray(schema.catalogCompanies.id, mine));
+  // Listed companies are thousands: only shown when searched for or chosen.
+  const visible = or(and(eq(schema.catalogCompanies.shared, true), ne(schema.catalogCompanies.source, "borsa")), eq(schema.catalogCompanies.createdByUserId, userId), inArray(schema.catalogCompanies.id, mine));
   return db
     .select()
     .from(schema.catalogCompanies)
@@ -129,7 +277,7 @@ export async function addCustomSector(db: DB, userId: number, name: string, trac
   if (!row) {
     [row] = await db
       .insert(schema.catalogSectors)
-      .values({ slug, name: clean, track, keywords: [], createdByUserId: userId, shared: false })
+      .values({ slug, name: clean, track, keywords: [], createdByUserId: userId, shared: false, source: "altro" })
       .returning();
   }
   await setPref(db, userId, "sector", row.id, stance);
@@ -151,7 +299,7 @@ export async function addCustomCompany(
   if (!row) {
     [row] = await db
       .insert(schema.catalogCompanies)
-      .values({ slug, name: clean, kind: input.kind ?? "azienda", sectorId: input.sectorId ?? null, city: input.city?.trim() || null, track: "tutti", createdByUserId: userId, shared: false })
+      .values({ slug, name: clean, kind: input.kind ?? "azienda", sectorId: input.sectorId ?? null, city: input.city?.trim() || null, ...placeOf(input.city?.trim() || null), track: "tutti", createdByUserId: userId, shared: false, source: "altro" })
       .returning();
   }
   void track;
@@ -193,4 +341,42 @@ export { suggestCompanies, type Suggestion } from "./career";
 export function careersSearchUrl(name: string, track: Track): string {
   const q = `${name} ${track === "stage" ? "careers internship" : "lavora con noi"}`;
   return `https://duckduckgo.com/?q=${encodeURIComponent(q)}`;
+}
+
+/** Browse the whole company list page by page (listed companies included), in the person's countries and regions. */
+export async function browseCompanies(
+  db: DB,
+  userId: number,
+  opts: SearchScope & { sectorId?: number | null; page?: number; perPage?: number },
+): Promise<{ rows: Company[]; total: number }> {
+  const c = schema.catalogCompanies;
+  const where = [or(eq(c.shared, true), eq(c.createdByUserId, userId))];
+  if (opts.countries?.length) where.push(inArray(c.country, opts.countries));
+  if (opts.sectorId) where.push(or(eq(c.sectorId, opts.sectorId), sql`exists (select 1 from json_each(${c.extraSectorIds}) where value = ${opts.sectorId})`));
+  // Regions: within a country that has chosen regions, only those regions (companies with no known region stay).
+  for (const cc of new Set((opts.regions ?? []).map((r) => r.split(":")[0]))) {
+    const names = (opts.regions ?? []).filter((r) => r.startsWith(`${cc}:`)).map((r) => r.slice(cc.length + 1));
+    where.push(or(ne(c.country, cc), inArray(c.region, names), sql`${c.region} is null`));
+  }
+  const perPage = Math.min(100, opts.perPage ?? 30);
+  const page = Math.max(1, opts.page ?? 1);
+  const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(c).where(and(...where));
+  const rows = await db
+    .select()
+    .from(c)
+    .where(and(...where))
+    .orderBy(sql`${c.source} = 'borsa'`, desc(c.size), sql`lower(${c.name})`)
+    .limit(perPage)
+    .offset((page - 1) * perPage);
+  return { rows, total: Number(n) };
+}
+
+/** Can this person see (and so choose) this entry? Shared entries, their own, and those they already chose. */
+export async function canChoose(db: DB, userId: number, kind: "sector" | "company", id: number): Promise<boolean> {
+  const t = kind === "sector" ? schema.catalogSectors : schema.catalogCompanies;
+  const row = await db.select({ shared: t.shared, by: t.createdByUserId }).from(t).where(eq(t.id, id)).get();
+  if (!row) return false;
+  if (row.shared || row.by === userId) return true;
+  const pref = await db.query.userPrefs.findFirst({ where: and(eq(schema.userPrefs.userId, userId), eq(schema.userPrefs.kind, kind), eq(schema.userPrefs.refId, id)) });
+  return pref != null;
 }
