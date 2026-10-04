@@ -9,8 +9,10 @@ pagine dei segreti di Vercel e di GitHub, come indicato sotto.
   Chiedi a Claude di aprire la pull request e uniscila.
 - Tieni aperto un file di appunti **sul tuo computer** (non nel repository) dove copiare i valori.
 
-## 1. Casella Gmail dedicata (10 min)
-1. Crea un nuovo Gmail solo per Compass.
+## 1. Casella Gmail (10 min)
+1. Va bene anche la tua Gmail personale (si cambia dopo cambiando due variabili). Sappi che con la
+   password per le app Compass può leggere tutta la casella: usa solo gli avvisi di lavoro e le
+   risposte alle candidature, ma una Gmail dedicata resta più pulita e più sicura.
 2. Account Google → Sicurezza → attiva la **verifica in due passaggi**.
 3. Account Google → Sicurezza → **Password per le app** → creane una chiamata "Compass".
    Annota: indirizzo (`MAILBOX_USER`) e password di 16 lettere (`MAILBOX_APP_PASSWORD`).
