@@ -287,6 +287,9 @@ export const catalogCompanies = sqliteTable("catalog_companies", {
   atsSlug: text("ats_slug"),
   /** When Compass last looked for its public job board on its own (sources/ats/discover.ts). */
   atsCheckedAt: ts("ats_checked_at"),
+  /** Its own careers page, found by the web scraping (sources/web/careers.ts), and when it was looked for. */
+  careersUrl: text("careers_url"),
+  careersCheckedAt: ts("careers_checked_at"),
   createdByUserId: integer("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
   shared: integer("shared", { mode: "boolean" }).notNull().default(true),
   /** curato = hand-made list; altro = added by a person; borsa = listed companies (shown when searched or chosen). */

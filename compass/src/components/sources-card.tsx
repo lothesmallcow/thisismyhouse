@@ -4,7 +4,8 @@ import { searchNowAction } from "@/app/(app)/actions";
 import { formatWhen } from "@/lib/core/time";
 import { getDb, schema } from "@/lib/db";
 import { env, mailboxConfig } from "@/lib/env";
-import { lastQuickSearch } from "@/lib/pipeline/quick-search";
+import { lastQuickResult, lastQuickSearch } from "@/lib/pipeline/quick-search";
+import { AutoRefresh } from "./auto-refresh";
 import { searchCodeFor } from "@/lib/pipeline/search-terms";
 import { prioritizedCompanies } from "@/lib/server/career";
 import { getSettings } from "@/lib/server/settings";
@@ -14,18 +15,21 @@ import { Button, Card, Chip } from "./ui";
 /** Where this person's offers come from, what is still off, and "Cerca ora". */
 export async function SourcesCard({ userId }: { userId: number }) {
   const db = getDb();
-  const [user, picks, settings, code, last] = await Promise.all([
+  const [user, picks, settings, code, last, result] = await Promise.all([
     db.query.users.findFirst({ where: eq(schema.users.id, userId) }),
     prioritizedCompanies(db, userId),
     getSettings(db),
     searchCodeFor(db, userId),
     lastQuickSearch(db, userId),
+    lastQuickResult(db, userId),
   ]);
   const box = env.demoMode ? { user: "la casella demo" } : mailboxConfig(user?.mailboxKey);
-  const withBoard = picks.filter((p) => p.company.ats && p.company.atsSlug).length;
+  const withBoard = picks.filter((p) => (p.company.ats && p.company.atsSlug) || p.company.careersUrl).length;
   const web = env.demoMode || (Boolean(env.tavilyKey) && settings.w1Enabled);
   const api = env.demoMode || (Boolean(env.adzuna.appId && env.adzuna.appKey) && settings.adzunaEnabled);
   const now = new Date();
+  // Started less than two minutes ago and not finished yet: still running.
+  const running = last != null && now.getTime() - last.getTime() < 120_000 && !(result?.finishedAt && new Date(result.finishedAt) >= last);
   const row = (on: boolean, title: string, text: React.ReactNode) => (
     <li className="flex gap-3">
       <span className="mt-0.5 shrink-0">{on ? <Chip tone="good">attiva</Chip> : <Chip>spenta</Chip>}</span>
@@ -40,12 +44,22 @@ export async function SourcesCard({ userId }: { userId: number }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[15px] font-semibold">Da dove arrivano le tue offerte</p>
-          <p className="text-[13px] text-faint">{last ? `Ultima ricerca ${formatWhen(last, now)}.` : "Nessuna ricerca ancora."} Poi ogni mattina, da sola.</p>
+          <p className="text-[13px] text-faint" aria-live="polite">
+            {running
+              ? "Web scraping in corso: la pagina si aggiorna da sola."
+              : last && result
+                ? `Ultimo web scraping ${formatWhen(last, now)}: ${result.sites} siti di aziende e ${result.feeds} pagine lavoro letti${result.web ? `, ${result.web} ricerche sul web` : ""}; ${result.found} offerte trovate, ${result.created} nuove.`
+                : "Nessuna ricerca ancora."}{" "}
+            Poi ogni mattina, da sola.
+          </p>
         </div>
         <form action={searchNowAction}>
-          <Button size="sm">Cerca ora</Button>
+          <Button size="sm" disabled={running}>
+            {running ? "In corso…" : "Fai web scraping"}
+          </Button>
         </form>
       </div>
+      {running && <AutoRefresh />}
       <ul className="mt-4 space-y-3 text-[13.5px]">
         {row(
           Boolean(box),
@@ -59,13 +73,19 @@ export async function SourcesCard({ userId }: { userId: number }) {
           ),
         )}
         {row(
-          withBoard > 0,
-          "Pagine lavoro delle aziende scelte",
+          true, // no key needed: always on
+          "Siti delle aziende (web scraping)",
           <>
-            {withBoard} delle {picks.length} aziende che hai scelto hanno una pagina lavoro leggibile (le cerco da solo). <Link href="/aziende">Scegli altre aziende</Link>.
+            Leggo le pagine &quot;lavora con noi&quot; delle aziende che scegli e delle quotate dei tuoi settori, rispettando le regole di ogni sito. Per {withBoard} delle {picks.length} aziende scelte ho già trovato la pagina. <Link href="/aziende">Scegli altre aziende</Link>.
           </>,
         )}
-        {row(web, "Ricerca sul web", web ? "Cerca le tue posizioni sui siti di lavoro ogni mattina." : "Si attiva con una chiave gratuita (TAVILY_API_KEY) messa dall'amministratore.")}
+        {row(
+          web,
+          "Ricerca sul web (LinkedIn, Indeed, InfoJobs)",
+          web
+            ? "Cerco le tue posizioni con un motore di ricerca e ti mostro gli annunci trovati, senza entrare nei siti."
+            : "Cerca gli annunci con un motore di ricerca e te li mostra senza entrare nei siti. Si attiva con una chiave gratuita (TAVILY_API_KEY) messa dall'amministratore.",
+        )}
         {row(api, "Motori di offerte", api ? "Offerte da Adzuna, nelle tue zone." : "Si attiva con una chiave gratuita (ADZUNA_APP_ID) messa dall'amministratore.")}
       </ul>
       {box && code.alerts.length > 0 && (

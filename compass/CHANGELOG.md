@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.11.0 · 2026-10-04
+
+- **"Fai web scraping"** on Offerte: one click reads, in the background and within a minute, the
+  chosen companies' job boards and their own career pages, the career pages of the listed companies
+  in the chosen sectors, and (with a free search key) LinkedIn, Indeed and InfoJobs results from a
+  search engine, shown without opening those sites. At most every 10 minutes per person; the page
+  updates by itself and says what was read and found.
+- Career pages are scraped politely (robots.txt, one request every 5 s per site, never job
+  platforms); a careers page once found is remembered and read again in the daily run.
+
 ## 0.10.0 · 2026-10-04
 
 - **First search right away**: when someone finishes the questionnaire (and with "Cerca ora" on

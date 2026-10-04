@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Flash } from "@/components/flash";
 import { IconFolder, IconPlus, IconSearch, IconSliders } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
-import { Empty, LinkButton, PageHeader } from "@/components/ui";
+import { Button, Empty, LinkButton, PageHeader } from "@/components/ui";
 import { CONTRACT_LABELS, SECTORS } from "@/lib/core/extract";
 import type { Level } from "@/lib/core/rank";
 import { and, eq, sql } from "drizzle-orm";
@@ -11,7 +11,7 @@ import { requireUser } from "@/lib/server/auth";
 import { defaultFilters, listJobs, PAGE_SIZE, type JobFilters } from "@/lib/server/jobs";
 import { getProfile } from "@/lib/server/profile";
 import { getSettings } from "@/lib/server/settings";
-import { saveDefaultFiltersAction } from "../actions";
+import { saveDefaultFiltersAction, searchNowAction } from "../actions";
 import { SourcesCard } from "@/components/sources-card";
 
 export const metadata = { title: "Offerte" };
@@ -88,6 +88,11 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
         }
         actions={
           <div className="flex flex-wrap gap-2">
+            <form action={searchNowAction}>
+              <Button size="sm">
+                <IconSearch size={16} /> Fai web scraping
+              </Button>
+            </form>
             <LinkButton href="/offerte/cartelle" variant="secondary" size="sm">
               <IconFolder size={16} /> Cartelle
             </LinkButton>

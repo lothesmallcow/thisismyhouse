@@ -490,7 +490,7 @@ test("quick questionnaire for a new account: 5 questions, a generic role becomes
   await page.goto("/offerte");
   await expect(page.getByText("Da dove arrivano le tue offerte")).toBeVisible();
   await assertUiBasics(page);
-  await page.getByRole("button", { name: "Cerca ora" }).click();
+  await page.getByRole("button", { name: "Fai web scraping" }).first().click();
   await expect(page.getByText(/Hai già cercato da poco/)).toBeVisible();
   // Details later: the complete questionnaire, answers kept.
   await page.goto("/profilo");

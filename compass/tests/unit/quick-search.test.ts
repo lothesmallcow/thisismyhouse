@@ -1,5 +1,5 @@
 // The first search right after the questionnaire: job boards found on their own (only when the
-// published name matches), read at once, and not repeated within half an hour.
+// published name matches), read at once, and not repeated within 10 minutes.
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { schema } from "@/lib/db";
@@ -37,7 +37,7 @@ describe("finding a company's job board", () => {
     expect(await discoverAts(fakeNet(calls), "Omonima")).toBeNull(); // the slug exists, but it is someone else
   });
 
-  it("right after the questionnaire: the board is found, read, the offers ranked; not again within half an hour", async () => {
+  it("right after the questionnaire: the board is found, read, the offers ranked; not again within 10 minutes", async () => {
     const db = await freshDb();
     const NOW = new Date("2026-10-05T07:00:00Z");
     const { M } = await seedPeople(db, NOW, { student: true });
@@ -50,7 +50,7 @@ describe("finding a company's job board", () => {
     expect(r).toMatchObject({ boardsFound: 1, feeds: 1, found: 1, created: 1 });
     expect(await db.query.catalogCompanies.findFirst({ where: eq(schema.catalogCompanies.id, acme.id) })).toMatchObject({ ats: "greenhouse", atsSlug: "acmeesempio", atsCheckedAt: NOW });
     expect((await db.select().from(schema.jobs)).some((j) => j.title === "Stage corporate finance")).toBe(true);
-    const again = await runQuickSearch(db, M, { fetchImpl: fakeNet(calls), web: null, adzuna: null, now: new Date(NOW.getTime() + 10 * 60_000) });
+    const again = await runQuickSearch(db, M, { fetchImpl: fakeNet(calls), web: null, adzuna: null, now: new Date(NOW.getTime() + 5 * 60_000) });
     expect(again.skipped).toBe("recent");
   });
 });
