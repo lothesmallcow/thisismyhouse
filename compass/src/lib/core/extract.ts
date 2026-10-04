@@ -130,7 +130,7 @@ export function extractLanguages(text: string): LanguageReq[] {
 
 export const SECTORS: [string, RegExp][] = [
   ["Amministrazione e contabilità", /amministrativ|contabil|ragioner|fatturazion|paghe|bilancio|accounting|amministrazione|back office|tesoreria|commercialist|data entry/],
-  ["Segreteria e reception", /segreteri|receptionist|reception|centralinist|front office|assistente di direzione|office manager|secretary/],
+  ["Segreteria e reception", /segreteri|segretari[ao]|receptionist|reception|centralinist|front office|assistente di direzione|office manager|secretary/],
   ["Vendita e negozi", /commess|addett[oa] vendite|sales assistant|cassier|negozio|retail|store|banconist|venditor|consulente commerciale/],
   ["Assistenza clienti", /customer (?:care|service)|assistenza clienti|operatore call center|call center|helpdesk|contact center|inbound/],
   ["Logistica e magazzino", /magazzin|logistic|carrell|spedizion|warehouse|picking|autista|corriere/],
@@ -189,4 +189,68 @@ export function isValidEmail(s: string): boolean {
 
 export function emailDomain(email: string): string {
   return email.split("@")[1]?.toLowerCase() ?? "";
+}
+
+// --- Internships and student programmes ---------------------------------------------------
+
+export type JobType = "lavoro" | "stage" | "programma" | "unknown";
+
+export const JOB_TYPE_LABELS: Record<JobType, string> = {
+  lavoro: "Lavoro",
+  stage: "Stage",
+  programma: "Programma per studenti",
+  unknown: "Non indicato",
+};
+
+const PROGRAMME_RE = /spring (?:week|insight|programme|program)|insight (?:day|week|programme|program|event)|discovery (?:day|programme|program)|early insights?|summer school|open day|first[- ]year (?:programme|program|students programme)|winter (?:insight|programme)/;
+const INTERNSHIP_RE = /\bstage\b|stagista|stagiaire|tirocini|internship|\bintern\b|summer analyst|summer associate|off[- ]cycle|praticantato|working student|werkstudent|\btrainee\b/;
+const SENIOR_RE = /\bsenior\b|\bmanager\b|\bdirector\b|\bhead of\b|responsabile|\blead\b|vice president|\bvp\b/;
+const EXPERIENCE_RE = /(?:almeno|minimo|min\.?)\s*(?:[2-9]|\d{2})\s*anni di esperienza|esperienza (?:pregressa |consolidata )?(?:di )?(?:almeno )?(?:[2-9]|\d{2})\s*anni|\b(?:[2-9]|\d{2})\+?\s*(?:years|anni) (?:of )?(?:relevant |proven |professional )?(?:work )?experience/;
+
+/** Is this ad a job, an internship, or a short programme for students? Title first, then text. */
+export function extractJobType(title: string, text: string): JobType {
+  const t = fold(title);
+  const all = fold(`${title}\n${text}`);
+  if (PROGRAMME_RE.test(t)) return "programma";
+  if (INTERNSHIP_RE.test(t)) return "stage";
+  if (SENIOR_RE.test(t)) return "lavoro";
+  if (PROGRAMME_RE.test(all)) return "programma";
+  if (/tirocinio (?:curriculare|extracurriculare|formativo)|stage (?:curriculare|extracurriculare|retribuito)|internship (?:programme|program|position)|rimborso spese (?:mensile|di)|indennita di (?:stage|tirocinio)/.test(all)) return "stage";
+  if (EXPERIENCE_RE.test(all) || /tempo indeterminato|permanent contract|contratto a tempo determinato/.test(all)) return "lavoro";
+  return "unknown";
+}
+
+export type Eligibility = "laurea-richiesta" | "fine-studi" | "penultimo-anno" | "primo-anno" | "esperienza" | "retribuito" | "non-retribuito";
+
+export const ELIGIBILITY_LABELS: Record<Eligibility, string> = {
+  "laurea-richiesta": "Chiede la laurea",
+  "fine-studi": "Per chi sta per laurearsi",
+  "penultimo-anno": "Per il penultimo anno",
+  "primo-anno": "Aperto ai primi anni",
+  esperienza: "Chiede esperienza",
+  retribuito: "Retribuito",
+  "non-retribuito": "Non retribuito",
+};
+
+/** Who the ad is for, as codes the ranking understands. Each rule is a phrase found in the text. */
+export function extractEligibility(text: string): Eligibility[] {
+  const t = fold(text);
+  const out = new Set<Eligibility>();
+  const finalYear = /laureand|final[- ]year|last year of (?:your|their) (?:studies|degree)|in procinto di laurearsi|graduating in/.test(t);
+  if (finalYear) out.add("fine-studi");
+  if (/neolaureat|laurea (?:gia )?conseguita|recent graduates?|graduate (?:programme|program|scheme)|(?:have|hold) (?:a|an) (?:bachelor|master)'?s? degree|completed (?:a|your) degree/.test(t) && !/laureand/.test(t)) out.add("laurea-richiesta");
+  if (/penultimate year|penultimo anno|second[- ]to[- ]last year/.test(t)) out.add("penultimo-anno");
+  if (/first[- ]year|primo anno|1st[- ]year|any year of (?:study|studies)|all years of study|qualsiasi anno/.test(t)) out.add("primo-anno");
+  if (EXPERIENCE_RE.test(t)) out.add("esperienza");
+  if (/non retribuit|unpaid|senza rimborso|a titolo gratuito/.test(t)) out.add("non-retribuito");
+  else if (/rimborso spese|indennita di (?:stage|tirocinio|partecipazione)|paid internship|stipend|retribuit|compenso mensile|\bsalary\b|\bpaid\b/.test(t)) out.add("retribuito");
+  return [...out];
+}
+
+/** "Stage di 6 mesi", "3-month internship" -> 6, 3. Only plausible internship lengths (1-12). */
+export function extractDurationMonths(text: string): number | null {
+  const t = fold(text);
+  const m = t.match(/(?:durata(?: di)?|di|per|for|a|an?)\s*(\d{1,2})\s*mesi\b/) ?? t.match(/\b(\d{1,2})[- ]?months?\b/) ?? t.match(/\b(\d{1,2})\s*mesi\b/);
+  const n = m ? Number(m[1]) : NaN;
+  return n >= 1 && n <= 12 ? n : null;
 }

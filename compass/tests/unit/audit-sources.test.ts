@@ -18,7 +18,8 @@ import { TavilyProvider, type SearchProvider } from "@/lib/sources/web/w1";
 import { updateProfile } from "@/lib/server/profile";
 import { setSetting } from "@/lib/server/settings";
 import { guessFromUrl } from "@/lib/core/url-guess";
-import { freshDb } from "./helpers/db";
+import { freshDb, seedPeople, view } from "./helpers/db";
+import { seedAccounts } from "@/lib/seed";
 
 const NOW = new Date("2026-10-05T07:00:00Z");
 const fixture = (f: string) => fs.readFileSync(path.join("fixtures/http", f), "utf8");
@@ -189,7 +190,8 @@ describe("W1", () => {
   let db: DB;
   beforeEach(async () => {
     db = await freshDb();
-    await updateProfile(db, { roles: ["Impiegata amministrativa", "Segretaria", "Receptionist"], city: "Torino" });
+    const [L] = await seedAccounts(db, { admin: { email: "a@example.com", password: "admin-password" }, people: [{ email: "u@example.com", password: "demo-password", name: "L", track: "lavoro" }] });
+    await updateProfile(db, L, { roles: ["Impiegata amministrativa", "Segretaria", "Receptionist"], city: "Torino", onboardedAt: NOW });
   });
 
   it("the 26th query of the day is refused (cap 25) and the provider is not called", async () => {
@@ -233,13 +235,12 @@ describe("W1", () => {
 describe("isolation and idempotency", () => {
   it("one source throwing does not stop the others", async () => {
     const db = await freshDb();
-    const { seedDemo } = await import("@/lib/seed");
-    await seedDemo(db, NOW);
+    await seedPeople(db, NOW, { student: false });
     const broken = (async (u: string, i?: RequestInit) => {
       if (u.includes("adzuna")) throw new Error("adzuna is down");
       return demoFetch()(u, i);
     }) as typeof fetch;
-    const s = await runIngest({ db, fetchImpl: broken, mailbox: null, demo: true, now: NOW, politeSleep: async () => {} });
+    const s = await runIngest({ db, fetchImpl: broken, mailboxes: [], demo: true, now: NOW, politeSleep: async () => {} });
     expect(s.sources["api:adzuna"]).toBeNull();
     expect(s.sources["ats:greenhouse:esempiotech"]).toBe(1);
     expect(s.sources["w2:careers.esempio-demo.example"]).toBe(1);
@@ -250,10 +251,9 @@ describe("isolation and idempotency", () => {
 
   it("running ingestion twice creates no duplicates", async () => {
     const db = await freshDb();
-    const { seedDemo } = await import("@/lib/seed");
-    await seedDemo(db, NOW);
+    const { L } = await seedPeople(db, NOW, { student: false });
     const { DemoMailbox } = await import("@/lib/sources/mail/demo");
-    const deps = { db, fetchImpl: demoFetch(), mailbox: new DemoMailbox(db), demo: true, now: NOW, politeSleep: async () => {} };
+    const deps = { db, fetchImpl: demoFetch(), mailboxes: [{ key: "default", owners: [L], mailbox: new DemoMailbox(db) }], demo: true, now: NOW, politeSleep: async () => {} };
     await runIngest(deps);
     const [{ a }] = await db.select({ a: sql<number>`count(*)` }).from(schema.jobs);
     const [{ s1 }] = await db.select({ s1: sql<number>`count(*)` }).from(schema.jobSources);
@@ -280,7 +280,8 @@ describe("geocoder fallback (off by default)", () => {
     const db = await freshDb();
     const { getSettings } = await import("@/lib/server/settings");
     expect((await getSettings(db)).geocoderEnabled).toBe(false);
-    await updateProfile(db, { city: "Torino", lat: 45.06776, lng: 7.68249, roles: ["Impiegata"] });
+    const [L] = await seedAccounts(db, { admin: { email: "a@example.com", password: "admin-password" }, people: [{ email: "u@example.com", password: "demo-password", name: "L", track: "lavoro" }] });
+    await updateProfile(db, L, { city: "Torino", lat: 45.06776, lng: 7.68249, roles: ["Impiegata"] });
     const { upsertRawJob } = await import("@/lib/server/jobs");
     await upsertRawJob(db, { source: "manual", url: null, title: "Impiegata", company: "A", location: "Lingotto" }, NOW);
     await setSetting(db, "geocoderEnabled", true);
@@ -290,13 +291,14 @@ describe("geocoder fallback (off by default)", () => {
       if (u.includes("nominatim")) calls++;
       return demoFetch()(u, i);
     }) as typeof fetch;
-    await runIngest({ db, fetchImpl: f, mailbox: null, demo: true, now: NOW, politeSleep: async (ms) => void sleeps.push(ms) });
+    await runIngest({ db, fetchImpl: f, mailboxes: [], demo: true, now: NOW, politeSleep: async (ms) => void sleeps.push(ms) });
     const j = await db.query.jobs.findFirst({ where: eq(schema.jobs.company, "A") });
-    expect(j!.distanceKm).toBeGreaterThan(0);
-    expect(j!.distanceKm).toBeLessThan(5);
+    const v = await view(db, L, j!.id);
+    expect(v!.distanceKm).toBeGreaterThan(0);
+    expect(v!.distanceKm).toBeLessThan(5);
     expect(sleeps).toContain(1100);
     await db.update(schema.jobs).set({ lat: null }).where(eq(schema.jobs.company, "A"));
-    await runIngest({ db, fetchImpl: f, mailbox: null, demo: true, now: NOW, politeSleep: async () => {} });
+    await runIngest({ db, fetchImpl: f, mailboxes: [], demo: true, now: NOW, politeSleep: async () => {} });
     expect(calls).toBe(1); // second time from cache
   });
 });

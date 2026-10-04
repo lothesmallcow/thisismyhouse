@@ -1,65 +1,58 @@
-// Load test: 5,000 jobs in the database. Measures the Offerte query and a full rerank.
+// Load test: 5,000 shared jobs, two people. Measures the Offerte query and a full re-rank.
 // Usage: DATABASE_URL=file:data/local/perf.db npx tsx scripts/perf-5000.ts
 import "./load-env";
 import { getDb, migrateDb, schema } from "../src/lib/db";
 import { seedAccounts, seedDemo } from "../src/lib/seed";
-import { listJobs, rerankAll } from "../src/lib/server/jobs";
-import { rankJob } from "../src/lib/core/rank";
-import { toRankProfile, getProfile } from "../src/lib/server/profile";
+import { listJobs, rerankAll, rerankUser } from "../src/lib/server/jobs";
+import { updateProfile } from "../src/lib/server/profile";
 
 const db = getDb();
 await migrateDb(db);
-await seedAccounts(db, { userEmail: "demo@example.com", userPassword: "demo-compass", adminEmail: "admin@example.com", adminPassword: "admin-compass" });
-await seedDemo(db, new Date());
-const p = toRankProfile(await getProfile(db));
-const cities = ["Torino", "Moncalieri", "Rivoli", "Chieri", "Milano", "Asti", "Nichelino", "Collegno"];
-const titles = ["Impiegata amministrativa", "Segretaria", "Addetta vendite", "Magazziniere", "Receptionist", "Contabile", "Operatrice call center"];
+const [lucia, marco] = await seedAccounts(db, {
+  admin: { email: "admin@example.com", password: "admin-compass" },
+  people: [
+    { email: "demo@example.com", password: "demo-compass", name: "Lucia Ferraro", track: "lavoro" },
+    { email: "studente@example.com", password: "demo-compass", name: "Marco Bianchi", track: "stage", mailboxKey: "studente" },
+  ],
+});
+await seedDemo(db, new Date(), { userId: lucia, studentId: marco });
+const cities: [string, number, number][] = [["Torino", 45.07, 7.69], ["Moncalieri", 45.0, 7.68], ["Rivoli", 45.07, 7.51], ["Milano", 45.46, 9.19], ["Asti", 44.9, 8.21]];
+const titles = ["Impiegata amministrativa", "Segretaria", "Addetta vendite", "Magazziniere", "Summer Analyst Intern", "Stage M&A", "Operatrice call center"];
 const now = Date.now();
 const rows = Array.from({ length: 5000 }, (_, i) => {
-  const job = {
-    title: `${titles[i % titles.length]} ${i}`,
-    company: `Azienda Prova ${i % 900}`,
-    description: "Annuncio di prova generato per il test di carico.",
-    sector: null,
-    distanceKm: (i * 7) % 90,
-    remote: "unknown" as const,
-    hours: (i % 3 === 0 ? "part" : "full") as "part" | "full",
-    contract: "indeterminato" as const,
-    minAnnualGross: null,
-    maxAnnualGross: i % 4 === 0 ? 20000 + (i % 15000) : null,
-    languages: [],
-    postedAt: new Date(now - (i % 40) * 86400000),
-    scamFlagCount: 0,
-  };
-  const r = rankJob(job, p, [], new Date());
+  const [city, lat, lng] = cities[i % cities.length];
+  const postedAt = new Date(now - (i % 40) * 86400000);
   return {
     dedupeKey: `perf|${i}`,
-    title: job.title,
-    company: job.company,
-    city: cities[i % cities.length],
-    distanceKm: job.distanceKm,
-    hours: job.hours,
-    contract: job.contract,
-    salaryMax: job.maxAnnualGross,
-    postedAt: job.postedAt,
-    firstSeenAt: job.postedAt,
+    title: `${titles[i % titles.length]} ${i}`,
+    company: `Azienda Prova ${i % 900}`,
+    city,
+    lat,
+    lng,
+    description: "Annuncio di prova generato per il test di carico.",
+    hours: i % 3 === 0 ? "part" : "full",
+    contract: "indeterminato",
+    jobType: i % 7 >= 4 && i % 7 <= 5 ? "stage" : "lavoro",
+    salaryMax: i % 4 === 0 ? 20000 + (i % 15000) : null,
+    postedAt,
+    firstSeenAt: postedAt,
     updatedAt: new Date(),
-    score: r.score,
-    level: r.level,
-    reasons: r.reasons,
-    factors: r.factors,
   };
 });
-for (let i = 0; i < rows.length; i += 500) await db.insert(schema.jobs).values(rows.slice(i, i + 500));
+for (let i = 0; i < rows.length; i += 500) {
+  const ids = await db.insert(schema.jobs).values(rows.slice(i, i + 500)).returning({ id: schema.jobs.id });
+  await db.insert(schema.jobSources).values(ids.map((r) => ({ jobId: r.id, source: "api:adzuna", seenAt: new Date() })));
+}
 const t = async (label: string, f: () => Promise<unknown>) => {
   const s = performance.now();
   await f();
   console.log(`${label}: ${Math.round(performance.now() - s)} ms`);
 };
-await t("Offerte, first page (10)", () => listJobs(db, {}, 10));
-await t("Offerte, first page again (warm)", () => listJobs(db, {}, 10));
-await t("Offerte with 3 filters", () => listJobs(db, { maxKm: 20, hours: "part", days: 7 }, 10));
-await t("Offerte after 'Mostra altre 10' x20 (200 rows)", () => listJobs(db, {}, 200));
-const { updateProfile } = await import("../src/lib/server/profile");
-await updateProfile(db, { maxKm: 10, hours: "part" }); // changes almost every job's score
-await t("Full rerank of 5,000 jobs (after a profile change)", () => rerankAll(db));
+await t("Full re-rank, both people (first time, 2 x 5,000 rows written)", () => rerankAll(db));
+await t("Offerte, first page (10)", () => listJobs(db, lucia, {}, 10));
+await t("Offerte, first page again (warm)", () => listJobs(db, lucia, {}, 10));
+await t("Offerte with 3 filters", () => listJobs(db, lucia, { maxKm: 20, hours: "part", days: 7 }, 10));
+await t("Offerte, student, only chosen companies", () => listJobs(db, marco, { focus: "aziende" }, 10));
+await t("Offerte after 'Mostra altre 10' x20 (200 rows)", () => listJobs(db, lucia, {}, 200));
+await updateProfile(db, lucia, { maxKm: 10, hours: "part" }); // changes almost every job's score
+await t("Re-rank one person after a profile change", () => rerankUser(db, lucia));

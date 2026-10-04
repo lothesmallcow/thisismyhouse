@@ -19,3 +19,7 @@ what to re-verify.
 | [0011](0011-privacy-and-data.md) | What is stored, where, and how it is deleted |
 | [0012](0012-project-location-and-name.md) | Name "Compass", code in `compass/` for now |
 | [0013](0013-send-queue.md) | Send queue: atomic claim, one per run, cap at send time, recovery |
+| [0014](0014-accounts-and-visibility.md) | Several people: shared jobs, per-person scores and data, invitations |
+| [0015](0015-catalog-themes-and-career.md) | Catalog with themes and extra sectors, focus switch, career suggestions, student year rules |
+| [0016](0016-experience-timeline.md) | Timeline from the CV text or LinkedIn's data export (the API gives no work history) |
+| [0017](0017-redesign.md) | A quieter, professional design with the same accessibility floor |

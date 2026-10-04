@@ -127,3 +127,102 @@ export const DEMO_SPONTANEOUS = [
   { name: "Ottica Vigna", email: "candidature@otticavigna.example", sourceUrl: "https://www.otticavigna.example/lavora-con-noi", city: "Moncalieri" },
   { name: "Farmacia Comunale Esempio", email: "personale@farmaciaesempio.example", sourceUrl: "https://www.farmaciaesempio.example/candidature", city: "Torino" },
 ];
+
+// --- The demo student (internship search). Fictional person, fictional companies. -------------
+
+export const DEMO_STUDENT = {
+  name: "Marco Bianchi",
+  phone: "333 000 0000",
+  email: "marco.bianchi.stage@example.com",
+  linkedinUrl: "https://www.linkedin.com/in/esempio-marco-bianchi",
+  roles: [],
+  synonyms: [],
+  city: "Milano",
+  maxKm: 25,
+  remoteOk: true,
+  hours: "any" as const,
+  contracts: [],
+  minNetMonthly: 700,
+  hideBelowMin: false,
+  languages: [{ language: "inglese", level: "fluente" as const }, { language: "spagnolo", level: "base" as const }],
+  avoidSectors: [],
+  avoidCompanies: [],
+  avoidKeywords: [],
+  university: "Università (esempio), Milano",
+  degree: "Economia e finanza",
+  studyYear: 1,
+  degreeYears: 3,
+  graduationYear: 2029,
+  periods: ["estate"],
+  extraPlaces: ["Londra"],
+  paidOnly: false,
+  tastes: ["finanza", "imprenditoria", "tecnologia"],
+  focus: "tutte" as const,
+  presentation: "Primo anno di economia e finanza. Mi interessano M&A, startup e mercati; ho esperienza di lavoro in squadra in attività di volontariato e associazioni studentesche.",
+  availability: "Disponibile per uno stage estivo (giugno-settembre) o part-time durante il semestre.",
+  salaryExpectation: "Rimborso spese in linea con la policy aziendale.",
+};
+
+/** Catalog choices of the demo student: real sector names, real catalog companies as preferences only, plus one "Altro". */
+export const DEMO_STUDENT_PREFS = {
+  sectors: ["investment-banking", "venture-capital", "startup", "fintech"],
+  avoidSectors: ["sanita"],
+  companies: ["lazard", "houlihan-lokey", "vitale-and-co", "satispay", "p101"],
+  custom: [{ name: "Esempio Advisory Partners", kind: "boutique" as const, sector: "investment-banking" }],
+};
+
+export const DEMO_STUDENT_CV_LINES = [
+  "Marco Bianchi (profilo di prova)",
+  "Milano - marco.bianchi.stage@example.com",
+  "",
+  "ISTRUZIONE",
+  "2026 - oggi  Economia e finanza (primo anno), Università (esempio)",
+  "2021 - 2026  Liceo scientifico, Milano",
+  "",
+  "ESPERIENZE",
+  "2026 - oggi  Membro, Associazione studentesca di finanza (esempio), Milano",
+  "  - Analisi di bilanci e presentazioni di società quotate",
+  "2025 - 2025  Commesso estivo, Negozio di articoli sportivi (esempio), Milano",
+  "",
+  "VOLONTARIATO",
+  "2023 - 2025  Volontario, Biblioteca di quartiere (esempio), Milano",
+  "",
+  "COMPETENZE",
+  "Excel, PowerPoint, basi di Python. Inglese fluente, spagnolo base.",
+];
+
+interface StageSpec {
+  title: string;
+  company: string;
+  city: string;
+  source: SourceKind;
+  days: number;
+  text: string;
+  email?: string;
+}
+
+const STAGE_SPECS: StageSpec[] = [
+  { title: "Stage M&A Analyst", company: "Esempio Advisory Partners", city: "Milano", source: "api:adzuna", days: 1, text: "Stage di 6 mesi nel team M&A: supporto a valutazioni, pitch book e due diligence. Rimborso spese mensile. Aperto anche a studenti del primo anno con forte interesse per la finanza.", email: "careers@esempioadvisory.example" },
+  { title: "Summer Internship Investment Banking", company: "Banca d'Affari Esempio", city: "Milano", source: "w1", days: 2, text: "Summer internship di 10 settimane nella divisione investment banking. Rivolto a studenti al penultimo anno di laurea triennale o magistrale. Paid internship." },
+  { title: "Spring Insight Week Finanza", company: "Gruppo Bancario Esempio", city: "Milano", source: "api:adzuna", days: 3, text: "Spring insight week di 3 giorni per studenti del primo anno: incontri con i team di M&A, mercati e asset management." },
+  { title: "Venture Capital Intern", company: "Fondo Venture Esempio", city: "Milano", source: "w1", days: 2, text: "Internship di 4 mesi nel team investimenti: analisi di startup, dealflow, ricerche di mercato. Rimborso spese. Inglese fluente.", email: "jobs@fondoventure.example" },
+  { title: "Founder's Associate (stage)", company: "Startup Pagamenti Esempio", city: "Milano", source: "email:linkedin", days: 0, text: "Stage di 6 mesi a supporto dei fondatori: business development, analisi dati, progetti speciali. Ibrido, 2 giorni da remoto. Rimborso spese 800 euro al mese." },
+  { title: "Graduate Programme Corporate Finance", company: "Industria Esempio Spa", city: "Torino", source: "api:adzuna", days: 4, text: "Graduate programme di 18 mesi per neolaureati in economia, laurea conseguita con ottimi voti." },
+  { title: "Equity Research Intern", company: "Esempio Capital Markets", city: "Londra", source: "w1", days: 5, text: "Off-cycle internship in equity research (6 months). Open to students in any year of study. Paid internship. Fluent English required." },
+  { title: "Stage Marketing Digitale", company: "Agenzia Comunicazione Esempio", city: "Milano", source: "api:adzuna", days: 2, text: "Stage di 6 mesi nel team social media e contenuti. Stage curriculare non retribuito." },
+  { title: "Senior Financial Controller", company: "Gruppo Industriale Esempio", city: "Milano", source: "api:adzuna", days: 1, text: "Almeno 7 anni di esperienza in controllo di gestione. Contratto a tempo indeterminato.", email: "hr@gruppoindustriale.example" },
+  { title: "Strategy Consulting Intern", company: "Consulenza Strategica Esempio", city: "Milano", source: "w1", days: 6, text: "Internship di 6 mesi in progetti di strategia per grandi aziende. Per laureandi in economia o ingegneria." },
+];
+
+export function demoStageJobs(now: Date): RawJob[] {
+  return STAGE_SPECS.map((s, i) => ({
+    source: s.source,
+    url: s.source === "email:linkedin" ? `https://www.linkedin.com/jobs/view/${4199900000 + i}` : s.source === "api:adzuna" ? `https://www.adzuna.it/details/${4899900000 + i}` : `https://carriere.example/stage/${2000 + i}`,
+    title: s.title,
+    company: s.company,
+    location: s.city,
+    description: [s.text, s.email ? `Inviare CV e lettera a ${s.email}.` : "Candidature tramite il sito."].join("\n"),
+    salaryText: null,
+    postedAt: new Date(now.getTime() - s.days * 86400000 - 3600000 * (i % 5)),
+  }));
+}

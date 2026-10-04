@@ -3,20 +3,24 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isValidEmail } from "@/lib/core/extract";
 import { HARD_MAX_PER_DAY } from "@/lib/core/guardrails";
 import { OutboxTransport } from "@/lib/mail/transport";
 import { getDb, schema } from "@/lib/db";
-import { env } from "@/lib/env";
+import { COMPANY_KINDS, type CompanyKind } from "@/lib/db/schema";
+import { env, mailboxConfig } from "@/lib/env";
 import { JOB_NAMES, runJob, type JobName } from "@/lib/pipeline/jobs";
+import { createAccount, createInvite, MIN_PASSWORD, setActive } from "@/lib/server/accounts";
 import { processQueue, setKillSwitch } from "@/lib/server/applications";
-import { requireAdmin, signIn, signOut } from "@/lib/server/auth";
-import { setAdjustmentActive } from "@/lib/server/jobs";
+import { requireAdmin, setViewAs, signIn, signOut } from "@/lib/server/auth";
+import { rerankAll, rerankUser, setAdjustmentActive } from "@/lib/server/jobs";
 import { hashPassword } from "@/lib/server/passwords";
-import { getSettings, setSetting, updateGuardrails } from "@/lib/server/settings";
+import { deleteAccount } from "@/lib/server/privacy";
+import { getSettings, setSetting, updateGuardrails, updateUserSettings, type RegistrationMode } from "@/lib/server/settings";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const num = (f: FormData, k: string, d = 0) => (Number.isFinite(Number(f.get(k))) && f.get(k) !== "" ? Number(f.get(k)) : d);
@@ -27,7 +31,15 @@ const hm = (s: string, d: number) => {
 
 function back(path: string, msg = "salvato"): never {
   revalidatePath("/", "layout");
-  redirect(`${path}?msg=${msg}`);
+  redirect(`${path}${path.includes("?") ? "&" : "?"}msg=${msg}`);
+}
+
+/** The person a per-person admin form is about (must be a real "user" account). */
+async function person(f: FormData): Promise<number> {
+  const id = num(f, "u");
+  const u = id ? await getDb().query.users.findFirst({ where: and(eq(schema.users.id, id), eq(schema.users.role, "user")) }) : null;
+  if (!u) back("/admin/utenti", "errore");
+  return u.id;
 }
 
 export async function adminSignInAction(f: FormData) {
@@ -54,8 +66,18 @@ export async function saveGuardrailsAction(f: FormData) {
     undoMinutes: Math.max(15, num(f, "undo", s.guardrails.undoMinutes)), // never below 15
     companyCooldownDays: Math.max(1, num(f, "companyCooldown", s.guardrails.companyCooldownDays)),
     spontaneousCooldownDays: Math.max(30, num(f, "spontaneousCooldown", s.guardrails.spontaneousCooldownDays)),
-    autopilot: str(f, "autopilot") === "1",
   });
+  back("/admin/invii");
+}
+
+/** Per person: autopilot on/off, and lifting their own stop. */
+export async function personSendingAction(f: FormData) {
+  await requireAdmin();
+  const u = await person(f);
+  const patch: { autopilot?: boolean; killSwitch?: boolean } = {};
+  if (f.has("autopilot")) patch.autopilot = str(f, "autopilot") === "1";
+  if (f.has("killSwitch")) patch.killSwitch = str(f, "killSwitch") === "1";
+  await updateUserSettings(getDb(), u, patch);
   back("/admin/invii");
 }
 
@@ -68,7 +90,7 @@ export async function realSendingAction(f: FormData) {
 
 export async function adminKillSwitchAction(f: FormData) {
   await requireAdmin();
-  await setKillSwitch(getDb(), str(f, "on") === "1", "admin");
+  await setKillSwitch(getDb(), null, str(f, "on") === "1", "admin");
   back("/admin");
 }
 
@@ -81,6 +103,7 @@ export async function saveSourcesAction(f: FormData) {
   await setSetting(db, "joobleEnabled", str(f, "joobleEnabled") === "1");
   await setSetting(db, "digestEnabled", str(f, "digestEnabled") === "1");
   await setSetting(db, "geocoderEnabled", str(f, "geocoderEnabled") === "1");
+  await setSetting(db, "registration", (["closed", "invite", "open"].includes(str(f, "registration")) ? str(f, "registration") : "invite") as RegistrationMode);
   back("/admin/fonti");
 }
 
@@ -144,15 +167,17 @@ export async function deleteSiteAction(f: FormData) {
 
 export async function addSpontaneousAction(f: FormData) {
   await requireAdmin();
+  const userId = await person(f);
   const email = str(f, "email").toLowerCase();
-  if (!str(f, "name") || !isValidEmail(email) || !/^https?:\/\//.test(str(f, "sourceUrl"))) back("/admin/spontanee", "errore");
-  await getDb().insert(schema.spontaneousCompanies).values({ name: str(f, "name"), email, sourceUrl: str(f, "sourceUrl"), city: str(f, "city") || null, status: "approved" });
-  back("/admin/spontanee");
+  if (!str(f, "name") || !isValidEmail(email) || !/^https?:\/\//.test(str(f, "sourceUrl"))) back(`/admin/spontanee?u=${userId}`, "errore");
+  await getDb().insert(schema.spontaneousCompanies).values({ userId, name: str(f, "name"), email, sourceUrl: str(f, "sourceUrl"), city: str(f, "city") || null, status: "approved" });
+  back(`/admin/spontanee?u=${userId}`);
 }
 
 /** CSV: name,email,source_url,city (header optional). */
 export async function importSpontaneousCsvAction(f: FormData) {
   await requireAdmin();
+  const userId = await person(f);
   const file = f.get("file");
   const text = file instanceof File ? await file.text() : str(f, "csv");
   const rows = text
@@ -162,9 +187,9 @@ export async function importSpontaneousCsvAction(f: FormData) {
   if (rows.length) {
     await getDb()
       .insert(schema.spontaneousCompanies)
-      .values(rows.map(([name, email, sourceUrl, city]) => ({ name, email: email.toLowerCase(), sourceUrl, city: city || null, status: "approved" as const })));
+      .values(rows.map(([name, email, sourceUrl, city]) => ({ userId, name, email: email.toLowerCase(), sourceUrl, city: city || null, status: "approved" as const })));
   }
-  back("/admin/spontanee", rows.length ? "importati" : "errore");
+  back(`/admin/spontanee?u=${userId}`, rows.length ? "importati" : "errore");
 }
 
 export async function setSpontaneousStatusAction(f: FormData) {
@@ -173,7 +198,7 @@ export async function setSpontaneousStatusAction(f: FormData) {
     .update(schema.spontaneousCompanies)
     .set({ status: str(f, "status") as "approved" | "rejected" | "suggested" })
     .where(eq(schema.spontaneousCompanies.id, num(f, "id")));
-  back("/admin/spontanee");
+  back(`/admin/spontanee?u=${num(f, "u")}`);
 }
 
 export async function addBlockAction(f: FormData) {
@@ -192,18 +217,123 @@ export async function deleteBlockAction(f: FormData) {
 export async function toggleAdjustmentAction(f: FormData) {
   await requireAdmin();
   await setAdjustmentActive(getDb(), num(f, "id"), str(f, "active") === "1");
-  back("/admin/classifica");
+  back(`/admin/classifica?u=${num(f, "u")}`);
 }
 
 export async function changePasswordAction(f: FormData) {
   await requireAdmin();
   const pw = str(f, "password");
-  if (pw.length < 8) back("/admin/utenti", "password-corta");
+  if (pw.length < MIN_PASSWORD) back("/admin/utenti", "password-corta");
   await getDb()
     .update(schema.users)
     .set({ passwordHash: await hashPassword(pw) })
     .where(eq(schema.users.id, num(f, "userId")));
+  await getDb().delete(schema.sessions).where(eq(schema.sessions.userId, num(f, "userId")));
   back("/admin/utenti");
+}
+
+// --- People and accounts ---------------------------------------------------------------------------
+
+export async function createPersonAction(f: FormData) {
+  await requireAdmin();
+  const r = await createAccount(getDb(), {
+    email: str(f, "email"),
+    password: str(f, "password"),
+    name: str(f, "name"),
+    track: str(f, "track") === "stage" ? "stage" : "lavoro",
+    mailboxKey: str(f, "mailboxKey") || null,
+  });
+  if (!r.ok) back("/admin/utenti", r.error === "exists" ? "email-esistente" : r.error === "password" ? "password-corta" : "email-non-valida");
+  back("/admin/utenti", "account-creato");
+}
+
+export async function createInviteAction(f: FormData) {
+  await requireAdmin();
+  const code = await createInvite(getDb(), str(f, "note"));
+  // Shown once on the next page via a 2-minute admin-only cookie: never in a URL, never stored in clear.
+  (await cookies()).set("compass_invite", code, { httpOnly: true, sameSite: "strict", path: "/admin", maxAge: 120, secure: process.env.NODE_ENV === "production" });
+  back("/admin/utenti", "invito-creato");
+}
+
+export async function revokeInviteAction(f: FormData) {
+  await requireAdmin();
+  await getDb().update(schema.invites).set({ revoked: true }).where(eq(schema.invites.id, num(f, "id")));
+  back("/admin/utenti");
+}
+
+export async function setPersonAction(f: FormData) {
+  await requireAdmin();
+  const userId = await person(f);
+  const key = str(f, "mailboxKey").toLowerCase();
+  const digest = str(f, "digestEmail").toLowerCase();
+  if (key && !env.demoMode && !mailboxConfig(key)) back("/admin/utenti", "errore");
+  if (digest && !isValidEmail(digest)) back("/admin/utenti", "email-non-valida");
+  await getDb()
+    .update(schema.users)
+    .set({ mailboxKey: key || null, digestEmail: digest || null, name: str(f, "name") || undefined })
+    .where(eq(schema.users.id, userId));
+  back("/admin/utenti");
+}
+
+export async function setActiveAction(f: FormData) {
+  await requireAdmin();
+  await setActive(getDb(), await person(f), str(f, "active") === "1");
+  back("/admin/utenti");
+}
+
+export async function deletePersonAction(f: FormData) {
+  await requireAdmin();
+  const userId = await person(f);
+  if (str(f, "confirm") !== "ELIMINA") back("/admin/utenti", "errore");
+  await deleteAccount(getDb(), userId);
+  back("/admin/utenti", "account-eliminato");
+}
+
+/** "Apri l'app di ...": the admin sees one person's app (read and act as them). */
+export async function viewAsAction(f: FormData) {
+  await requireAdmin();
+  await setViewAs(await person(f));
+  redirect("/offerte");
+}
+
+// --- Catalog ---------------------------------------------------------------------------------------
+
+export async function saveCatalogCompanyAction(f: FormData) {
+  await requireAdmin();
+  const db = getDb();
+  const ats = str(f, "ats");
+  const kind = str(f, "kind") as CompanyKind;
+  await db
+    .update(schema.catalogCompanies)
+    .set({
+      shared: str(f, "shared") === "1",
+      kind: COMPANY_KINDS.includes(kind) ? kind : undefined,
+      city: str(f, "city") || null,
+      ats: (["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio"].includes(ats) ? ats : null) as (typeof schema.catalogCompanies.$inferInsert)["ats"],
+      atsSlug: str(f, "atsSlug").replace(/[^\w.-]/g, "") || null,
+    })
+    .where(eq(schema.catalogCompanies.id, num(f, "id")));
+  await rerankAll(db);
+  back("/admin/catalogo", "catalogo-salvato");
+}
+
+export async function shareCatalogSectorAction(f: FormData) {
+  await requireAdmin();
+  await getDb().update(schema.catalogSectors).set({ shared: str(f, "shared") === "1" }).where(eq(schema.catalogSectors.id, num(f, "id")));
+  back("/admin/catalogo", "catalogo-salvato");
+}
+
+export async function deleteCatalogEntryAction(f: FormData) {
+  await requireAdmin();
+  const db = getDb();
+  const kind = str(f, "kind") === "sector" ? "sector" : "company";
+  const id = num(f, "id");
+  const owners = await db.select({ u: schema.userPrefs.userId }).from(schema.userPrefs).where(and(eq(schema.userPrefs.kind, kind), eq(schema.userPrefs.refId, id)));
+  await db.delete(schema.userPrefs).where(and(eq(schema.userPrefs.kind, kind), eq(schema.userPrefs.refId, id)));
+  if (kind === "sector") await db.delete(schema.catalogSectors).where(eq(schema.catalogSectors.id, id));
+  else await db.delete(schema.catalogCompanies).where(eq(schema.catalogCompanies.id, id));
+  for (const o of new Set(owners.map((x) => x.u))) await rerankUser(db, o);
+  back("/admin/catalogo", "catalogo-salvato");
 }
 
 // --- Demo tools ------------------------------------------------------------------------------------
@@ -214,7 +344,8 @@ export async function simulateReplyAction(f: FormData) {
   if (!env.demoMode) back("/admin/posta", "errore");
   const db = getDb();
   const app = await db.query.applications.findFirst({ where: eq(schema.applications.id, num(f, "appId")) });
-  if (!app?.messageId || !app.toEmail) back("/admin/posta", "errore");
+  if (!app?.messageId || !app.toEmail || !app.userId) back("/admin/posta", "errore");
+  const owner = await db.query.users.findFirst({ where: eq(schema.users.id, app.userId) });
   const tpl = fs.readFileSync(path.join(process.cwd(), "fixtures/emails/reply-1.eml"), "utf8");
   const id = `<demo-reply-${app.id}-${Date.now()}@${app.toEmail.split("@")[1]}>`;
   const raw = tpl
@@ -223,7 +354,7 @@ export async function simulateReplyAction(f: FormData) {
     .replace(/^Subject: .*$/m, `Subject: Re: ${app.subject ?? "Candidatura"}`)
     .replace(/^Message-ID: .*$/m, `Message-ID: ${id}`)
     .replace(/^Date: .*$/m, `Date: ${new Date().toUTCString()}`);
-  await db.insert(schema.demoInbox).values({ messageId: id, raw, receivedAt: new Date() });
+  await db.insert(schema.demoInbox).values({ messageId: id, raw, mailboxKey: owner?.mailboxKey ?? "default", receivedAt: new Date() });
   await runJob(db, "replies");
   back("/admin/posta", "risposta-simulata");
 }
@@ -239,7 +370,7 @@ export async function flushQueueDemoAction() {
     const next = await db.query.applications.findFirst({ where: eq(schema.applications.status, "queued"), orderBy: (a, { asc }) => [asc(a.sendAt)] });
     if (!next?.sendAt) break;
     at = new Date(Math.max(at.getTime(), next.sendAt.getTime()) + 1000);
-    await processQueue(db, new OutboxTransport(db), at, Math.random, { allowSimulated: true });
+    await processQueue(db, (u) => new OutboxTransport(db, u.id), at, Math.random, { allowSimulated: true });
   }
   back("/admin/posta", "coda-svuotata");
 }

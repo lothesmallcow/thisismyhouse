@@ -1,28 +1,36 @@
 # Compass
 
-**A calm, rule-based job finder for one person in Italy.** Compass reads the job-alert e-mails
-she already receives, adds openings from free job APIs, company career feeds and a capped
-web search, ranks everything with explainable rules, and helps her apply in a few taps:
-by e-mail with strict guardrails, or on the company site with a copy-paste kit.
+**A calm, rule-based job and internship finder for a few people in Italy.** Compass reads the
+job-alert e-mails each person already receives, adds openings from free job APIs, company career
+feeds and a capped web search, ranks everything with explainable rules, and helps them apply in a
+few taps: by e-mail with strict guardrails, or on the company site with a copy-paste kit.
 
-It is built for someone who uses WhatsApp but has never installed an app on purpose: plain
-warm Italian, 19 px text, AAA contrast, big labelled buttons, four places to go, and an
-"Annulla" on everything that leaves the house.
+Each person has their own account and track: **lavoro** (jobs, e.g. an office worker) or
+**stage** (internships for university students, ranked by year of study: spring weeks and
+insight days in the first years, summer internships in the penultimate year, graduate programmes
+in the final year). They choose the boutiques, banks, funds, brands and sectors they care about
+from a catalog (or add their own with "Altro"), and Compass suggests nearby careers from their
+experience: someone who sold luxury fashion might be shown yachts or luxury hotels.
 
-| Offers (phone) | One offer | Replies |
+Plain Italian, a quiet professional design (light and dark), WCAG 2.1 AA, and an "Annulla" on
+everything that leaves the house.
+
+| Offers (laptop) | Career paths (student) | Companies and sectors |
 |---|---|---|
-| ![Offerte](docs/screenshots/phone-offerte.png) | ![Offerta](docs/screenshots/phone-offerta.png) | ![Candidature](docs/screenshots/phone-candidature.png) |
+| ![Offerte](docs/screenshots/student-offerte.png) | ![Percorsi](docs/screenshots/student-percorsi.png) | ![Aziende](docs/screenshots/student-aziende.png) |
 
-| Landing | Subscription | Admin: sources health |
+| Offers (phone) | One offer | Experience timeline |
 |---|---|---|
-| ![Landing](docs/screenshots/landing.png) | ![Abbonamento](docs/screenshots/abbonamento.png) | ![Fonti](docs/screenshots/admin-fonti.png) |
+| ![Offerte](docs/screenshots/phone-offerte.png) | ![Offerta](docs/screenshots/phone-offerta.png) | ![Esperienze](docs/screenshots/laptop-esperienze.png) |
 
 ## The problem
 
 Looking for work in Italy means LinkedIn, Indeed, InfoJobs, agencies and company sites, each
 with its own alerts, duplicates, scams and forms. The person who most needs a clear list is often
-the one least comfortable with all of that. Compass turns it into one short, ranked, explained list
-and a guided way to apply, without ever touching her platform accounts.
+the one least comfortable with all of that. For a first-year student the problem is different:
+too many "Associate" ads and not enough of the programmes that actually take first-years.
+Compass turns both into one short, ranked, explained list and a guided way to apply, without
+ever touching anyone's platform accounts.
 
 ## What it does
 
@@ -34,7 +42,20 @@ and a guided way to apply, without ever touching her platform accounts.
   contract, hours, remote, languages, distance from home (offline comuni dataset), application
   e-mail with evidence, and **dedupes** across sources keeping every link.
 - **Ranks** with named rules into *Molto adatta / Adatta / Poco adatta* plus 1-2 reasons
-  ("A 8 km da casa", "Chiede inglese fluente"). "Non mi interessa" teaches it, visibly and undoably.
+  ("Nella tua città", "Spring week: adatta al tuo anno", "Lazard è tra le aziende che hai scelto").
+  "Non mi interessa" teaches it, visibly and undoably.
+- **Accounts**: invitation links or admin-created accounts, each person's data fully separate
+  (jobs are shared, scores and statuses are per person; private alerts stay private), an admin
+  "open their app" view, optional one mailbox per person.
+- **Catalog and focus**: ~180 boutiques, banks, funds, consulting firms, startups and brands, each
+  with several sectors and themes (Ferrari is cars, but also luxury and sport). A switch decides
+  what you see: everything with your choices first, only your choices, or only your companies.
+  Filters (minimum net pay, distance, type, contract...) start from the questionnaire and can be
+  saved as your defaults.
+- **Career panel**: an experience timeline read from the CV (PDF text) or a LinkedIn data export,
+  career paths and company suggestions built from shared themes, a gentle "might not be the best
+  fit" note when a choice is far from everything else, advice for your year of study, and a
+  questionnaire you can redo or edit one step at a time.
 - **Applies** in three lanes: (1) e-mail applications she approves with one tap, or an opt-in
   autopilot; (2) "Prepara con Claude": a ready-to-paste prompt for a tailored letter, no AI
   inside the app; (3) a "Kit candidatura" with copy buttons for site forms.
@@ -65,7 +86,7 @@ flowchart LR
   end
   DB[("libSQL / Turso")]
   subgraph App["Next.js app"]
-    HER["Her app (Italian, PWA)<br/>Offerte · Da inviare · Candidature · Aiuto"]
+    HER["Each person's app (Italian, PWA)<br/>Offerte · Da inviare · Candidature · Aziende · Profilo"]
     ADM["Admin area"]
   end
   Q["Send queue<br/>guardrails ×2"]
@@ -86,11 +107,12 @@ Code map:
 
 | Path | What |
 |---|---|
-| `src/lib/core/` | Pure rules: `salary`, `extract`, `geo`, `dedupe`, `rank`, `scam-rules`, `guardrails`, `templates`, `cv-pick`, `prompt`, `normalize`, `time` |
+| `src/lib/core/` | Pure rules: `salary`, `extract`, `geo`, `dedupe`, `rank` (+ `rank-config`), `career-stage`, `timeline`, `scam-rules`, `guardrails`, `templates`, `cv-pick`, `prompt`, `normalize`, `time` |
+| `src/lib/catalog/` | The curated catalog: sectors with themes, companies with extra sectors and themes, tastes |
 | `src/lib/sources/` | Adapters: `mail/` (IMAP + demo mailbox), `alerts/` (per-template parsers), `api/`, `ats/`, `web/` (W1, robots, polite fetcher, JSON-LD) |
 | `src/lib/pipeline/` | Jobs: `ingest`, `discover`, `mailbox-scan`, `digest`, source `health`, `jobs` (runner) |
-| `src/lib/server/` | Repositories and services: jobs, applications/queue, replies, profile, settings, auth, metrics, privacy |
-| `src/app/` | Pages: `(public)` landing + subscription, `(app)` her four sections, `(setup)` onboarding, `admin/` |
+| `src/lib/server/` | Services, all scoped by person: jobs, applications/queue, replies, profile, settings, auth, accounts, catalog, career, experiences, metrics, privacy |
+| `src/app/` | Pages: `(public)` landing, sign-in, sign-up, subscription; `(app)` each person's app; `(setup)` the questionnaire; `admin/` |
 | `fixtures/` | Synthetic alert e-mails and HTTP responses used by tests and demo mode |
 | `docs/adr/` | Architecture Decision Records |
 
@@ -105,7 +127,8 @@ npm install
 npm run demo              # migrate + seed fake data + start on http://localhost:3000
 ```
 
-- Her app: `http://localhost:3000/entra` with `demo@example.com` / `demo-compass`
+- Job seeker (Lucia, fake): `http://localhost:3000/entra` with `demo@example.com` / `demo-compass`
+- Student (Marco, fake, first year): `studente@example.com` / `demo-compass`
 - Admin: `http://localhost:3000/admin/entra` with `admin@example.com` / `admin-compass`
 - Fill the list from the demo sources: admin → Fonti → "Raccogli offerte" (or `npm run job:ingest`).
 
@@ -113,10 +136,10 @@ npm run demo              # migrate + seed fake data + start on http://localhost
 |---|---|
 | `npm run demo` | one-command local start in demo mode |
 | `npm run check` | lint + typecheck + unit tests + personal-data scan |
-| `npm test` | Vitest: 243 unit and integration tests (rules, parsers, sources, pipeline, guardrails, races, edge dates) |
-| `npm run build && npm run test:e2e` | Playwright: 15 end-to-end flows on a phone viewport (incl. auth matrix, XSS, axe) |
+| `npm test` | Vitest: 287 unit and integration tests (rules, parsers, sources, pipeline, guardrails, accounts isolation, catalog, career, migration) |
+| `npm run build && npm run test:e2e` | Playwright: 19 end-to-end flows on a phone viewport (incl. two people, invitations, auth matrix, XSS, axe light and dark) |
 | `npm run simulate:week` | a full demo week on a simulated clock, every step checked against the database |
-| `npm run audit:ui` | every screen at 360/1280 px: axe, text and target sizes, keyboard focus, zoom (needs a running demo) |
+| `npm run audit:ui` | every screen at 360/1280 px, light and dark: axe, text and target sizes, keyboard focus, zoom (needs a running demo) |
 | `npm run job:<ingest\|discover\|queue\|replies\|digest>` | run a scheduled job by hand |
 | `npm run hooks:install` | install the pre-commit secret/personal-data scan |
 | `node scripts/screenshots.mjs` | regenerate the README screenshots from a running demo |
@@ -128,9 +151,10 @@ Audit evidence (accessibility report, error states, load test, demo week): [docs
 
 ## Legal and ethical design
 
-- **Email alerts first.** The platforms already send her alerts; reading her own mailbox is the
-  least intrusive way to get their listings. **Her LinkedIn, Indeed and InfoJobs accounts are
-  never touched by code**: no logins, no automation of any "Easy Apply" or ATS form, no account
+- **Email alerts first.** The platforms already send alerts; reading a person's own mailbox is the
+  least intrusive way to get their listings. **Nobody's LinkedIn, Indeed or InfoJobs account is
+  ever touched by code** (the timeline uses the export file LinkedIn lets you download, because
+  LinkedIn's API does not give work history to apps like this): no logins, no automation of any "Easy Apply" or ATS form, no account
   creation, no CAPTCHA solving, no proxies, no user-agent tricks.
 - **Tiered web discovery.** W1 uses an official search API with a hard daily cap and stores
   only thin records she opens herself. W2 reads only sites the admin approved after reading their
@@ -144,8 +168,9 @@ Audit evidence (accessibility report, error states, load test, demo week): [docs
   "work from home, earn now", or using a free-mail address unrelated to the company are flagged;
   autopilot never sends them.
 - **Honesty.** Templates and the Claude prompt forbid inventing or inflating experience.
-- **Privacy.** Her data lives only in the database and the dedicated mailbox, never in the repo
-  or logs; one click deletes everything. Pay transparency (D.Lgs. 96/2026) is respected by
+- **Privacy.** Each person's data lives only in the database and their mailbox, never in the repo
+  or logs, and no one sees another person's CV, applications or private alerts; one click
+  deletes everything, and the admin can delete an account. Pay transparency (D.Lgs. 96/2026) is respected by
   treating unknown pay as neutral, never as a reason to hide an ad.
 
 ## The subscription page

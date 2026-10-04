@@ -12,25 +12,25 @@ export default async function BlocchiPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <Flash code={sp.msg} />
-      <h1 className="text-[2.2rem] font-semibold">Lista nera</h1>
-      <p className="mt-2 max-w-3xl text-ink-soft">A questi nomi, domini o parole non parte mai nessuna candidatura, né approvata né col pilota automatico.</p>
+      <h1 className="text-[22px] font-semibold">Lista nera</h1>
+      <p className="mt-2 max-w-3xl text-muted">A questi nomi, domini o parole non parte mai nessuna candidatura, né approvata né col pilota automatico.</p>
       <div className="mt-6 space-y-2">
         {rows.map((r) => (
           <Card key={r.id} className="flex items-center justify-between gap-3 !p-4">
             <p>
-              <span className="mr-2 rounded-full bg-paper px-3 py-1 text-[0.9rem] font-bold">{KIND[r.kind]}</span>
+              <span className="mr-2 rounded-full bg-subtle px-3 py-1 text-[12.5px] font-semibold">{KIND[r.kind]}</span>
               {r.value}
             </p>
             <form action={deleteBlockAction}>
               <input type="hidden" name="id" value={r.id} />
-              <Button variant="quiet">Togli</Button>
+              <Button variant="ghost">Togli</Button>
             </form>
           </Card>
         ))}
       </div>
       <SectionTitle>Aggiungi</SectionTitle>
       <form action={addBlockAction}>
-        <Card className="grid gap-5 sm:grid-cols-[1fr_2fr_auto] sm:items-end">
+        <Card className="grid grid-cols-1 gap-5 sm:grid-cols-[1fr_2fr_auto] sm:items-end">
           <Field label="Tipo" htmlFor="kind">
             <select id="kind" name="kind">
               {Object.entries(KIND).map(([k, v]) => (

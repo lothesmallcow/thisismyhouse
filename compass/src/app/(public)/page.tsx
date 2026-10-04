@@ -1,122 +1,103 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CompassMark, IconCheck, IconFolder, IconMail, IconOffers, IconSend, IconStop } from "@/components/icons";
+import { IconBuilding, IconCheck, IconMail, IconSparkle, IconStar } from "@/components/icons";
 import { LinkButton } from "@/components/ui";
 import { currentUser } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
 const FEATURES = [
-  { Icon: IconMail, t: "Legge gli avvisi per te", d: "Gli avvisi di LinkedIn, Indeed e InfoJobs arrivano in una casella dedicata. Compass li legge e tiene solo le offerte vere, senza doppioni." },
-  { Icon: IconOffers, t: "Ti dice perché", d: "Ogni offerta ha un giudizio semplice, Molto adatta, Adatta o Poco adatta, con il motivo: “A 8 km da casa”, “Part-time come vuoi tu”." },
-  { Icon: IconSend, t: "Candidature in un tocco", d: "Se l'annuncio chiede il CV per e-mail, l'e-mail è già pronta. Tu la leggi e premi Invia. Hai sempre 15 minuti per annullare." },
-  { Icon: IconFolder, t: "Ti avvisa quando rispondono", d: "Riconosce le risposte delle aziende e te le mostra subito: “Hai ricevuto una risposta da Rossi Srl!”." },
+  { Icon: IconBuilding, title: "Le aziende che scegli tu", text: "Un catalogo di boutique, banche, fondi, consulenza, startup e brand, più quelle che aggiungi. Le loro offerte salgono in cima, o diventano le uniche." },
+  { Icon: IconSparkle, title: "Suggerimenti dal tuo CV", text: "Compass legge il tuo CV e i tuoi interessi e ti propone aziende simili a quelle che hai scelto, spiegando perché." },
+  { Icon: IconStar, title: "Classifica spiegata", text: "Ogni offerta ha un giudizio e i motivi: distanza, retribuzione, requisiti, anno di corso per gli stage. Niente scatole nere." },
+  { Icon: IconMail, title: "Candidature con controllo", text: "E-mail preparate per te, inviate solo dopo la tua conferma, una alla volta, con 15 minuti per annullare." },
 ];
 
-export default async function Landing() {
-  if (await currentUser()) redirect("/offerte");
+const PREVIEW = [
+  { t: "Stage M&A Analyst", c: "Esempio Advisory Partners · Milano", r: ["È uno stage", "Azienda scelta", "Aperto ai primi anni"], l: "Molto adatta" },
+  { t: "Venture Capital Intern", c: "Fondo Venture Esempio · Milano", r: ["Settore: venture capital", "Retribuito"], l: "Molto adatta" },
+  { t: "Impiegata amministrativa", c: "Ferramenta Esempio · Torino", r: ["È il ruolo che cerchi", "A 4 km da casa"], l: "Molto adatta" },
+];
+
+export default async function Home() {
+  if ((await currentUser())?.role === "user") redirect("/offerte");
   return (
-    <>
-      <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-8 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:pt-16">
-          <div className="rise">
-            <p className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-1.5 text-[0.95rem] font-bold text-needle-ink">
-              <span className="h-2 w-2 rounded-full bg-needle" /> Per chi cerca lavoro e non vuole perdersi
-            </p>
-            <h1 className="mt-6 text-[2.9rem] font-semibold leading-[1.02] sm:text-[4.2rem]">
-              Il lavoro giusto,
-              <br />
-              <span className="italic text-navy">senza perdersi.</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-[1.2rem] leading-relaxed text-ink-soft">
-              Compass raccoglie le offerte di lavoro, sceglie quelle adatte a te e ti aiuta a candidarti in pochi tocchi. In italiano semplice, con pulsanti grandi e niente sorprese.
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <LinkButton href="/entra" className="px-8">
-                Entra in Compass
-              </LinkButton>
-              <LinkButton href="/abbonamento" variant="secondary" className="px-8">
-                Vedi i piani
-              </LinkButton>
-            </div>
-            <p className="mt-5 text-[0.98rem] text-ink-soft">30 giorni gratis, poi scegli tu. Nessun account social da collegare.</p>
+    <div className="mx-auto max-w-6xl px-4 sm:px-8">
+      <section className="grid grid-cols-1 items-center gap-12 pt-16 lg:grid-cols-[1.1fr_1fr] lg:pt-24">
+        <div>
+          <p className="text-[12.5px] font-medium uppercase tracking-[0.08em] text-accent">Lavoro e stage, in Italia</p>
+          <h1 className="mt-3 text-[36px] font-semibold leading-[1.08] tracking-tight sm:text-[48px]">Le offerte giuste, dalle aziende che scegli.</h1>
+          <p className="mt-5 max-w-xl text-[16px] text-muted">
+            Compass raccoglie le offerte dagli avvisi che già ricevi e da fonti pubbliche, le ordina per te spiegando il perché, e ti aiuta a candidarti senza perdere il controllo.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-2">
+            <LinkButton href="/registrati">Crea un account</LinkButton>
+            <LinkButton href="/entra" variant="secondary">
+              Entra
+            </LinkButton>
           </div>
-
-          <div className="relative mx-auto aspect-square w-full max-w-[420px]" aria-hidden="true">
-            <div className="absolute inset-0 rounded-full border border-line-strong/60" />
-            <div className="absolute inset-[9%] rounded-full border border-dashed border-line-strong/70" />
-            <div className="absolute inset-[18%] rounded-full bg-card shadow-[0_30px_80px_-30px_rgb(23_34_45/0.45)]" />
-            <div className="absolute inset-[24%] flex items-center justify-center">
-              <div className="animate-[spin_60s_linear_infinite] motion-reduce:animate-none">
-                <CompassMark size={220} />
-              </div>
-            </div>
-            {[
-              ["top-[6%] left-[2%]", "Molto adatta", "bg-sage text-sage-ink"],
-              ["bottom-[12%] left-[-2%]", "A 8 km da casa", "bg-card text-ink"],
-              ["top-[18%] right-[-4%]", "Part-time", "bg-amber text-amber-ink"],
-              ["bottom-[2%] right-[6%]", "Risposta ricevuta!", "bg-navy text-white"],
-            ].map(([pos, label, tone]) => (
-              <span key={label} className={`absolute ${pos} rounded-full border border-line px-4 py-2 text-[0.95rem] font-bold shadow-[var(--shadow-card)] ${tone}`}>
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 sm:px-8">
-        <div className="grid gap-5 sm:grid-cols-2">
-          {FEATURES.map(({ Icon, t, d }) => (
-            <div key={t} className="rounded-[var(--radius-card)] border border-line bg-card p-7 shadow-[var(--shadow-card)]">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy-soft text-navy">
-                <Icon />
-              </span>
-              <h2 className="mt-4 text-[1.5rem] font-semibold">{t}</h2>
-              <p className="mt-2 text-ink-soft">{d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto mt-20 max-w-6xl px-4 sm:px-8">
-        <div className="grid gap-10 rounded-[32px] bg-navy px-6 py-12 text-white sm:px-12 lg:grid-cols-2">
-          <div>
-            <h2 className="text-[2.2rem] font-semibold leading-tight text-white">Fatto con rispetto, per te e per chi ti assume.</h2>
-            <p className="mt-4 text-[1.1rem] text-white/85">Compass non entra mai nei tuoi account e non manda candidature a raffica. Ogni invio passa da regole precise.</p>
-          </div>
-          <ul className="space-y-4 text-[1.05rem]">
-            {[
-              "Non accede a LinkedIn, Indeed o InfoJobs al posto tuo.",
-              "Al massimo 10 candidature al giorno, nei giorni e negli orari di lavoro.",
-              "Ogni invio si può annullare per 15 minuti.",
-              "Riconosce gli annunci sospetti, per esempio quelli che chiedono soldi.",
-              "I tuoi dati restano tuoi: li cancelli con un tocco.",
-            ].map((t) => (
-              <li key={t} className="flex gap-3">
-                <IconCheck className="mt-0.5 shrink-0 text-[#9fd3ad]" />
-                <span>{t}</span>
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted">
+            {["Nessun accesso ai tuoi account LinkedIn o Indeed", "Ogni invio va confermato", "Dati cancellabili in ogni momento"].map((x) => (
+              <li key={x} className="flex items-center gap-1.5">
+                <IconCheck size={14} className="text-accent" /> {x}
               </li>
             ))}
-            <li className="flex gap-3">
-              <IconStop className="mt-0.5 shrink-0 text-[#f2a493]" />
-              <span>Un pulsante rosso ferma tutti gli invii, sempre.</span>
-            </li>
           </ul>
+        </div>
+        <div aria-hidden="true" className="rounded-[16px] border border-line bg-subtle p-3 sm:p-4">
+          <div className="space-y-2.5">
+            {PREVIEW.map((p) => (
+              <div key={p.t} className="rounded-[10px] border border-line bg-surface p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[14.5px] font-semibold">{p.t}</p>
+                    <p className="text-[12.5px] text-muted">{p.c}</p>
+                  </div>
+                  <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-good-soft px-2.5 text-[11.5px] font-medium text-good">
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                    {p.l}
+                  </span>
+                </div>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {p.r.map((r) => (
+                    <span key={r} className="rounded-md bg-subtle px-2 py-0.5 text-[11.5px] text-muted">
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto mt-20 max-w-3xl px-4 text-center sm:px-8">
-        <h2 className="text-[2.2rem] font-semibold">Pronta a iniziare?</h2>
-        <p className="mt-3 text-[1.1rem] text-ink-soft">Ci vogliono cinque minuti: ti faccio otto domande semplici, una alla volta.</p>
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <LinkButton href="/entra" className="px-8">
-            Entra in Compass
-          </LinkButton>
-          <LinkButton href="/abbonamento" variant="secondary" className="px-8">
-            Confronta i piani
+      <section className="mt-28 grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2" aria-label="Cosa fa">
+        {FEATURES.map(({ Icon, title, text }) => (
+          <div key={title} className="flex gap-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+              <Icon size={18} />
+            </span>
+            <div>
+              <h2 className="text-[15.5px] font-semibold">{title}</h2>
+              <p className="mt-1 text-[14px] text-muted">{text}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="mt-28 rounded-[16px] border border-line bg-surface px-6 py-10 text-center sm:px-12">
+        <h2 className="text-[22px] font-semibold">Pronto in cinque minuti</h2>
+        <p className="mx-auto mt-2 max-w-xl text-[14.5px] text-muted">Un breve questionario: cosa cerchi, dove, quali aziende ti interessano. Il resto lo fa Compass, ogni mattina.</p>
+        <div className="mt-6 flex justify-center gap-2">
+          <LinkButton href="/registrati">Inizia</LinkButton>
+          <LinkButton href="/abbonamento" variant="ghost">
+            Vedi i prezzi
           </LinkButton>
         </div>
+        <p className="mt-6 text-[12.5px] text-faint">
+          Hai un codice di invito? <Link href="/registrati">Usalo qui</Link>.
+        </p>
       </section>
-    </>
+    </div>
   );
 }

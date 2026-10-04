@@ -1,42 +1,61 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { TASTES } from "@/lib/catalog/data";
 import { getDb } from "@/lib/db";
 import { findPlace } from "@/lib/core/geo";
 import { requireUser } from "@/lib/server/auth";
-import { rerankAll } from "@/lib/server/jobs";
+import { rerankUser } from "@/lib/server/jobs";
+import { applyPrefsForm } from "@/lib/server/prefs-form";
 import { getProfile, suggestSynonyms, updateProfile, type ProfilePatch } from "@/lib/server/profile";
+import { STEPS, type StepId } from "./steps";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const lines = (s: string) => s.split(/\n|,/).map((x) => x.trim()).filter(Boolean);
+const int = (s: string) => (Number.isInteger(Number(s)) && s !== "" ? Number(s) : null);
 
+/** Save one questionnaire step, then go to the next one (or back to the profile). */
 export async function saveStepAction(f: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const db = getDb();
-  const step = str(f, "step");
+  const step = str(f, "step") as StepId | "risposte";
   const skip = str(f, "skip") === "1";
   const back = str(f, "ritorno") === "profilo";
+  const current = await getProfile(db, user.id);
+  const steps = STEPS[current.track];
+  const n = Number(str(f, "n")) || steps.indexOf(step as StepId) + 1;
   const patch: ProfilePatch = {};
 
   if (!skip) {
     switch (step) {
-      case "1":
+      case "nome":
         Object.assign(patch, { name: str(f, "name"), phone: str(f, "phone"), email: str(f, "email") });
         break;
-      case "2": {
+      case "ruolo": {
         if (str(f, "fase") === "sinonimi") {
           patch.synonyms = [...f.getAll("synonym").map(String), ...lines(str(f, "extra"))];
         } else {
           const roles = [str(f, "role1"), str(f, "role2"), str(f, "role3")].filter(Boolean);
-          patch.roles = roles;
-          await updateProfile(db, patch);
-          if (suggestSynonyms(roles).length > 0 || roles.length > 0) {
-            redirect(`/benvenuto/2?fase=sinonimi${back ? "&ritorno=profilo" : ""}`);
+          await updateProfile(db, user.id, { roles });
+          if (roles.length > 0 && suggestSynonyms(roles).length + current.synonyms.length > 0) {
+            redirect(`/benvenuto/${n}?fase=sinonimi${back ? "&ritorno=profilo" : ""}`);
           }
         }
         break;
       }
-      case "3": {
+      case "studi": {
+        const year = int(str(f, "studyYear"));
+        const total = int(str(f, "degreeYears"));
+        Object.assign(patch, {
+          university: str(f, "university").slice(0, 120),
+          degree: str(f, "degree").slice(0, 120),
+          studyYear: year && year >= 1 && year <= 6 ? year : null,
+          degreeYears: total && [2, 3, 5, 6].includes(total) ? total : null,
+          graduationYear: int(str(f, "graduationYear")),
+        });
+        break;
+      }
+      case "dove": {
         const city = str(f, "city");
         const place = findPlace(city);
         Object.assign(patch, {
@@ -46,30 +65,41 @@ export async function saveStepAction(f: FormData) {
           maxKm: Math.max(1, Math.min(100, Number(str(f, "km")) || 20)),
           remoteOk: str(f, "remote") === "1",
         });
+        if (current.track === "stage") patch.extraPlaces = lines(str(f, "places")).slice(0, 8);
         break;
       }
-      case "4":
+      case "quando":
+        Object.assign(patch, { periods: f.getAll("period").map(String), paidOnly: str(f, "paidOnly") === "1" });
+        break;
+      case "contratto":
         Object.assign(patch, { hours: (str(f, "hours") || "any") as "full" | "part" | "any", contracts: f.getAll("contract").map(String) });
         break;
-      case "5": {
-        const n = Number(str(f, "net").replace(/[^\d]/g, ""));
-        patch.minNetMonthly = n > 0 ? n : null;
+      case "paga": {
+        const v = Number(str(f, "net").replace(/[^\d]/g, ""));
+        patch.minNetMonthly = v > 0 ? v : null;
+        patch.hideBelowMin = v > 0 && str(f, "hideBelowMin") === "1";
         break;
       }
-      case "6": {
-        const langs = ["inglese", "francese", "tedesco", "spagnolo"]
+      case "lingue":
+        patch.languages = ["inglese", "francese", "tedesco", "spagnolo"]
           .map((l) => ({ language: l, level: str(f, `lang-${l}`) }))
           .filter((l) => ["base", "buono", "fluente"].includes(l.level)) as { language: string; level: "base" | "buono" | "fluente" }[];
-        patch.languages = langs;
+        break;
+      case "settori":
+      case "aziende":
+        await applyPrefsForm(db, user.id, f);
+        break;
+      case "gusti":
+        patch.tastes = f.getAll("taste").map(String).filter((t) => TASTES.some((x) => x.key === t));
+        break;
+      case "evitare":
+        Object.assign(patch, { avoidCompanies: lines(str(f, "companies")), avoidKeywords: lines(str(f, "keywords")) });
+        break;
+      case "focus": {
+        const focus = str(f, "focus");
+        Object.assign(patch, { focus: focus === "tutte" ? "tutte" : "preferite", focusCompaniesOnly: focus === "aziende" });
         break;
       }
-      case "8":
-        Object.assign(patch, {
-          avoidSectors: f.getAll("sector").map(String),
-          avoidCompanies: lines(str(f, "companies")),
-          avoidKeywords: lines(str(f, "keywords")),
-        });
-        break;
       case "risposte":
         Object.assign(patch, {
           presentation: str(f, "presentation"),
@@ -81,16 +111,15 @@ export async function saveStepAction(f: FormData) {
     }
   }
 
-  const current = await getProfile(db);
-  const n = Number(step);
-  if (!back && Number.isFinite(n) && n + 1 > current.onboardingStep) patch.onboardingStep = n + 1;
-  if (step === "8" && !current.onboardedAt) patch.onboardedAt = new Date();
-  await updateProfile(db, patch);
-  if (["2", "3", "4", "5", "6", "8"].includes(step)) await rerankAll(db);
+  const last = n >= steps.length && step !== "risposte";
+  if (!back && step !== "risposte" && n + 1 > current.onboardingStep) patch.onboardingStep = Math.min(n + 1, steps.length);
+  if (last && !current.onboardedAt) patch.onboardedAt = new Date();
+  await updateProfile(db, user.id, patch);
+  if (!["nome", "risposte", "cv"].includes(step)) await rerankUser(db, user.id);
   revalidatePath("/", "layout");
 
-  if (back) redirect("/aiuto/profilo?msg=salvato");
-  if (step === "8") redirect("/benvenuto/fine");
-  if (step === "risposte") redirect("/offerte");
+  if (back) redirect("/profilo?msg=salvato");
+  if (last) redirect("/benvenuto/fine");
+  if (step === "risposte") redirect("/offerte?msg=salvato");
   redirect(`/benvenuto/${n + 1}`);
 }

@@ -5,12 +5,17 @@ import { canonicalUrl } from "./dedupe";
 import {
   extractApplicationEmails,
   extractContract,
+  extractDurationMonths,
+  extractEligibility,
   extractHours,
+  extractJobType,
   extractLanguages,
   extractRemote,
   extractSector,
   type Contract,
+  type Eligibility,
   type Hours,
+  type JobType,
   type LanguageReq,
   type Remote,
 } from "./extract";
@@ -87,6 +92,9 @@ export interface NormalizedJob {
   remote: Remote;
   languages: LanguageReq[];
   sector: string | null;
+  jobType: JobType;
+  eligibility: Eligibility[];
+  durationMonths: number | null;
   applicationEmail: string | null;
   applicationEmailEvidence: string | null;
   postedAt: Date | null;
@@ -134,6 +142,9 @@ export function normalizeJob(raw: RawJob, home: { lat: number; lng: number } | n
     remote,
     languages: extractLanguages(description),
     sector: extractSector(`${title}\n${description.slice(0, 500)}`),
+    jobType: extractJobType(title, description),
+    eligibility: extractEligibility(description),
+    durationMonths: extractDurationMonths(`${title}\n${description}`),
     applicationEmail,
     applicationEmailEvidence: emails[0]?.evidence ?? null,
     postedAt: raw.postedAt ?? null,

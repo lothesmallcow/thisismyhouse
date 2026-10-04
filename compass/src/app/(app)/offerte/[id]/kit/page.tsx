@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/copy-button";
 import { Flash } from "@/components/flash";
 import { IconArrowLeft, IconCheck, IconDoc, IconExternal } from "@/components/icons";
-import { Button, Card, ExternalButton, LinkButton, PageHeader, SectionTitle } from "@/components/ui";
+import { Button, Card, ExternalButton, PageHeader, SectionTitle } from "@/components/ui";
 import { pickCv } from "@/lib/core/cv-pick";
-import { getDb, schema } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { cvList } from "@/lib/server/applications";
+import { requireUser } from "@/lib/server/auth";
 import { getJob } from "@/lib/server/jobs";
 import { getProfile } from "@/lib/server/profile";
 import { appliedOnSiteAction } from "../../../actions";
@@ -14,88 +17,88 @@ export const metadata = { title: "Kit candidatura" };
 export default async function KitPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ msg?: string }> }) {
   const { id } = await params;
   const sp = await searchParams;
+  const user = await requireUser();
   const db = getDb();
-  const data = await getJob(db, Number(id));
+  const data = await getJob(db, user.id, Number(id));
   if (!data) notFound();
   const { job, sources } = data;
-  const p = await getProfile(db);
-  const cvs = await db.select({ id: schema.cvs.id, label: schema.cvs.label, roleFamily: schema.cvs.roleFamily, isDefault: schema.cvs.isDefault, filename: schema.cvs.filename }).from(schema.cvs);
-  const cv = pickCv(cvs, { title: job.title, sector: job.sector });
+  const p = await getProfile(db, user.id);
+  const cv = pickCv(await cvList(db, user.id), { title: job.title, sector: job.sector });
   const link = sources.find((s) => s.url)?.url;
 
   const answers = [
+    { label: "Nome e cognome", value: p.name },
+    { label: "E-mail", value: p.email },
+    { label: "Telefono", value: p.phone },
+    { label: "Profilo LinkedIn", value: p.linkedinUrl },
+    ...(p.track === "stage"
+      ? [
+          { label: "Università", value: p.university },
+          { label: "Corso di laurea", value: p.degree },
+          { label: "Anno di corso", value: p.studyYear ? `${p.studyYear}° anno${p.degreeYears ? ` di ${p.degreeYears}` : ""}` : "" },
+          { label: "Laurea prevista", value: p.graduationYear ? String(p.graduationYear) : "" },
+        ]
+      : []),
     { label: "Breve presentazione", value: p.presentation },
     { label: "Disponibilità", value: p.availability },
-    { label: "Richiesta economica", value: p.salaryExpectation },
-    { label: "Telefono", value: p.phone },
-    { label: "E-mail", value: p.email },
-    { label: "Profilo LinkedIn", value: p.linkedinUrl },
-    { label: "Nome e cognome", value: p.name },
+    { label: p.track === "stage" ? "Richiesta economica / rimborso" : "Richiesta economica", value: p.salaryExpectation },
   ].filter((a) => a.value);
 
   return (
     <>
       <Flash code={sp.msg} />
-      <LinkButton href={`/offerte/${id}`} variant="quiet" className="-ml-3 mb-2 px-3">
-        <IconArrowLeft /> Torna all&apos;offerta
-      </LinkButton>
-      <PageHeader
-        title="Kit candidatura"
-        help="Apri il sito dell'annuncio, poi copia da qui le risposte che ti chiedono e incollale nel modulo. Alla fine premi il pulsante verde in fondo."
-      />
-      <p className="mb-5 text-[1.1rem]">
-        <strong>{job.title}</strong> · {job.company ?? "azienda non indicata"}
-      </p>
+      <Link href={`/offerte/${id}`} className="mb-5 inline-flex h-8 items-center gap-1.5 text-[13px] text-muted no-underline hover:text-ink">
+        <IconArrowLeft size={16} /> Offerta
+      </Link>
+      <PageHeader eyebrow="Kit candidatura" title={job.title} description={`${job.company ?? "Azienda non indicata"} · apri il sito, copia le risposte nel modulo, poi segna la candidatura come inviata.`} />
 
-      <Card className="space-y-4">
-        <p className="font-bold">1. Apri l&apos;annuncio sul sito</p>
-        {link ? (
-          <ExternalButton href={link} variant="primary" wide>
-            <IconExternal /> Apri il sito dell&apos;annuncio
-          </ExternalButton>
-        ) : (
-          <p className="text-ink-soft">Non ho il link dell&apos;annuncio: cercalo sul sito dell&apos;azienda.</p>
-        )}
-        <p className="text-[0.98rem] text-ink-soft">Si apre in una nuova finestra. Questa pagina resta qui, ci puoi tornare quando vuoi.</p>
-      </Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+        <div className="min-w-0">
+          <div className="space-y-2">
+            {answers.length === 0 && <p className="text-muted">Compila le risposte pronte nel tuo profilo.</p>}
+            {answers.map((a) => (
+              <div key={a.label} className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium uppercase tracking-[0.06em] text-faint">{a.label}</p>
+                  <p className="mt-0.5 text-[14px]">{a.value}</p>
+                </div>
+                <CopyButton text={a.value} label="Copia" size="sm" />
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[13px]">
+            <Link href="/benvenuto/risposte?ritorno=profilo">Modifica le risposte</Link>
+          </p>
+        </div>
 
-      <SectionTitle>2. Copia e incolla le risposte</SectionTitle>
-      <div className="space-y-3">
-        {answers.length === 0 && <p className="text-ink-soft">Compila le tue risposte in Aiuto → Il mio profilo.</p>}
-        {answers.map((a) => (
-          <Card key={a.label} className="!p-4">
-            <p className="text-[0.95rem] font-bold uppercase tracking-wide text-ink-soft">{a.label}</p>
-            <p className="mt-1 text-[1.05rem]">{a.value}</p>
-            <div className="mt-3">
-              <CopyButton text={a.value} label={`Copia ${a.label[0].toLowerCase()}${a.label.slice(1)}`} wide />
-            </div>
+        <aside className="space-y-4">
+          <Card className="space-y-2.5 !p-4">
+            {link ? (
+              <ExternalButton href={link} variant="primary" wide>
+                <IconExternal size={16} /> Apri il sito dell&apos;annuncio
+              </ExternalButton>
+            ) : (
+              <p className="text-[13.5px] text-muted">Link non disponibile: cerca l&apos;annuncio sul sito dell&apos;azienda.</p>
+            )}
+            {cv ? (
+              <a href={`/api/cv/${cv.id}`} download className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-line-strong text-[14px] font-medium text-ink no-underline hover:bg-subtle">
+                <IconDoc size={16} /> Scarica {cv.label}
+              </a>
+            ) : (
+              <p className="text-[13.5px] text-muted">
+                Nessun CV caricato. <Link href="/profilo/cv">Caricalo qui</Link>.
+              </p>
+            )}
           </Card>
-        ))}
+          <form action={appliedOnSiteAction}>
+            <input type="hidden" name="jobId" value={job.id} />
+            <Button variant="accent" wide>
+              <IconCheck size={16} /> Ho inviato la candidatura
+            </Button>
+          </form>
+        </aside>
       </div>
-
-      <SectionTitle>3. Il tuo CV</SectionTitle>
-      <Card className="flex flex-wrap items-center justify-between gap-3">
-        {cv ? (
-          <>
-            <p className="flex items-center gap-2">
-              <IconDoc /> <span>{cv.label}</span>
-            </p>
-            <a href={`/api/cv/${cv.id}`} download className="inline-flex min-h-[56px] items-center rounded-2xl border-2 border-navy px-5 font-bold no-underline">
-              Scarica il CV
-            </a>
-          </>
-        ) : (
-          <p className="text-ink-soft">Non hai ancora caricato un CV. Puoi farlo in Aiuto → I miei CV.</p>
-        )}
-      </Card>
-      <p className="mt-2 text-[0.98rem] text-ink-soft">Quando il sito ti chiede di caricare il CV, scegli questo file dalla cartella &ldquo;Download&rdquo;.</p>
-
-      <form action={appliedOnSiteAction} className="mt-10">
-        <input type="hidden" name="jobId" value={job.id} />
-        <Button variant="success" wide>
-          <IconCheck /> Fatto, mi sono candidata
-        </Button>
-      </form>
+      <SectionTitle className="sr-only">Fine</SectionTitle>
     </>
   );
 }

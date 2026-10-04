@@ -11,7 +11,6 @@ const good = {
   CONTACT_EMAIL: "contatto@compass.example",
   MAILBOX_USER: "x@example.com",
   MAILBOX_APP_PASSWORD: "p",
-  DIGEST_TO: "lei@example.com",
   ADMIN_ALERT_EMAIL: "io@example.com",
 };
 

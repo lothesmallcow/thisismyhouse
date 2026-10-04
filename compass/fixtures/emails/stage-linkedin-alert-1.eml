@@ -1,0 +1,49 @@
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+To: marco.bianchi.stage@example.com
+Subject: "internship": 3 nuove offerte a Milano
+Date: Mon, 05 Oct 2026 07:20:00 +0200
+Message-ID: <alert-li-stage-2001@linkedin.example>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="b2"
+
+--b2
+Content-Type: text/plain; charset=utf-8
+
+Le tue offerte di lavoro
+
+M&A Summer Analyst Intern
+Esempio Advisory Partners
+Milano, Lombardia, Italia
+Visualizza offerta: https://www.linkedin.com/comm/jobs/view/4099900101/?trackingId=St1
+
+--b2
+Content-Type: text/html; charset=utf-8
+
+<html><body style="font-family:Arial">
+<table width="100%"><tr><td><h2>Le tue offerte di lavoro</h2><p>In base alle tue preferenze: internship, Milano</p></td></tr></table>
+<table width="100%" class="job">
+  <tr><td><img src="https://media.example/logo-s1.png" alt="Esempio Advisory Partners"></td>
+  <td>
+    <a href="https://www.linkedin.com/comm/jobs/view/4099900101/?trackingId=St1&amp;refId=s1">M&amp;A Summer Analyst Intern</a>
+    <p>Esempio Advisory Partners · Milano, Lombardia, Italia</p>
+    <p>Candidatura semplice</p>
+  </td></tr>
+</table>
+<table width="100%" class="job">
+  <tr><td><img src="https://media.example/logo-s2.png" alt="Fintech Esempio"></td>
+  <td>
+    <a href="https://www.linkedin.com/comm/jobs/view/4099900102/?trackingId=St2&amp;refId=s2">Business Analyst Intern (6 mesi)</a>
+    <p>Fintech Esempio · Milano, Lombardia, Italia (Ibrido)</p>
+    <p>Promossa</p>
+  </td></tr>
+</table>
+<table width="100%" class="job">
+  <tr><td><img src="https://media.example/logo-s3.png" alt="Banca Esempio"></td>
+  <td>
+    <a href="https://www.linkedin.com/comm/jobs/view/4099900103/?trackingId=St3&amp;refId=s3">Senior Credit Risk Manager</a>
+    <p>Banca Esempio · Milano, Lombardia, Italia</p>
+    <p>Candidatura semplice</p>
+  </td></tr>
+</table>
+</body></html>
+--b2--

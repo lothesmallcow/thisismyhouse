@@ -1,5 +1,5 @@
 "use client";
-// Rule-based extraction runs in the browser as she pastes: fields fill themselves, she checks.
+// Rule-based extraction runs in the browser while pasting: fields fill themselves, the person checks.
 import { useState } from "react";
 import { extractApplicationEmails } from "@/lib/core/extract";
 import { findSalaryText } from "@/lib/core/salary";
@@ -38,30 +38,32 @@ export function ManualPrefill() {
   }
 
   const input = (k: keyof typeof f, label: string, hint?: string, type = "text") => (
-    <div className="space-y-2">
-      <label htmlFor={k} className="block text-[1.05rem] font-bold">
+    <div className="space-y-1.5">
+      <label htmlFor={k} className="block text-[13px] font-medium">
         {label}
       </label>
-      {hint && <p className="text-[0.98rem] text-ink-soft">{hint}</p>}
       <input id={k} name={k} type={type} value={f[k]} onChange={set(k)} required={k === "title"} />
+      {hint && <p className="text-[12.5px] text-faint">{hint}</p>}
     </div>
   );
 
   return (
     <>
-      <div className="space-y-2">
-        <label htmlFor="text" className="block text-[1.05rem] font-bold">
+      <div className="space-y-1.5">
+        <label htmlFor="text" className="block text-[13px] font-medium">
           Testo dell&apos;annuncio
         </label>
-        <p className="text-[0.98rem] text-ink-soft">Incolla tutto il testo. Va bene anche se è lungo.</p>
         <textarea id="text" name="text" rows={8} value={text} onChange={(e) => onText(e.target.value)} />
+        <p className="text-[12.5px] text-faint">Incolla tutto il testo: i campi sotto si compilano da soli.</p>
       </div>
-      {input("url", "Indirizzo della pagina dell'annuncio (se ce l'hai)", "Puoi anche incollare solo questo: provo a leggere titolo e città.", "url")}
-      {input("title", "Che lavoro è?")}
-      {input("company", "Azienda")}
-      {input("city", "Città")}
-      {input("salary", "Stipendio (se c'è scritto)")}
-      {input("email", "E-mail per candidarsi (se c'è)", "La trovo da sola se il testo chiede di mandare il CV a un indirizzo.", "email")}
+      {input("url", "Link dell'annuncio", "Facoltativo. Da solo basta a leggere titolo e città.", "url")}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {input("title", "Ruolo")}
+        {input("company", "Azienda")}
+        {input("city", "Città")}
+        {input("salary", "Retribuzione", "Se indicata.")}
+      </div>
+      {input("email", "E-mail per candidarsi", "Se l'annuncio chiede di mandare il CV a un indirizzo.", "email")}
     </>
   );
 }

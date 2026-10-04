@@ -3,11 +3,12 @@ import { and, eq, sql } from "drizzle-orm";
 import { romeDateKey } from "../core/time";
 import type { DB } from "../db";
 import { schema } from "../db";
-import { buildQueries, hitToRawJob, isJobPage, spontaneousSuggestion, type SearchProvider } from "../sources/web/w1";
-import { dedupeCandidates, upsertRawJob } from "../server/jobs";
-import { getProfile } from "../server/profile";
+import { buildQueries, buildStudentQueries, hitToRawJob, isJobPage, spontaneousSuggestion, type SearchProvider, type SearchQuery } from "../sources/web/w1";
+import { dedupeCandidates, rankContexts, upsertRawJob } from "../server/jobs";
+import { rankPrefs } from "../server/catalog";
 import { getSettings } from "../server/settings";
 import { runWithHealth } from "./health";
+import { searchPlan } from "./search-terms";
 
 export const W1_HARD_MAX = 100; // even if the admin types more, never above this
 
@@ -26,20 +27,38 @@ async function bump(db: DB, counter: string, now: Date): Promise<void> {
     .onConflictDoUpdate({ target: [schema.usageCounters.counter, schema.usageCounters.day], set: { count: sql`${schema.usageCounters.count} + 1` } });
 }
 
+/** Every person's queries, interleaved so one shared daily cap is split fairly. */
+async function plannedQueries(db: DB, max: number): Promise<{ q: SearchQuery; userId: number }[]> {
+  const per: { q: SearchQuery; userId: number }[][] = [];
+  for (const ctx of await rankContexts(db)) {
+    if (!ctx.profile.onboardedAt) continue;
+    const plan = searchPlan(ctx.profile, await rankPrefs(db, ctx.userId));
+    const qs =
+      ctx.profile.track === "stage"
+        ? buildStudentQueries(plan.interests.length ? plan.interests : ["finance"], ctx.profile.focus === "preferite" || plan.companies.length ? plan.companies : [], plan.city, max)
+        : buildQueries([...ctx.profile.roles, ...ctx.profile.synonyms], plan.city, max);
+    per.push(qs.map((q) => ({ q, userId: ctx.userId })));
+  }
+  const out: { q: SearchQuery; userId: number }[] = [];
+  for (let i = 0; out.length < max && per.some((l) => l[i]); i++) for (const l of per) if (l[i] && out.length < max) out.push(l[i]);
+  return out;
+}
+
 export async function runDiscover(db: DB, provider: SearchProvider | null, now = new Date()): Promise<{ queries: number; found: number; created: number; suggested: number; capReached: boolean }> {
   const settings = await getSettings(db);
   const out = { queries: 0, found: 0, created: 0, suggested: 0, capReached: false };
   if (!settings.w1Enabled || !provider) return out;
   const cap = Math.min(settings.w1DailyCap, W1_HARD_MAX);
-  const profile = await getProfile(db);
-  if (!profile.roles.length) return out;
   const used = await usageToday(db, "w1-queries", now);
   const remaining = Math.max(0, cap - used);
   if (remaining === 0) return { ...out, capReached: true };
+  const queries = await plannedQueries(db, remaining);
+  if (queries.length === 0) return out;
 
   await runWithHealth(db, "w1", async () => {
     const cache = await dedupeCandidates(db);
-    for (const q of buildQueries([...profile.roles, ...profile.synonyms], profile.city || "Torino", remaining)) {
+    const contexts = await rankContexts(db);
+    for (const { q, userId } of queries) {
       if ((await usageToday(db, "w1-queries", now)) >= cap) {
         out.capReached = true;
         break;
@@ -50,16 +69,16 @@ export async function runDiscover(db: DB, provider: SearchProvider | null, now =
       for (const h of all) {
         const sug = spontaneousSuggestion(h);
         if (!sug) continue;
-        const known = await db.query.spontaneousCompanies.findFirst({ where: eq(schema.spontaneousCompanies.email, sug.email) });
+        const known = await db.query.spontaneousCompanies.findFirst({ where: and(eq(schema.spontaneousCompanies.email, sug.email), eq(schema.spontaneousCompanies.userId, userId)) });
         if (!known) {
-          await db.insert(schema.spontaneousCompanies).values({ ...sug, status: "suggested" });
+          await db.insert(schema.spontaneousCompanies).values({ ...sug, userId, status: "suggested" });
           out.suggested++;
         }
       }
       const hits = all.filter((h) => isJobPage(h.url));
       for (const h of hits) {
         out.found++;
-        if ((await upsertRawJob(db, hitToRawJob(h), now, cache)).created) out.created++;
+        if ((await upsertRawJob(db, hitToRawJob(h), now, { cache, contexts })).created) out.created++;
       }
     }
     return { items: out.found, failures: 0 };

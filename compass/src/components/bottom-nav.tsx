@@ -1,37 +1,67 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconFolder, IconHelp, IconOffers, IconSend } from "./icons";
+import { IconBuilding, IconFolder, IconOffers, IconSend, IconUser } from "./icons";
 
-const ITEMS = [
+export const NAV_ITEMS = [
   { href: "/offerte", label: "Offerte", Icon: IconOffers },
   { href: "/da-inviare", label: "Da inviare", Icon: IconSend },
-  { href: "/candidature", label: "Le mie candidature", Icon: IconFolder },
-  { href: "/aiuto", label: "Aiuto", Icon: IconHelp },
+  { href: "/candidature", label: "Candidature", Icon: IconFolder },
+  { href: "/aziende", label: "Aziende", Icon: IconBuilding },
+  { href: "/profilo", label: "Profilo", Icon: IconUser },
 ];
 
-/** At most 4 places to go. Always visible, icon + words, no menus inside menus. */
+const isActive = (path: string, href: string) => path === href || path.startsWith(href + "/");
+
+function Badge({ n }: { n?: number }) {
+  return n ? <span className="ml-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[11px] font-semibold text-surface">{n}</span> : null;
+}
+
+/** Desktop: links in the header. */
+export function TopNav({ badges }: { badges: Partial<Record<string, number>> }) {
+  const path = usePathname();
+  return (
+    <nav aria-label="Menu principale" className="hidden md:block">
+      <ul className="flex items-center gap-1">
+        {NAV_ITEMS.map(({ href, label }) => {
+          const active = isActive(path, href);
+          return (
+            <li key={href}>
+              <Link
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`inline-flex h-9 items-center rounded-md px-3 text-[14px] no-underline transition-colors ${active ? "bg-subtle font-medium text-ink" : "text-muted hover:text-ink"}`}
+              >
+                {label}
+                <Badge n={badges[href]} />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+/** Phone: a tab bar at the bottom. */
 export function BottomNav({ badges }: { badges: Partial<Record<string, number>> }) {
   const path = usePathname();
   return (
-    <nav aria-label="Menu principale" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card shadow-[0_-6px_20px_-12px_rgb(23_34_45/0.25)] pb-[env(safe-area-inset-bottom)]">
-      <ul className="mx-auto grid max-w-3xl grid-cols-4">
-        {ITEMS.map(({ href, label, Icon }) => {
-          const active = path === href || path.startsWith(href + "/");
+    <nav aria-label="Menu principale" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <ul className="mx-auto grid max-w-lg grid-cols-5">
+        {NAV_ITEMS.map(({ href, label, Icon }) => {
+          const active = isActive(path, href);
           const n = badges[href];
           return (
             <li key={href}>
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex min-h-[74px] flex-col items-center justify-center gap-1 px-1 text-center text-[0.95rem] font-bold leading-tight no-underline ${active ? "text-navy" : "text-ink-soft hover:text-ink"}`}
+                className={`relative flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] no-underline ${active ? "font-medium text-accent" : "text-faint"}`}
               >
-                {active && <span className="absolute inset-x-5 top-0 h-[4px] rounded-b-full bg-needle" aria-hidden="true" />}
                 <span className="relative">
-                  <Icon size={28} strokeWidth={active ? 2.4 : 2} />
-                  {n ? (
-                    <span className="absolute -right-3 -top-2 min-w-[28px] rounded-full bg-needle-ink px-1.5 text-[0.95rem] leading-[28px] text-white">{n}</span>
-                  ) : null}
+                  <Icon size={21} strokeWidth={active ? 2.1 : 1.8} />
+                  {n ? <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-semibold text-surface">{n}</span> : null}
                 </span>
                 <span>{label}</span>
               </Link>

@@ -1,4 +1,5 @@
-// Reply detection on the dedicated mailbox: thread/Message-ID first, sender domain as fallback.
+// Reply detection on each person's mailbox: thread/Message-ID first, sender domain as fallback.
+// A mailbox only ever matches the applications of the people who use it.
 import { and, eq, inArray } from "drizzle-orm";
 import { emailDomain } from "../core/extract";
 import { FREE_MAIL_DOMAINS } from "../core/scam-rules";
@@ -16,11 +17,12 @@ export interface ReplyMatch {
 
 const SENT = ["sent", "replied", "interview", "rejected", "offer"] as const;
 
-export async function matchReply(db: DB, e: InboundEmail): Promise<ReplyMatch | null> {
+export async function matchReply(db: DB, e: InboundEmail, userIds: number[]): Promise<ReplyMatch | null> {
+  if (userIds.length === 0) return null;
   const sent = await db
     .select({ id: schema.applications.id, messageId: schema.applications.messageId, toEmail: schema.applications.toEmail, sentAt: schema.applications.sentAt })
     .from(schema.applications)
-    .where(inArray(schema.applications.status, [...SENT]));
+    .where(and(inArray(schema.applications.status, [...SENT]), inArray(schema.applications.userId, userIds)));
   const ids = new Set([e.inReplyTo, ...e.references].filter(Boolean) as string[]);
   const byThread = sent.find((a) => a.messageId && ids.has(a.messageId));
   if (byThread) return { applicationId: byThread.id, matchedBy: "thread" };
@@ -53,6 +55,7 @@ export async function recordReply(db: DB, e: InboundEmail, m: ReplyMatch): Promi
   if (!app) return false;
   const suggested = suggestStatus(`${e.subject}\n${e.text}`);
   await db.insert(schema.replies).values({
+    userId: app.userId,
     applicationId: app.id,
     fromEmail: e.from.address,
     fromName: e.from.name || null,
@@ -63,29 +66,29 @@ export async function recordReply(db: DB, e: InboundEmail, m: ReplyMatch): Promi
     receivedAt: e.date,
   });
   await db.update(schema.applications).set({ replyAt: app.replyAt ?? e.date, status: app.status === "sent" ? "replied" : app.status }).where(eq(schema.applications.id, app.id));
-  await notifyUser(db, `Hai ricevuto una risposta da ${app.company ?? e.from.name ?? "un'azienda"}!`, "/candidature");
+  if (app.userId) await notifyUser(db, app.userId, `Nuova risposta da ${app.company ?? e.from.name ?? "un'azienda"}`, "/candidature");
   return true;
 }
 
 /** One tap: accept the suggested status (or pick another). */
 const REPLY_STATUSES: ApplicationStatus[] = ["replied", "interview", "rejected", "offer"];
 
-export async function confirmReply(db: DB, replyId: number, status?: ApplicationStatus): Promise<void> {
-  const r = await db.query.replies.findFirst({ where: eq(schema.replies.id, replyId) });
+export async function confirmReply(db: DB, userId: number, replyId: number, status?: ApplicationStatus): Promise<void> {
+  const r = await db.query.replies.findFirst({ where: and(eq(schema.replies.id, replyId), eq(schema.replies.userId, userId)) });
   if (!r?.applicationId) return;
   if (status && !REPLY_STATUSES.includes(status)) status = undefined; // only reply outcomes, never "queued" etc.
   await db.update(schema.applications).set({ status: status ?? r.suggestedStatus ?? "replied", updatedAt: new Date() }).where(eq(schema.applications.id, r.applicationId));
   await db.update(schema.replies).set({ confirmed: true }).where(eq(schema.replies.id, replyId));
 }
 
-export async function dismissReply(db: DB, replyId: number): Promise<void> {
-  await db.update(schema.replies).set({ dismissed: true }).where(eq(schema.replies.id, replyId));
+export async function dismissReply(db: DB, userId: number, replyId: number): Promise<void> {
+  await db.update(schema.replies).set({ dismissed: true }).where(and(eq(schema.replies.id, replyId), eq(schema.replies.userId, userId)));
 }
 
-export async function pendingReplies(db: DB) {
+export async function pendingReplies(db: DB, userId: number) {
   return db
     .select({ reply: schema.replies, app: schema.applications })
     .from(schema.replies)
     .innerJoin(schema.applications, eq(schema.applications.id, schema.replies.applicationId))
-    .where(and(eq(schema.replies.confirmed, false), eq(schema.replies.dismissed, false)));
+    .where(and(eq(schema.replies.userId, userId), eq(schema.replies.confirmed, false), eq(schema.replies.dismissed, false)));
 }

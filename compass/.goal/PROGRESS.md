@@ -1,6 +1,8 @@
 # Goal
 Build **Compass** (the brief calls it "Bussola"), a boomer-proof Italian job finder for one person: email alerts first, legal tiered web discovery second, rule-based parsing/ranking, three application lanes with strict sending guardrails, demo mode with fake data, plus a public "Abbonamento" (subscription) page with invented prices. Must be portfolio-grade (tests, CI, ADRs, README) and aesthetically pleasing. Spec: `BRIEF.md`
 
+**Extension (0.3.0, your messages of 2026-10-04):** several accounts (you and your mother), internships for you as a first-year BIEF student, a catalog of boutiques/banks/funds/brands with "Altro", suggestions from CV/experience/tastes, a focus switch (all jobs with choices first / only choices / only chosen companies), filters with questionnaire defaults, themes and multi-sector brands, a career panel, fit warnings, an experience timeline (CV or LinkedIn), redo/edit the questionnaire, year-of-study rules (spring weeks for first years, not Associate), and a professional minimal redesign.
+
 ## Definition of Done
 - [x] M0: research decisions recorded as ADRs (mailbox, job APIs, search API, hosting, stack, schema, risks) — docs/adr/0001-0012
 - [x] Runs locally with one command (`npm run demo`) in demo mode, from a clean checkout
@@ -39,6 +41,19 @@ Build **Compass** (the brief calls it "Bussola"), a boomer-proof Italian job fin
 - [x] Every user-facing feature exercised in the running app (Playwright e2e on the production build)
 - [x] README, CHANGELOG, ADRs, Italian guide (docs/come-si-usa.md)
 
+### Definition of Done: extension 0.3.0
+- [x] Accounts: invitations (HMAC, shown once), admin-created accounts, registration closed/invite/open, deactivate/delete, admin "Apri la sua app"
+- [x] Data separated per person (jobs shared, `user_jobs` per person, private alert sources stay private); migration 0003 moves the old single-person data (tested on legacy rows)
+- [x] One mailbox per person optional (`MAILBOX_<KEY>_*`); digest to each person's address
+- [x] Stage track: own 12-step questionnaire, job type/eligibility/duration extraction, ranking by year of study, English templates, student search queries
+- [x] Catalog: ~180 companies (boutiques, banks, funds, consulting, startups, brands incl. fashion, yachts, luxury hotels), sectors with themes, extra sectors per brand, "Altro" private until shared
+- [x] Suggestions from CV, experiences, tastes, choices; career paths with roles; fit warnings; student year advice
+- [x] Focus switch + filters (min net pay, km, type, contract, hours, sector, days, search) with defaults from the questionnaire, saveable
+- [x] Experience timeline from CV PDF text or LinkedIn data export; manual add/delete
+- [x] Redo the questionnaire (answers kept) or edit single steps
+- [x] Redesign (Inter, light/dark, top bar + 5 tabs); 234 screens audited, 0 axe violations, 0 overflow
+- [x] 287 unit/integration tests, 19 e2e, simulate-week passes, load test 2 people × 5,000 jobs
+
 ## Plan
 - [x] M0 research + ADRs
 - [x] Scaffold Next 16 + TS + Tailwind 4 + Drizzle/libSQL, design system, auth
@@ -54,7 +69,7 @@ Build **Compass** (the brief calls it "Bussola"), a boomer-proof Italian job fin
 ## Waiting on you
 Ordered by what unblocks the most. None of this is needed to try the demo (`npm run demo`).
 
-1. **Mailbox** (unblocks real alerts, replies, sending): create the dedicated Gmail, 2-Step Verification, app password; set `MAILBOX_USER`, `MAILBOX_APP_PASSWORD`, `DIGEST_TO`, `CONTACT_EMAIL`, `ADMIN_ALERT_EMAIL` in `.env` (never in chat). Then forward the platform alerts to it. `docs/setup.md` §1-2.
+1. **Mailbox** (unblocks real alerts, replies, sending): create the dedicated Gmail, 2-Step Verification, app password; set `MAILBOX_USER`, `MAILBOX_APP_PASSWORD`, `CONTACT_EMAIL`, `ADMIN_ALERT_EMAIL` in `.env` (never in chat). For your own mailbox add `MAILBOX_STUDENTE_USER` / `MAILBOX_STUDENTE_APP_PASSWORD` and pick `studente` for your account in Admin → Persone (or share the default one). Then forward the platform alerts to it. `docs/setup.md` §1-2.
 2. **Real alert samples** (unblocks trustworthy parsers): after alerts start arriving, export 2-3 per platform, anonymize, add to `fixtures/emails/`. All three parsers are built on synthetic samples.
 3. **Free API keys** (no card): Adzuna (`ADZUNA_APP_ID/KEY`) and Tavily (`TAVILY_API_KEY`). And **confirm Adzuna's terms** allow ongoing personal non-commercial use (their terms mention a 14-day evaluation).
 4. **Permission points I did not do**: create the dedicated public repo and move `compass/` there; Turso database; Vercel project; GitHub Actions secrets; deploy; switch real sending on. `docs/setup.md` §4-7.
@@ -68,6 +83,9 @@ Ordered by what unblocks the most. None of this is needed to try the demo (`npm 
 12. **Small decisions**: MIT licence OK? Lane 2 paste-only (no file upload back) OK? Delete `.goal/` notes before publishing?
 13. **Subscription page**: prices are invented. If you ever charge, Vercel Hobby (non-commercial) is no longer allowed and you need payments + Italian invoicing/VAT: talk to an accountant first.
 14. **Keep the schedule alive**: GitHub disables scheduled workflows after 60 days without commits on a public repo.
+15. **Your mother's niche sector**: I don't know it, so it is not in the catalog. She can add it with "Altro" (sector and companies), or tell me the sector and 10-20 companies and I add them with themes.
+16. **Your timeline**: upload your real CV in the app (not in the repo) or the LinkedIn export zip (LinkedIn → Settings → Data privacy → Get a copy of your data → Positions + Education). LinkedIn's API does not give work history, so "connect LinkedIn" is not possible.
+17. **Eligibility check**: many spring weeks and insight programmes are for students in a specific year and some have minimum-age or right-to-work rules (e.g. London). The app's year rules are general; check each programme's page.
 
 ## Decisions
 - Project name is **Compass** (your instruction); UI copy stays Italian.
@@ -86,6 +104,7 @@ Ordered by what unblocks the most. None of this is needed to try the demo (`npm 
 - Italian number formatting: "1200 €" (CLDR Italian does not group 4-digit numbers); fine.
 
 ## Log
+- 2026-10-04 13:00 Extension 0.3.0: accounts + migration 0003, per-person server layer, catalog + Altro, focus/filters, stage track, redesign, themes/career panel/fit warnings/timeline/redo questionnaire, year-of-study rules | 287 unit, 19 e2e, audit-ui 234 screens 0 axe, simulate-week OK, perf 2×5,000 | this commit
 - 2026-10-04 09:10 M0 research (Gmail app passwords, Gmail API testing tokens, Apps Script quotas, Adzuna/Jooble/Careerjet, Brave/Tavily/Google CSE/Bing, Vercel/Turso, D.Lgs. 96/2026, comuni datasets) | verified by web search | recorded in ADRs
 - 2026-10-04 09:15 Core rule engine (salary, extract, geo, dedupe, rank, scam, guardrails, templates, cv, prompt) | 121 unit tests | 012ff30
 - 2026-10-04 09:35 Schema, sources, pipeline, applications, replies, digest, metrics, seed | 146 tests incl. demo-mode pipeline integration | 224d46b

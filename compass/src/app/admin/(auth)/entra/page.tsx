@@ -15,7 +15,7 @@ export default async function AdminEntra({ searchParams }: { searchParams: Promi
       <Brand href="/" />
       <Card className="mt-6 !p-8">
         <h1 className="text-[2rem] font-semibold">Area amministratore</h1>
-        <p className="mt-2 text-ink-soft">Accesso separato per chi gestisce Compass.</p>
+        <p className="mt-2 text-muted">Accesso separato per chi gestisce Compass.</p>
         {sp.errore && (
           <div className="mt-5">
             <Notice tone="warn">{sp.errore === "attesa" ? "Troppi tentativi: riprova tra 15 minuti." : "Credenziali non corrette."}</Notice>

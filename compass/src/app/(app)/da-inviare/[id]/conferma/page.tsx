@@ -1,43 +1,34 @@
-import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { IconArrowLeft, IconSend } from "@/components/icons";
-import { Button, Card, HelpBox, LinkButton } from "@/components/ui";
-import { getDb, schema } from "@/lib/db";
+import { IconSend } from "@/components/icons";
+import { Button, Card, LinkButton } from "@/components/ui";
+import { getDb } from "@/lib/db";
+import { getApplication } from "@/lib/server/applications";
+import { requireUser } from "@/lib/server/auth";
 import { approveAction } from "../../../actions";
 
-export const metadata = { title: "Confermi l'invio?" };
+export const metadata = { title: "Conferma invio" };
 
 export default async function ConfermaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const app = await getDb().query.applications.findFirst({ where: eq(schema.applications.id, Number(id)) });
+  const user = await requireUser();
+  const app = await getApplication(getDb(), user.id, Number(id));
   if (!app || app.status !== "draft") notFound();
   return (
-    <div className="mx-auto max-w-xl pt-6">
-      <HelpBox text="Controlla il nome dell'azienda: se è giusto premi Sì, invia." />
-      <Card className="mt-4 rise text-center !p-8">
-        <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-navy-soft text-navy">
-          <IconSend size={32} />
+    <div className="mx-auto max-w-md pt-6">
+      <Card className="!p-6">
+        <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-accent">
+          <IconSend size={18} />
         </span>
-        <p className="font-serif text-[1.6rem] font-semibold leading-snug">
-          Sto per inviare la tua candidatura a <span className="text-navy">{app.company ?? app.toEmail}</span>
-          {app.role && app.role !== "Candidatura spontanea" ? (
-            <>
-              {" "}
-              per il ruolo di <span className="text-navy">{app.role}</span>
-            </>
-          ) : null}
-          . Confermi?
-        </p>
-        <p className="mt-4 text-ink-soft">Partirà tra almeno 15 minuti. Fino ad allora puoi premere &ldquo;Annulla&rdquo;.</p>
-        <form action={approveAction} className="mt-7 space-y-3">
+        <h1 className="text-[20px] font-semibold leading-snug">Inviare la candidatura a {app.company ?? app.toEmail}?</h1>
+        {app.role && app.role !== "Candidatura spontanea" && <p className="mt-1 text-[14px] text-muted">{app.role}</p>}
+        <p className="mt-3 text-[13.5px] text-muted">Destinatario: {app.toEmail}. Parte tra almeno 15 minuti, nella finestra di invio; fino ad allora puoi annullare.</p>
+        <form action={approveAction} className="mt-6 flex flex-col gap-2 sm:flex-row-reverse">
           <input type="hidden" name="appId" value={app.id} />
-          <Button wide>
-            <IconSend /> Sì, invia
-          </Button>
+          <Button className="sm:flex-1">Sì, invia</Button>
+          <LinkButton href="/da-inviare" variant="secondary" className="sm:flex-1">
+            Annulla
+          </LinkButton>
         </form>
-        <LinkButton href="/da-inviare" variant="secondary" wide className="mt-3">
-          <IconArrowLeft /> No, torna indietro
-        </LinkButton>
       </Card>
     </div>
   );

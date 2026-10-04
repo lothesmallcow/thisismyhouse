@@ -6,24 +6,25 @@
 Ti dice quante offerte nuove ci sono, quante candidature sono pronte e se qualcuno ti ha risposto.
 Premi il pulsante blu **Apri Compass**.
 
-**2. In basso ci sono sempre quattro pulsanti**
+**2. In basso ci sono sempre cinque pulsanti** (sul computer sono in alto)
 - **Offerte**: le offerte di lavoro scelte per te.
 - **Da inviare**: le candidature via e-mail pronte da mandare.
-- **Le mie candidature**: a chi ti sei candidata e chi ti ha risposto.
-- **Aiuto**: questa guida, il tuo profilo, i tuoi CV.
+- **Candidature**: a chi ti sei candidata e chi ti ha risposto.
+- **Aziende**: le aziende e i settori che ti interessano, e quelli da evitare.
+- **Profilo**: i tuoi dati, i CV, le esperienze, questa guida.
 
 <img src="guida/1-offerte.png" width="260" alt="La pagina Offerte">
 
 **3. Le offerte**
-In alto ci sono quelle **Molto adatte** (tre pallini verdi). Sotto il titolo leggi perché te le
-propongo, per esempio *A 8 km da casa*. Tocca un'offerta per leggerla tutta.
+In alto ci sono quelle **Molto adatte** (etichetta verde). Sotto il titolo leggi perché te le
+propongo, per esempio *Nella tua città*. Tocca un'offerta per leggerla tutta.
 
 <img src="guida/2-offerta.png" width="260" alt="Un'offerta aperta">
 
 **4. Ti piace? Ci sono tre modi per candidarti**
-- **Prepara la candidatura via e-mail**: preparo io l'e-mail con il tuo CV. La trovi in *Da inviare*.
+- **Prepara candidatura via e-mail**: preparo io l'e-mail con il tuo CV. La trovi in *Da inviare*.
 - **Candidati sul sito**: apri il sito dell'annuncio e copi le risposte già pronte con i pulsanti **Copia**.
-  Alla fine premi **Fatto, mi sono candidata**.
+  Alla fine premi **Ho inviato la candidatura**.
 - **Prepara con Claude** (per le offerte migliori): copi un testo, lo incolli nella chat di Claude,
   poi incolli qui la lettera che ti prepara.
 
@@ -39,14 +40,18 @@ fino ad allora puoi premere **Annulla l'invio**.
 <img src="guida/4-da-inviare.png" width="260" alt="La pagina Da inviare">
 
 **7. Quando qualcuno risponde**
-In *Le mie candidature* compare **Hai ricevuto una risposta da ...!** Premi **Sì, va bene** per
-segnare, per esempio, *Colloquio*. L'e-mail completa la leggi nella casella della ricerca di lavoro.
+In *Candidature* compare **Risposta da ...** con quello che sembra (per esempio un invito a un
+colloquio). Premi il pulsante nero, per esempio **Segna come colloquio**, oppure **Ignora**. L'e-mail completa la leggi nella casella della ricerca di lavoro.
 
-<img src="guida/5-candidature.png" width="260" alt="Le mie candidature con una risposta">
+<img src="guida/5-candidature.png" width="260" alt="Candidature con una risposta">
 
 **8. Se qualcosa non va**
 Il pulsante rosso **Ferma tutti gli invii** (in *Da inviare*) blocca tutto subito. Non succede niente
 di grave: si riattiva con un tocco. Per qualsiasi dubbio, chiedi a chi ti ha preparato Compass.
 
 **Da sapere:** Compass non entra mai nei tuoi account LinkedIn, Indeed o InfoJobs e non manda niente
-di nascosto: ogni invio è scritto in *Le mie candidature*.
+di nascosto: ogni invio è scritto in *Candidature*.
+
+**In più:** in *Aziende* scegli i nomi che ti interessano (se il tuo manca, usa **Altro**) e decidi
+se vedere tutte le offerte con quelle in cima, o solo le tue scelte. In *Profilo → Esperienze* c'è
+la tua storia lavorativa letta dal CV: Compass la usa per suggerirti aziende e percorsi vicini.

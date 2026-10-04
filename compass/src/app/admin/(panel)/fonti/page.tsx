@@ -24,24 +24,24 @@ export default async function FontiPage({ searchParams }: { searchParams: Promis
   const health = await db.select().from(schema.sourceHealth);
   const w1Used = await usageToday(db, "w1-queries");
   const toggle = (name: keyof typeof s, label: string, note?: string) => (
-    <label className="flex min-h-[60px] items-center gap-4 rounded-2xl border-2 border-line bg-white px-4">
+    <label className="flex min-h-[44px] items-center gap-3 rounded-lg border border-line bg-surface px-3.5 text-[14px]">
       <input type="checkbox" name={name} value="1" defaultChecked={Boolean(s[name])} />
       <span>
         <strong>{label}</strong>
-        {note && <span className="block text-[0.95rem] text-ink-soft">{note}</span>}
+        {note && <span className="block text-[13px] text-muted">{note}</span>}
       </span>
     </label>
   );
   return (
     <>
       <Flash code={sp.msg} />
-      <h1 className="text-[2.2rem] font-semibold">Fonti</h1>
-      <p className="mt-2 max-w-3xl text-ink-soft">Ogni fonte è indipendente: se una si rompe, le altre continuano. Qui vedi come stanno.</p>
+      <h1 className="text-[22px] font-semibold">Fonti e impostazioni</h1>
+      <p className="mt-2 max-w-3xl text-muted">Ogni fonte è indipendente: se una si rompe, le altre continuano. Qui vedi come stanno.</p>
 
       <SectionTitle>Salute delle fonti</SectionTitle>
-      <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="overflow-x-auto rounded-2xl border border-line bg-card">
-        <table className="w-full min-w-[760px] text-left text-[0.98rem]">
-          <thead className="bg-paper">
+      <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="overflow-x-auto rounded-lg border border-line bg-surface">
+        <table className="w-full min-w-[760px] text-left text-[13.5px]">
+          <thead className="bg-subtle">
             <tr>
               <th className="px-4 py-2">Fonte</th>
               <th className="px-4 py-2">Ultimo successo</th>
@@ -55,7 +55,7 @@ export default async function FontiPage({ searchParams }: { searchParams: Promis
           <tbody>
             {health.length === 0 && (
               <tr>
-                <td className="px-4 py-3 text-ink-soft" colSpan={7}>
+                <td className="px-4 py-3 text-muted" colSpan={7}>
                   Nessuna esecuzione ancora. Premi &ldquo;Raccogli offerte&rdquo; qui sotto.
                 </td>
               </tr>
@@ -64,15 +64,15 @@ export default async function FontiPage({ searchParams }: { searchParams: Promis
               const bad = h.consecutiveFailures > 0 || (h.pausedUntil && h.pausedUntil > new Date());
               return (
                 <tr key={h.source} className="border-t border-line align-top">
-                  <td className="px-4 py-2 font-bold">{h.source}</td>
+                  <td className="px-4 py-2 font-semibold">{h.source}</td>
                   <td className="px-4 py-2">{h.lastSuccessAt ? formatWhen(h.lastSuccessAt) : "mai"}</td>
                   <td className="px-4 py-2">{h.lastRunAt ? `${formatWhen(h.lastRunAt)} (${h.itemsFound})` : "-"}</td>
                   <td className="px-4 py-2">{h.totalFound}</td>
                   <td className="px-4 py-2">{h.parseFailures}</td>
                   <td className="px-4 py-2">{h.blocks}</td>
                   <td className="px-4 py-2">
-                    <span className={`rounded-full px-2.5 py-1 text-[0.85rem] font-bold ${bad ? "bg-rose text-rose-ink" : "bg-sage text-sage-ink"}`}>{bad ? "attenzione" : "ok"}</span>
-                    {h.lastError && <span className="mt-1 block text-[0.9rem] text-ink-soft">{h.lastError}</span>}
+                    <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${bad ? "bg-bad-soft text-bad" : "bg-good-soft text-good"}`}>{bad ? "attenzione" : "ok"}</span>
+                    {h.lastError && <span className="mt-1 block text-[12.5px] text-muted">{h.lastError}</span>}
                   </td>
                 </tr>
               );
@@ -98,11 +98,19 @@ export default async function FontiPage({ searchParams }: { searchParams: Promis
           {toggle("joobleEnabled", "Jooble (API)", "La chiave gratuita ha un limite TOTALE di circa 500 richieste: tenerla spenta salvo necessità.")}
           {toggle("w1Enabled", "W1: ricerca sul web con Tavily", env.tavilyKey || env.demoMode ? `Usate oggi ${w1Used} ricerche.` : "Manca TAVILY_API_KEY nel file .env.")}
           <label className="block space-y-2">
-            <span className="font-bold">Limite ricerche W1 al giorno (max 100)</span>
+            <span className="font-semibold">Limite ricerche W1 al giorno (max 100)</span>
             <input name="w1DailyCap" type="number" min={0} max={100} defaultValue={s.w1DailyCap} />
           </label>
           {toggle("geocoderEnabled", "Geocoder online (OpenStreetMap Nominatim) per le località fuori dall'elenco dei comuni", "Spento finché non lo approvi: 1 richiesta al secondo, massimo 10 per raccolta, risultati memorizzati.")}
-          {toggle("digestEnabled", "E-mail del mattino a lei", env.digestTo || env.demoMode ? undefined : "Manca DIGEST_TO nel file .env.")}
+          {toggle("digestEnabled", "E-mail del mattino (interruttore generale)", "Ognuno può spegnere la sua dal profilo. Destinatario: l'e-mail impostata in Persone.")}
+          <label className="block space-y-1.5">
+            <span className="text-[13px] font-medium">Chi può creare un account</span>
+            <select name="registration" defaultValue={s.registration}>
+              <option value="invite">Solo con codice di invito</option>
+              <option value="open">Chiunque (massimo 20 al giorno)</option>
+              <option value="closed">Nessuno: solo l&apos;amministratore</option>
+            </select>
+          </label>
           <Button>Salva</Button>
         </Card>
       </form>

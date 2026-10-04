@@ -12,18 +12,26 @@ app keeps working in demo mode until the last one.
    ```
    MAILBOX_USER=(the new Gmail address)
    MAILBOX_APP_PASSWORD=the 16-character app password
-   DIGEST_TO=her normal e-mail address (for the morning e-mail)
    CONTACT_EMAIL=an address websites can contact about our requests
    ADMIN_ALERT_EMAIL=your inbox, for alerts when a source breaks
    ```
+   The morning e-mail goes to each person's "e-mail per il riepilogo" (Admin → Persone), or to
+   the address they sign in with if that is empty.
+
+   **A second person with their own mailbox** (e.g. the student account): repeat steps 1-3 for a
+   second Gmail and add `MAILBOX_<KEY>_USER` and `MAILBOX_<KEY>_APP_PASSWORD`, for example
+   `MAILBOX_STUDENTE_USER` / `MAILBOX_STUDENTE_APP_PASSWORD`. Then in Admin → Persone set that
+   person's mailbox to `studente`. Applications leave from their mailbox, their alerts are read
+   from it, and nobody else sees what arrives there. People can also share the default mailbox.
+
    With `DEMO_MODE=false` the server **refuses to start** if a required variable is missing or
    weak (it prints which one), so mistakes show up at deploy time, not weeks later.
 
 ## 2. Forward the job alerts
 
-In **her** LinkedIn / Indeed / InfoJobs accounts (by hand, in the browser), create job alerts for
-her roles and city, delivered to her normal inbox. Then in her normal Gmail:
-Settings → Forwarding → add the dedicated address; then create filters
+For each person, in **their** LinkedIn / Indeed / InfoJobs accounts (by hand, in the browser), create job alerts for
+her roles and city, delivered to their normal inbox. Then in that normal Gmail:
+Settings → Forwarding → add their dedicated address; then create filters
 `from:(jobalerts-noreply@linkedin.com OR jobs-listings@linkedin.com OR alert@indeed.com OR noreply@infojobs.it)`
 → "Forward to" the dedicated address. (Or set the alerts to the dedicated address directly.)
 
@@ -47,13 +55,19 @@ turso db show compass --url        # -> DATABASE_URL (libsql://...)
 turso db tokens create compass     # -> DATABASE_AUTH_TOKEN
 ```
 Then `npm run db:migrate` and `npm run db:seed` with `DEMO_MODE=false` and your own
-`SEED_USER_*` / `SEED_ADMIN_*` passwords (seed creates the two accounts and the letter templates,
-no fake data in real mode). Change both passwords from the admin "Accessi" page afterwards.
+`SEED_USER_*` / `SEED_ADMIN_*` passwords (seed creates the first person, the admin and the
+letter templates, no fake data in real mode). Change both passwords afterwards.
+
+**More people.** Admin → Persone: create an account directly, or create an invitation link
+(valid 14 days, shown once). Admin → Fonti → "Registrazione" decides who can sign up:
+`chiuso`, `solo con invito` (default) or `aperto` (at most 20 new accounts a day). Each person
+has their own profile, CV, companies, applications and morning e-mail; the admin can open any
+person's app ("Apri la sua app") to help them.
 
 ## 5. Hosting (Vercel Hobby, free)
 
 1. Import the repository in Vercel (root directory `compass/` while it lives in `thisismyhouse`).
-2. Environment variables: everything from `.env.example`, with `DEMO_MODE=false`,
+2. Environment variables: everything from `.env.example` (including any `MAILBOX_<KEY>_*`), with `DEMO_MODE=false`,
    a long random `SESSION_SECRET` and `CRON_SECRET`, `APP_URL` = the Vercel URL.
 3. `vercel.json` schedules the daily digest; Vercel sends `CRON_SECRET` automatically.
 

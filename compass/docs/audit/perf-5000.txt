@@ -1,6 +1,7 @@
-Offerte, first page (10): 7 ms
-Offerte, first page again (warm): 7 ms
-Offerte with 3 filters: 8 ms
-Offerte after 'Mostra altre 10' x20 (200 rows): 11 ms
-Full rerank of 5,000 jobs (after a profile change): 840 ms
-Offerte page load with 5,029 jobs (ms): 128, 110, 83, 88, 99 | with 200 cards: 260
+Full re-rank, both people (first time, 2 x 5,000 rows written): 4158 ms
+Offerte, first page (10): 14 ms
+Offerte, first page again (warm): 9 ms
+Offerte with 3 filters: 10 ms
+Offerte, student, only chosen companies: 6 ms
+Offerte after 'Mostra altre 10' x20 (200 rows): 22 ms
+Re-rank one person after a profile change: 2332 ms

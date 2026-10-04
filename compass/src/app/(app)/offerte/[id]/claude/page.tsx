@@ -1,67 +1,95 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/copy-button";
 import { IconArrowLeft } from "@/components/icons";
-import { Button, Card, Field, LinkButton, PageHeader, SectionTitle } from "@/components/ui";
+import { Button, Card, Field, Notice, PageHeader } from "@/components/ui";
 import { pickCv } from "@/lib/core/cv-pick";
 import { buildClaudePrompt } from "@/lib/core/prompt";
+import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
+import { requireUser } from "@/lib/server/auth";
 import { getJob } from "@/lib/server/jobs";
 import { getProfile } from "@/lib/server/profile";
 import { saveCuratedAction } from "../../../actions";
 
 export const metadata = { title: "Prepara con Claude" };
 
-export default async function ClaudePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClaudePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ lingua?: string }> }) {
   const { id } = await params;
+  const sp = await searchParams;
+  const user = await requireUser();
   const db = getDb();
-  const data = await getJob(db, Number(id));
+  const data = await getJob(db, user.id, Number(id));
   if (!data) notFound();
   const { job, sources } = data;
-  const p = await getProfile(db);
-  const cvs = await db.select().from(schema.cvs);
+  const p = await getProfile(db, user.id);
+  const cvs = await db.select().from(schema.cvs).where(and(eq(schema.cvs.userId, user.id)));
   const cv = pickCv(cvs, { title: job.title, sector: job.sector });
   const cvText = cvs.find((c) => c.id === cv?.id)?.text ?? "";
+  const language = sp.lingua === "en" ? "en" : "it";
   const prompt = buildClaudePrompt({
     job: { title: job.title, company: job.company, city: job.city, description: job.description, url: sources.find((s) => s.url)?.url ?? null },
     cvText,
     name: p.name,
+    student: p.track === "stage" ? { university: p.university, degree: p.degree, year: p.studyYear } : null,
+    language,
   });
 
   return (
     <>
-      <LinkButton href={`/offerte/${id}`} variant="quiet" className="-ml-3 mb-2 px-3">
-        <IconArrowLeft /> Torna all&apos;offerta
-      </LinkButton>
+      <Link href={`/offerte/${id}`} className="mb-5 inline-flex h-8 items-center gap-1.5 text-[13px] text-muted no-underline hover:text-ink">
+        <IconArrowLeft size={16} /> Offerta
+      </Link>
       <PageHeader
-        title="Prepara con Claude"
-        help="Per le offerte migliori: copia il testo, incollalo nella chat di Claude, poi incolla qui sotto quello che ti risponde."
+        eyebrow="Prepara con Claude"
+        title={job.title}
+        description="Copia il testo, incollalo in claude.ai, poi incolla qui la lettera che ti prepara. Il testo chiede a Claude di non inventare nulla."
       />
 
-      <Card className="space-y-4">
-        <p className="font-bold">1. Copia questo testo</p>
-        <p className="text-[0.98rem] text-ink-soft">Contiene l&apos;annuncio, il tuo CV e la regola più importante: non inventare niente.</p>
-        <CopyButton text={prompt} label="Copia il testo per Claude" wide primary />
-        <pre tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-paper p-4 font-sans text-[0.95rem]">{prompt}</pre>
-      </Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="!p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[14px] font-semibold">1. Testo da copiare</p>
+            <div role="group" aria-label="Lingua della lettera" className="inline-flex rounded-lg border border-line p-0.5 text-[12.5px]">
+              {(["it", "en"] as const).map((l) => (
+                <Link
+                  key={l}
+                  href={`/offerte/${id}/claude${l === "en" ? "?lingua=en" : ""}`}
+                  aria-current={language === l ? "true" : undefined}
+                  className={`inline-flex h-7 items-center rounded-md px-2.5 no-underline ${language === l ? "bg-subtle font-medium text-ink" : "text-muted"}`}
+                >
+                  {l === "it" ? "Lettera in italiano" : "In inglese"}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <pre tabIndex={0} role="region" aria-label="Testo per Claude" className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-subtle p-3.5 font-sans text-[13px] leading-relaxed text-muted">
+            {prompt}
+          </pre>
+          <div className="mt-3">
+            <CopyButton text={prompt} label="Copia il testo" primary wide />
+          </div>
+          {!cvText && (
+            <div className="mt-3">
+              <Notice tone="warn">
+                Il testo del tuo CV non è salvato: aggiungilo in <Link href="/profilo/cv">Profilo → CV</Link> per un risultato migliore.
+              </Notice>
+            </div>
+          )}
+        </Card>
 
-      <Card className="mt-5">
-        <p className="font-bold">2. Incollalo nella chat di Claude</p>
-        <p className="mt-1">Claude è un assistente che aiuta a scrivere: apri claude.ai, incolla il testo e invia. Controlla che la lettera dica solo cose vere.</p>
-        <p className="mt-2 text-ink-soft">La prima volta fatti aiutare da chi ti ha preparato Compass: serve un account su claude.ai.</p>
-        {!cvText && <p className="mt-3 rounded-xl bg-amber px-4 py-3 text-amber-ink">Il testo del tuo CV non è ancora salvato: puoi aggiungerlo in Aiuto → I miei CV.</p>}
-      </Card>
-
-      <SectionTitle>3. Incolla qui la lettera preparata</SectionTitle>
-      <form action={saveCuratedAction} className="space-y-5">
-        <input type="hidden" name="jobId" value={job.id} />
-        <Field label="Oggetto dell'e-mail" htmlFor="subject">
-          <input id="subject" name="subject" type="text" defaultValue={`Candidatura per ${job.title} | ${p.name}`} />
-        </Field>
-        <Field label="Testo della lettera" htmlFor="body" hint="Incolla qui la lettera che ti ha preparato Claude.">
-          <textarea id="body" name="body" rows={10} required />
-        </Field>
-        <Button wide>{job.applicationEmail ? "Salva e metti tra quelle da inviare" : "Salva e vai al kit candidatura"}</Button>
-      </form>
+        <form action={saveCuratedAction} className="space-y-4">
+          <input type="hidden" name="jobId" value={job.id} />
+          <p className="text-[14px] font-semibold">2. Incolla la lettera preparata</p>
+          <Field label="Oggetto dell'e-mail" htmlFor="subject">
+            <input id="subject" name="subject" type="text" defaultValue={`${language === "en" ? "Application" : "Candidatura"}: ${job.title} | ${p.name}`} />
+          </Field>
+          <Field label="Testo della lettera" htmlFor="body" hint="Rileggila: deve dire solo cose vere.">
+            <textarea id="body" name="body" rows={12} required />
+          </Field>
+          <Button wide>{job.applicationEmail ? "Salva tra quelle da inviare" : "Salva e vai al kit candidatura"}</Button>
+        </form>
+      </div>
     </>
   );
 }

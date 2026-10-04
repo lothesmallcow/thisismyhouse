@@ -1,6 +1,6 @@
-// UI audit against a running demo server: every screen at 360 px and 1280 px.
+// UI audit against a running demo server: every screen at 360 px and 1280 px, plus dark mode.
 // - screenshot (JPEG) of each screen -> docs/audit/screens/
-// - axe-core (WCAG 2 A/AA + AAA "color-contrast-enhanced")
+// - axe-core (WCAG 2.1 A/AA), in light and dark color schemes
 // - smallest visible text, smallest tap target, unlabeled buttons
 // - keyboard: Tab through the page, every focused element must show a visible focus style
 // - 200% zoom: 640 px wide viewport must not scroll sideways
@@ -16,17 +16,18 @@ fs.mkdirSync(OUT, { recursive: true });
 const db = createClient({ url: process.env.DATABASE_URL || "file:data/local/compass.db" });
 const one = async (q) => (await db.execute(q)).rows[0];
 
-const job = await one("select id from jobs where status != 'dismissed' order by score desc limit 1");
-const jobSite = await one("select id from jobs where application_email is null and status != 'dismissed' order by score desc limit 1");
-const tpl = await one("select id from templates limit 1");
+const lucia = (await one("select id from users where email = 'demo@example.com'")).id;
+const job = await one(`select j.id from jobs j join user_jobs u on u.job_id = j.id and u.user_id = ${lucia} where u.status != 'dismissed' order by u.score desc limit 1`);
+const jobSite = await one(`select j.id from jobs j join user_jobs u on u.job_id = j.id and u.user_id = ${lucia} where j.application_email is null and u.status != 'dismissed' order by u.score desc limit 1`);
+const tpl = await one(`select id from templates where user_id = ${lucia} limit 1`);
 
 const browser = await chromium.launch(process.env.PLAYWRIGHT_CHROMIUM_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } : {});
 
 async function login(ctx, who) {
   const p = await ctx.newPage();
-  if (who === "her") {
+  if (who === "her" || who === "him") {
     await p.goto(BASE + "/entra");
-    await p.fill("#email", "demo@example.com");
+    await p.fill("#email", who === "her" ? "demo@example.com" : "studente@example.com");
     await p.fill("#password", "demo-compass");
   } else {
     await p.goto(BASE + "/admin/entra");
@@ -40,15 +41,15 @@ async function login(ctx, who) {
 
 // Make sure a draft exists so the confirm/edit screens can be audited.
 async function ensureDraft(ctx) {
-  let d = await one("select id from applications where status = 'draft' limit 1");
+  let d = await one(`select id from applications where status = 'draft' and user_id = ${lucia} limit 1`);
   if (d) return d.id;
-  const e = await one("select id from jobs where application_email is not null and status in ('new','seen') limit 1");
+  const e = await one(`select j.id from jobs j join user_jobs u on u.job_id = j.id and u.user_id = ${lucia} where j.application_email is not null and u.status in ('new','seen') limit 1`);
   const p = await ctx.newPage();
   await p.goto(`${BASE}/offerte/${e.id}`);
-  await p.click("button:has-text('Prepara la candidatura via e-mail')");
+  await p.click("button:has-text('Prepara candidatura via e-mail')");
   await p.waitForURL(/da-inviare/);
   await p.close();
-  d = await one("select id from applications where status = 'draft' limit 1");
+  d = await one(`select id from applications where status = 'draft' and user_id = ${lucia} limit 1`);
   return d.id;
 }
 
@@ -63,6 +64,8 @@ const SCREENS = [
   ["public", "/abbonamento/compass", "Abbonamento: piano scelto"],
   ["public", "/entra", "Entra"],
   ["public", "/entra?errore=1", "Entra: password sbagliata"],
+  ["public", "/registrati", "Crea un account"],
+  ["public", "/registrati?errore=invite", "Crea un account: invito non valido"],
   ["public", "/admin/entra", "Admin: entra"],
   ["her", "/offerte", "Offerte"],
   ["her", "/offerte?mostra=scartate", "Offerte scartate"],
@@ -76,32 +79,43 @@ const SCREENS = [
   ["her", `/da-inviare/${draft}/modifica`, "Modifica candidatura"],
   ["her", "/da-inviare/tutte", "Invia tutte"],
   ["her", "/candidature", "Le mie candidature"],
-  ["her", "/aiuto", "Aiuto"],
-  ["her", "/aiuto/come-si-usa", "Come si usa"],
-  ["her", "/aiuto/profilo", "Il mio profilo"],
-  ["her", "/aiuto/cv", "I miei CV"],
-  ["her", "/aiuto/lettere", "Le mie lettere"],
-  ["her", `/aiuto/lettere/${tpl.id}`, "Modifica lettera"],
-  ["her", "/aiuto/cancella", "Cancella i miei dati"],
-  ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => ["her", `/benvenuto/${n}?ritorno=profilo`, `Benvenuto passo ${n}`]),
-  ["her", "/benvenuto/2?fase=sinonimi&ritorno=profilo", "Benvenuto passo 2 (sinonimi)"],
+  ["her", "/aziende", "Aziende e settori"],
+  ["her", "/profilo", "Profilo"],
+  ["her", "/profilo/ricerca", "Preferenze di ricerca"],
+  ["her", "/profilo/guida", "Guida"],
+  ["her", "/profilo/cv", "CV"],
+  ["her", "/profilo/lettere", "Lettere"],
+  ["her", `/profilo/lettere/${tpl.id}`, "Modifica lettera"],
+  ["her", "/profilo/cancella", "Cancella i miei dati"],
+  ["her", "/profilo/esperienze", "Esperienze"],
+  ["her", "/percorsi", "Percorsi"],
+  ...Array.from({ length: 12 }, (_, i) => ["her", `/benvenuto/${i + 1}?ritorno=profilo`, `Questionario lavoro passo ${i + 1}`]),
+  ["her", "/benvenuto/2?fase=sinonimi&ritorno=profilo", "Questionario lavoro passo 2 (sinonimi)"],
+  ["him", "/offerte", "Studente: offerte"],
+  ["him", "/offerte?vista=aziende", "Studente: solo aziende scelte"],
+  ["him", "/aziende", "Studente: aziende e settori"],
+  ["him", "/profilo", "Studente: profilo"],
+  ["him", "/percorsi", "Studente: percorsi"],
+  ["him", "/profilo/esperienze", "Studente: esperienze"],
+  ...Array.from({ length: 12 }, (_, i) => ["him", `/benvenuto/${i + 1}?ritorno=profilo`, `Questionario stage passo ${i + 1}`]),
   ["her", "/benvenuto/risposte?ritorno=profilo", "Risposte pronte"],
   ["her", "/benvenuto/fine", "Benvenuto: fine"],
   ["her", "/pagina-che-non-esiste", "Pagina non trovata"],
   ["admin", "/admin", "Admin: panoramica"],
-  ...["invii", "fonti", "aziende", "siti", "spontanee", "blocchi", "classifica", "registro", "metriche", "posta", "utenti"].map((p) => ["admin", `/admin/${p}`, `Admin: ${p}`]),
+  ...["utenti", "invii", "fonti", "catalogo", "catalogo?vista=tutte", "aziende", "siti", "spontanee", "blocchi", "classifica", "registro", "metriche", "posta"].map((p) => ["admin", `/admin/${p}`, `Admin: ${p}`]),
 ];
 
 const VIEWPORTS = [
-  { name: "360", width: 360, height: 780 },
-  { name: "1280", width: 1280, height: 800 },
+  { name: "360", width: 360, height: 780, scheme: "light" },
+  { name: "1280", width: 1280, height: 800, scheme: "light" },
+  { name: "1280-dark", width: 1280, height: 800, scheme: "dark" },
 ];
 
 const report = [];
 for (const vp of VIEWPORTS) {
   const ctxs = {};
-  for (const who of ["public", "her", "admin"]) {
-    ctxs[who] = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+  for (const who of ["public", "her", "him", "admin"]) {
+    ctxs[who] = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, colorScheme: vp.scheme, reducedMotion: "reduce" });
     if (who !== "public") await login(ctxs[who], who);
   }
   for (const [who, path, title] of SCREENS) {
@@ -111,7 +125,7 @@ for (const vp of VIEWPORTS) {
     const slug = `${vp.name}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
     await page.screenshot({ path: `${OUT}/${slug}.jpg`, type: "jpeg", quality: 55, fullPage: true });
 
-    const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).withRules(["color-contrast-enhanced"]).analyze();
+    const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
     const checks = await page.evaluate(() => {
       const visible = (el) => {
         const r = el.getBoundingClientRect();
@@ -152,8 +166,7 @@ for (const vp of VIEWPORTS) {
         minTarget: Math.round(minTarget),
         minTargetText,
         unlabeled,
-        help: /Cosa faccio qui\?/.test(document.body.innerText),
-        status: /Ultimo aggiornamento|Prima ricerca in corso/.test(document.body.innerText),
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
       };
     });
 
@@ -197,16 +210,18 @@ const zoom = [];
 for (const width of [640, 320]) {
   const ctx = await browser.newContext({ viewport: { width, height: 700 } });
   await login(ctx, "her");
-  for (const [who, path, title] of SCREENS.filter(([w]) => w === "her")) {
-    const p = await ctx.newPage();
+  const ctxHim = await browser.newContext({ viewport: { width, height: 700 } });
+  await login(ctxHim, "him");
+  for (const [who, path, title] of SCREENS.filter(([w]) => w === "her" || w === "him")) {
+    const p = await (who === "him" ? ctxHim : ctx).newPage();
     await p.goto(BASE + path);
     await p.waitForLoadState("networkidle");
     const over = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     zoom.push({ width, title, overflowPx: over });
     await p.close();
-    void who;
   }
   await ctx.close();
+  await ctxHim.close();
 }
 await browser.close();
 
@@ -216,11 +231,11 @@ const lines = [
   "",
   `Generated by \`node scripts/audit-ui.mjs\` on ${new Date().toISOString()} against a demo build. Screenshots: \`docs/audit/screens/\`.`,
   "",
-  "| Width | Screen | axe violations | Smallest text | Smallest target | Unlabeled | Help line | Status line | Focus visible | Screenshot |",
-  "|---|---|---|---|---|---|---|---|---|---|",
+  "| Width | Screen | axe violations | Smallest text | Smallest target | Unlabeled | Sideways overflow | Focus visible | Screenshot |",
+  "|---|---|---|---|---|---|---|---|---|",
   ...report.map(
     (r) =>
-      `| ${r.viewport} | ${r.title} | ${r.axe.length ? r.axe.map((a) => `${a.id} (${a.impact}, ${a.nodes})`).join("; ") : "0"} | ${r.minFont.toFixed(1)}px "${r.minFontText}" | ${r.minTarget}px "${r.minTargetText}" | ${r.unlabeled.length} | ${r.help ? "yes" : "no"} | ${r.status ? "yes" : "no"} | ${r.focusOk} ok${r.focusBad.length ? `, missing: ${r.focusBad.join(", ")}` : ""} | ${r.screenshot.split("/").pop()} |`,
+      `| ${r.viewport} | ${r.title} | ${r.axe.length ? r.axe.map((a) => `${a.id} (${a.impact}, ${a.nodes})`).join("; ") : "0"} | ${r.minFont.toFixed(1)}px "${r.minFontText}" | ${r.minTarget}px "${r.minTargetText}" | ${r.unlabeled.length} | ${r.overflow > 1 ? `${r.overflow}px` : "0"} | ${r.focusOk} ok${r.focusBad.length ? `, missing: ${r.focusBad.join(", ")}` : ""} | ${r.screenshot.split("/").pop()} |`,
   ),
   "",
   "## Zoom / reflow (horizontal overflow in px, 0 = no sideways scrolling)",

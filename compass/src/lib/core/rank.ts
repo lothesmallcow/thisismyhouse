@@ -2,10 +2,11 @@
 // reason, so the level shown to her ("Molto adatta", "Adatta", "Poco adatta") can always be
 // explained, and the admin can see the full breakdown.
 
-import type { Contract, Hours, LanguageReq, Remote } from "./extract";
+import type { Contract, Eligibility, Hours, JobType, LanguageReq, Remote } from "./extract";
 import { normalizeCompany } from "./dedupe";
-import { fold, keyTokens } from "./text";
+import { escapeRe, fold, keyTokens } from "./text";
 import { RANK_WEIGHTS as W, THRESHOLDS } from "./rank-config";
+import { careerStage, titleSeniority } from "./career-stage";
 
 export { THRESHOLDS };
 
@@ -18,6 +19,7 @@ export const LEVEL_LABELS: Record<Level, string> = {
 };
 
 export interface RankProfile {
+  track: "lavoro" | "stage";
   roles: string[]; // target role titles
   synonyms: string[]; // approved synonyms
   maxKm: number;
@@ -29,7 +31,28 @@ export interface RankProfile {
   avoidKeywords: string[];
   avoidCompanies: string[];
   avoidSectors: string[];
+  /** From the catalog: sectors with their words, companies with their other names. */
+  likedSectors: { name: string; keywords: string[] }[];
+  avoidSectorTerms: { name: string; keywords: string[] }[];
+  likedCompanies: { name: string; aliases: string[] }[];
+  // Students
+  studyYear: number | null;
+  degreeYears: number | null;
+  extraPlaces: string[];
+  paidOnly: boolean;
 }
+
+/** A job seeker with no catalog choices and no student fields (handy defaults for tests and tools). */
+export const NO_CHOICES = {
+  track: "lavoro",
+  likedSectors: [],
+  avoidSectorTerms: [],
+  likedCompanies: [],
+  studyYear: null,
+  degreeYears: null,
+  extraPlaces: [],
+  paidOnly: false,
+} satisfies Partial<RankProfile>;
 
 export interface RankJob {
   title: string;
@@ -45,6 +68,9 @@ export interface RankJob {
   languages: LanguageReq[];
   postedAt: Date | null;
   scamFlagCount: number;
+  city: string | null;
+  jobType: JobType;
+  eligibility: Eligibility[];
 }
 
 /** An adjustment created by "Non mi interessa" (or by the admin). Visible and undoable. */
@@ -64,8 +90,10 @@ export interface Factor {
 export interface RankResult {
   score: number;
   level: Level;
-  reasons: string[]; // 1-2 reasons shown to her
-  factors: Factor[]; // full breakdown for admin
+  reasons: string[]; // 1-2 reasons shown in the list
+  factors: Factor[]; // full breakdown (detail page, admin)
+  /** The ad matches a chosen company or sector (used by the "only my choices" focus). */
+  presetMatch: "company" | "sector" | null;
 }
 
 
@@ -108,13 +136,15 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     profile.maxKm,
     ...adjustments.filter((a) => a.kind === "distance").map((a) => Number(a.value)).filter((n) => n > 0),
   );
-  if (job.remote === "remote" && profile.remoteOk) f.push({ key: "distance", points: W.remoteAccepted, reason: "Si lavora da casa" });
+  const extraPlace = job.city ? profile.extraPlaces.find((p) => fold(p) === fold(job.city!)) : undefined;
+  if (job.remote === "remote" && profile.remoteOk) f.push({ key: "distance", points: W.remoteAccepted, reason: "Da remoto" });
+  else if (extraPlace) f.push({ key: "distance", points: W.extraPlaceMatch, reason: `A ${job.city}, tra le città che hai scelto` });
   else if (job.distanceKm != null) {
     const km = Math.round(job.distanceKm);
-    if (km <= Math.max(3, kmCap / 2)) f.push({ key: "distance", points: W.distanceNear, reason: km <= 1 ? "Vicinissima a casa" : `A ${km} km da casa` });
+    if (km <= Math.max(3, kmCap / 2)) f.push({ key: "distance", points: W.distanceNear, reason: km <= 1 ? "Nella tua città" : `A ${km} km da casa` });
     else if (km <= kmCap) f.push({ key: "distance", points: W.distanceOk, reason: `A ${km} km da casa` });
-    else f.push({ key: "distance", points: W.distanceFar, reason: `Lontana: ${km} km da casa` });
-    if (job.remote === "hybrid" && profile.remoteOk) f.push({ key: "remote", points: W.hybridBonus, reason: "In parte da casa" });
+    else f.push({ key: "distance", points: W.distanceFar, reason: `Lontano: ${km} km da casa` });
+    if (job.remote === "hybrid" && profile.remoteOk) f.push({ key: "remote", points: W.hybridBonus, reason: "In parte da remoto" });
   }
 
   // 3. Salary vs floor (unknown = neutral)
@@ -173,12 +203,100 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     f.push({ key: "avoid-sector", points: W.avoidSector, reason: "Settore che vuoi evitare" });
   }
 
-  // 9. Scam
+  for (const s of profile.avoidSectorTerms) {
+    if (f.some((x) => x.key === "avoid-sector")) break;
+    if (sectorHit(s, job, titleT, null)) f.push({ key: "avoid-sector", points: W.avoidSector, reason: `Settore che vuoi evitare (${s.name.toLowerCase()})` });
+  }
+
+  // 9. Chosen companies and sectors
+  let presetMatch: RankResult["presetMatch"] = null;
+  const likedCo = profile.likedCompanies.find((c) => companyNameMatches(job.company, c));
+  if (likedCo) {
+    f.push({ key: "company-liked", points: W.companyLiked, reason: `${likedCo.name} è tra le aziende che hai scelto` });
+    presetMatch = "company";
+  }
+  let bestSector: { name: string; where: "title" | "text" } | null = null;
+  for (const s of profile.likedSectors) {
+    const where = sectorHit(s, job, titleT, descT);
+    if (where === "title" || (where === "text" && !bestSector)) bestSector = { name: s.name, where };
+    if (where === "title") break;
+  }
+  if (bestSector) {
+    f.push({ key: "sector-liked", points: bestSector.where === "title" ? W.sectorLiked : W.sectorLikedText, reason: `Settore che ti interessa: ${bestSector.name.toLowerCase()}` });
+    presetMatch ??= "sector";
+  } else if (!likedCo && profile.track === "stage" && profile.likedSectors.length > 0) {
+    f.push({ key: "sector-liked", points: W.outsideInterests, reason: "Fuori dai settori che hai scelto" });
+  }
+
+  // 10. Students: is it an internship, and is it right for their year?
+  if (profile.track === "stage") {
+    const stage = careerStage(profile.studyYear, profile.degreeYears);
+    const seniority = titleSeniority(job.title);
+    const summer = /\bsummer\b|estiv/i.test(job.title);
+    if (job.jobType === "programma") {
+      if (stage === "primi-anni") f.push({ key: "type", points: W.programmeFirstYears, reason: "Ideale per il tuo anno: programma per studenti" });
+      else f.push({ key: "type", points: stage === "ultimo" ? W.programmeLate : W.programmeMatch, reason: "È un programma per studenti" });
+    } else if (job.jobType === "stage") {
+      if (stage === "primi-anni") f.push({ key: "type", points: W.stageFirstYears, reason: "È uno stage" });
+      else if (stage === "penultimo" && summer) f.push({ key: "type", points: W.stageMatch + W.summerPenultimate, reason: "Stage estivo: quello che conta al penultimo anno" });
+      else f.push({ key: "type", points: W.stageMatch, reason: "È uno stage" });
+      if (stage === "primi-anni" && /summer (analyst|associate)/i.test(job.title)) f.push({ key: "stage-fit", points: W.summerAnalystEarly, reason: "Di solito per chi è al penultimo anno" });
+    } else if (job.jobType === "lavoro") {
+      if (stage === "ultimo" && seniority === "entry") f.push({ key: "type", points: W.entryJobFinalYear, reason: "Posizione da neolaureato: adatta se ti laurei a breve" });
+      else f.push({ key: "type", points: W.notAnInternship, reason: "È un lavoro, non uno stage" });
+    } else f.push({ key: "type", points: W.notClearlyInternship, reason: "Non dice se è uno stage" });
+    if (seniority === "senior" || (seniority === "associate" && job.jobType !== "stage" && job.jobType !== "programma")) {
+      f.push({ key: "seniority", points: W.seniorityTooHigh, reason: "Livello troppo alto per il tuo anno" });
+    }
+    const el = job.eligibility;
+    const year = profile.studyYear;
+    const total = profile.degreeYears;
+    if (el.includes("laurea-richiesta") && stage === "ultimo") f.push({ key: "eligibility", points: W.degreeRequiredFinalYear, reason: "Chiede la laurea: ci sei quasi" });
+    else if (el.includes("laurea-richiesta")) f.push({ key: "eligibility", points: W.degreeRequired, reason: "Chiede la laurea già conseguita" });
+    else if (el.includes("fine-studi") && stage === "ultimo") f.push({ key: "eligibility-open", points: W.finalYearWelcome, reason: "Pensato per chi si laurea a breve" });
+    else if (el.includes("fine-studi") && year && total && year < total) f.push({ key: "eligibility", points: W.finalYearOnly, reason: "Pensato per chi sta per laurearsi" });
+    else if (el.includes("penultimo-anno") && year && total && year < total - 1) f.push({ key: "eligibility", points: W.penultimateOnly, reason: "Pensato per chi è al penultimo anno" });
+    if (el.includes("primo-anno") && (!year || year <= 2)) f.push({ key: "eligibility-open", points: W.firstYearWelcome, reason: "Aperto anche ai primi anni" });
+    if (el.includes("esperienza")) f.push({ key: "experience", points: W.experienceRequired, reason: "Chiede anni di esperienza" });
+    if (el.includes("non-retribuito") && profile.paidOnly) f.push({ key: "pay", points: W.unpaid, reason: "Non retribuito" });
+    else if (el.includes("retribuito")) f.push({ key: "pay", points: W.paid, reason: "Retribuito" });
+  } else if (job.jobType === "programma") {
+    f.push({ key: "type", points: W.programmeForStudents, reason: "È un programma per studenti" });
+  }
+
+  // 11. Scam
   if (job.scamFlagCount > 0) f.push({ key: "scam", points: W.scam, reason: "Attenzione: potrebbe essere una truffa" });
 
   const score = f.reduce((s, x) => s + x.points, 0);
   const level: Level = score >= THRESHOLDS.molto ? "molto" : score >= THRESHOLDS.adatta ? "adatta" : "poco";
-  return { score, level, reasons: pickReasons(f, level), factors: f };
+  return { score, level, reasons: pickReasons(f, level), factors: f, presetMatch };
+}
+
+/** Where a sector shows up in an ad: its name as the detected sector or in the title, or only in the text. */
+function sectorHit(s: { name: string; keywords: string[] }, job: RankJob, titleT: string[], descT: string[] | null): "title" | "text" | null {
+  if (job.sector && fold(job.sector) === fold(s.name)) return "title";
+  const all = [s.name, ...s.keywords];
+  const terms = all.filter((t) => keyTokens(t).length > 0);
+  // Short symbolic terms ("m&a", "fp&a") have no word tokens: match them as written.
+  const symbolic = all.filter((t) => /[&+]/.test(t) && t.length <= 6).map((t) => new RegExp(`(^|[^a-z0-9])${escapeRe(fold(t))}([^a-z0-9]|$)`));
+  if (terms.some((t) => containsPhrase(titleT, t)) || symbolic.some((re) => re.test(fold(job.title)))) return "title";
+  if (descT && (terms.some((t) => containsPhrase(descT, t)) || symbolic.some((re) => re.test(fold(job.description))))) return "text";
+  if (job.company && terms.some((t) => containsPhrase(keyTokens(job.company!), t))) return "title";
+  return null;
+}
+
+/** Same rule as the catalog: equal names, or the chosen name is the start of the ad's company name. */
+export function companyNameMatches(jobCompany: string | null, entry: { name: string; aliases: string[] }): boolean {
+  const job = normalizeCompany(jobCompany);
+  if (!job) return false;
+  const jt = job.split(" ");
+  return [entry.name, ...entry.aliases].some((n) => {
+    const c = normalizeCompany(n);
+    if (!c) return false;
+    if (c === job) return true;
+    const ct = c.split(" ");
+    return ct.length <= jt.length && ct.every((w, i) => jt[i] === w) && (ct.length > 1 || c.length >= 4);
+  });
 }
 
 function pickReasons(f: Factor[], level: Level): string[] {

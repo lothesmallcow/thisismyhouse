@@ -1,17 +1,18 @@
-// Real mailbox: IMAP on the dedicated Gmail account with an app password (see ADR 0002).
+// Real mailbox: IMAP on a dedicated Gmail account with an app password (see ADR 0002).
 // Read-only use: we never delete or move messages; processed Message-IDs live in our DB.
 import { ImapFlow } from "imapflow";
-import { env } from "../../env";
+import type { MailboxConfig } from "../../env";
 import { parseRawEmail } from "./parse";
 import type { InboundEmail, Mailbox } from "./types";
 
 export class ImapMailbox implements Mailbox {
+  constructor(private box: MailboxConfig) {}
   async fetchSince(since: Date): Promise<InboundEmail[]> {
     const client = new ImapFlow({
-      host: env.mailbox.imapHost,
+      host: this.box.imapHost,
       port: 993,
       secure: true,
-      auth: { user: env.mailbox.user, pass: env.mailbox.password },
+      auth: { user: this.box.user, pass: this.box.password },
       logger: false, // never log mailbox content (privacy)
     });
     await client.connect();

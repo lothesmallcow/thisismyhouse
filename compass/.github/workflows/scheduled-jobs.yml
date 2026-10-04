@@ -1,7 +1,8 @@
 # Scheduled jobs (free on GitHub Actions). Times are UTC; comments give Italian time (CEST).
 # Needs repository secrets: DATABASE_URL, DATABASE_AUTH_TOKEN, SESSION_SECRET and, for real mode,
-# MAILBOX_USER, MAILBOX_APP_PASSWORD, DIGEST_TO, CONTACT_EMAIL, ADZUNA_APP_ID, ADZUNA_APP_KEY,
-# TAVILY_API_KEY. Repository variable DEMO_MODE must be set to "false" for real mode.
+# MAILBOX_USER, MAILBOX_APP_PASSWORD, CONTACT_EMAIL, ADZUNA_APP_ID, ADZUNA_APP_KEY,
+# TAVILY_API_KEY. A second mailbox (key "studente"): MAILBOX_STUDENTE_USER, MAILBOX_STUDENTE_APP_PASSWORD;
+# for another key, add its two lines below. Repository variable DEMO_MODE must be set to "false" for real mode.
 # Logs are public on a public repo: the job runner prints counts only, never personal data.
 name: Scheduled jobs
 on:
@@ -29,7 +30,8 @@ jobs:
       APP_URL: ${{ vars.APP_URL }}
       MAILBOX_USER: ${{ secrets.MAILBOX_USER }}
       MAILBOX_APP_PASSWORD: ${{ secrets.MAILBOX_APP_PASSWORD }}
-      DIGEST_TO: ${{ secrets.DIGEST_TO }}
+      MAILBOX_STUDENTE_USER: ${{ secrets.MAILBOX_STUDENTE_USER }}
+      MAILBOX_STUDENTE_APP_PASSWORD: ${{ secrets.MAILBOX_STUDENTE_APP_PASSWORD }}
       CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
       ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
       ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}

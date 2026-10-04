@@ -37,7 +37,7 @@ export interface TemplateSeed {
   body: string;
 }
 
-/** Default templates: short, warm, plain Italian. Nothing invented about her experience. */
+/** Default templates for job seekers: short, plain Italian. Nothing invented about anyone's experience. */
 export const DEFAULT_TEMPLATES: TemplateSeed[] = [
   {
     name: "Candidatura semplice",
@@ -75,10 +75,59 @@ Cordiali saluti,
 
 vi scrivo perché mi piacerebbe lavorare con {azienda}. Ho visto che sul vostro sito invitate a inviare candidature spontanee.
 
-In allegato trovate il mio curriculum. Se in futuro si aprisse una posizione adatta a me, sarei felice di essere contattata.
+In allegato trovate il mio curriculum. Se in futuro si aprisse una posizione adatta al mio profilo, sarei felice di sentirvi.
 
 Grazie per l'attenzione.
 Cordiali saluti,
 {nome}`,
   },
 ];
+
+/** Default templates for students looking for an internship (Italian first, English for international firms). */
+export const STAGE_TEMPLATES: TemplateSeed[] = [
+  {
+    name: "Candidatura per uno stage",
+    kind: "job",
+    subject: "Candidatura stage: {ruolo} | {nome}",
+    body: `Buongiorno,
+
+frequento l'università e vorrei candidarmi per {ruolo}, che ho trovato tramite {fonte}.
+
+In allegato trovate il mio curriculum. Sarei felice di approfondire in un colloquio, anche online, e di raccontarvi perché {azienda} mi interessa.
+
+Grazie per l'attenzione.
+Cordiali saluti,
+{nome}`,
+  },
+  {
+    name: "Internship application (English)",
+    kind: "job",
+    subject: "Application: {ruolo} | {nome}",
+    body: `Dear Hiring Team,
+
+I am a university student and I would like to apply for the {ruolo} position at {azienda}, which I found through {fonte}.
+
+Please find my CV attached. I would welcome the chance to discuss how I could contribute to your team.
+
+Kind regards,
+{nome}`,
+  },
+  {
+    name: "Candidatura spontanea per stage",
+    kind: "spontaneous",
+    subject: "Candidatura spontanea per uno stage | {nome}",
+    body: `Buongiorno,
+
+frequento l'università e mi piacerebbe fare uno stage presso {azienda}. Ho visto che sul vostro sito invitate a inviare candidature spontanee.
+
+In allegato trovate il mio curriculum. Se si aprisse un'opportunità adatta, sarei felice di sentirvi.
+
+Grazie per l'attenzione.
+Cordiali saluti,
+{nome}`,
+  },
+];
+
+export function templatesFor(track: "lavoro" | "stage"): TemplateSeed[] {
+  return track === "stage" ? STAGE_TEMPLATES : DEFAULT_TEMPLATES;
+}

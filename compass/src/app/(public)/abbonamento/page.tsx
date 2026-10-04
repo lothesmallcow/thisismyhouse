@@ -1,98 +1,93 @@
-import { IconCheck, IconX } from "@/components/icons";
+import { IconCheck } from "@/components/icons";
 import { LinkButton } from "@/components/ui";
 import { PLANS, euro } from "./plans";
 
-export const metadata = { title: "Abbonamento", description: "I piani di Compass: Essenziale, Compass e Famiglia." };
+export const metadata = { title: "Prezzi", description: "I piani di Compass: Essenziale, Compass e Famiglia." };
 
 const COMPARE: [string, (string | boolean)[]][] = [
   ["Offerte dagli avvisi e-mail", [true, true, true]],
+  ["Lavoro e stage", [true, true, true]],
+  ["Aziende e brand scelti", ["10", "Illimitati", "Illimitati"]],
+  ["Suggerimenti dal CV", [false, true, true]],
+  ["Solo le aziende scelte", [false, true, true]],
   ["Offerte dal web e dai siti aziendali", [false, true, true]],
   ["Candidature via e-mail al giorno", ["3", "10", "20"]],
-  ["CV diversi per tipo di lavoro", ["1", "3", "3"]],
+  ["CV per tipo di posizione", ["1", "3", "3"]],
   ["E-mail del mattino", [false, true, true]],
   ["Risposte delle aziende riconosciute", [false, true, true]],
   ["Prepara con Claude", [false, true, true]],
   ["Pilota automatico", [false, false, true]],
-  ["Candidature spontanee", [false, false, true]],
-  ["Accesso per chi ti aiuta", [false, false, true]],
+  ["Account", ["1", "1", "4"]],
 ];
 
 const FAQ = [
-  ["Posso disdire quando voglio?", "Sì. Disdici con un tocco e resti nel piano fino alla fine del periodo già pagato. Nessuna penale."],
-  ["C'è un periodo di prova?", "I primi 30 giorni del piano Compass e del piano Famiglia sono gratis. Se non ti convince, torni a Essenziale senza pagare nulla."],
-  ["Compass entra nel mio account LinkedIn o Indeed?", "No, mai. Compass legge solo gli avvisi che ricevi per e-mail e le offerte pubbliche. Non accede ai tuoi account e non si candida al posto tuo sui loro siti."],
-  ["Cosa succede ai miei dati?", "Restano tuoi. Li usiamo solo per trovarti lavoro e li cancelli con un tocco dalla pagina Aiuto."],
-  ["Il pagamento annuale conviene?", "Sì: con il piano annuale paghi circa due mesi in meno rispetto al mensile."],
+  ["Posso disdire quando voglio?", "Sì, in qualsiasi momento, senza penali. Resti nel piano fino alla fine del periodo pagato."],
+  ["C'è un periodo di prova?", "30 giorni gratis per Compass e Famiglia. Se non ti convince torni a Essenziale senza pagare."],
+  ["Compass entra nel mio account LinkedIn o Indeed?", "No, mai. Legge solo gli avvisi che ricevi per e-mail e le offerte pubbliche, e non si candida al posto tuo sui loro siti."],
+  ["Cosa succede ai miei dati?", "Restano tuoi: servono solo a trovarti offerte e li cancelli in ogni momento dal profilo."],
+  ["Funziona per gli stage?", "Sì: la modalità stage legge anno di corso, periodi e requisiti degli annunci (primo anno, penultimo anno, laurea richiesta) e mette in cima boutique, fondi e aziende che scegli."],
 ];
 
 export default function AbbonamentoPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-8">
-      <section className="mx-auto max-w-3xl pt-6 text-center rise">
-        <p className="font-bold text-needle-ink">Abbonamento</p>
-        <h1 className="mt-2 text-[2.6rem] font-semibold leading-tight sm:text-[3.4rem]">Scegli il piano giusto per te</h1>
-        <p className="mt-4 text-[1.15rem] text-ink-soft">Prezzi chiari, niente costi nascosti. Inizi gratis e cambi piano quando vuoi.</p>
+      <section className="mx-auto max-w-2xl pt-16 text-center">
+        <p className="text-[12.5px] font-medium uppercase tracking-[0.08em] text-accent">Prezzi</p>
+        <h1 className="mt-2 text-[32px] font-semibold leading-tight sm:text-[40px]">Semplici, senza sorprese</h1>
+        <p className="mt-3 text-[15px] text-muted">Inizi gratis e cambi piano quando vuoi.</p>
+        <p className="mx-auto mt-4 inline-flex rounded-full bg-warn-soft px-3 py-1 text-[12.5px] text-warn">Pagamenti non ancora attivi: i prezzi sono indicativi.</p>
       </section>
 
-      <section className="mt-12 grid items-stretch gap-6 lg:grid-cols-3" aria-label="Piani">
+      <section className="mt-12 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3" aria-label="Piani">
         {PLANS.map((p) => (
-          <article
-            key={p.id}
-            className={`relative flex flex-col rounded-[28px] border p-7 shadow-[var(--shadow-card)] ${p.highlight ? "border-navy bg-navy text-white lg:-mt-4 lg:mb-[-1rem]" : "border-line bg-card"}`}
-          >
-            {p.highlight && <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-needle-ink px-4 py-1.5 text-[0.95rem] font-bold text-white">Il più scelto</span>}
-            <h2 className={`text-[1.8rem] font-semibold ${p.highlight ? "text-white" : ""}`}>{p.name}</h2>
-            <p className={p.highlight ? "text-white/85" : "text-ink-soft"}>{p.tagline}</p>
-            <p className="mt-6 flex items-end gap-2">
-              <span className="font-serif text-[3.2rem] font-semibold leading-none">{euro(p.monthly)}</span>
-              <span className={`pb-1.5 ${p.highlight ? "text-white/85" : "text-ink-soft"}`}>{p.monthly ? "al mese" : "per sempre"}</span>
+          <article key={p.id} className={`relative flex flex-col rounded-[var(--radius-card)] border bg-surface p-6 ${p.highlight ? "border-accent ring-1 ring-accent" : "border-line"}`}>
+            {p.highlight && <span className="absolute -top-3 left-6 rounded-full bg-accent px-2.5 py-0.5 text-[12px] font-medium text-surface">Consigliato</span>}
+            <h2 className="text-[17px] font-semibold">{p.name}</h2>
+            <p className="text-[13.5px] text-muted">{p.tagline}</p>
+            <p className="mt-5 flex items-baseline gap-1.5">
+              <span className="text-[34px] font-semibold tracking-tight tabular-nums">{euro(p.monthly)}</span>
+              <span className="text-[13.5px] text-muted">{p.monthly ? "/ mese" : "per sempre"}</span>
             </p>
-            <p className={`mt-2 min-h-[1.6em] text-[0.98rem] ${p.highlight ? "text-white/85" : "text-ink-soft"}`}>
-              {p.yearly ? `oppure ${euro(p.yearly)} l'anno (risparmi ${euro(Math.round((p.monthly * 12 - p.yearly) * 100) / 100)})` : "Nessuna carta richiesta"}
-            </p>
-            <p className={`mt-5 rounded-2xl px-4 py-3 font-bold ${p.highlight ? "bg-white/10" : "bg-paper"}`}>{p.limits}</p>
-            <ul className="mt-5 flex-1 space-y-3">
+            <p className="mt-1 min-h-[1.5em] text-[12.5px] text-faint">{p.yearly ? `${euro(p.yearly)} all'anno, due mesi gratis` : "Nessuna carta richiesta"}</p>
+            <p className="mt-4 rounded-lg bg-subtle px-3 py-2 text-[13px] font-medium">{p.limits}</p>
+            <ul className="mt-4 flex-1 space-y-2">
               {p.features.map((f) => (
-                <li key={f} className="flex gap-2.5">
-                  <IconCheck className={`mt-0.5 shrink-0 ${p.highlight ? "text-[#9fd3ad]" : "text-sage-ink"}`} size={22} />
+                <li key={f} className="flex gap-2 text-[13.5px]">
+                  <IconCheck className="mt-0.5 shrink-0 text-accent" size={15} />
                   <span>{f}</span>
                 </li>
               ))}
             </ul>
-            <LinkButton href={`/abbonamento/${p.id}`} variant={p.highlight ? "secondary" : "primary"} wide className="mt-7">
-              {p.monthly ? `Prova ${p.name} gratis per 30 giorni` : "Inizia gratis"}
+            <LinkButton href={`/abbonamento/${p.id}`} variant={p.highlight ? "primary" : "secondary"} wide className="mt-6">
+              {p.monthly ? `Prova ${p.name}` : "Inizia gratis"}
             </LinkButton>
           </article>
         ))}
       </section>
 
-      <section className="mt-20">
-        <h2 className="text-center text-[2rem] font-semibold">Confronta i piani</h2>
-        <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="mt-6 overflow-x-auto rounded-[var(--radius-card)] border border-line bg-card shadow-[var(--shadow-card)]">
-          <table className="w-full min-w-[560px] text-left">
+      <section className="mt-16" aria-labelledby="confronto">
+        <h2 id="confronto" className="text-[18px] font-semibold">
+          Confronto
+        </h2>
+        <div className="mt-4 overflow-x-auto rounded-[var(--radius-card)] border border-line bg-surface" tabIndex={0} role="region" aria-label="Tabella di confronto">
+          <table className="w-full min-w-[560px] text-[13.5px]">
             <thead>
-              <tr className="border-b border-line">
-                <th className="px-5 py-4 font-bold">Cosa comprende</th>
+              <tr className="border-b border-line text-left">
+                <th className="px-4 py-3 font-medium text-muted">Funzione</th>
                 {PLANS.map((p) => (
-                  <th key={p.id} className="px-4 py-4 text-center font-serif text-[1.15rem] font-semibold">
+                  <th key={p.id} className="px-4 py-3 text-center font-semibold">
                     {p.name}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-line">
               {COMPARE.map(([label, vals]) => (
-                <tr key={label} className="border-b border-line/70 last:border-0">
-                  <td className="px-5 py-3.5">{label}</td>
+                <tr key={label}>
+                  <td className="px-4 py-2.5">{label}</td>
                   {vals.map((v, i) => (
-                    <td key={i} className="px-4 py-3.5 text-center">
-                      {v === true ? (
-                        <IconCheck className="mx-auto text-sage-ink" aria-label="Sì" />
-                      ) : v === false ? (
-                        <IconX className="mx-auto text-ink-soft/70" size={20} aria-label="No" />
-                      ) : (
-                        <span className="font-bold">{v}</span>
-                      )}
+                    <td key={i} className="px-4 py-2.5 text-center">
+                      {v === true ? <IconCheck size={16} className="mx-auto text-accent" aria-label="Sì" /> : v === false ? <span className="text-faint" aria-label="No">–</span> : v}
                     </td>
                   ))}
                 </tr>
@@ -102,17 +97,18 @@ export default function AbbonamentoPage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-20 max-w-3xl">
-        <h2 className="text-center text-[2rem] font-semibold">Domande frequenti</h2>
-        <div className="mt-6 space-y-3">
+      <section className="mx-auto mt-16 max-w-3xl" aria-labelledby="faq">
+        <h2 id="faq" className="text-[18px] font-semibold">
+          Domande frequenti
+        </h2>
+        <div className="mt-4 divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface">
           {FAQ.map(([q, a]) => (
-            <details key={q} className="rounded-2xl border border-line bg-card px-5 shadow-[var(--shadow-card)]">
-              <summary className="flex min-h-[64px] cursor-pointer items-center text-[1.1rem] font-bold">{q}</summary>
-              <p className="pb-5 text-ink-soft">{a}</p>
+            <details key={q} className="group px-4 py-3">
+              <summary className="flex min-h-[32px] cursor-pointer list-none items-center text-[14px] font-medium">{q}</summary>
+              <p className="mt-2 text-[13.5px] text-muted">{a}</p>
             </details>
           ))}
         </div>
-        <p className="mt-10 text-center text-[0.95rem] text-ink-soft">Prezzi IVA inclusa. Anteprima: i pagamenti online non sono ancora attivi.</p>
       </section>
     </div>
   );

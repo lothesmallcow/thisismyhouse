@@ -69,6 +69,23 @@ export function buildQueries(roles: string[], city: string, max: number): Search
   return out.slice(0, max);
 }
 
+/** Students: internships by interest and by chosen company (plain words, no quotes: these are not job titles). */
+export function buildStudentQueries(terms: string[], companies: string[], city: string, max: number): SearchQuery[] {
+  const out: SearchQuery[] = [];
+  for (const c of companies.slice(0, 4)) {
+    out.push({ q: `${c} internship ${city}`, includeDomains: ["linkedin.com"] });
+    out.push({ q: `${c} stage ${city} candidatura` });
+  }
+  for (const t of terms.slice(0, 3)) {
+    out.push({ q: `internship ${t} ${city}`, includeDomains: ["linkedin.com"] });
+    out.push({ q: `stage ${t} ${city}`, includeDomains: ["it.indeed.com"] });
+  }
+  // Interleave companies and interests so a small cap still covers both.
+  const a = out.filter((_, i) => i % 2 === 0);
+  const b = out.filter((_, i) => i % 2 === 1);
+  return [...a, ...b].slice(0, max);
+}
+
 /** Only pages that look like a single job ad, not search/listing pages. */
 export function isJobPage(url: string): boolean {
   const u = url.toLowerCase();

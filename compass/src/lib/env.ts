@@ -1,5 +1,19 @@
 // Typed access to configuration. Safe defaults: demo mode is ON unless explicitly "false".
 
+export interface MailboxConfig {
+  key: string; // "default" or the lower-case <KEY> of MAILBOX_<KEY>_USER
+  user: string;
+  password: string;
+  imapHost: string;
+  smtpHost: string;
+}
+
+/** The mailbox with this key, if its two variables are set. */
+export function mailboxConfig(key: string | null | undefined): MailboxConfig | null {
+  if (!key) return null;
+  return env.mailboxes.find((m) => m.key === key.toLowerCase()) ?? null;
+}
+
 export const env = {
   get demoMode(): boolean {
     return (process.env.DEMO_MODE ?? "true").toLowerCase() !== "false";
@@ -41,11 +55,23 @@ export const env = {
       return Boolean(process.env.MAILBOX_USER && process.env.MAILBOX_APP_PASSWORD);
     },
   },
+  /** Every configured mailbox: MAILBOX_USER/MAILBOX_APP_PASSWORD is "default", MAILBOX_<KEY>_USER/_APP_PASSWORD adds more. */
+  get mailboxes(): MailboxConfig[] {
+    const out: MailboxConfig[] = [];
+    const host = { imapHost: process.env.MAILBOX_IMAP_HOST || "imap.gmail.com", smtpHost: process.env.MAILBOX_SMTP_HOST || "smtp.gmail.com" };
+    if (process.env.MAILBOX_USER && process.env.MAILBOX_APP_PASSWORD) {
+      out.push({ key: "default", user: process.env.MAILBOX_USER, password: process.env.MAILBOX_APP_PASSWORD, ...host });
+    }
+    for (const [k, v] of Object.entries(process.env)) {
+      const m = k.match(/^MAILBOX_([A-Z0-9]+)_USER$/);
+      if (!m || !v) continue;
+      const password = process.env[`MAILBOX_${m[1]}_APP_PASSWORD`];
+      if (password) out.push({ key: m[1].toLowerCase(), user: v, password, ...host });
+    }
+    return out;
+  },
   get adminAlertEmail(): string {
     return process.env.ADMIN_ALERT_EMAIL || "";
-  },
-  get digestTo(): string {
-    return process.env.DIGEST_TO || "";
   },
   get adzuna() {
     return { appId: process.env.ADZUNA_APP_ID || "", appKey: process.env.ADZUNA_APP_KEY || "" };

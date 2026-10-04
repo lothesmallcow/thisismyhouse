@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.3.0 · 2026-10-04
+
+Several people, internships for students, a catalog of companies and a career panel.
+
+- **Accounts**: invitations or admin-created accounts; registration closed / by invite / open;
+  jobs shared, scores and everything personal per person; admin "open their app"; one mailbox per
+  person optional (`MAILBOX_<KEY>_*`); `DIGEST_TO` replaced by each person's digest address.
+- **Students**: a `stage` track with its own questionnaire (university, year, periods, paid
+  only); internships, spring weeks, insight days and graduate programmes recognised; ranking by
+  year of study (first years: spring weeks, not Associate roles); English letter templates.
+- **Catalog**: ~180 boutiques, banks, funds, consulting firms, startups and brands, with extra
+  sectors and themes; "Altro" for anything missing (private until shared); like/avoid choices.
+- **Focus and filters**: all jobs with choices first / only choices / only chosen companies;
+  minimum net pay, type, contract, hours, sector, search; defaults from the questionnaire,
+  saveable.
+- **Career panel**: experience timeline from the CV (PDF text) or a LinkedIn data export;
+  career paths and company suggestions by shared themes; a gentle fit warning; advice for the
+  year of study; redo the questionnaire or change single answers.
+- **Design**: new professional, minimal UI with dark mode; 234 screens audited, 0 axe issues.
+- **Tests**: 287 unit/integration (incl. migration of legacy data and isolation between people),
+  19 end-to-end flows.
+
 ## 0.2.0 · 2026-10-04
 
 Hardening after an independent review and a full audit.

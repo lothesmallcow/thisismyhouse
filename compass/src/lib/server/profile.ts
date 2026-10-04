@@ -1,33 +1,37 @@
-// Her profile (single row). Also converts it into the ranking profile.
+// One profile per account. Also converts it (plus catalog choices) into the ranking profile.
 import { eq } from "drizzle-orm";
 import type { Contract } from "../core/extract";
 import type { RankProfile } from "../core/rank";
 import { netAnnualToGrossAnnual, MONTHS_PER_YEAR } from "../core/salary";
 import type { DB } from "../db";
 import { schema } from "../db";
+import type { RankPrefs } from "./catalog";
 
 export type Profile = typeof schema.profile.$inferSelect;
-export type ProfilePatch = Partial<Omit<Profile, "id">>;
+export type ProfilePatch = Partial<Omit<Profile, "id" | "userId">>;
 
-export async function getProfile(db: DB): Promise<Profile> {
-  const row = await db.query.profile.findFirst({ where: eq(schema.profile.id, 1) });
+export async function getProfile(db: DB, userId: number): Promise<Profile> {
+  const row = await db.query.profile.findFirst({ where: eq(schema.profile.userId, userId) });
   if (row) return row;
-  await db.insert(schema.profile).values({ id: 1 }).onConflictDoNothing();
-  return (await db.query.profile.findFirst({ where: eq(schema.profile.id, 1) }))!;
+  await db.insert(schema.profile).values({ userId }).onConflictDoNothing();
+  return (await db.query.profile.findFirst({ where: eq(schema.profile.userId, userId) }))!;
 }
 
-export async function updateProfile(db: DB, patch: ProfilePatch): Promise<Profile> {
-  await getProfile(db);
+export async function updateProfile(db: DB, userId: number, patch: ProfilePatch): Promise<Profile> {
+  await getProfile(db, userId);
   const p = { ...patch, updatedAt: new Date() };
   if (patch.minNetMonthly !== undefined) {
     p.minGrossAnnualEstimate = patch.minNetMonthly ? netAnnualToGrossAnnual(patch.minNetMonthly * MONTHS_PER_YEAR) : null;
   }
-  await db.update(schema.profile).set(p).where(eq(schema.profile.id, 1));
-  return getProfile(db);
+  await db.update(schema.profile).set(p).where(eq(schema.profile.userId, userId));
+  return getProfile(db, userId);
 }
 
-export function toRankProfile(p: Profile): RankProfile {
+const NO_PREFS: RankPrefs = { likedSectors: [], avoidSectors: [], likedCompanies: [], avoidCompanies: [] };
+
+export function toRankProfile(p: Profile, prefs: RankPrefs = NO_PREFS): RankProfile {
   return {
+    track: p.track,
     roles: p.roles,
     synonyms: p.synonyms,
     maxKm: p.maxKm,
@@ -37,8 +41,15 @@ export function toRankProfile(p: Profile): RankProfile {
     minAnnualGross: p.minGrossAnnualEstimate,
     languages: p.languages,
     avoidKeywords: p.avoidKeywords,
-    avoidCompanies: p.avoidCompanies,
+    avoidCompanies: [...p.avoidCompanies, ...prefs.avoidCompanies],
     avoidSectors: p.avoidSectors,
+    likedSectors: prefs.likedSectors,
+    avoidSectorTerms: prefs.avoidSectors,
+    likedCompanies: prefs.likedCompanies,
+    studyYear: p.studyYear,
+    degreeYears: p.degreeYears,
+    extraPlaces: p.extraPlaces,
+    paidOnly: p.paidOnly,
   };
 }
 

@@ -13,23 +13,25 @@ import { dismissJob, listJobs, setAdjustmentActive } from "@/lib/server/jobs";
 import { computeMetrics } from "@/lib/server/metrics";
 import { deleteAllMyData } from "@/lib/server/privacy";
 import { confirmReply, pendingReplies } from "@/lib/server/replies";
-import { getSettings, updateGuardrails } from "@/lib/server/settings";
-import { seedAccounts, seedDemo } from "@/lib/seed";
+import { getSettings, updateGuardrails, updateUserSettings } from "@/lib/server/settings";
+
 import { demoFetch } from "@/lib/sources/demo-fetch";
 import { DemoMailbox } from "@/lib/sources/mail/demo";
 import { TavilyProvider } from "@/lib/sources/web/w1";
-import { freshDb } from "./helpers/db";
+import { freshDb, seedPeople, view } from "./helpers/db";
 
 // Monday 5 October 2026, 09:00 Rome
 const NOW = new Date("2026-10-05T07:00:00Z");
 const noSleep = async () => {};
 const rng = () => 0.5;
 let db: DB;
+let L: number; // Lucia: job search
+let M: number; // Marco: internships
+const herMailbox = () => [{ key: "default", owners: [L], mailbox: new DemoMailbox(db, "default") }];
 
 beforeEach(async () => {
   db = await freshDb();
-  await seedAccounts(db, { userEmail: "u@example.com", userPassword: "x", adminEmail: "a@example.com", adminPassword: "y" });
-  await seedDemo(db, NOW);
+  ({ L, M } = await seedPeople(db, NOW));
 });
 
 const count = async (t: SQLiteTable) => Number((await db.select({ n: sql<number>`count(*)` }).from(t))[0].n);
@@ -37,7 +39,7 @@ const count = async (t: SQLiteTable) => Number((await db.select({ n: sql<number>
 describe("ingest (demo mode: real adapters, fixture network)", () => {
   it("reads the demo mailbox, Adzuna, ATS and the approved W2 site; dedupes across sources", async () => {
     const before = await count(schema.jobs);
-    const s = await runIngest({ db, fetchImpl: demoFetch(), mailbox: new DemoMailbox(db), demo: true, now: NOW, politeSleep: noSleep });
+    const s = await runIngest({ db, fetchImpl: demoFetch(), mailboxes: herMailbox(), demo: true, now: NOW, politeSleep: noSleep });
     expect(s.mailbox!.alerts).toBe(5);
     expect(s.newJobs).toBeGreaterThan(10);
     expect(s.sources["api:adzuna"]).toBeGreaterThan(0);
@@ -63,21 +65,21 @@ describe("ingest (demo mode: real adapters, fixture network)", () => {
     expect(health.find((h) => h.source === "email:linkedin")?.itemsFound).toBe(6);
 
     // Running again parses nothing twice
-    const again = await runIngest({ db, fetchImpl: demoFetch(), mailbox: new DemoMailbox(db), demo: true, now: NOW, politeSleep: noSleep });
+    const again = await runIngest({ db, fetchImpl: demoFetch(), mailboxes: herMailbox(), demo: true, now: NOW, politeSleep: noSleep });
     expect(again.mailbox!.alerts).toBe(0);
     expect(again.newJobs).toBe(0);
   });
 
   it("the scam ad from the Indeed alert is flagged and ranked Poco adatta", async () => {
-    await runIngest({ db, fetchImpl: demoFetch(), mailbox: new DemoMailbox(db), demo: true, now: NOW, politeSleep: noSleep });
+    await runIngest({ db, fetchImpl: demoFetch(), mailboxes: herMailbox(), demo: true, now: NOW, politeSleep: noSleep });
     const scam = await db.query.jobs.findFirst({ where: eq(schema.jobs.title, "Operatrice data entry da casa - guadagna subito") });
     expect(scam!.scamFlags.map((f) => f.id)).toEqual(expect.arrayContaining(["easy-money"]));
-    expect(scam!.level).toBe("poco");
+    expect((await view(db, L, scam!.id))!.level).toBe("poco");
   });
 
   it("a 403 stops the source for the rest of the day and is recorded", async () => {
     const blocked = async () => new Response("no", { status: 403 });
-    await runIngest({ db, fetchImpl: blocked, mailbox: null, demo: true, now: NOW, politeSleep: noSleep });
+    await runIngest({ db, fetchImpl: blocked, mailboxes: [], demo: true, now: NOW, politeSleep: noSleep });
     const h = await db.query.sourceHealth.findFirst({ where: eq(schema.sourceHealth.source, "api:adzuna") });
     expect(h!.blocks).toBe(1);
     expect(h!.pausedUntil!.getTime()).toBeGreaterThan(NOW.getTime());
@@ -110,20 +112,20 @@ describe("W1 discovery", () => {
 
 describe("listing and 'Non mi interessa'", () => {
   it("lists best matches first, 10 at a time, and filters", async () => {
-    const page = await listJobs(db, {}, 10, NOW);
+    const page = await listJobs(db, L, {}, 10, NOW);
     expect(page.jobs).toHaveLength(10);
     expect(page.total).toBeGreaterThan(10);
     const order = page.jobs.map((j) => j.level);
     expect(order.indexOf("poco") === -1 || order.lastIndexOf("molto") < order.indexOf("poco")).toBe(true);
-    const part = await listJobs(db, { hours: "part" }, 100, NOW);
+    const part = await listJobs(db, L, { hours: "part" }, 100, NOW);
     expect(part.jobs.every((j) => j.hours !== "full")).toBe(true);
-    const near = await listJobs(db, { maxKm: 10 }, 100, NOW);
+    const near = await listJobs(db, L, { maxKm: 10 }, 100, NOW);
     expect(near.jobs.every((j) => j.remote === "remote" || (j.distanceKm ?? 999) <= 10)).toBe(true);
   });
 
   it("dismissing 'azienda' adds a visible adjustment that can be undone", async () => {
-    const job = (await listJobs(db, {}, 1, NOW)).jobs[0];
-    const label = await dismissJob(db, job.id, "azienda", NOW);
+    const job = (await listJobs(db, L, {}, 1, NOW)).jobs[0];
+    const label = await dismissJob(db, L, job.id, "azienda", NOW);
     expect(label).toMatch(/Evita l'azienda/);
     const adj = await db.select().from(schema.rankAdjustments);
     expect(adj).toHaveLength(1);
@@ -140,11 +142,11 @@ describe("applying", () => {
 
   it("Lane 1: prepare, approve (queued >= 15 min), send in demo mode -> outbox, never twice", async () => {
     const job = await emailJob();
-    const app = (await prepareEmailApplication(db, job.id))!;
+    const app = (await prepareEmailApplication(db, L, job.id))!;
     expect(app.subject).toBe("Candidatura per Impiegata amministrativa | Lucia Ferraro");
     expect(app.body).toMatch(/Lucia Ferraro$/);
     expect(app.cvId).not.toBeNull();
-    const r = await approveApplication(db, app.id, NOW, rng);
+    const r = await approveApplication(db, L, app.id, NOW, rng);
     expect(r.ok).toBe(true);
     expect(r.sendAt!.getTime() - NOW.getTime()).toBeGreaterThanOrEqual(15 * 60000);
 
@@ -158,39 +160,40 @@ describe("applying", () => {
     const log = await db.select().from(schema.sendLog).where(eq(schema.sendLog.status, "simulated"));
     expect(log.some((l) => l.company === "Ferramenta Colombo Srl")).toBe(true);
     // Same job again: returns the existing application, never a second e-mail
-    const again = await prepareEmailApplication(db, job.id);
+    const again = await prepareEmailApplication(db, L, job.id);
     expect(again!.id).toBe(app.id);
   });
 
   it("Annulla during the undo window brings it back to Da inviare", async () => {
     const job = await emailJob();
-    const app = (await prepareEmailApplication(db, job.id))!;
-    await approveApplication(db, app.id, NOW, rng);
-    expect(await cancelApplication(db, app.id, new Date(NOW.getTime() + 60000))).toBe(true);
+    const app = (await prepareEmailApplication(db, L, job.id))!;
+    await approveApplication(db, L, app.id, NOW, rng);
+    expect(await cancelApplication(db, L, app.id, new Date(NOW.getTime() + 60000))).toBe(true);
     const back = await db.query.applications.findFirst({ where: eq(schema.applications.id, app.id) });
     expect(back!.status).toBe("draft");
   });
 
   it("kill switch pulls queued e-mails back and blocks the queue", async () => {
     const job = await emailJob();
-    const app = (await prepareEmailApplication(db, job.id))!;
-    await approveApplication(db, app.id, NOW, rng);
-    expect(await setKillSwitch(db, true)).toBe(1);
-    expect((await approveApplication(db, app.id, NOW, rng)).ok).toBe(false);
+    const app = (await prepareEmailApplication(db, L, job.id))!;
+    await approveApplication(db, L, app.id, NOW, rng);
+    expect(await setKillSwitch(db, L, true)).toBe(1);
+    expect((await approveApplication(db, L, app.id, NOW, rng)).ok).toBe(false);
     expect((await processQueue(db, new OutboxTransport(db), new Date(NOW.getTime() + 86400000), rng)).sent).toBe(0);
-    await setKillSwitch(db, false);
-    expect((await approveApplication(db, app.id, NOW, rng)).ok).toBe(true);
+    await setKillSwitch(db, L, false);
+    expect((await approveApplication(db, L, app.id, NOW, rng)).ok).toBe(true);
   });
 
   it("Invia tutte respects the daily cap by moving the rest to the next days", async () => {
     await updateGuardrails(db, { dailyCap: 2 });
-    for (const j of await db.select().from(schema.jobs).where(sql`${schema.jobs.applicationEmail} is not null and ${schema.jobs.status} != 'applied'`)) {
-      await prepareEmailApplication(db, j.id);
+    const mine = await db.select({ j: schema.jobs }).from(schema.userJobs).innerJoin(schema.jobs, eq(schema.jobs.id, schema.userJobs.jobId)).where(sql`${schema.userJobs.userId} = ${L} and ${schema.jobs.applicationEmail} is not null and ${schema.userJobs.status} != 'applied'`);
+    for (const { j } of mine) {
+      await prepareEmailApplication(db, L, j.id);
     }
-    const all = await listDrafts(db);
+    const all = await listDrafts(db, L);
     const bulk = all.filter((d) => d.app.warnings.length === 0);
     expect(bulk.length).toBeLessThan(all.length); // drafts with a warning are left out of "Invia tutte"
-    const r = await approveAll(db, NOW, rng);
+    const r = await approveAll(db, L, NOW, rng);
     expect(r.queued + r.blocked).toBe(bulk.length);
     const queued = await db.select().from(schema.applications).where(eq(schema.applications.status, "queued"));
     const perDay = new Map<string, number>();
@@ -200,30 +203,35 @@ describe("applying", () => {
 
   it("autopilot only queues Molto adatta jobs without scam flags, and only when on", async () => {
     expect((await runAutopilot(db, NOW, rng)).queued).toBe(0);
-    await updateGuardrails(db, { autopilot: true });
+    await updateUserSettings(db, L, { autopilot: true });
     await runAutopilot(db, NOW, rng);
     const queued = await db.select({ a: schema.applications, j: schema.jobs }).from(schema.applications).innerJoin(schema.jobs, eq(schema.jobs.id, schema.applications.jobId)).where(eq(schema.applications.status, "queued"));
     expect(queued.length).toBeGreaterThan(0);
-    expect(queued.every(({ j }) => j.level === "molto" && j.scamFlags.length === 0)).toBe(true);
-    expect(queued.every(({ a }) => a.mode === "autopilot")).toBe(true);
+    for (const { a, j } of queued) {
+      expect(a.userId).toBe(L); // Marco did not turn it on
+      expect((await view(db, L, j.id))!.level).toBe("molto");
+      expect(j.scamFlags).toHaveLength(0);
+      expect(a.mode).toBe("autopilot");
+    }
   });
 
   it("spontaneous: one per company per 6 months", async () => {
     const c = await db.query.spontaneousCompanies.findFirst();
-    const app = (await prepareSpontaneous(db, c!.id))!;
+    expect(await prepareSpontaneous(db, M, c!.id)).toBeNull(); // her list, not his
+    const app = (await prepareSpontaneous(db, L, c!.id))!;
     expect(app.subject).toMatch(/Candidatura spontanea/);
-    const r = await approveApplication(db, app.id, NOW, rng);
+    const r = await approveApplication(db, L, app.id, NOW, rng);
     expect(r.ok).toBe(true);
     await processQueue(db, new OutboxTransport(db), new Date(r.sendAt!.getTime() + 1000), rng);
-    const second = (await prepareSpontaneous(db, c!.id))!;
-    const r2 = await approveApplication(db, second.id, new Date(NOW.getTime() + 30 * 86400000), rng);
+    const second = (await prepareSpontaneous(db, L, c!.id))!;
+    const r2 = await approveApplication(db, L, second.id, new Date(NOW.getTime() + 30 * 86400000), rng);
     expect(r2.ok).toBe(false);
     expect(r2.blockers![0].code).toBe("repeat-spontaneous");
   });
 
-  it("Lane 3: 'Fatto, mi sono candidata' is logged", async () => {
-    const job = (await listJobs(db, {}, 1, NOW)).jobs[0];
-    await markAppliedOnSite(db, job.id, NOW);
+  it("Lane 3: 'Ho inviato la candidatura' is logged", async () => {
+    const job = (await listJobs(db, L, {}, 1, NOW)).jobs[0];
+    await markAppliedOnSite(db, L, job.id, NOW);
     const a = await db.query.applications.findFirst({ where: eq(schema.applications.jobId, job.id) });
     expect(a).toMatchObject({ lane: "site", status: "applied_site" });
   });
@@ -232,41 +240,52 @@ describe("applying", () => {
 describe("replies", () => {
   it("matches a reply by thread and suggests 'colloquio'", async () => {
     const job = await db.query.jobs.findFirst({ where: eq(schema.jobs.company, "Ferramenta Colombo Srl") });
-    const app = (await prepareEmailApplication(db, job!.id))!;
-    const r = await approveApplication(db, app.id, NOW, rng);
+    const app = (await prepareEmailApplication(db, L, job!.id))!;
+    const r = await approveApplication(db, L, app.id, NOW, rng);
     await processQueue(db, new OutboxTransport(db), new Date(r.sendAt!.getTime() + 1000), rng);
     const sent = await db.query.applications.findFirst({ where: eq(schema.applications.id, app.id) });
     const raw = fs.readFileSync("fixtures/emails/reply-1.eml", "utf8").replaceAll("<REPLACE_WITH_SENT_MESSAGE_ID>", sent!.messageId!).replace(/^Date: .*$/m, `Date: ${new Date(NOW.getTime() + 86400000).toUTCString()}`);
     await db.insert(schema.demoInbox).values({ messageId: "<reply-5001@studio-rinaldi.example>", raw, receivedAt: new Date(NOW.getTime() + 86400000) });
-    const s = await scanMailbox(db, new DemoMailbox(db), new Date(NOW.getTime() + 86400000 + 1000));
+    // Marco's mailbox never matches Lucia's applications
+    expect((await scanMailbox(db, new DemoMailbox(db), [M], new Date(NOW.getTime() + 86400000 + 1000))).replies).toBe(0);
+    await db.delete(schema.processedMessages);
+    const s = await scanMailbox(db, new DemoMailbox(db), [L], new Date(NOW.getTime() + 86400000 + 1000));
     expect(s.replies).toBe(1);
-    const pending = await pendingReplies(db);
+    expect(await pendingReplies(db, M)).toHaveLength(0);
+    const pending = await pendingReplies(db, L);
     const mine = pending.find((p) => p.app.id === app.id)!;
     expect(mine.reply).toMatchObject({ matchedBy: "thread", suggestedStatus: "interview" });
     const notes = await db.select().from(schema.notifications).where(eq(schema.notifications.audience, "user"));
-    expect(notes.some((n) => /Hai ricevuto una risposta da Ferramenta Colombo Srl/.test(n.text))).toBe(true);
-    await confirmReply(db, mine.reply.id);
+    expect(notes.some((n) => n.userId === L && /Nuova risposta da Ferramenta Colombo Srl/.test(n.text))).toBe(true);
+    await confirmReply(db, M, mine.reply.id); // not his: ignored
+    expect((await db.query.applications.findFirst({ where: eq(schema.applications.id, app.id) }))!.status).toBe("replied");
+    await confirmReply(db, L, mine.reply.id);
     expect((await db.query.applications.findFirst({ where: eq(schema.applications.id, app.id) }))!.status).toBe("interview");
   });
 });
 
 describe("digest, metrics, privacy", () => {
-  it("composes a warm digest with one button", () => {
+  it("composes a short digest with one button", () => {
     const d = composeDigest("Lucia Ferraro", { newJobs: 6, ready: 3, replies: 1 }, "https://compass.example");
-    expect(d.subject).toBe("Buongiorno! 6 nuove offerte, 3 candidature pronte, 1 risposta ricevuta");
-    expect(d.text).toMatch(/^Buongiorno Lucia!/);
+    expect(d.subject).toBe("Compass: 6 nuove offerte, 3 candidature pronte, 1 risposta ricevuta");
+    expect(d.text).toMatch(/^Buongiorno Lucia,/);
     expect(d.html.match(/<a /g)).toHaveLength(1);
     expect(composeDigest("", { newJobs: 0, ready: 0, replies: 0 }, "x").text).toMatch(/Ricontrollo domani mattina/);
   });
 
-  it("sends the digest once per day (demo -> outbox)", async () => {
-    expect(await runDigest(db, new OutboxTransport(db), NOW)).toBe("sent");
-    expect(await runDigest(db, new OutboxTransport(db), NOW)).toBe("already-sent");
-    expect((await db.select().from(schema.outbox).where(eq(schema.outbox.kind, "digest")))).toHaveLength(1);
+  it("sends one digest per person per day, to each person's address (demo -> outbox)", async () => {
+    const first = await runDigest(db, (u) => new OutboxTransport(db, u.id), NOW);
+    expect(first[L]).toBe("sent");
+    expect(first[M]).toBe("sent");
+    expect((await runDigest(db, (u) => new OutboxTransport(db, u.id), NOW))[L]).toBe("already-sent");
+    const out = await db.select().from(schema.outbox).where(eq(schema.outbox.kind, "digest"));
+    expect(out.map((o) => o.toEmail).sort()).toEqual(["s@example.com", "u@example.com"]);
+    await updateUserSettings(db, M, { digestEnabled: false, lastDigestDay: null });
+    expect((await runDigest(db, (u) => new OutboxTransport(db, u.id), NOW))[M]).toBe("disabled");
   });
 
   it("computes metrics from raw rows", async () => {
-    const m = await computeMetrics(db);
+    const m = await computeMetrics(db, L);
     expect(m.jobsTotal).toBeGreaterThan(20);
     expect(m.applicationsByLane.find((l) => l.lane === "email")?.total).toBe(2);
     expect(m.replies).toBe(0); // the seeded reply is on a simulated send
@@ -276,14 +295,20 @@ describe("digest, metrics, privacy", () => {
     expect(m.emailSimulated).toBe(2);
   });
 
-  it("deletes all her data", async () => {
-    await deleteAllMyData(db);
-    expect(await count(schema.jobs)).toBe(0);
-    expect(await count(schema.cvs)).toBe(0);
-    expect(await count(schema.applications)).toBe(0);
-    const p = await db.query.profile.findFirst();
+  it("deletes all her data and nobody else's", async () => {
+    const hisCvs = (await db.select().from(schema.cvs).where(eq(schema.cvs.userId, M))).length;
+    const hisView = (await db.select().from(schema.userJobs).where(eq(schema.userJobs.userId, M))).length;
+    const privateToHer = await db.query.jobs.findFirst({ where: eq(schema.jobs.company, "Ferramenta Colombo Srl") }); // from her LinkedIn alert
+    await deleteAllMyData(db, L);
+    expect(await db.select().from(schema.userJobs).where(eq(schema.userJobs.userId, L))).toHaveLength(0);
+    expect(await db.select().from(schema.cvs).where(eq(schema.cvs.userId, L))).toHaveLength(0);
+    expect(await db.select().from(schema.applications).where(eq(schema.applications.userId, L))).toHaveLength(0);
+    expect(await db.query.jobs.findFirst({ where: eq(schema.jobs.id, privateToHer!.id) })).toBeUndefined();
+    expect(await db.select().from(schema.cvs).where(eq(schema.cvs.userId, M))).toHaveLength(hisCvs);
+    expect(await db.select().from(schema.userJobs).where(eq(schema.userJobs.userId, M))).toHaveLength(hisView);
+    const p = await db.query.profile.findFirst({ where: eq(schema.profile.userId, L) });
     expect(p!.name).toBe("");
-    expect(await count(schema.users)).toBe(2); // accounts stay
+    expect(await count(schema.users)).toBe(3); // accounts stay
     expect((await getSettings(db)).realSending).toBe(false);
   });
 });

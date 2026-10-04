@@ -1,5 +1,15 @@
 # Compass audit
 
+> **Update for 0.3.0 (several people, students, catalog, career panel, redesign).** Re-run on the
+> 0.3.0 commit: **287 unit/integration tests passed** (`npx vitest run`), **19 e2e passed**
+> (`npm run build && npm run test:e2e`), **UI audit 234 screens, 0 axe violations, 0 overflow**
+> (`npm run audit:ui`, report in `docs/audit/`), `simulate:week` all checks passed with two people,
+> load test 2 people × 5,000 jobs (Offerte ~9 ms, per-person re-rank ~1.1 s, `docs/audit/perf-5000.txt`).
+> New evidence: isolation between people (U `accounts-catalog.test.ts`, E `security.spec.ts`
+> "CV isolation" and closed pages), legacy-data migration (U `migration-accounts.test.ts`),
+> career rules (U `career.test.ts`), the career flow (E `compass.spec.ts` › "career: ..."). The
+> sections below are the original 0.2.0 audit; numbers there refer to that commit.
+
 Run on 2026-10-04 against commit `271a1b1` + the commit that adds this file. Legend: ✅ done and
 verified · ❌ not done / broken · ⚠️ partly done · N/A (with reason).
 "Evidence" points to a test name (`file › describe › test`), a command and its output, or a file.

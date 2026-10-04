@@ -7,7 +7,7 @@ import { extractApplicationEmails, extractContract, extractHours, extractLanguag
 import { distanceKm, findPlace } from "@/lib/core/geo";
 import { checkSend, DEFAULT_GUARDRAILS, effectiveDailyCap, inSendWindow, MAX_ATTACHMENT_BYTES, scheduleSend } from "@/lib/core/guardrails";
 import { normalizeJob } from "@/lib/core/normalize";
-import { rankJob, type RankProfile } from "@/lib/core/rank";
+import { NO_CHOICES, rankJob, type RankProfile } from "@/lib/core/rank";
 import { RANK_WEIGHTS } from "@/lib/core/rank-config";
 import { parseSalary } from "@/lib/core/salary";
 import { DEFAULT_TEMPLATES, merge } from "@/lib/core/templates";
@@ -20,11 +20,11 @@ import { scanMailbox } from "@/lib/pipeline/mailbox-scan";
 import { approveApplication, cancelApplication, prepareEmailApplication, processQueue } from "@/lib/server/applications";
 import { dedupeCandidates, listJobs, upsertRawJob } from "@/lib/server/jobs";
 import { updateGuardrails } from "@/lib/server/settings";
-import { seedDemo } from "@/lib/seed";
+import { seedAccounts } from "@/lib/seed";
 import { parseAlert } from "@/lib/sources/alerts";
 import { DemoMailbox } from "@/lib/sources/mail/demo";
 import { parseRawEmail } from "@/lib/sources/mail/parse";
-import { freshDb } from "./helpers/db";
+import { freshDb, seedPeople } from "./helpers/db";
 
 const NOW = new Date("2026-10-05T07:00:00Z"); // Monday 09:00 Rome
 const rng = () => 0.5;
@@ -45,9 +45,10 @@ describe("salary: the brief's examples", () => {
 
   it("unknown salary stays visible under a pay filter (neutral, not zero)", async () => {
     const db = await freshDb();
+    const [L] = await seedAccounts(db, { admin: { email: "a@example.com", password: "admin-password" }, people: [{ email: "u@example.com", password: "demo-password", name: "L", track: "lavoro" }] });
     await upsertRawJob(db, { source: "manual", url: null, title: "Senza stipendio", company: "A", location: "Torino" }, NOW);
     await upsertRawJob(db, { source: "manual", url: null, title: "Pagato poco", company: "B", location: "Torino", salaryText: "RAL 15.000 €" }, NOW);
-    const r = await listJobs(db, { minSalary: 25000 }, 50, NOW);
+    const r = await listJobs(db, L, { minNetMonthly: 1500 }, 50, NOW);
     expect(r.jobs.map((j) => j.title)).toEqual(["Senza stipendio"]);
   });
 });
@@ -110,9 +111,9 @@ describe("dedupe", () => {
   });
   it("LinkedIn alert + W1 + API = one job with three source links", async () => {
     const cache = await dedupeCandidates(db);
-    const a = await upsertRawJob(db, { source: "email:linkedin", url: "https://www.linkedin.com/comm/jobs/view/4099999999/?trk=a", title: "Impiegata amministrativa", company: "Rossi S.r.l.", location: "Torino" }, NOW, cache);
-    const b = await upsertRawJob(db, { source: "w1", url: "https://it.linkedin.com/jobs/view/impiegata-amministrativa-at-rossi-4099999999", title: "Impiegata amministrativa", company: null, location: null, thin: true }, NOW, cache);
-    const c = await upsertRawJob(db, { source: "api:adzuna", url: "https://www.adzuna.it/details/1", title: "Impiegato amministrativo", company: "ROSSI SRL", location: "Torino, Piemonte", description: "Inviare il CV a hr@rossi.example" }, NOW, cache);
+    const a = await upsertRawJob(db, { source: "email:linkedin", url: "https://www.linkedin.com/comm/jobs/view/4099999999/?trk=a", title: "Impiegata amministrativa", company: "Rossi S.r.l.", location: "Torino" }, NOW, { cache });
+    const b = await upsertRawJob(db, { source: "w1", url: "https://it.linkedin.com/jobs/view/impiegata-amministrativa-at-rossi-4099999999", title: "Impiegata amministrativa", company: null, location: null, thin: true }, NOW, { cache });
+    const c = await upsertRawJob(db, { source: "api:adzuna", url: "https://www.adzuna.it/details/1", title: "Impiegato amministrativo", company: "ROSSI SRL", location: "Torino, Piemonte", description: "Inviare il CV a hr@rossi.example" }, NOW, { cache });
     expect(new Set([a.jobId, b.jobId, c.jobId]).size).toBe(1);
     const srcs = await db.select().from(schema.jobSources).where(eq(schema.jobSources.jobId, a.jobId));
     expect(srcs.map((s) => s.source).sort()).toEqual(["api:adzuna", "email:linkedin", "w1"]);
@@ -144,13 +145,13 @@ describe("dedupe", () => {
     const b = await upsertRawJob(db, { source: "manual", url: null, title: "Segretaria" }, NOW);
     expect(a.jobId).not.toBe(b.jobId); // nothing to prove they are the same job
     const j = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, a.jobId) });
-    expect([j!.city, j!.company, j!.distanceKm]).toEqual([null, null, null]);
+    expect([j!.city, j!.company, j!.lat]).toEqual([null, null, null]);
   });
 });
 
 describe("ranking", () => {
-  const empty: RankProfile = { roles: [], synonyms: [], maxKm: 20, remoteOk: true, hours: "any", contracts: [], minAnnualGross: null, languages: [], avoidKeywords: [], avoidCompanies: [], avoidSectors: [] };
-  const job = { title: "Impiegata", company: "Rossi", description: "", sector: null, distanceKm: null, remote: "unknown" as const, hours: "unknown" as const, contract: "unknown" as const, minAnnualGross: null, maxAnnualGross: null, languages: [], postedAt: NOW, scamFlagCount: 0 };
+  const empty: RankProfile = { ...NO_CHOICES, roles: [], synonyms: [], maxKm: 20, remoteOk: true, hours: "any", contracts: [], minAnnualGross: null, languages: [], avoidKeywords: [], avoidCompanies: [], avoidSectors: [] };
+  const job = { city: null, jobType: "unknown" as const, eligibility: [], title: "Impiegata", company: "Rossi", description: "", sector: null, distanceKm: null, remote: "unknown" as const, hours: "unknown" as const, contract: "unknown" as const, minAnnualGross: null, maxAnnualGross: null, languages: [], postedAt: NOW, scamFlagCount: 0 };
   it("weights live in one config file", () => {
     expect(RANK_WEIGHTS.avoidCompany).toBe(-100);
   });
@@ -239,11 +240,19 @@ describe("guardrails at the boundaries", () => {
 
 describe("sending in the database", () => {
   let db: DB;
+  let L: number;
   beforeEach(async () => {
     db = await freshDb();
-    await seedDemo(db, NOW);
+    ({ L } = await seedPeople(db, NOW, { student: false }));
   });
-  const emailJobs = async () => db.select().from(schema.jobs).where(sql`${schema.jobs.applicationEmail} is not null and ${schema.jobs.status} != 'applied'`);
+  const emailJobs = async () =>
+    (
+      await db
+        .select({ j: schema.jobs })
+        .from(schema.userJobs)
+        .innerJoin(schema.jobs, eq(schema.jobs.id, schema.userJobs.jobId))
+        .where(sql`${schema.userJobs.userId} = ${L} and ${schema.jobs.applicationEmail} is not null and ${schema.userJobs.status} != 'applied'`)
+    ).map((r) => r.j);
 
   it("demo mode: the real SMTP transport is never used, even with the admin switch on", async () => {
     const prev = { ...process.env };
@@ -251,10 +260,10 @@ describe("sending in the database", () => {
     process.env.MAILBOX_USER = "x@example.com";
     process.env.MAILBOX_APP_PASSWORD = "pw";
     const spy = vi.spyOn(SmtpTransport.prototype, "send");
-    const t = getTransport(db, true, "Lucia");
+    const t = getTransport(db, true, { id: L, mailboxKey: "default" }, "Lucia");
     expect(t).toBeInstanceOf(OutboxTransport);
-    const app = (await prepareEmailApplication(db, (await emailJobs())[0].id))!;
-    const r = await approveApplication(db, app.id, NOW, rng);
+    const app = (await prepareEmailApplication(db, L, (await emailJobs())[0].id))!;
+    const r = await approveApplication(db, L, app.id, NOW, rng);
     await processQueue(db, t, new Date(r.sendAt!.getTime() + 1000), rng);
     expect(spy).not.toHaveBeenCalled();
     expect((await db.select().from(schema.outbox)).length).toBe(1);
@@ -265,8 +274,8 @@ describe("sending in the database", () => {
   it("e-mail is plain text, one recipient, CV attached", async () => {
     const sent: Parameters<OutboxTransport["send"]>[0][] = [];
     const t = { real: false, send: async (m: (typeof sent)[0]) => (sent.push(m), { messageId: "<m@x>", simulated: true }) };
-    const app = (await prepareEmailApplication(db, (await emailJobs())[0].id))!;
-    const r = await approveApplication(db, app.id, NOW, rng);
+    const app = (await prepareEmailApplication(db, L, (await emailJobs())[0].id))!;
+    const r = await approveApplication(db, L, app.id, NOW, rng);
     await processQueue(db, t, new Date(r.sendAt!.getTime() + 1000), rng);
     expect(sent).toHaveLength(1);
     expect(sent[0].html).toBeUndefined();
@@ -277,17 +286,17 @@ describe("sending in the database", () => {
   });
 
   it("Annulla really stops the send (the queue runner sends nothing afterwards)", async () => {
-    const app = (await prepareEmailApplication(db, (await emailJobs())[0].id))!;
-    const r = await approveApplication(db, app.id, NOW, rng);
-    expect(await cancelApplication(db, app.id, new Date(NOW.getTime() + 60000))).toBe(true);
+    const app = (await prepareEmailApplication(db, L, (await emailJobs())[0].id))!;
+    const r = await approveApplication(db, L, app.id, NOW, rng);
+    expect(await cancelApplication(db, L, app.id, new Date(NOW.getTime() + 60000))).toBe(true);
     const out = await processQueue(db, new OutboxTransport(db), new Date(r.sendAt!.getTime() + 3600000), rng);
     expect(out.sent).toBe(0);
     expect(await db.select().from(schema.outbox)).toHaveLength(0);
   });
 
   it("two queue runners at the same time never send the same e-mail twice", async () => {
-    const app = (await prepareEmailApplication(db, (await emailJobs())[0].id))!;
-    const r = await approveApplication(db, app.id, NOW, rng);
+    const app = (await prepareEmailApplication(db, L, (await emailJobs())[0].id))!;
+    const r = await approveApplication(db, L, app.id, NOW, rng);
     const at = new Date(r.sendAt!.getTime() + 1000);
     const [a, b] = await Promise.all([processQueue(db, new OutboxTransport(db), at, rng), processQueue(db, new OutboxTransport(db), at, rng)]);
     expect(a.sent + b.sent).toBe(1);
@@ -297,11 +306,11 @@ describe("sending in the database", () => {
   it("the daily cap is re-checked at send time (approvals racing for the last slot)", async () => {
     await updateGuardrails(db, { dailyCap: 1 });
     const jobs = await emailJobs();
-    const a1 = (await prepareEmailApplication(db, jobs[0].id))!;
-    const a2 = (await prepareEmailApplication(db, jobs[1].id))!;
+    const a1 = (await prepareEmailApplication(db, L, jobs[0].id))!;
+    const a2 = (await prepareEmailApplication(db, L, jobs[1].id))!;
     // Both approved "at the same moment" from two devices: force both into the same slot.
-    await approveApplication(db, a1.id, NOW, rng);
-    await approveApplication(db, a2.id, NOW, rng);
+    await approveApplication(db, L, a1.id, NOW, rng);
+    await approveApplication(db, L, a2.id, NOW, rng);
     const slot = new Date(NOW.getTime() + 20 * 60000);
     await db.update(schema.applications).set({ sendAt: slot }).where(eq(schema.applications.status, "queued"));
     const out = await processQueue(db, new OutboxTransport(db), new Date(slot.getTime() + 1000), rng);
@@ -313,26 +322,26 @@ describe("sending in the database", () => {
 describe("replies vs alerts, digest counts", () => {
   it("a job newsletter from a company she applied to is NOT taken as a reply", async () => {
     const db = await freshDb();
-    await seedDemo(db, NOW);
+    const { L } = await seedPeople(db, NOW, { student: false });
     // she applied to an agency at lavorosereno.example
-    await db.insert(schema.applications).values({ lane: "email", status: "sent", company: "Agenzia Lavoro Sereno", toEmail: "selezione@lavorosereno.example", messageId: "<m1@x>", sentAt: new Date(NOW.getTime() - 86400000) });
+    await db.insert(schema.applications).values({ userId: L, lane: "email", status: "sent", company: "Agenzia Lavoro Sereno", toEmail: "selezione@lavorosereno.example", messageId: "<m1@x>", sentAt: new Date(NOW.getTime() - 86400000) });
     const raw = fs.readFileSync("fixtures/emails/generic-agency-alert-1.eml", "utf8").replace(/^Date: .*$/m, `Date: ${NOW.toUTCString()}`);
     await db.delete(schema.demoInbox);
     await db.insert(schema.demoInbox).values({ messageId: "<alert-gen-4001@lavorosereno.example>", raw, receivedAt: NOW });
-    const s = await scanMailbox(db, new DemoMailbox(db), new Date(NOW.getTime() + 1000));
+    const s = await scanMailbox(db, new DemoMailbox(db), [L], new Date(NOW.getTime() + 1000));
     expect(s.replies).toBe(0);
     expect(s.alerts).toBe(1);
   });
 
   it("digest counts match direct database queries", async () => {
     const db = await freshDb();
-    await seedDemo(db, NOW);
-    const c = await digestCounts(db, NOW);
+    const { L } = await seedPeople(db, NOW);
+    const c = await digestCounts(db, L, NOW);
     const since = NOW.getTime() - 86400000;
-    const all = await db.select().from(schema.jobs);
-    expect(c.newJobs).toBe(all.filter((j) => j.firstSeenAt.getTime() >= since && j.level !== "poco" && j.status !== "dismissed").length);
-    expect(c.ready).toBe((await db.select().from(schema.applications).where(eq(schema.applications.status, "draft"))).length);
-    expect(c.replies).toBe((await db.select().from(schema.replies)).filter((r) => r.receivedAt.getTime() >= since).length);
+    const all = await db.select({ j: schema.jobs, v: schema.userJobs }).from(schema.userJobs).innerJoin(schema.jobs, eq(schema.jobs.id, schema.userJobs.jobId)).where(eq(schema.userJobs.userId, L));
+    expect(c.newJobs).toBe(all.filter(({ j, v }) => j.firstSeenAt.getTime() >= since && v.level !== "poco" && v.status !== "dismissed").length);
+    expect(c.ready).toBe((await db.select().from(schema.applications).where(sql`${schema.applications.userId} = ${L} and ${schema.applications.status} = 'draft'`)).length);
+    expect(c.replies).toBe((await db.select().from(schema.replies).where(eq(schema.replies.userId, L))).filter((r) => r.receivedAt.getTime() >= since).length);
   });
 });
 

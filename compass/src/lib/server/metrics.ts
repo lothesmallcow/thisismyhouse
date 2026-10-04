@@ -1,6 +1,7 @@
 // Admin metrics. These numbers may end up on a CV, so they are computed from raw rows,
 // not estimated: jobs per source, applications per lane, reply rate, posting-to-application time.
-import { sql } from "drizzle-orm";
+// With `userId` they describe one person; without, everyone.
+import { and, eq, sql, type SQL } from "drizzle-orm";
 import type { DB } from "../db";
 import { schema } from "../db";
 
@@ -26,19 +27,26 @@ function median(xs: number[]): number | null {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
-export async function computeMetrics(db: DB): Promise<Metrics> {
-  const [{ n: jobsTotal }] = await db.select({ n: sql<number>`count(*)` }).from(schema.jobs);
+export async function computeMetrics(db: DB, userId?: number): Promise<Metrics> {
+  const visible: SQL | undefined = userId != null ? sql`${schema.jobs.id} in (select job_id from user_jobs where user_id = ${userId})` : undefined;
+  const [{ n: jobsTotal }] = await db.select({ n: sql<number>`count(*)` }).from(schema.jobs).where(visible);
   // A job found by two sources counts for both: this is "jobs found per source".
   const bySource = await db
     .select({ source: schema.jobSources.source, jobs: sql<number>`count(distinct ${schema.jobSources.jobId})` })
     .from(schema.jobSources)
+    .where(userId != null ? sql`${schema.jobSources.jobId} in (select job_id from user_jobs where user_id = ${userId}) and (${schema.jobSources.userId} is null or ${schema.jobSources.userId} = ${userId})` : undefined)
     .groupBy(schema.jobSources.source);
-  const byLevel = await db.select({ level: schema.jobs.level, jobs: sql<number>`count(*)` }).from(schema.jobs).groupBy(schema.jobs.level);
+  const byLevel = await db
+    .select({ level: schema.userJobs.level, jobs: sql<number>`count(*)` })
+    .from(schema.userJobs)
+    .where(userId != null ? eq(schema.userJobs.userId, userId) : undefined)
+    .groupBy(schema.userJobs.level);
 
   const apps = await db
     .select({ lane: schema.applications.lane, status: schema.applications.status, simulated: schema.applications.simulated, sentAt: schema.applications.sentAt, replyAt: schema.applications.replyAt, postedAt: schema.jobs.postedAt, firstSeenAt: schema.jobs.firstSeenAt })
     .from(schema.applications)
-    .leftJoin(schema.jobs, sql`${schema.jobs.id} = ${schema.applications.jobId}`);
+    .leftJoin(schema.jobs, sql`${schema.jobs.id} = ${schema.applications.jobId}`)
+    .where(userId != null ? and(eq(schema.applications.userId, userId)) : undefined);
   const done = apps.filter((a) => a.sentAt && !["draft", "queued", "cancelled", "skipped", "failed"].includes(a.status));
   const lanes = new Map<string, number>();
   for (const a of done) lanes.set(a.lane, (lanes.get(a.lane) ?? 0) + 1);

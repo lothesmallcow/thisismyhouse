@@ -146,16 +146,58 @@ export const IconHome = (p: P) => (
   </Svg>
 );
 
-/** The Compass mark: a compass rose with the north needle in red. */
-export function CompassMark({ size = 36 }: { size?: number }) {
+export const IconBuilding = (p: P) => (
+  <Svg {...p}>
+    <path d="M4 20V5.5A1.5 1.5 0 0 1 5.5 4h7A1.5 1.5 0 0 1 14 5.5V20M14 9h4.5A1.5 1.5 0 0 1 20 10.5V20M3 20h18M8 8h2M8 12h2M8 16h2M17 13h0M17 16h0" />
+  </Svg>
+);
+export const IconUser = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+  </Svg>
+);
+export const IconSearch = (p: P) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m20 20-4.2-4.2" />
+  </Svg>
+);
+export const IconSliders = (p: P) => (
+  <Svg {...p}>
+    <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+    <circle cx="16" cy="7" r="2" />
+    <circle cx="10" cy="17" r="2" />
+  </Svg>
+);
+export const IconStar = (p: P) => (
+  <Svg {...p}>
+    <path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4 7.2 18.9l.9-5.4-3.9-3.8 5.4-.8L12 4Z" />
+  </Svg>
+);
+export const IconLogout = (p: P) => (
+  <Svg {...p}>
+    <path d="M15 4h3.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H15M10 16l4-4-4-4M14 12H4" />
+  </Svg>
+);
+export const IconChevron = (p: P) => (
+  <Svg {...p}>
+    <path d="m6 9 6 6 6-6" />
+  </Svg>
+);
+export const IconBolt = (p: P) => (
+  <Svg {...p}>
+    <path d="M13 3 5 13.5h6L10.5 21 19 10.5h-6L13 3Z" />
+  </Svg>
+);
+
+/** The Compass mark: a needle in a rounded square. */
+export function CompassMark({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <circle cx="32" cy="32" r="30" fill="#1f3b57" />
-      <circle cx="32" cy="32" r="25" fill="none" stroke="#f7f2e9" strokeOpacity=".35" strokeWidth="1.5" />
-      <path d="M32 10 38 32H26L32 10Z" fill="#e9644c" />
-      <path d="M32 54 26 32h12L32 54Z" fill="#f7f2e9" />
-      <path d="M10 32 32 28v8L10 32ZM54 32 32 36v-8l22 4Z" fill="#f7f2e9" fillOpacity=".55" />
-      <circle cx="32" cy="32" r="3.2" fill="#1f3b57" stroke="#f7f2e9" strokeWidth="1.6" />
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--accent)" />
+      <path d="M16 6.5 19.2 16h-6.4L16 6.5Z" fill="var(--surface)" />
+      <path d="M16 25.5 12.8 16h6.4L16 25.5Z" fill="var(--surface)" fillOpacity=".45" />
     </svg>
   );
 }

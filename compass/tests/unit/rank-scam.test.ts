@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { rankJob, type RankJob, type RankProfile } from "@/lib/core/rank";
+import { NO_CHOICES, rankJob, type RankJob, type RankProfile } from "@/lib/core/rank";
 import { scamFlags } from "@/lib/core/scam-rules";
 
 const profile: RankProfile = {
+  ...NO_CHOICES,
   roles: ["Impiegata amministrativa"],
   synonyms: ["Addetta contabilità"],
   maxKm: 25,
@@ -18,6 +19,9 @@ const profile: RankProfile = {
 
 const now = new Date("2026-10-05T08:00:00Z");
 const base: RankJob = {
+  city: "Torino",
+  jobType: "unknown",
+  eligibility: [],
   title: "Impiegata amministrativa",
   company: "Rossi Srl",
   description: "",
@@ -55,12 +59,12 @@ describe("rankJob", () => {
   it("far away jobs drop and say so", () => {
     const r = rankJob({ ...base, distanceKm: 70, title: "Magazziniere" }, profile, [], now);
     expect(r.level).toBe("poco");
-    expect(r.reasons[0]).toMatch(/Lontana: 70 km/);
+    expect(r.reasons[0]).toMatch(/Lontano: 70 km/);
   });
 
   it("remote work counts as close when she accepts it", () => {
     const r = rankJob({ ...base, distanceKm: null, remote: "remote" }, profile, [], now);
-    expect(r.reasons.join(" ")).toMatch(/da casa/);
+    expect(r.reasons.join(" ")).toMatch(/Da remoto/);
   });
 
   it("fluent English she lacks is a reason", () => {

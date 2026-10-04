@@ -2,29 +2,41 @@
 // /api/cron/<job> routes (host cron). Demo mode wires fixtures; real mode wires the network.
 import type { DB } from "../db";
 import { schema } from "../db";
-import { env } from "../env";
-import { getTransport, OutboxTransport, SmtpTransport } from "../mail/transport";
+import { env, mailboxConfig } from "../env";
+import { getTransport, serviceTransport } from "../mail/transport";
 import { demoFetch } from "../sources/demo-fetch";
 import { DemoMailbox } from "../sources/mail/demo";
 import { ImapMailbox } from "../sources/mail/imap";
-import type { Mailbox } from "../sources/mail/types";
 import { TavilyProvider } from "../sources/web/w1";
 import { processQueue, runAutopilot } from "../server/applications";
-import { getProfile } from "../server/profile";
 import { getSettings } from "../server/settings";
 import { runDigest } from "./digest";
 import { runDiscover } from "./discover";
-import { runIngest } from "./ingest";
+import { runIngest, type MailboxRun } from "./ingest";
 import { scanMailbox } from "./mailbox-scan";
 import { runWithHealth } from "./health";
-import { and, eq, gte } from "drizzle-orm";
+import { and, eq, gte, isNotNull } from "drizzle-orm";
 
 export const JOB_NAMES = ["ingest", "discover", "queue", "replies", "digest"] as const;
 export type JobName = (typeof JOB_NAMES)[number];
 
-function mailboxFor(db: DB): Mailbox | null {
-  if (env.demoMode) return new DemoMailbox(db);
-  return env.mailbox.configured ? new ImapMailbox() : null;
+/** One run per mailbox key in use by an active person (demo: the demo inbox rows with that key). */
+export async function mailboxRuns(db: DB): Promise<MailboxRun[]> {
+  const people = await db
+    .select({ id: schema.users.id, key: schema.users.mailboxKey })
+    .from(schema.users)
+    .where(and(eq(schema.users.role, "user"), eq(schema.users.active, true), isNotNull(schema.users.mailboxKey)));
+  const byKey = new Map<string, number[]>();
+  for (const p of people) byKey.set(p.key!.toLowerCase(), [...(byKey.get(p.key!.toLowerCase()) ?? []), p.id]);
+  const out: MailboxRun[] = [];
+  for (const [key, owners] of byKey) {
+    if (env.demoMode) out.push({ key, owners, mailbox: new DemoMailbox(db, key) });
+    else {
+      const box = mailboxConfig(key);
+      if (box) out.push({ key, owners, mailbox: new ImapMailbox(box) });
+    }
+  }
+  return out;
 }
 
 export async function runJob(db: DB, name: JobName, now = new Date()): Promise<unknown> {
@@ -45,7 +57,7 @@ async function dispatch(db: DB, name: JobName, now: Date): Promise<unknown> {
   const fetchImpl = demo ? demoFetch() : fetch;
   switch (name) {
     case "ingest": {
-      const summary = await runIngest({ db, fetchImpl, mailbox: mailboxFor(db), demo, now });
+      const summary = await runIngest({ db, fetchImpl, mailboxes: await mailboxRuns(db), demo, now });
       const auto = await runAutopilot(db, now);
       return { ...summary, autopilot: auto };
     }
@@ -55,26 +67,25 @@ async function dispatch(db: DB, name: JobName, now: Date): Promise<unknown> {
     }
     case "queue": {
       const settings = await getSettings(db);
-      const profile = await getProfile(db);
-      return processQueue(db, getTransport(db, settings.realSending, profile.name), now);
+      return processQueue(db, (u) => getTransport(db, settings.realSending, u, u.name), now);
     }
     case "replies": {
-      const mb = mailboxFor(db);
-      if (!mb) return { skipped: "mailbox not configured" };
-      let out: unknown = null;
-      await runWithHealth(db, "mailbox", async () => {
-        const s = await scanMailbox(db, mb, now);
-        out = s;
-        return { items: s.alerts + s.replies, failures: 0 };
-      }, now);
+      const runs = await mailboxRuns(db);
+      if (runs.length === 0) return { skipped: "no mailbox configured" };
+      const out: Record<string, unknown> = {};
+      for (const m of runs) {
+        await runWithHealth(db, m.key === "default" ? "mailbox" : `mailbox:${m.key}`, async () => {
+          const s = await scanMailbox(db, m.mailbox, m.owners, now);
+          out[m.key] = s;
+          return { items: s.alerts + s.replies, failures: 0 };
+        }, now);
+      }
       return out;
     }
     case "digest": {
-      // The morning e-mail is part of her interface: in real mode it goes out as soon as the mailbox
+      // The morning e-mail is part of the interface: in real mode it goes out as soon as a mailbox
       // is configured, independently of the switch for job applications.
-      const profile = await getProfile(db);
-      const transport = !env.demoMode && env.mailbox.configured ? new SmtpTransport(profile.name) : new OutboxTransport(db);
-      return runDigest(db, transport, now);
+      return runDigest(db, (u) => serviceTransport(db, u), now);
     }
   }
 }
@@ -88,7 +99,7 @@ async function emailNewAdminAlerts(db: DB, since: Date): Promise<void> {
     .from(schema.notifications)
     .where(and(eq(schema.notifications.audience, "admin"), gte(schema.notifications.createdAt, since)));
   if (rows.length === 0) return;
-  const transport = !env.demoMode && env.mailbox.configured ? new SmtpTransport("Compass") : new OutboxTransport(db);
+  const transport = serviceTransport(db, null);
   await transport.send({
     kind: "admin-alert",
     to,

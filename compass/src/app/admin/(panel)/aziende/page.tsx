@@ -12,16 +12,16 @@ export default async function AziendePage({ searchParams }: { searchParams: Prom
   return (
     <>
       <Flash code={sp.msg} />
-      <h1 className="text-[2.2rem] font-semibold">Aziende da seguire</h1>
-      <p className="mt-2 max-w-3xl text-ink-soft">Molte aziende pubblicano le offerte tramite un sistema (ATS) con un elenco pubblico e documentato. Compass lo legge una volta al giorno e tiene solo le offerte in Italia.</p>
+      <h1 className="text-[22px] font-semibold">Aziende da seguire</h1>
+      <p className="mt-2 max-w-3xl text-muted">Molte aziende pubblicano le offerte tramite un sistema (ATS) con un elenco pubblico e documentato. Compass lo legge una volta al giorno e tiene solo le offerte in Italia.</p>
       <div className="mt-6 space-y-3">
         {rows.map((r) => (
           <Card key={r.id} className="flex flex-wrap items-center justify-between gap-3 !p-4">
             <div>
-              <p className="font-bold">
-                {r.name} <span className="font-normal text-ink-soft">· {ATS_LABELS[r.ats as AtsType]} · {r.slug}</span>
+              <p className="font-semibold">
+                {r.name} <span className="font-normal text-muted">· {ATS_LABELS[r.ats as AtsType]} · {r.slug}</span>
               </p>
-              <p className="break-all font-mono text-[0.8rem] text-ink-soft">{atsEndpoint(r.ats as AtsType, r.slug)}</p>
+              <p className="break-all font-mono text-[11.5px] text-muted">{atsEndpoint(r.ats as AtsType, r.slug)}</p>
             </div>
             <div className="flex gap-2">
               <form action={toggleWatchAction}>
@@ -31,7 +31,7 @@ export default async function AziendePage({ searchParams }: { searchParams: Prom
               </form>
               <form action={deleteWatchAction}>
                 <input type="hidden" name="id" value={r.id} />
-                <Button variant="quiet">Togli</Button>
+                <Button variant="ghost">Togli</Button>
               </form>
             </div>
           </Card>
@@ -39,7 +39,7 @@ export default async function AziendePage({ searchParams }: { searchParams: Prom
       </div>
       <SectionTitle>Aggiungi un&apos;azienda</SectionTitle>
       <form action={addWatchAction}>
-        <Card className="grid gap-5 sm:grid-cols-3">
+        <Card className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <Field label="Nome" htmlFor="name">
             <input id="name" name="name" type="text" required />
           </Field>

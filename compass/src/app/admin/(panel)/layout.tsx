@@ -11,26 +11,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const admin = await requireAdmin();
   return (
     <div className="min-h-dvh pb-16">
-      <div className={`px-4 py-2 text-center text-[0.95rem] font-bold ${env.demoMode ? "bg-navy text-white" : "bg-rose text-rose-ink"}`}>
+      <div className={`border-b border-line px-4 py-1.5 text-center text-[12.5px] ${env.demoMode ? "bg-subtle text-muted" : "bg-bad-soft text-bad"}`}>
         {env.demoMode ? "DEMO_MODE=true · nessuna e-mail esce dal server, le fonti leggono fixtures" : "Modalità reale · le fonti sono vive"}
       </div>
-      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 pt-5 sm:px-8">
-        <div className="flex items-center gap-4">
-          <Brand href="/admin" small />
-          <span className="rounded-full bg-paper-deep px-3 py-1 text-[0.9rem] font-bold">Admin</span>
+      <header className="border-b border-line">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-8">
+          <div className="flex items-center gap-3">
+            <Brand href="/admin" small />
+            <span className="rounded-md bg-subtle px-2 py-0.5 text-[12px] font-medium text-muted">Admin</span>
+          </div>
+          <div className="flex items-center gap-1 text-[13px]">
+            <span className="hidden px-2 text-faint sm:inline">{admin.email}</span>
+            <Link href="/admin/utenti" className="inline-flex h-9 items-center rounded-md px-2.5 text-muted no-underline hover:text-ink">
+              Apri un&apos;app
+            </Link>
+            <form action={adminSignOutAction}>
+              <button className="inline-flex h-9 items-center rounded-md px-2.5 text-muted hover:bg-subtle hover:text-ink">Esci</button>
+            </form>
+          </div>
         </div>
-        <div className="flex items-center gap-3 text-[0.95rem]">
-          <span className="hidden text-ink-soft sm:inline">{admin.email}</span>
-          <Link href="/offerte" className="inline-flex min-h-[48px] items-center font-bold">
-            Apri l&apos;app di lei
-          </Link>
-          <form action={adminSignOutAction}>
-            <button className="min-h-[48px] rounded-xl px-3 font-bold text-navy hover:bg-navy-soft">Esci</button>
-          </form>
-        </div>
+        <AdminTabs />
       </header>
-      <AdminTabs />
-      <main className="mx-auto max-w-6xl px-4 pt-6 sm:px-8">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 pt-8 sm:px-8">{children}</main>
     </div>
   );
 }

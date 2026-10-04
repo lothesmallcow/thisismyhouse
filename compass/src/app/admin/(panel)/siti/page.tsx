@@ -12,16 +12,16 @@ export default async function SitiPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <Flash code={sp.msg} />
-      <h1 className="text-[2.2rem] font-semibold">Siti di annunci (W2)</h1>
-      <p className="mt-2 max-w-3xl text-ink-soft">Pagine &ldquo;Lavora con noi&rdquo;, piccoli siti di annunci, agenzie, portali pubblici. Ogni sito va approvato a mano dopo aver letto termini d&apos;uso e robots.txt. Compass rispetta robots.txt, fa al massimo una richiesta ogni 5 secondi e si ferma al primo blocco.</p>
+      <h1 className="text-[22px] font-semibold">Siti di annunci (W2)</h1>
+      <p className="mt-2 max-w-3xl text-muted">Pagine &ldquo;Lavora con noi&rdquo;, piccoli siti di annunci, agenzie, portali pubblici. Ogni sito va approvato a mano dopo aver letto termini d&apos;uso e robots.txt. Compass rispetta robots.txt, fa al massimo una richiesta ogni 5 secondi e si ferma al primo blocco.</p>
       <div className="mt-6 space-y-4">
         {rows.map((r) => (
           <Card key={r.id}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="font-bold">{r.name}</p>
-              <span className={`rounded-full px-3 py-1 font-bold ${r.approved ? "bg-sage text-sage-ink" : "bg-amber text-amber-ink"}`}>{r.approved ? `Approvato${r.approvedAt ? " il " + formatDate(r.approvedAt) : ""}` : "Da approvare"}</span>
+              <p className="font-semibold">{r.name}</p>
+              <span className={`rounded-full px-3 py-1 font-semibold ${r.approved ? "bg-good-soft text-good" : "bg-warn-soft text-warn"}`}>{r.approved ? `Approvato${r.approvedAt ? " il " + formatDate(r.approvedAt) : ""}` : "Da approvare"}</span>
             </div>
-            <p className="break-all text-ink-soft">{r.startUrl}</p>
+            <p className="break-all text-muted">{r.startUrl}</p>
             <form action={approveSiteAction} className="mt-4 space-y-3">
               <input type="hidden" name="id" value={r.id} />
               <input type="hidden" name="approved" value={r.approved ? "0" : "1"} />
@@ -37,7 +37,7 @@ export default async function SitiPage({ searchParams }: { searchParams: Promise
             </form>
             <form action={deleteSiteAction} className="mt-2">
               <input type="hidden" name="id" value={r.id} />
-              <Button variant="quiet">Togli</Button>
+              <Button variant="ghost">Togli</Button>
             </form>
           </Card>
         ))}

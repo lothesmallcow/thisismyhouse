@@ -1,8 +1,9 @@
 "use server";
-// Server actions for her app. Every action checks the session first (they are reachable by
-// direct POST), then redirects with a fixed message code.
+// Server actions for the app. Every action resolves the signed-in person first (they are
+// reachable by direct POST) and only touches that person's rows, then redirects with a fixed
+// message code.
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/core/guardrails";
@@ -23,12 +24,19 @@ import {
   updateDraft,
 } from "@/lib/server/applications";
 import { requireUser, signOut } from "@/lib/server/auth";
-import { dismissJob, markSeen, restoreJob, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
+import { listCompanies, listSectors, setPref } from "@/lib/server/catalog";
+import { applyPrefsForm } from "@/lib/server/prefs-form";
+import { dismissJob, markSeen, rerankUser, restoreJob, setAdjustmentActive, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
 import { deleteAllMyData } from "@/lib/server/privacy";
+import { fitWarnings } from "@/lib/server/career";
+import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences, pdfText, rematchExperiences, saveExperiences } from "@/lib/server/experiences";
+import { updateProfile } from "@/lib/server/profile";
+import { updateUserSettings } from "@/lib/server/settings";
 import { confirmReply, dismissReply } from "@/lib/server/replies";
 
 const num = (f: FormData, k: string) => Number(f.get(k));
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
+const ids = (f: FormData, k: string) => f.getAll(k).map(Number).filter((n) => Number.isInteger(n) && n > 0);
 
 function done(path: string, msg: string): never {
   revalidatePath("/", "layout");
@@ -36,198 +44,278 @@ function done(path: string, msg: string): never {
   redirect(`${base}${base.includes("?") ? "&" : "?"}msg=${msg}${hash ? `#${hash}` : ""}`);
 }
 
+/** Only same-site relative paths come back from forms. */
+function safeBack(f: FormData, fallback: string): string {
+  const b = str(f, "back");
+  return b.startsWith("/") && !b.startsWith("//") ? b : fallback;
+}
+
 // --- Offerte -------------------------------------------------------------------------------------
 
 export async function dismissAction(f: FormData) {
-  await requireUser();
+  const u = await requireUser();
   const reason = (str(f, "reason") || "nessuno") as DismissReason;
-  await dismissJob(getDb(), num(f, "jobId"), reason);
+  await dismissJob(getDb(), u.id, num(f, "jobId"), reason);
   done("/offerte", "scartata");
 }
 
 export async function restoreAction(f: FormData) {
-  await requireUser();
-  await restoreJob(getDb(), num(f, "jobId"));
+  const u = await requireUser();
+  await restoreJob(getDb(), u.id, num(f, "jobId"));
   done(`/offerte/${num(f, "jobId")}`, "salvato");
 }
 
 export async function markSeenAction(jobId: number) {
-  await requireUser();
-  await markSeen(getDb(), jobId);
+  const u = await requireUser();
+  await markSeen(getDb(), u.id, jobId);
 }
 
 export async function prepareEmailAction(f: FormData) {
-  await requireUser();
-  const app = await prepareEmailApplication(getDb(), num(f, "jobId"));
+  const u = await requireUser();
+  const app = await prepareEmailApplication(getDb(), u.id, num(f, "jobId"));
   if (!app) done(`/offerte/${num(f, "jobId")}`, "errore");
   done(`/da-inviare#candidatura-${app.id}`, "preparata");
 }
 
 export async function appliedOnSiteAction(f: FormData) {
-  await requireUser();
-  await markAppliedOnSite(getDb(), num(f, "jobId"));
-  done("/candidature", "candidata");
+  const u = await requireUser();
+  const ok = await markAppliedOnSite(getDb(), u.id, num(f, "jobId"));
+  done(ok ? "/candidature" : "/offerte", ok ? "candidata" : "errore");
 }
 
 export async function saveCuratedAction(f: FormData) {
-  await requireUser();
+  const u = await requireUser();
   const jobId = num(f, "jobId");
   const body = str(f, "body");
   if (!body) done(`/offerte/${jobId}/claude`, "errore");
-  const r = await saveCurated(getDb(), jobId, { subject: str(f, "subject") || "Candidatura", body });
+  const r = await saveCurated(getDb(), u.id, jobId, { subject: str(f, "subject") || "Candidatura", body });
   if (r === "use-site") done(`/offerte/${jobId}/kit`, "usa-il-sito");
   done("/da-inviare", "testo-salvato");
 }
 
 export async function manualAddAction(f: FormData) {
-  await requireUser();
+  const u = await requireUser();
   const title = str(f, "title");
   if (!title) done("/offerte/aggiungi", "errore");
   const url = str(f, "url");
-  const res = await upsertRawJob(getDb(), {
-    source: "manual",
-    url: /^https?:\/\//.test(url) ? url : null,
-    title,
-    company: str(f, "company") || null,
-    location: str(f, "city") || null,
-    description: str(f, "text"),
-    salaryText: str(f, "salary") || null,
-    postedAt: new Date(),
-  });
+  const db = getDb();
+  const res = await upsertRawJob(
+    db,
+    {
+      source: "manual",
+      url: /^https?:\/\//.test(url) ? url : null,
+      title,
+      company: str(f, "company") || null,
+      location: str(f, "city") || null,
+      description: str(f, "text"),
+      salaryText: str(f, "salary") || null,
+      postedAt: new Date(),
+    },
+    new Date(),
+    { owners: [u.id] },
+  );
   const email = str(f, "email");
-  if (email && isValidEmail(email)) {
-    await setApplicationEmail(getDb(), res.jobId, email.toLowerCase(), "Indirizzo aggiunto a mano");
-  }
+  if (email && isValidEmail(email)) await setApplicationEmail(db, u.id, res.jobId, email.toLowerCase(), "Indirizzo aggiunto a mano");
   done(`/offerte/${res.jobId}`, "aggiunta");
+}
+
+/** "Salva come predefiniti" on the Offerte filters. */
+export async function saveDefaultFiltersAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const focus = str(f, "focus");
+  const net = Number(str(f, "netto").replace(/[^\d]/g, ""));
+  await updateProfile(db, u.id, {
+    focus: focus === "preferite" || focus === "aziende" ? "preferite" : "tutte",
+    focusCompaniesOnly: focus === "aziende",
+    hideBelowMin: net > 0,
+    ...(net > 0 ? { minNetMonthly: net } : {}),
+  });
+  done("/offerte", "filtri-salvati");
 }
 
 // --- Da inviare ----------------------------------------------------------------------------------
 
 export async function approveAction(f: FormData) {
-  await requireUser();
-  const r = await approveApplication(getDb(), num(f, "appId"));
+  const u = await requireUser();
+  const r = await approveApplication(getDb(), u.id, num(f, "appId"));
   done("/da-inviare", r.ok ? "in-coda" : "bloccata");
 }
 
 export async function approveAllAction(f: FormData) {
-  await requireUser();
-  const ids = f.getAll("appId").map(Number).filter((n) => n > 0);
-  await approveAll(getDb(), new Date(), Math.random, ids);
+  const u = await requireUser();
+  await approveAll(getDb(), u.id, new Date(), Math.random, ids(f, "appId"));
   done("/da-inviare", "tutte-in-coda");
 }
 
 export async function cancelAction(f: FormData) {
-  await requireUser();
-  const ok = await cancelApplication(getDb(), num(f, "appId"));
+  const u = await requireUser();
+  const ok = await cancelApplication(getDb(), u.id, num(f, "appId"));
   done("/da-inviare", ok ? "annullata" : "errore");
 }
 
 export async function skipAction(f: FormData) {
-  await requireUser();
-  await skipApplication(getDb(), num(f, "appId"));
+  const u = await requireUser();
+  await skipApplication(getDb(), u.id, num(f, "appId"));
   done("/da-inviare", "saltata");
 }
 
 export async function updateDraftAction(f: FormData) {
-  await requireUser();
+  const u = await requireUser();
   const cvId = num(f, "cvId");
-  await updateDraft(getDb(), num(f, "appId"), { subject: str(f, "subject"), body: str(f, "body"), cvId: cvId || null });
+  await updateDraft(getDb(), u.id, num(f, "appId"), { subject: str(f, "subject"), body: str(f, "body"), cvId: cvId || null });
   done(`/da-inviare#candidatura-${num(f, "appId")}`, "salvato");
 }
 
 export async function killSwitchAction(f: FormData) {
-  await requireUser();
+  const u = await requireUser();
   const on = str(f, "on") === "1";
-  await setKillSwitch(getDb(), on);
+  await setKillSwitch(getDb(), u.id, on, "user");
   done("/da-inviare", on ? "fermati" : "ripartiti");
 }
 
 export async function prepareSpontaneousAction(f: FormData) {
-  await requireUser();
-  const app = await prepareSpontaneous(getDb(), num(f, "companyId"));
+  const u = await requireUser();
+  const app = await prepareSpontaneous(getDb(), u.id, num(f, "companyId"));
   done(app ? `/da-inviare#candidatura-${app.id}` : "/da-inviare", app ? "preparata" : "errore");
 }
 
 export async function readNotificationsAction() {
-  await requireUser();
-  await getDb().update(schema.notifications).set({ read: true }).where(eq(schema.notifications.audience, "user"));
+  const u = await requireUser();
+  await getDb()
+    .update(schema.notifications)
+    .set({ read: true })
+    .where(and(eq(schema.notifications.audience, "user"), eq(schema.notifications.userId, u.id)));
   revalidatePath("/", "layout");
 }
 
 // --- Candidature -------------------------------------------------------------------------------
 
 export async function confirmReplyAction(f: FormData) {
-  await requireUser();
+  const u = await requireUser();
   const status = str(f, "status");
   const allowed: ApplicationStatus[] = ["replied", "interview", "rejected", "offer"];
-  await confirmReply(getDb(), num(f, "replyId"), allowed.includes(status as ApplicationStatus) ? (status as ApplicationStatus) : undefined);
+  await confirmReply(getDb(), u.id, num(f, "replyId"), allowed.includes(status as ApplicationStatus) ? (status as ApplicationStatus) : undefined);
   done("/candidature", "stato-aggiornato");
 }
 
 export async function dismissReplyAction(f: FormData) {
-  await requireUser();
-  await dismissReply(getDb(), num(f, "replyId"));
+  const u = await requireUser();
+  await dismissReply(getDb(), u.id, num(f, "replyId"));
   done("/candidature", "salvato");
 }
 
-// --- Aiuto: CV, lettere, dati ------------------------------------------------------------------
+// --- Aziende e settori (catalog choices) ------------------------------------------------------------
+
+/** Save one form of catalog choices (see applyPrefsForm), then re-rank this person's offers. */
+export async function savePrefsAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const r = await applyPrefsForm(db, u.id, f);
+  if (r.added) await rematchExperiences(db, u.id); // a company added with "Altro" may be where they worked
+  await rerankUser(db, u.id);
+  done(safeBack(f, "/aziende"), r.added ? "altro-aggiunto" : "preferenze");
+}
+
+/** One tap on a suggestion or a chip: like, avoid, or clear. */
+export async function setPrefAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const kind = str(f, "kind") === "sector" ? "sector" : "company";
+  const id = num(f, "id");
+  const visible = kind === "sector" ? (await listSectors(db, u.id)).some((s) => s.id === id) : (await listCompanies(db, u.id)).some((c) => c.id === id);
+  if (!visible) done(safeBack(f, "/aziende"), "errore");
+  const stance = str(f, "stance");
+  await setPref(db, u.id, kind, id, stance === "like" || stance === "avoid" ? stance : null);
+  await rerankUser(db, u.id);
+  const warn = kind === "company" && stance === "like" && (await fitWarnings(db, u.id)).has(id);
+  done(safeBack(f, "/aziende"), warn ? "preferenze-attenzione" : "preferenze");
+}
+
+export async function saveFocusAction(f: FormData) {
+  const u = await requireUser();
+  const focus = str(f, "focus");
+  await updateProfile(getDb(), u.id, { focus: focus === "tutte" ? "tutte" : "preferite", focusCompaniesOnly: focus === "aziende" });
+  done(safeBack(f, "/aziende"), "preferenze");
+}
+
+export async function toggleAdjustmentAction(f: FormData) {
+  const u = await requireUser();
+  await setAdjustmentActive(getDb(), num(f, "id"), str(f, "active") === "1", u.id);
+  done("/profilo/ricerca", "salvato");
+}
+
+// --- Profilo: CV, lettere, dati ------------------------------------------------------------------
 
 export async function uploadCvAction(f: FormData) {
-  await requireUser();
-  const back = str(f, "back") || "/aiuto/cv";
+  const u = await requireUser();
+  const back = safeBack(f, "/profilo/cv");
   const file = f.get("file");
   if (!(file instanceof File) || file.size === 0) done(back, "errore");
   if (file.size > MAX_ATTACHMENT_BYTES) done(back, "cv-troppo-grande");
   const buf = Buffer.from(await file.arrayBuffer());
   if (!looksLikePdf(buf)) done(back, "cv-non-pdf");
   const db = getDb();
-  const existing = await db.select({ id: schema.cvs.id }).from(schema.cvs);
+  const existing = await db.select({ id: schema.cvs.id }).from(schema.cvs).where(eq(schema.cvs.userId, u.id));
   if (existing.length >= 3) done(back, "cv-troppi");
   const family = str(f, "family") || "Generale";
+  // The text is read from the PDF itself when it was not pasted (scanned CVs have none).
+  const text = str(f, "text") || (await pdfText(buf));
   await db.insert(schema.cvs).values({
+    userId: u.id,
     label: `CV ${family}`,
     roleFamily: family,
     filename: file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 80) || "cv.pdf",
     size: buf.length,
     data: buf,
-    text: str(f, "text"),
+    text,
     isDefault: existing.length === 0,
   });
-  done(back, "cv-caricato");
+  // First CV with readable text, and no timeline yet: build it from the CV.
+  const timeline = await listExperiences(db, u.id);
+  let found = 0;
+  if (text && timeline.every((e) => e.source === "cv")) found = await importFromCvText(db, u.id, text);
+  done(back, found ? "cv-caricato-esperienze" : text ? "cv-caricato" : "cv-caricato-senza-testo");
 }
 
 export async function deleteCvAction(f: FormData) {
-  await requireUser();
-  await getDb().delete(schema.cvs).where(eq(schema.cvs.id, num(f, "cvId")));
-  done(str(f, "back") || "/aiuto/cv", "salvato");
+  const u = await requireUser();
+  await getDb().delete(schema.cvs).where(and(eq(schema.cvs.id, num(f, "cvId")), eq(schema.cvs.userId, u.id)));
+  done(safeBack(f, "/profilo/cv"), "salvato");
 }
 
 export async function setDefaultCvAction(f: FormData) {
-  await requireUser();
+  const u = await requireUser();
   const db = getDb();
-  await db.update(schema.cvs).set({ isDefault: false });
-  await db.update(schema.cvs).set({ isDefault: true }).where(eq(schema.cvs.id, num(f, "cvId")));
-  done("/aiuto/cv", "salvato");
+  const cv = await db.query.cvs.findFirst({ where: and(eq(schema.cvs.id, num(f, "cvId")), eq(schema.cvs.userId, u.id)) });
+  if (!cv) done("/profilo/cv", "errore");
+  await db.update(schema.cvs).set({ isDefault: false }).where(eq(schema.cvs.userId, u.id));
+  await db.update(schema.cvs).set({ isDefault: true }).where(eq(schema.cvs.id, cv.id));
+  done("/profilo/cv", "salvato");
 }
 
 export async function saveCvTextAction(f: FormData) {
-  await requireUser();
-  await getDb().update(schema.cvs).set({ text: str(f, "text"), roleFamily: str(f, "family") || "Generale", label: `CV ${str(f, "family") || "Generale"}` }).where(eq(schema.cvs.id, num(f, "cvId")));
-  done("/aiuto/cv", "salvato");
+  const u = await requireUser();
+  const family = str(f, "family") || "Generale";
+  await getDb()
+    .update(schema.cvs)
+    .set({ text: str(f, "text"), roleFamily: family, label: `CV ${family}` })
+    .where(and(eq(schema.cvs.id, num(f, "cvId")), eq(schema.cvs.userId, u.id)));
+  done("/profilo/cv", "salvato");
 }
 
 export async function saveTemplateAction(f: FormData) {
-  await requireUser();
+  const u = await requireUser();
   await getDb()
     .update(schema.templates)
     .set({ subject: str(f, "subject"), body: str(f, "body"), name: str(f, "name") || "Lettera", updatedAt: new Date() })
-    .where(eq(schema.templates.id, num(f, "templateId")));
-  done("/aiuto/lettere", "salvato");
+    .where(and(eq(schema.templates.id, num(f, "templateId")), eq(schema.templates.userId, u.id)));
+  done("/profilo/lettere", "salvato");
 }
 
 export async function deleteAllDataAction() {
-  await requireUser();
-  await deleteAllMyData(getDb());
+  const u = await requireUser();
+  await deleteAllMyData(getDb(), u.id);
   revalidatePath("/", "layout");
   redirect("/benvenuto/1?msg=dati-cancellati");
 }
@@ -235,4 +323,96 @@ export async function deleteAllDataAction() {
 export async function signOutAction() {
   await signOut("user");
   redirect("/entra");
+}
+
+/** Profilo → Preferenze di ricerca: focus, salary floor as a filter, morning e-mail. */
+export async function saveSearchSettingsAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const focus = str(f, "focus");
+  const net = Number(str(f, "netto").replace(/[^\d]/g, ""));
+  await updateProfile(db, u.id, {
+    focus: focus === "tutte" ? "tutte" : "preferite",
+    focusCompaniesOnly: focus === "aziende",
+    minNetMonthly: net > 0 ? net : null,
+    hideBelowMin: net > 0 && str(f, "nascondi") === "1",
+  });
+  await updateUserSettings(db, u.id, { digestEnabled: str(f, "digest") === "1" });
+  await rerankUser(db, u.id);
+  done("/profilo/ricerca", "salvato");
+}
+
+// --- Esperienze (timeline) and the questionnaire ---------------------------------------------------
+
+export async function readCvTimelineAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const cv = await db.query.cvs.findFirst({ where: and(eq(schema.cvs.id, num(f, "cvId")), eq(schema.cvs.userId, u.id)) });
+  if (!cv) done("/profilo/esperienze", "errore");
+  let text = cv.text;
+  if (!text) {
+    text = await pdfText(new Uint8Array(cv.data));
+    if (text) await db.update(schema.cvs).set({ text }).where(eq(schema.cvs.id, cv.id));
+  }
+  const n = text ? await importFromCvText(db, u.id, text) : 0;
+  await rerankUser(db, u.id);
+  done("/profilo/esperienze", n ? "esperienze-lette" : "esperienze-nessuna");
+}
+
+export async function importLinkedInAction(f: FormData) {
+  const u = await requireUser();
+  const files: { name: string; data: Uint8Array }[] = [];
+  for (const x of f.getAll("files")) {
+    if (x instanceof File && x.size > 0 && x.size < 20 * 1024 * 1024) files.push({ name: x.name, data: new Uint8Array(await x.arrayBuffer()) });
+  }
+  const n = files.length ? await importFromLinkedIn(getDb(), u.id, files) : 0;
+  done("/profilo/esperienze", n ? "esperienze-lette" : "linkedin-niente");
+}
+
+export async function addExperienceAction(f: FormData) {
+  const u = await requireUser();
+  const title = str(f, "title");
+  const organization = str(f, "organization");
+  if (!title && !organization) done("/profilo/esperienze", "errore");
+  const year = (k: string) => {
+    const n = Number(str(f, k));
+    return n >= 1950 && n <= 2100 ? n : null;
+  };
+  const kind = str(f, "kind");
+  const current = str(f, "current") === "1";
+  await saveExperiences(
+    getDb(),
+    u.id,
+    [
+      {
+        kind: kind === "studio" || kind === "volontariato" || kind === "altro" ? kind : "lavoro",
+        title,
+        organization,
+        city: str(f, "city") || null,
+        startYear: year("startYear"),
+        startMonth: null,
+        endYear: current ? null : year("endYear"),
+        endMonth: null,
+        current,
+        description: str(f, "description"),
+      },
+    ],
+    "manuale",
+  );
+  await rerankUser(getDb(), u.id);
+  done("/profilo/esperienze", "salvato");
+}
+
+export async function deleteExperienceAction(f: FormData) {
+  const u = await requireUser();
+  await deleteExperience(getDb(), u.id, num(f, "id"));
+  done("/profilo/esperienze", "salvato");
+}
+
+/** "Rifai il questionario": every answer stays prefilled; the app stays usable meanwhile. */
+export async function restartQuestionnaireAction() {
+  const u = await requireUser();
+  await updateProfile(getDb(), u.id, { onboardingStep: 1 });
+  revalidatePath("/", "layout");
+  redirect("/benvenuto/1?rifai=1");
 }

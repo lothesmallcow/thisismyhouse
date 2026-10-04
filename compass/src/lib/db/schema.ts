@@ -2,7 +2,7 @@
 // readable at a glance. Dates are stored as integer timestamps (ms).
 
 import { sql } from "drizzle-orm";
-import { blob, index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { blob, index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const ts = (name: string) => integer(name, { mode: "timestamp_ms" });
 const createdAt = () => ts("created_at").notNull().default(sql`(unixepoch() * 1000)`);
@@ -15,6 +15,26 @@ export const users = sqliteTable("users", {
   role: text("role", { enum: ["user", "admin"] }).notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  name: text("name").notNull().default(""),
+  /** A disabled account cannot sign in and is skipped by every scheduled job. */
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  /** Which configured mailbox reads this person's alerts and sends their e-mails (see env.mailboxes). Null: none yet. */
+  mailboxKey: text("mailbox_key"),
+  /** Where the morning e-mail goes. Null: the sign-in address. */
+  digestEmail: text("digest_email"),
+  lastLoginAt: ts("last_login_at"),
+  createdAt: createdAt(),
+});
+
+/** One-time invitation codes for "Crea un account" (only the hash is stored). */
+export const invites = sqliteTable("invites", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  codeHash: text("code_hash").notNull().unique(),
+  note: text("note").notNull().default(""),
+  expiresAt: ts("expires_at").notNull(),
+  usedByUserId: integer("used_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  usedAt: ts("used_at"),
+  revoked: integer("revoked", { mode: "boolean" }).notNull().default(false),
   createdAt: createdAt(),
 });
 
@@ -33,12 +53,28 @@ export const loginAttempts = sqliteTable("login_attempts", {
   lockedUntil: ts("locked_until"),
 });
 
-// --- Her profile (single row, id = 1) ------------------------------------------------------
+// --- Profiles (one per account) --------------------------------------------------------------
 
 export type ProfileLanguage = { language: string; level: "base" | "buono" | "fluente" };
+export type Track = "lavoro" | "stage";
 
-export const profile = sqliteTable("profile", {
+export const profile = sqliteTable(
+  "profile",
+  {
   id: integer("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  /** "lavoro": a job (the original Compass). "stage": internships and student programmes. */
+  track: text("track", { enum: ["lavoro", "stage"] }).notNull().default("lavoro"),
+  /**
+   * "tutte": every offer, with extra weight on chosen companies and sectors.
+   * "preferite": only offers from chosen companies (and chosen sectors unless focusCompaniesOnly).
+   */
+  focus: text("focus", { enum: ["tutte", "preferite"] }).notNull().default("tutte"),
+  focusCompaniesOnly: integer("focus_companies_only", { mode: "boolean" }).notNull().default(false),
+  /** Personal tastes from the questionnaire (TASTES keys), used for company suggestions. */
+  tastes: json<string[]>("tastes").notNull().default([]),
+  /** Hide offers whose known pay is below minNetMonthly (unknown pay stays visible). */
+  hideBelowMin: integer("hide_below_min", { mode: "boolean" }).notNull().default(false),
   name: text("name").notNull().default(""),
   phone: text("phone").notNull().default(""),
   email: text("email").notNull().default(""),
@@ -62,10 +98,21 @@ export const profile = sqliteTable("profile", {
   presentation: text("presentation").notNull().default(""),
   availability: text("availability").notNull().default(""),
   salaryExpectation: text("salary_expectation").notNull().default(""),
+  // Students ("stage" track)
+  university: text("university").notNull().default(""),
+  degree: text("degree").notNull().default(""),
+  studyYear: integer("study_year"), // 1 = first year
+  degreeYears: integer("degree_years"), // 3 for a bachelor, 2 for a master, 5 for a single-cycle degree
+  graduationYear: integer("graduation_year"),
+  periods: json<string[]>("periods").notNull().default([]), // "estate", "autunno", "inverno", "primavera", "part-time"
+  extraPlaces: json<string[]>("extra_places").notNull().default([]), // other cities, e.g. "Londra"
+  paidOnly: integer("paid_only", { mode: "boolean" }).notNull().default(false),
   onboardingStep: integer("onboarding_step").notNull().default(1),
   onboardedAt: ts("onboarded_at"),
   updatedAt: ts("updated_at"),
-});
+  },
+  (t) => [uniqueIndex("profile_user_idx").on(t.userId)],
+);
 
 // --- Jobs ------------------------------------------------------------------------------------
 
@@ -85,7 +132,6 @@ export const jobs = sqliteTable(
     province: text("province"),
     lat: real("lat"),
     lng: real("lng"),
-    distanceKm: real("distance_km"),
     description: text("description").notNull().default(""),
     salaryRaw: text("salary_raw"),
     salaryMin: integer("salary_min"), // annual gross
@@ -98,6 +144,11 @@ export const jobs = sqliteTable(
     remote: text("remote").notNull().default("unknown"),
     languages: json<LanguageRow[]>("languages").notNull().default([]),
     sector: text("sector"),
+    /** "lavoro", "stage" (internship), "programma" (insight/spring week), or "unknown". */
+    jobType: text("job_type").notNull().default("unknown"),
+    /** Who the ad is for: codes from extractEligibility() (e.g. "laurea-richiesta", "primo-anno"). */
+    eligibility: json<string[]>("eligibility").notNull().default([]),
+    durationMonths: integer("duration_months"),
     applicationEmail: text("application_email"),
     applicationEmailEvidence: text("application_email_evidence"),
     scamFlags: json<ScamFlagRow[]>("scam_flags").notNull().default([]),
@@ -105,17 +156,31 @@ export const jobs = sqliteTable(
     postedAt: ts("posted_at"),
     firstSeenAt: ts("first_seen_at").notNull(),
     updatedAt: ts("updated_at").notNull(),
-    // ranking (recomputed when profile or adjustments change)
+  },
+  (t) => [index("jobs_dedupe_idx").on(t.dedupeKey)],
+);
+
+/**
+ * A job as one person sees it: distance from their home, their ranking, their actions.
+ * A row exists only for people allowed to see the job (see jobSources.userId).
+ */
+export const userJobs = sqliteTable(
+  "user_jobs",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    jobId: integer("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+    distanceKm: real("distance_km"),
     score: integer("score").notNull().default(0),
     level: text("level", { enum: ["molto", "adatta", "poco"] }).notNull().default("poco"),
     reasons: json<Reason[]>("reasons").notNull().default([]),
     factors: json<FactorRow[]>("factors").notNull().default([]),
-    // her actions
     status: text("status", { enum: ["new", "seen", "dismissed", "applied"] }).notNull().default("new"),
     dismissReason: text("dismiss_reason"),
     seenAt: ts("seen_at"),
+    /** Matches the person's choices: "company" (a chosen company), "sector" (a chosen sector) or null. */
+    presetMatch: text("preset_match", { enum: ["company", "sector"] }),
   },
-  (t) => [index("jobs_level_idx").on(t.level, t.status), index("jobs_dedupe_idx").on(t.dedupeKey)],
+  (t) => [primaryKey({ columns: [t.userId, t.jobId] }), index("user_jobs_list_idx").on(t.userId, t.level, t.status)],
 );
 
 export const jobSources = sqliteTable(
@@ -126,9 +191,93 @@ export const jobSources = sqliteTable(
     source: text("source").notNull(), // SourceKind
     url: text("url"),
     externalId: text("external_id"),
+    /** Private source (someone's own alert e-mails, or added by hand): only they see the job through it. Null: everyone. */
+    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
     seenAt: ts("seen_at").notNull(),
   },
   (t) => [index("job_sources_job_idx").on(t.jobId), index("job_sources_url_idx").on(t.url)],
+);
+
+// --- Catalog: sectors, boutiques, brands (curated + "Altro" added by people) ---------------------
+
+export type CatalogTrack = "lavoro" | "stage" | "tutti";
+export const COMPANY_KINDS = ["boutique", "banca", "fondo", "consulenza", "startup", "brand", "azienda", "programma"] as const;
+export type CompanyKind = (typeof COMPANY_KINDS)[number];
+
+export const catalogSectors = sqliteTable("catalog_sectors", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  track: text("track").$type<CatalogTrack>().notNull().default("tutti"),
+  /** Words that identify the sector in a job title or text (the name itself always counts). */
+  keywords: json<string[]>("keywords").notNull().default([]),
+  /** Broad themes the sector belongs to ("lusso", "moda", "nautica"...): they connect related sectors. */
+  themes: json<string[]>("themes").notNull().default([]),
+  /** Curated entries have no author. Entries added with "Altro" are private until the admin shares them. */
+  createdByUserId: integer("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  shared: integer("shared", { mode: "boolean" }).notNull().default(true),
+  createdAt: createdAt(),
+});
+
+export const catalogCompanies = sqliteTable("catalog_companies", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  aliases: json<string[]>("aliases").notNull().default([]),
+  kind: text("kind").$type<CompanyKind>().notNull().default("azienda"),
+  /** Main sector. A brand is often in more than one: see extraSectorIds (Ferrari: auto, and luxury lifestyle). */
+  sectorId: integer("sector_id").references(() => catalogSectors.id, { onDelete: "set null" }),
+  extraSectorIds: json<number[]>("extra_sector_ids").notNull().default([]),
+  /** Themes of its own, on top of those of its sectors. */
+  themes: json<string[]>("themes").notNull().default([]),
+  city: text("city"),
+  track: text("track").$type<CatalogTrack>().notNull().default("tutti"),
+  note: text("note"),
+  /** Optional public ATS feed (filled in by the admin after checking it). */
+  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio"] }),
+  atsSlug: text("ats_slug"),
+  createdByUserId: integer("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  shared: integer("shared", { mode: "boolean" }).notNull().default(true),
+  createdAt: createdAt(),
+});
+
+/** One person's experience timeline: work, studies, volunteering. From the CV, a LinkedIn data export, or typed in. */
+export const experiences = sqliteTable(
+  "experiences",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["lavoro", "studio", "volontariato", "altro"] }).notNull().default("lavoro"),
+    title: text("title").notNull().default(""),
+    organization: text("organization").notNull().default(""),
+    city: text("city"),
+    startYear: integer("start_year"),
+    startMonth: integer("start_month"),
+    endYear: integer("end_year"), // null and current=false: unknown
+    endMonth: integer("end_month"),
+    current: integer("current", { mode: "boolean" }).notNull().default(false),
+    description: text("description").notNull().default(""),
+    source: text("source", { enum: ["cv", "linkedin", "manuale"] }).notNull().default("manuale"),
+    /** What Compass understood: the catalog company and sector it matched (used for suggestions). */
+    catalogCompanyId: integer("catalog_company_id").references(() => catalogCompanies.id, { onDelete: "set null" }),
+    sectorId: integer("sector_id").references(() => catalogSectors.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("experiences_user_idx").on(t.userId)],
+);
+
+/** "Mi interessa" / "Da evitare" on catalog entries, per person. */
+export const userPrefs = sqliteTable(
+  "user_prefs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["sector", "company"] }).notNull(),
+    refId: integer("ref_id").notNull(),
+    stance: text("stance", { enum: ["like", "avoid"] }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("user_prefs_unique").on(t.userId, t.kind, t.refId)],
 );
 
 // --- Sources: health, processed messages, watchlists, approvals -----------------------------
@@ -201,6 +350,7 @@ export const usageCounters = sqliteTable(
 
 export const cvs = sqliteTable("cvs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   label: text("label").notNull(),
   roleFamily: text("role_family").notNull(),
   filename: text("filename").notNull(),
@@ -214,6 +364,7 @@ export const cvs = sqliteTable("cvs", {
 
 export const templates = sqliteTable("templates", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   kind: text("kind", { enum: ["job", "spontaneous"] }).notNull(),
   subject: text("subject").notNull(),
@@ -224,6 +375,7 @@ export const templates = sqliteTable("templates", {
 
 export const spontaneousCompanies = sqliteTable("spontaneous_companies", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   email: text("email").notNull(),
   sourceUrl: text("source_url").notNull(), // page where the company publishes the address
@@ -252,6 +404,7 @@ export const applications = sqliteTable(
   "applications",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
     jobId: integer("job_id").references(() => jobs.id, { onDelete: "set null" }),
     spontaneousCompanyId: integer("spontaneous_company_id").references(() => spontaneousCompanies.id, { onDelete: "set null" }),
     lane: text("lane", { enum: ["email", "curated", "site"] }).notNull(),
@@ -274,11 +427,12 @@ export const applications = sqliteTable(
     createdAt: createdAt(),
     updatedAt: ts("updated_at"),
   },
-  (t) => [index("applications_status_idx").on(t.status), index("applications_job_idx").on(t.jobId)],
+  (t) => [index("applications_status_idx").on(t.status), index("applications_job_idx").on(t.jobId), index("applications_user_idx").on(t.userId, t.status)],
 );
 
 export const sendLog = sqliteTable("send_log", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   applicationId: integer("application_id").references(() => applications.id, { onDelete: "set null" }),
   toEmail: text("to_email").notNull(),
   company: text("company"),
@@ -292,6 +446,7 @@ export const sendLog = sqliteTable("send_log", {
 
 export const replies = sqliteTable("replies", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   applicationId: integer("application_id").references(() => applications.id, { onDelete: "cascade" }),
   fromEmail: text("from_email").notNull(),
   fromName: text("from_name"),
@@ -308,6 +463,7 @@ export const replies = sqliteTable("replies", {
 
 export const rankAdjustments = sqliteTable("rank_adjustments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   kind: text("kind", { enum: ["company", "keyword", "role", "distance", "salary"] }).notNull(),
   value: text("value").notNull(),
   label: text("label").notNull(),
@@ -333,6 +489,7 @@ export const settings = sqliteTable("settings", {
 /** Every e-mail the app "sends" in demo mode lands here instead of the internet. */
 export const outbox = sqliteTable("outbox", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   kind: text("kind", { enum: ["application", "digest", "admin-alert"] }).notNull(),
   toEmail: text("to_email").notNull(),
   subject: text("subject").notNull(),
@@ -347,6 +504,7 @@ export const outbox = sqliteTable("outbox", {
 export const demoInbox = sqliteTable("demo_inbox", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   messageId: text("message_id").notNull().unique(),
+  mailboxKey: text("mailbox_key").notNull().default("default"),
   raw: text("raw").notNull(), // full RFC 822 source
   receivedAt: ts("received_at").notNull(),
 });
@@ -354,6 +512,8 @@ export const demoInbox = sqliteTable("demo_inbox", {
 export const notifications = sqliteTable("notifications", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   audience: text("audience", { enum: ["user", "admin"] }).notNull(),
+  /** For audience "user": whose notification it is. */
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   text: text("text").notNull(),
   href: text("href"),
   read: integer("read", { mode: "boolean" }).notNull().default(false),

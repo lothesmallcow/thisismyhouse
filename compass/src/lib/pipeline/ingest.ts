@@ -1,7 +1,7 @@
-// Scheduled ingestion: mailbox (alerts + replies), job APIs, ATS watchlist, W2 approved sites.
+// Scheduled ingestion: each mailbox (alerts + replies), job APIs (one plan per person), ATS feeds
+// (admin watchlist + chosen catalog companies with a known feed), W2 approved sites.
 // Each source runs inside runWithHealth(), so one broken source never stops the others.
-import { and, eq, isNotNull, isNull } from "drizzle-orm";
-import { distanceKm } from "../core/geo";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { geocode, GEOCODE_MAX_PER_RUN } from "../sources/geocode";
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -13,17 +13,28 @@ import { BlockedError, type FetchLike } from "../sources/http";
 import type { Mailbox } from "../sources/mail/types";
 import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
-import { dedupeCandidates, rerankJob, upsertRawJob } from "../server/jobs";
-import { getProfile, homeOf } from "../server/profile";
+import { dedupeCandidates, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
+import { rankPrefs } from "../server/catalog";
 import { getSettings, setSetting } from "../server/settings";
+import { searchPlan } from "./search-terms";
 import type { RawJob } from "../core/normalize";
 import { isPaused, runWithHealth } from "./health";
 import { scanMailbox, type MailboxSummary } from "./mailbox-scan";
 
+export interface MailboxRun {
+  key: string;
+  mailbox: Mailbox;
+  /** The people who use this mailbox: its alerts are private to them, its replies match their applications. */
+  owners: number[];
+}
+
+/** Job API calls per run, whatever the number of people (free quotas are small). */
+export const API_CALLS_PER_RUN = 9;
+
 export interface IngestDeps {
   db: DB;
   fetchImpl: FetchLike;
-  mailbox: Mailbox | null;
+  mailboxes: MailboxRun[];
   demo: boolean;
   now?: Date;
   /** For tests: skip the 5-second politeness wait. */
@@ -36,42 +47,58 @@ export interface IngestSummary {
   newJobs: number;
 }
 
-async function store(db: DB, jobs: RawJob[], now: Date): Promise<{ created: number; total: number }> {
+async function store(db: DB, jobs: RawJob[], now: Date, contexts: RankContext[]): Promise<{ created: number; total: number }> {
   const cache = await dedupeCandidates(db);
   let created = 0;
-  for (const j of jobs) if ((await upsertRawJob(db, j, now, cache)).created) created++;
+  for (const j of jobs) if ((await upsertRawJob(db, j, now, { cache, contexts })).created) created++;
   return { created, total: jobs.length };
 }
 
 export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
-  const { db, fetchImpl, mailbox, demo } = deps;
+  const { db, fetchImpl, demo } = deps;
   const now = deps.now ?? new Date();
   const settings = await getSettings(db);
-  const profile = await getProfile(db);
+  const contexts = await rankContexts(db);
   const summary: IngestSummary = { mailbox: null, sources: {}, newJobs: 0 };
 
-  // 1. Mailbox (first source)
-  if (mailbox) {
+  // 1. Mailboxes (first source), one per configured key in use
+  for (const m of deps.mailboxes) {
+    const source = m.key === "default" ? "mailbox" : `mailbox:${m.key}`;
     try {
-      summary.mailbox = await scanMailbox(db, mailbox, now);
-      summary.newJobs += summary.mailbox.jobsNew;
-      await runWithHealth(db, "mailbox", async () => ({ items: summary.mailbox!.alerts, failures: 0 }), now);
+      const r = await scanMailbox(db, m.mailbox, m.owners, now, { contexts });
+      summary.mailbox = summary.mailbox
+        ? { alerts: summary.mailbox.alerts + r.alerts, jobsNew: summary.mailbox.jobsNew + r.jobsNew, jobsMerged: summary.mailbox.jobsMerged + r.jobsMerged, replies: summary.mailbox.replies + r.replies }
+        : r;
+      summary.newJobs += r.jobsNew;
+      await runWithHealth(db, source, async () => ({ items: r.alerts, failures: 0 }), now);
     } catch (e) {
-      await runWithHealth(db, "mailbox", async () => { throw e; }, now);
+      await runWithHealth(db, source, async () => { throw e; }, now);
     }
   }
 
-  const roles = profile.roles.slice(0, 3);
-  const city = profile.city || "Torino";
+  // One search plan per person; identical searches are made once.
+  const plans = [];
+  for (const ctx of contexts) {
+    if (!ctx.profile.onboardedAt) continue;
+    plans.push(searchPlan(ctx.profile, await rankPrefs(db, ctx.userId)));
+  }
+  const calls = new Map<string, { what: string; where: string; distanceKm: number }>();
+  for (let i = 0; i < 3; i++) {
+    for (const p of plans) {
+      const what = p.apiTerms[i];
+      if (what) calls.set(`${what.toLowerCase()}|${p.city.toLowerCase()}`, { what, where: p.city, distanceKm: p.radiusKm });
+    }
+  }
+  const apiCalls = [...calls.values()].slice(0, API_CALLS_PER_RUN);
 
   // 2. Adzuna
   const adzuna = demo ? { appId: "demo", appKey: "demo" } : env.adzuna;
-  if (settings.adzunaEnabled && adzuna.appId && adzuna.appKey && roles.length) {
+  if (settings.adzunaEnabled && adzuna.appId && adzuna.appKey && apiCalls.length) {
     const r = await runWithHealth(db, "api:adzuna", async () => {
       let items = 0;
-      for (const what of roles) {
-        const jobs = await fetchAdzuna(fetchImpl, adzuna, { what, where: city, distanceKm: profile.maxKm });
-        const s = await store(db, jobs, now);
+      for (const c of apiCalls) {
+        const jobs = await fetchAdzuna(fetchImpl, adzuna, c);
+        const s = await store(db, jobs, now, contexts);
         items += s.total;
         summary.newJobs += s.created;
       }
@@ -80,21 +107,31 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
     summary.sources["api:adzuna"] = r?.items ?? null;
   }
 
-  // 3. Jooble (tiny lifetime quota: off by default)
+  // 3. Jooble (tiny lifetime quota: off by default, one call per run)
   const joobleKey = demo ? "demo" : env.joobleKey;
-  if (settings.joobleEnabled && joobleKey && roles.length) {
+  if (settings.joobleEnabled && joobleKey && apiCalls.length) {
     const r = await runWithHealth(db, "api:jooble", async () => {
-      const jobs = await fetchJooble(fetchImpl, joobleKey, { keywords: roles[0], location: city, radiusKm: profile.maxKm });
-      const s = await store(db, jobs, now);
+      const c = apiCalls[0];
+      const jobs = await fetchJooble(fetchImpl, joobleKey, { keywords: c.what, location: c.where, radiusKm: c.distanceKm });
+      const s = await store(db, jobs, now, contexts);
       summary.newJobs += s.created;
       return { items: s.total, failures: 0 };
     }, now);
     summary.sources["api:jooble"] = r?.items ?? null;
   }
 
-  // 4. ATS watchlist
+  // 4. ATS feeds: the admin's watchlist, plus catalog companies someone chose that have a known feed.
   // 403/429 pauses the whole HOST (e.g. boards-api.greenhouse.io), not just one company.
-  const watch = await db.select().from(schema.companyWatchlist).where(eq(schema.companyWatchlist.active, true));
+  const listed = await db.select().from(schema.companyWatchlist).where(eq(schema.companyWatchlist.active, true));
+  const chosen = await db
+    .selectDistinct({ name: schema.catalogCompanies.name, ats: schema.catalogCompanies.ats, slug: schema.catalogCompanies.atsSlug })
+    .from(schema.catalogCompanies)
+    .innerJoin(schema.userPrefs, and(eq(schema.userPrefs.kind, "company"), eq(schema.userPrefs.refId, schema.catalogCompanies.id), eq(schema.userPrefs.stance, "like")))
+    .innerJoin(schema.users, and(eq(schema.users.id, schema.userPrefs.userId), eq(schema.users.active, true)))
+    .where(and(isNotNull(schema.catalogCompanies.ats), isNotNull(schema.catalogCompanies.atsSlug), sql`${schema.catalogCompanies.atsSlug} != ''`));
+  const watch = [...listed.map((w) => ({ name: w.name, ats: w.ats, slug: w.slug })), ...chosen.map((c) => ({ name: c.name, ats: c.ats!, slug: c.slug! }))].filter(
+    (w, i, all) => all.findIndex((x) => x.ats === w.ats && x.slug === w.slug) === i,
+  );
   for (const w of watch) {
     const key = `ats:${w.ats}:${w.slug}`;
     const host = new URL(atsEndpoint(w.ats as AtsType, w.slug)).host;
@@ -110,7 +147,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
         if (e instanceof BlockedError) await runWithHealth(db, `host:${host}`, async () => { throw e; }, now);
         throw e;
       }
-      const s = await store(db, jobs, now);
+      const s = await store(db, jobs, now, contexts);
       summary.newJobs += s.created;
       return { items: s.total, failures: 0 };
     }, now);
@@ -141,7 +178,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
             }
           }
         }
-        const s = await store(db, jobs, now);
+        const s = await store(db, jobs, now, contexts);
         summary.newJobs += s.created;
         return { items: s.total, failures };
       }, now);
@@ -151,7 +188,6 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
 
   // 6. Geocoder fallback for jobs whose city is not in the offline dataset (off by default)
   if (settings.geocoderEnabled) {
-    const home = homeOf(profile);
     const missing = await db
       .select()
       .from(schema.jobs)
@@ -163,8 +199,8 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
         const p = await geocode(db, fetchImpl, j.city!, deps.politeSleep ?? ((ms) => new Promise((r) => setTimeout(r, ms))));
         if (!p) continue;
         found++;
-        await db.update(schema.jobs).set({ lat: p.lat, lng: p.lng, distanceKm: home ? distanceKm(home, p) : null }).where(eq(schema.jobs.id, j.id));
-        await rerankJob(db, j.id, now);
+        await db.update(schema.jobs).set({ lat: p.lat, lng: p.lng }).where(eq(schema.jobs.id, j.id));
+        await rankJobForAll(db, j.id, now, contexts);
       }
       return { items: found, failures: 0 };
     }, now);

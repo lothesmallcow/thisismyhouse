@@ -2,9 +2,21 @@
 
 Short and practical. Everything is in the admin area: `/admin/entra` (separate login).
 
-## Change passwords
-Admin → **Accessi** → type a new password (8+ characters) under her account or yours → **Cambia**.
+## People and passwords
+Admin → **Persone**:
+- **Crea un account** (name, e-mail, password of 10+ characters, track *lavoro* or *stage*), or
+  **Crea invito** (in *Inviti*): a link valid 14 days, shown once, for one person to sign up alone.
+- Per person: mailbox key (`default`, or e.g. `studente` if `MAILBOX_STUDENTE_*` is set), the
+  address for the morning e-mail, a new password, deactivate, delete (type ELIMINA).
+- **Apri la sua app** shows Compass exactly as that person sees it, to help them; a bar at the
+  top says so and takes you back.
+- Who can sign up on their own: Admin → **Fonti** → *Registrazione* (closed, by invite, open).
 After 5 wrong attempts an account is locked for 15 minutes (on purpose).
+
+## Catalog (companies and sectors people can choose)
+Admin → **Catalogo**: the curated list plus what people added with "Altro". Entries added by a
+person are private to them until you press **Rendi visibile a tutti**. You can fix a company's city or its
+ATS (system and slug) so its offers are read directly from its careers site.
 
 ## Add a company to follow
 1. Open the company's careers page and look at the address of the job list:

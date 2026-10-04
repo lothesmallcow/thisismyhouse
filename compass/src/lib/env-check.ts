@@ -25,9 +25,12 @@ export function checkEnv(e: Env = process.env): EnvProblem[] {
   if ((e.DATABASE_URL ?? "").startsWith("libsql://")) need("DATABASE_AUTH_TOKEN", Boolean(e.DATABASE_AUTH_TOKEN), "is required for a Turso database");
   need("APP_URL", /^https?:\/\//.test(e.APP_URL ?? ""), "must be the public URL of the app (used in the morning e-mail)");
   need("CONTACT_EMAIL", /@/.test(e.CONTACT_EMAIL ?? ""), "is required: every outbound request carries it in an honest User-Agent");
-  need("MAILBOX_USER", Boolean(e.MAILBOX_USER), "is required to read alerts and send applications");
+  need("MAILBOX_USER", Boolean(e.MAILBOX_USER), "is required: the main mailbox reads alerts and sends e-mails (MAILBOX_<KEY>_USER adds more)");
   need("MAILBOX_APP_PASSWORD", Boolean(e.MAILBOX_APP_PASSWORD), "is required (Gmail app password, see docs/setup.md)");
-  need("DIGEST_TO", /@/.test(e.DIGEST_TO ?? ""), "should be her normal inbox for the morning e-mail", false);
+  for (const k of Object.keys(e)) {
+    const m = k.match(/^MAILBOX_([A-Z0-9]+)_USER$/);
+    if (m) need(`MAILBOX_${m[1]}_APP_PASSWORD`, Boolean(e[`MAILBOX_${m[1]}_APP_PASSWORD`]), `is required because ${k} is set`);
+  }
   need("ADMIN_ALERT_EMAIL", /@/.test(e.ADMIN_ALERT_EMAIL ?? ""), "should be your inbox for alerts when a source breaks", false);
   return out;
 }
