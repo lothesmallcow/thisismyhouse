@@ -19,6 +19,10 @@ everything that leaves the house.
 |---|---|---|
 | ![Offerte](docs/screenshots/student-offerte.png) | ![Percorsi](docs/screenshots/student-percorsi.png) | ![Aziende](docs/screenshots/student-aziende.png) |
 
+| Score out of 100 (luxury retail) | Requirements and score parts | Role sheet: pay by employer size |
+|---|---|---|
+| ![Offerte](docs/screenshots/persona-offerte.png) | ![Offerta](docs/screenshots/persona-offerta.png) | ![Scheda ruolo](docs/screenshots/persona-scheda-ruolo.png) |
+
 | Offers (phone) | One offer | Experience timeline |
 |---|---|---|
 | ![Offerte](docs/screenshots/phone-offerte.png) | ![Offerta](docs/screenshots/phone-offerta.png) | ![Esperienze](docs/screenshots/laptop-esperienze.png) |
@@ -56,6 +60,10 @@ ever touching anyone's platform accounts.
   questionnaire; ~3,100 listed companies and all 1,047 NACE industries (four languages) browsable
   and searchable; ~180 roles searched in each country's language. Searches go only where people
   want to work, best-fitting companies first and the rest in rotation, so free quotas last.
+- **Fit score out of 100**: seven readable parts (role, experience, requirements, place, pay,
+  conditions, choices), weights you can change, hard limits; each offer lists its requirements
+  against your CV with tips for the gaps; role sheets with pay by employer size for your area;
+  named folders; a discreet search that never puts your current employer forward.
 - **Career panel**: an experience timeline read from the CV (PDF text) or a LinkedIn data export,
   career paths and company suggestions built from shared themes, a gentle "might not be the best
   fit" note when a choice is far from everything else, advice for your year of study, and a
@@ -134,6 +142,7 @@ npm run demo              # migrate + seed fake data + start on http://localhost
 
 - Job seeker (Lucia, fake): `http://localhost:3000/entra` with `demo@example.com` / `demo-compass`
 - Student (Marco, fake, first year): `studente@example.com` / `demo-compass`
+- Luxury retail (Chiara, fake, store manager in Milan): `moda@example.com` / `demo-compass`
 - Admin: `http://localhost:3000/admin/entra` with `admin@example.com` / `admin-compass`
 - Fill the list from the demo sources: admin → Fonti → "Raccogli offerte" (or `npm run job:ingest`).
 
@@ -141,8 +150,8 @@ npm run demo              # migrate + seed fake data + start on http://localhost
 |---|---|
 | `npm run demo` | one-command local start in demo mode |
 | `npm run check` | lint + typecheck + unit tests + personal-data scan |
-| `npm test` | Vitest: 302 unit and integration tests (rules, parsers, sources, pipeline, guardrails, accounts isolation, catalog, career, countries, migration) |
-| `npm run build && npm run test:e2e` | Playwright: 20 end-to-end flows on a phone viewport (incl. two people, invitations, auth matrix, XSS, axe light and dark) |
+| `npm test` | Vitest: 316 unit and integration tests (rules, parsers, sources, pipeline, guardrails, accounts isolation, catalog, career, countries, fit score, persona, migration) |
+| `npm run build && npm run test:e2e` | Playwright: 21 end-to-end flows on a phone viewport (incl. two people, invitations, auth matrix, XSS, axe light and dark) |
 | `npm run simulate:week` | a full demo week on a simulated clock, every step checked against the database |
 | `npm run audit:ui` | every screen at 360/1280 px, light and dark: axe, text and target sizes, keyboard focus, zoom (needs a running demo) |
 | `npm run job:<ingest\|discover\|queue\|replies\|digest>` | run a scheduled job by hand |

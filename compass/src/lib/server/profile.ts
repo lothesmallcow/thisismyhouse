@@ -31,8 +31,10 @@ export async function updateProfile(db: DB, userId: number, patch: ProfilePatch)
 
 const NO_PREFS: RankPrefs = { likedSectors: [], avoidSectors: [], likedCompanies: [], avoidCompanies: [] };
 
-export function toRankProfile(p: Profile, prefs: RankPrefs = NO_PREFS): RankProfile {
+export function toRankProfile(p: Profile, prefs: RankPrefs = NO_PREFS, bg: Pick<RankProfile, "person" | "experienceSectors" | "currentEmployers"> = { person: null, experienceSectors: [], currentEmployers: [] }): RankProfile {
   return {
+    ...bg,
+    weights: (p.fitWeights as RankProfile["weights"]) ?? null,
     track: p.track,
     roles: p.roles,
     // The same roles in the languages of the countries they chose (and English, common everywhere).

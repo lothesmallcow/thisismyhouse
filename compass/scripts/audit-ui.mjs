@@ -25,9 +25,9 @@ const browser = await chromium.launch(process.env.PLAYWRIGHT_CHROMIUM_PATH ? { e
 
 async function login(ctx, who) {
   const p = await ctx.newPage();
-  if (who === "her" || who === "him") {
+  if (who === "her" || who === "him" || who === "moda") {
     await p.goto(BASE + "/entra");
-    await p.fill("#email", who === "her" ? "demo@example.com" : "studente@example.com");
+    await p.fill("#email", who === "her" ? "demo@example.com" : who === "him" ? "studente@example.com" : "moda@example.com");
     await p.fill("#password", "demo-compass");
   } else {
     await p.goto(BASE + "/admin/entra");
@@ -100,6 +100,14 @@ const SCREENS = [
   ["him", "/aziende?settore=abbigliamento", "Studente: cerca un settore NACE"],
   ["him", "/profilo/esperienze", "Studente: esperienze"],
   ...Array.from({ length: 12 }, (_, i) => ["him", `/benvenuto/${i + 1}?ritorno=profilo`, `Questionario stage passo ${i + 1}`]),
+  ["moda", "/offerte", "Retail lusso: offerte"],
+  ["moda", "/offerte?punteggio=70&ordina=recenti", "Retail lusso: punteggio minimo e ordine"],
+  ["moda", "/offerte/cartelle", "Retail lusso: cartelle"],
+  ["moda", "/ruoli", "Ruoli e stipendi"],
+  ["moda", "/ruoli/boutique-manager-gioielli", "Scheda ruolo: boutique manager orologi e gioielli"],
+  ["moda", "/profilo/punteggio", "Punteggio: pesi"],
+  ["moda", "/percorsi", "Retail lusso: percorsi e aziende a cui scrivere"],
+  ["moda", "/profilo", "Retail lusso: profilo (ricerca riservata)"],
   ["her", "/benvenuto/risposte?ritorno=profilo", "Risposte pronte"],
   ["her", "/benvenuto/fine", "Benvenuto: fine"],
   ["her", "/pagina-che-non-esiste", "Pagina non trovata"],
@@ -116,7 +124,7 @@ const VIEWPORTS = [
 const report = [];
 for (const vp of VIEWPORTS) {
   const ctxs = {};
-  for (const who of ["public", "her", "him", "admin"]) {
+  for (const who of ["public", "her", "him", "moda", "admin"]) {
     ctxs[who] = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, colorScheme: vp.scheme, reducedMotion: "reduce" });
     if (who !== "public") await login(ctxs[who], who);
   }
@@ -214,7 +222,7 @@ for (const width of [640, 320]) {
   await login(ctx, "her");
   const ctxHim = await browser.newContext({ viewport: { width, height: 700 } });
   await login(ctxHim, "him");
-  for (const [who, path, title] of SCREENS.filter(([w]) => w === "her" || w === "him")) {
+  for (const [who, path, title] of SCREENS.filter(([w]) => w === "her" || w === "him" || w === "moda")) {
     const p = await (who === "him" ? ctxHim : ctx).newPage();
     await p.goto(BASE + path);
     await p.waitForLoadState("networkidle");

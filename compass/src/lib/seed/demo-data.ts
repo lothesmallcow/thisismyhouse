@@ -226,3 +226,86 @@ export function demoStageJobs(now: Date): RawJob[] {
     postedAt: new Date(now.getTime() - s.days * 86400000 - 3600000 * (i % 5)),
   }));
 }
+
+// --- Third demo person: a store manager in high fashion, Milan, open to watches and jewellery -----
+
+export const DEMO_FASHION = {
+  name: "Chiara Colombo",
+  phone: "333 000 0000",
+  email: "chiara.colombo.lavoro@example.com",
+  linkedinUrl: "",
+  roles: ["Store manager", "Client advisor"],
+  synonyms: ["Boutique manager", "Responsabile di negozio"],
+  city: "Milano",
+  maxKm: 15,
+  remoteOk: false,
+  hours: "full" as const,
+  contracts: ["indeterminato"],
+  minNetMonthly: 2200,
+  hideBelowMin: false,
+  languages: [{ language: "inglese", level: "fluente" as const }, { language: "francese", level: "base" as const }],
+  avoidSectors: [],
+  avoidCompanies: [],
+  avoidKeywords: ["porta a porta"],
+  countries: ["IT"],
+  regions: ["IT:Lombardia"],
+  extraPlaces: [],
+  tastes: ["lusso", "moda"],
+  focus: "tutte" as const,
+  presentation: "Store manager nella moda di lusso a Milano, prima sales associate. Guido un team, seguo i clienti più importanti e i risultati del negozio. Valuto anche l'orologeria e la gioielleria.",
+  availability: "Preavviso di un mese.",
+  salaryExpectation: "In linea con il ruolo e l'esperienza.",
+};
+
+export const DEMO_FASHION_PREFS = {
+  sectors: ["moda-lusso", "gioielli"],
+  companies: ["bulgari", "panerai", "damiani"],
+};
+
+export const DEMO_FASHION_CV_LINES = [
+  "Chiara Colombo (profilo di prova)",
+  "Milano - chiara.colombo.lavoro@example.com",
+  "",
+  "ESPERIENZE",
+  "2019 - oggi Store Manager, Maison Esempio Moda, Milano",
+  "- Gestione del team di 12 persone, turni e formazione",
+  "- Budget di vendita e KPI del negozio: sell-out, conversione, scontrino medio",
+  "- Clienteling e portafoglio clienti internazionale, eventi per clienti VIC",
+  "2014 - 2019 Sales Associate, Boutique Esempio Alta Moda, Milano",
+  "- Vendita nel lusso, clienteling, visual merchandising del corner",
+  "",
+  "ISTRUZIONE",
+  "2010 - 2013 Laurea triennale in Economia e Management, Università Esempio, Milano",
+  "",
+  "LINGUE",
+  "Inglese fluente, francese base",
+  "COMPETENZE",
+  "Excel, CRM e clienteling, gestione inventario e stock",
+];
+
+interface FashionSpec { title: string; company: string; city: string; days: number; text: string; salary?: string; email?: string }
+const FASHION_SPECS: FashionSpec[] = [
+  { title: "Store Manager boutique alta moda", company: "Atelier Esempio Milano", city: "Milano", days: 1, text: "Cerchiamo uno Store Manager per la boutique di via Esempio. Requisiti: almeno 5 anni di esperienza nel retail di lusso, gestione di un team, obiettivi di vendita e KPI, clienteling. Inglese fluente. Contratto a tempo indeterminato, full time.", salary: "RAL 48.000 - 55.000 € più bonus", email: "careers@atelieresempio.example" },
+  { title: "Boutique Manager orologeria", company: "Orologeria Esempio Milano", city: "Milano", days: 2, text: "Boutique di alta orologeria cerca Boutique Manager. Richiesta esperienza nel settore orologi o gioielli, gestione del team, clienteling e portafoglio clienti. Almeno 6 anni di esperienza nel lusso. Laurea gradita.", salary: "RAL 50.000 € più premi" },
+  { title: "Watch Specialist / Sales Advisor", company: "Esempio Haute Horlogerie", city: "Milano", days: 3, text: "Watch specialist per boutique monomarca: vendita di orologi di alta gamma, clienteling, liste d'attesa. Conoscenza dell'orologeria richiesta; formazione sul prodotto fornita. Inglese fluente. Tempo indeterminato.", salary: "RAL 34.000 € più premi" },
+  { title: "Area Manager Retail Lombardia", company: "Gruppo Moda Esempio", city: "Bergamo", days: 4, text: "Area Manager per 6 negozi in Lombardia. Almeno 8 anni di esperienza nel retail, di cui 3 come store manager. Gestione di team, budget e KPI. Patente B. Tempo indeterminato.", salary: "RAL 60.000 € più auto aziendale" },
+  { title: "Client Advisor", company: "Maison Esempio Brescia", city: "Brescia", days: 2, text: "Client advisor per boutique di moda di lusso. Esperienza di 2 anni nella vendita nel lusso, clienteling, inglese fluente. Tempo indeterminato." },
+  { title: "Store Manager", company: "Maison Esempio Moda", city: "Milano", days: 1, text: "Store manager per la nostra boutique di Milano: gestione del team, KPI, clienteling. Tempo indeterminato." },
+  { title: "Junior Sales Assistant", company: "Outlet Esempio", city: "Milano", days: 5, text: "Addetto/a vendite junior, anche prima esperienza. Part time, contratto a tempo determinato." },
+  { title: "CRM e Clienteling Manager", company: "Brand Lusso Esempio", city: "Milano", days: 6, text: "Disegnerai i programmi per i clienti più importanti del brand. 4 anni tra negozio e marketing clienti, CRM, Excel. Laurea in economia o marketing.", salary: "RAL 45.000 €" },
+  { title: "Yacht Sales Manager", company: "Cantiere Esempio", city: "Genova", days: 7, text: "Vendita di yacht a clienti internazionali, saloni nautici. Esperienza di vendita nel lusso, inglese fluente. Tempo indeterminato." },
+  { title: "Store Manager", company: "Esempio Fashion Torino", city: "Torino", days: 3, text: "Store manager per negozio di abbigliamento premium. 5 anni di esperienza, gestione team. Tempo indeterminato." },
+];
+
+export function demoFashionJobs(now: Date): RawJob[] {
+  return FASHION_SPECS.map((s, i) => ({
+    source: "api:adzuna" as const,
+    url: `https://www.adzuna.it/details/${4899950000 + i}`,
+    title: s.title,
+    company: s.company,
+    location: s.city,
+    description: [s.text, s.email ? `Inviare CV a ${s.email}.` : "Candidature tramite il sito."].join("\n"),
+    salaryText: s.salary ?? null,
+    postedAt: new Date(now.getTime() - s.days * 86400000 - 3600000 * (i % 5)),
+  }));
+}

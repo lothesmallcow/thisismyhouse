@@ -66,6 +66,22 @@ await shoot(student, "/offerte", "student-offerte");
 await shoot(student, "/percorsi", "student-percorsi");
 await shoot(student, "/aziende", "student-aziende");
 await shoot(laptop, "/profilo/esperienze", "laptop-esperienze");
+// The luxury-retail persona: score, requirements, role sheet, companies to write to.
+const moda = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+{
+  const p = await moda.newPage();
+  await p.goto(BASE + "/entra");
+  await p.fill("#email", "moda@example.com");
+  await p.fill("#password", "demo-compass");
+  await p.getByRole("button", { name: "Entra", exact: true }).click();
+  await p.waitForURL(/offerte|benvenuto/);
+  const href = await p.getByRole("link", { name: /Boutique Manager orologeria/ }).first().getAttribute("href");
+  await p.close();
+  await shoot(moda, "/offerte", "persona-offerte");
+  await shoot(moda, href, "persona-offerta", { full: true });
+  await shoot(moda, "/ruoli/boutique-manager-gioielli", "persona-scheda-ruolo");
+  await shoot(moda, "/percorsi#aziende", "persona-dove-proporti");
+}
 await shoot(admin, "/admin/fonti", "admin-fonti");
 await shoot(admin, "/admin/metriche", "admin-metriche");
 // Images for the printable Italian guide (docs/come-si-usa.md), phone size, top of the screen only.

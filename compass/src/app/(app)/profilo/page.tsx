@@ -9,6 +9,7 @@ import { getDb, schema } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
 import { getPrefs } from "@/lib/server/catalog";
 import { getProfile } from "@/lib/server/profile";
+import { background } from "@/lib/server/person";
 import { stepIndex } from "../../(setup)/benvenuto/steps";
 import { restartQuestionnaireAction, signOutAction } from "../actions";
 
@@ -28,6 +29,7 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
   const db = getDb();
   const p = await getProfile(db, user.id);
   const prefs = await getPrefs(db, user.id);
+  const { currentEmployers } = await background(db, user.id, p);
   const cvs = await db.select({ id: schema.cvs.id }).from(schema.cvs).where(eq(schema.cvs.userId, user.id));
   const exps = await db.select({ id: schema.experiences.id }).from(schema.experiences).where(eq(schema.experiences.userId, user.id));
   const at = (id: string) => `/benvenuto/${stepIndex(p.track, id)}?ritorno=profilo`;
@@ -39,6 +41,11 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
     <>
       <Flash code={sp.msg} />
       <PageHeader title={p.name || "Profilo"} description={`${user.email} · ${stage ? "cerca uno stage" : "cerca lavoro"}`} />
+      {currentEmployers.length > 0 && (
+        <p className="-mt-3 mb-6 rounded-lg bg-subtle px-3.5 py-2.5 text-[13px] text-muted">
+          Ricerca riservata: {currentEmployers.join(", ")} (dove lavori ora, dalle tue <Link href="/profilo/esperienze">esperienze</Link>) non viene mai proposta, suggerita o contattata.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <section>
@@ -80,6 +87,8 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
             {[
               { href: "/profilo/esperienze", label: "Esperienze", value: exps.length ? `${exps.length} nella tua timeline` : "Dal CV, da LinkedIn o a mano" },
               { href: "/percorsi", label: "Percorsi per te", value: "Settori e ruoli vicini al tuo profilo" },
+              { href: "/profilo/punteggio", label: "Punteggio", value: p.fitWeights ? "Pesi personalizzati" : "Valori di partenza" },
+              { href: "/ruoli", label: "Ruoli e stipendi", value: "Cosa serve e quanto si guadagna, nella tua zona" },
               { href: "/aziende", label: "Aziende e settori", value: `${likedCompanies} aziende, ${likedSectors} settori scelti` },
               { href: "/profilo/ricerca", label: "Preferenze di ricerca", value: "Focus, filtri predefiniti, e-mail del mattino, correzioni" },
               { href: "/profilo/cv", label: "CV", value: cvs.length ? `${cvs.length} caricati` : "Nessuno" },

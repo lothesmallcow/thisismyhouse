@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Flash } from "@/components/flash";
-import { IconPlus, IconSearch, IconSliders } from "@/components/icons";
+import { IconFolder, IconPlus, IconSearch, IconSliders } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
 import { Empty, LinkButton, PageHeader } from "@/components/ui";
 import { CONTRACT_LABELS, SECTORS } from "@/lib/core/extract";
@@ -16,7 +16,7 @@ import { saveDefaultFiltersAction } from "../actions";
 export const metadata = { title: "Offerte" };
 
 const PLURAL: Record<Level, string> = { molto: "Molto adatte", adatta: "Adatte", poco: "Poco adatte" };
-const FILTER_KEYS = ["km", "netto", "orario", "contratto", "settore", "casa", "giorni", "q", "tipo", "vista"] as const;
+const FILTER_KEYS = ["km", "netto", "orario", "contratto", "settore", "casa", "giorni", "q", "tipo", "vista", "punteggio", "ordina"] as const;
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -45,10 +45,12 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
     type: (one(sp.tipo) as JobFilters["type"]) || undefined,
     focus: vista === "aziende" || vista === "preferite" ? vista : undefined,
     show: one(sp.mostra) === "scartate" ? "scartate" : undefined,
+    minFit: Number(one(sp.punteggio)) || undefined,
+    sort: one(sp.ordina) === "recenti" || one(sp.ordina) === "paga" ? (one(sp.ordina) as "recenti" | "paga") : undefined,
   };
   const limit = Math.min(200, Math.max(PAGE_SIZE, Number(one(sp.n)) || PAGE_SIZE));
   const { jobs, total } = await listJobs(db, user.id, filters, limit);
-  const active = (["maxKm", "minNetMonthly", "hours", "contract", "sector", "remote", "days", "type"] as const).filter((k) => filters[k] !== undefined).length;
+  const active = (["maxKm", "minNetMonthly", "hours", "contract", "sector", "remote", "days", "type", "minFit", "sort"] as const).filter((k) => filters[k] !== undefined).length;
   const [{ n: newCount }] = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.userJobs)
@@ -62,7 +64,8 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
     }
     return `/offerte?${p}`;
   };
-  const headings = jobs.map((j, i) => (!filters.show && (i === 0 || jobs[i - 1].level !== j.level) ? PLURAL[j.level] : null));
+  // Level headings only when the list is in order of fit.
+  const headings = jobs.map((j, i) => (!filters.show && !filters.sort && (i === 0 || jobs[i - 1].level !== j.level) ? PLURAL[j.level] : null));
   const isStage = profile.track === "stage";
   const views = [
     { key: "tutte", label: "Tutte", hint: "Tutte le offerte, con più peso alle tue scelte" },
@@ -81,9 +84,14 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
             : `${Number(newCount)} ${Number(newCount) === 1 ? "nuova" : "nuove"} da guardare. Le più adatte sono in alto.`
         }
         actions={
-          <LinkButton href="/offerte/aggiungi" variant="secondary" size="sm">
-            <IconPlus size={16} /> Aggiungi a mano
-          </LinkButton>
+          <div className="flex flex-wrap gap-2">
+            <LinkButton href="/offerte/cartelle" variant="secondary" size="sm">
+              <IconFolder size={16} /> Cartelle
+            </LinkButton>
+            <LinkButton href="/offerte/aggiungi" variant="secondary" size="sm">
+              <IconPlus size={16} /> Aggiungi a mano
+            </LinkButton>
+          </div>
         }
       />
 
@@ -192,7 +200,26 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
               <option value="30">Ultimo mese</option>
             </select>
           </label>
-          <label className="flex items-center gap-2.5 self-end pb-2.5 text-[14px]">
+          <label className="space-y-1.5">
+            <span className="block text-[13px] font-medium">Punteggio minimo</span>
+            <select name="punteggio" defaultValue={one(sp.punteggio)}>
+              <option value="">Qualsiasi</option>
+              {[50, 60, 70, 80].map((n) => (
+                <option key={n} value={n}>
+                  Almeno {n}/100
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-1.5">
+            <span className="block text-[13px] font-medium">Ordina per</span>
+            <select name="ordina" defaultValue={one(sp.ordina)}>
+              <option value="">Le più adatte a te</option>
+              <option value="recenti">Le più recenti</option>
+              <option value="paga">Le più pagate</option>
+            </select>
+          </label>
+          <label className="flex min-h-11 items-center gap-2.5 self-end text-[14px]">
             <input type="checkbox" name="casa" value="1" defaultChecked={one(sp.casa) === "1"} />
             Solo da remoto o ibride
           </label>
@@ -203,7 +230,9 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
         <form action={saveDefaultFiltersAction} className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3 text-[13px] text-muted">
           <input type="hidden" name="focus" value={vista} />
           <input type="hidden" name="netto" value={filters.minNetMonthly ?? ""} />
-          <span>Usa la vista e la retribuzione minima attuali ogni volta che apri Offerte.</span>
+          <span>
+            Usa la vista e la retribuzione minima attuali ogni volta che apri Offerte. Il punteggio si regola in <Link href="/profilo/punteggio">Profilo → Punteggio</Link>.
+          </span>
           <button className="inline-flex h-8 items-center rounded-lg border border-line-strong px-3 text-[13px] font-medium text-ink hover:bg-subtle">Salva come predefiniti</button>
         </form>
       </details>

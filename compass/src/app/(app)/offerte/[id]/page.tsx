@@ -11,7 +11,14 @@ import { daysAgoLabel, formatDate } from "@/lib/core/time";
 import { getDb, schema } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
 import { getJob, markSeen } from "@/lib/server/jobs";
-import { prepareEmailAction, restoreAction } from "../../actions";
+import { FitCard, RequirementsCard } from "@/components/fit";
+import { scaledPay, sheetFor } from "@/lib/catalog/role-sheets";
+import { findPlace } from "@/lib/core/geo";
+import { checkRequirements, extractRequirements } from "@/lib/core/requirements";
+import { background } from "@/lib/server/person";
+import { getProfile } from "@/lib/server/profile";
+import { prepareEmailAction, removeFromFolderAction, restoreAction, saveToFolderAction } from "../../actions";
+import { foldersOf, listFolders } from "@/lib/server/folders";
 
 export default async function OffertaPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ msg?: string }> }) {
   const { id } = await params;
@@ -41,6 +48,21 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
           ? "La candidatura è pronta in Da inviare."
           : null;
   const factors = job.factors.filter((f) => f.points !== 0).sort((a, b) => Math.abs(b.points) - Math.abs(a.points));
+  const profile = await getProfile(db, user.id);
+  const req = extractRequirements(job.title, job.description);
+  if (profile.track === "stage") req.years = null;
+  const sheet = sheetFor(job.title);
+  const estimate = (() => {
+    if (!sheet || sheet.pay.top[1] === 0) return null;
+    const p = scaledPay(sheet, job.city ? findPlace(job.city) : null);
+    const lo = Math.min(p.small[0], p.mid[0]);
+    const hi = Math.max(p.top[1], p.mid[1]);
+    return { where: p.where.split(",")[0], text: p.currency === "£" ? `£${lo}-${hi}k lordi l'anno` : `${lo}-${hi}k € lordi l'anno` };
+  })();
+  const folders = await listFolders(db, user.id);
+  const inIds = await foldersOf(db, user.id, job.id);
+  const inFolders = folders.filter((f) => inIds.includes(f.id));
+  const checks = checkRequirements(req, (await background(db, user.id, profile)).person);
 
   return (
     <>
@@ -88,6 +110,11 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
             <Fact label="Retribuzione">
               {salary}
               {job.salaryNote && job.salaryIsEstimate && <span className="block text-[12.5px] text-faint">{job.salaryNote}</span>}
+              {job.salaryMax == null && estimate && (
+                <span className="block text-[12.5px] text-faint">
+                  Non indicata. Per questo ruolo a {estimate.where}: di solito {estimate.text}, a seconda della dimensione dell&apos;azienda (stima di Compass).
+                </span>
+              )}
             </Fact>
             <Fact label="Contratto">
               {CONTRACT_LABELS[job.contract as keyof typeof CONTRACT_LABELS]}
@@ -158,11 +185,67 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
             )}
           </Card>
 
+          <Card className="!p-4">
+            <p className="text-[13px] font-semibold">Salva in una cartella</p>
+            {inFolders.length > 0 && (
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {inFolders.map((f) => (
+                  <li key={f.id}>
+                    <form action={removeFromFolderAction}>
+                      <input type="hidden" name="folderId" value={f.id} />
+                      <input type="hidden" name="jobId" value={job.id} />
+                      <input type="hidden" name="back" value={`/offerte/${job.id}`} />
+                      <button className="inline-flex h-8 items-center gap-1 rounded-full bg-accent-soft px-3 text-[12.5px] text-accent" aria-label={`Togli da ${f.name}`}>
+                        {f.name} ✕
+                      </button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form action={saveToFolderAction} className="mt-2.5 space-y-2">
+              <input type="hidden" name="jobId" value={job.id} />
+              <label htmlFor="folderId" className="sr-only">
+                Cartella
+              </label>
+              <select id="folderId" name="folderId" defaultValue="">
+                <option value="">Scegli una cartella…</option>
+                {folders
+                  .filter((f) => !inIds.includes(f.id))
+                  .map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+              </select>
+              <label htmlFor="newFolder" className="sr-only">
+                Oppure una nuova cartella
+              </label>
+              <input id="newFolder" name="newFolder" type="text" placeholder="…oppure una nuova cartella" />
+              <Button size="sm" variant="secondary" wide>
+                Salva
+              </Button>
+            </form>
+            <Link href="/offerte/cartelle" className="mt-1 inline-flex min-h-8 items-center text-[12.5px]">
+              Tutte le cartelle
+            </Link>
+          </Card>
+          <FitCard fit={job.fit} parts={job.parts} />
+          {sheet && (
+            <Card className="!p-4 text-[13px]">
+              <p className="font-semibold">Il ruolo: {sheet.title}</p>
+              <p className="mt-1 text-muted">Cosa si fa, cosa serve, età tipica e stipendio per tipo di azienda nella tua zona.</p>
+              <Link href={`/ruoli/${sheet.id}`} className="mt-1 inline-flex min-h-8 items-center">
+                Apri la scheda del ruolo
+              </Link>
+            </Card>
+          )}
+          <RequirementsCard checks={checks} />
           {factors.length > 0 && (
             <Card className="!p-4">
               <p className="text-[13px] font-semibold">Perché è {job.level === "molto" ? "molto adatta" : job.level === "adatta" ? "adatta" : "poco adatta"}</p>
               <ul className="mt-2.5 space-y-1.5">
-                {factors.slice(0, 6).map((f) => (
+                {factors.slice(0, 8).map((f) => (
                   <li key={f.key} className="flex items-start justify-between gap-3 text-[13px]">
                     <span className="text-muted">{f.reason}</span>
                     <span className={`shrink-0 tabular-nums ${f.points > 0 ? "text-good" : "text-bad"}`}>

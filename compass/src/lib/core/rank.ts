@@ -8,6 +8,8 @@ import { escapeRe, fold, keyTokens } from "./text";
 import { RANK_WEIGHTS as W, THRESHOLDS } from "./rank-config";
 import { careerStage, titleSeniority } from "./career-stage";
 import { countryName, findPlace } from "./geo";
+import { computeFit, type FitArea, type FitWeights } from "./fit";
+import { checkRequirements, extractRequirements, type Person } from "./requirements";
 
 export { THRESHOLDS };
 
@@ -44,6 +46,14 @@ export interface RankProfile {
   /** Countries and regions ("IT:Lombardia") they chose; empty = no limit. */
   countries: string[];
   regions: string[];
+  /** CV and timeline, for the requirements check (null = not known). */
+  person: Person | null;
+  /** Sectors of their past work ("same") and sectors that share a theme with it ("near"). */
+  experienceSectors: { name: string; keywords: string[]; relation: "same" | "near"; theme?: string }[];
+  /** Their own weights for the fit score (null = defaults). */
+  weights: Partial<FitWeights> | null;
+  /** Where they work now: a discreet search never puts it forward. */
+  currentEmployers: string[];
 }
 
 /** A job seeker with no catalog choices and no student fields (handy defaults for tests and tools). */
@@ -58,6 +68,10 @@ export const NO_CHOICES = {
   paidOnly: false,
   countries: [],
   regions: [],
+  person: null,
+  experienceSectors: [],
+  weights: null,
+  currentEmployers: [],
 } satisfies Partial<RankProfile>;
 
 export interface RankJob {
@@ -100,6 +114,9 @@ export interface RankResult {
   factors: Factor[]; // full breakdown (detail page, admin)
   /** The ad matches a chosen company or sector (used by the "only my choices" focus). */
   presetMatch: "company" | "sector" | null;
+  /** Fit score out of 100 and its seven parts (see core/fit.ts). */
+  fit: number;
+  parts: Record<FitArea, number>;
 }
 
 
@@ -211,7 +228,8 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
 
   const comp = normalizeCompany(job.company);
   const avoidCo = [...profile.avoidCompanies, ...adjustments.filter((a) => a.kind === "company").map((a) => a.value)];
-  if (comp && avoidCo.some((c) => normalizeCompany(c) === comp)) f.push({ key: "avoid-company", points: W.avoidCompany, reason: "Azienda che vuoi evitare" });
+  if (comp && profile.currentEmployers.some((c) => companyNameMatches(job.company, { name: c, aliases: [] }))) f.push({ key: "avoid-company", points: W.avoidCompany, reason: "È la tua azienda attuale: ricerca riservata" });
+  else if (comp && avoidCo.some((c) => normalizeCompany(c) === comp)) f.push({ key: "avoid-company", points: W.avoidCompany, reason: "Azienda che vuoi evitare" });
 
   if (job.sector && profile.avoidSectors.some((s) => fold(s) === fold(job.sector!))) {
     f.push({ key: "avoid-sector", points: W.avoidSector, reason: "Settore che vuoi evitare" });
@@ -290,12 +308,48 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     f.push({ key: "type", points: W.programmeForStudents, reason: "È un programma per studenti" });
   }
 
-  // 11. Scam
+  // 11. Experience: the listing's sector and level against what they have done.
+  if (profile.experienceSectors.length > 0) {
+    const same = profile.experienceSectors.find((s) => s.relation === "same" && sectorHit(s, job, titleT, descT));
+    const near = same ? undefined : profile.experienceSectors.find((s) => s.relation === "near" && sectorHit(s, job, titleT, descT) === "title");
+    if (same) f.push({ key: "exp-sector", points: W.experienceSameSector, reason: `Stesso settore della tua esperienza (${same.name.toLowerCase()})` });
+    else if (near) f.push({ key: "exp-sector", points: W.experienceNearSector, reason: `Settore vicino alla tua esperienza${near.theme ? ` (${near.theme})` : ""}: cambio possibile` });
+    else f.push({ key: "exp-sector", points: W.experienceOtherSector, reason: "Settore diverso dalla tua esperienza" });
+  }
+  const years = profile.person?.years ?? null;
+  if (profile.track === "lavoro" && years != null) {
+    const level = titleSeniority(job.title);
+    if (level === "senior" && years < 3) f.push({ key: "exp-level", points: W.levelTooHigh, reason: "Ruolo di responsabilità: di solito chiede più anni" });
+    else if (level === "senior" && years >= 5) f.push({ key: "exp-level", points: W.levelRight, reason: "Livello adatto alla tua esperienza" });
+    else if (level === "entry" && years >= 6) f.push({ key: "exp-level", points: W.levelTooLow, reason: "Probabilmente sotto il tuo livello" });
+  }
+
+  // 12. Requirements written in the listing, against the CV and the timeline.
+  if (profile.person) {
+    const req = extractRequirements(job.title, job.description);
+    if (profile.track === "stage") req.years = null; // students: handled by the year-of-study rules
+    const checks = checkRequirements(req, profile.person);
+    if (checks.length) {
+      let points = 0;
+      for (const c of checks) {
+        const isYears = /anni di esperienza/.test(c.label);
+        if (c.have === "si") points += isYears ? W.reqYearsMet : W.reqMet;
+        else if (c.have === "quasi") points += W.reqAlmost;
+        else if (c.have === "no") points += isYears ? W.reqYearsMissing : c.label === "Laurea" ? W.reqDegreeMissing : W.reqMissing;
+      }
+      const met = checks.filter((c) => c.have === "si").length;
+      const gap = checks.find((c) => c.have === "no");
+      f.push({ key: "req", points, reason: gap && met < checks.length ? `Requisiti: ${met} su ${checks.length} (manca: ${gap.label.toLowerCase()})` : `Requisiti: ${met} su ${checks.length}` });
+    }
+  }
+
+  // 13. Scam
   if (job.scamFlagCount > 0) f.push({ key: "scam", points: W.scam, reason: "Attenzione: potrebbe essere una truffa" });
 
   const score = f.reduce((s, x) => s + x.points, 0);
-  const level: Level = score >= THRESHOLDS.molto ? "molto" : score >= THRESHOLDS.adatta ? "adatta" : "poco";
-  return { score, level, reasons: pickReasons(f, level), factors: f, presetMatch };
+  const { fit, parts } = computeFit(f, profile.weights, profile.track);
+  const level: Level = fit >= THRESHOLDS.molto ? "molto" : fit >= THRESHOLDS.adatta ? "adatta" : "poco";
+  return { score, level, reasons: pickReasons(f, level), factors: f, presetMatch, fit, parts };
 }
 
 /** Where a sector shows up in an ad: its name as the detected sector or in the title, or only in the text. */

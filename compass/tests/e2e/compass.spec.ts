@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { assertUiBasics, login, loginAsAdmin, loginAsHer, loginAsStudent } from "./helpers";
+import { assertUiBasics, login, loginAsAdmin, loginAsFashion, loginAsHer, loginAsStudent } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -180,6 +180,8 @@ test("student: internships first, catalog choices, Altro, suggestions, only chos
   await expect(page.getByText(/tra le aziende che hai scelto/).first()).toBeVisible();
 
   await page.getByRole("link", { name: "Solo aziende scelte" }).click();
+  await expect(page).toHaveURL(/vista=aziende/); // read the cards of the new page, not the old one
+  await expect(page.getByRole("link", { name: "Solo aziende scelte" })).toHaveAttribute("aria-current", "true");
   const companies = await page.locator("article").allInnerTexts();
   expect(companies.length).toBeGreaterThan(0);
   expect(companies.every((t) => /Esempio Advisory Partners|Lazard|Houlihan|Vitale|Satispay|P101/.test(t))).toBe(true);
@@ -282,6 +284,68 @@ test("countries and regions, the full company database, NACE industries", async 
   await expect(page.getByText(/NACE 30\.1/).first()).toBeVisible();
 });
 
+test("persona: luxury store manager in Milan, score, requirements, role sheet, folders, weights, write to a company", async ({ page }) => {
+  await loginAsFashion(page);
+  // Offers with a score out of 100, best first.
+  await assertUiBasics(page);
+  const first = page.locator("article").first();
+  await expect(first).toContainText("Store Manager boutique alta moda");
+  await expect(first).toContainText("/100");
+  // Only the very good ones, and newest first.
+  await page.goto("/offerte?punteggio=70");
+  await expect(page.getByText("Junior Sales Assistant")).toHaveCount(0);
+  await page.goto("/offerte?ordina=recenti");
+  await expect(page.getByRole("heading", { name: "Molto adatte" })).toHaveCount(0);
+
+  // The watch boutique: score parts, requirements with the gap named, the role sheet.
+  await page.goto("/offerte?q=orologeria&tutte=1");
+  await page.getByRole("link", { name: /Boutique Manager orologeria/ }).first().click();
+  await assertUiBasics(page);
+  await expect(page.getByText("Punteggio", { exact: true })).toBeVisible();
+  await expect(page.getByText("Orologeria o gioielleria", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/chi viene dalla vendita nel lusso è spesso preso/)).toBeVisible();
+  await page.getByLabel("Cartella", { exact: true }).selectOption({ label: "Da tenere d'occhio" });
+  await page.getByRole("button", { name: "Salva", exact: true }).click();
+  await expect(page.getByText("Salvata nella cartella.")).toBeVisible();
+  await page.getByRole("link", { name: "Apri la scheda del ruolo" }).click();
+  await assertUiBasics(page);
+  await expect(page.getByText("Grandi gruppi e marchi di punta")).toBeVisible();
+  await expect(page.getByText(/Età tipica/)).toBeVisible();
+  await expect(page.getByText(/Stime indicative/).first()).toBeVisible();
+
+  // Folders: the starter ones, rename, create.
+  await page.goto("/offerte/cartelle");
+  await assertUiBasics(page);
+  await expect(page.getByRole("link", { name: /Candidarsi presto/ })).toBeVisible();
+  await page.getByLabel("Nuova cartella").fill("Colloqui da preparare");
+  await page.getByRole("button", { name: "Crea" }).click();
+  await expect(page.getByText("Cartella creata.")).toBeVisible();
+  await page.getByRole("link", { name: /Da tenere d'occhio/ }).click();
+  await expect(page.getByText(/Boutique Manager orologeria/)).toBeVisible();
+
+  // Her own weights: optional, one screen.
+  await page.goto("/profilo/punteggio");
+  await assertUiBasics(page);
+  await page.getByLabel("Luogo").fill("10");
+  await page.getByRole("button", { name: "Salva e ricalcola" }).click();
+  await expect(page.getByText("Pesi salvati: punteggi ricalcolati.")).toBeVisible();
+  await page.getByRole("button", { name: "Torna ai valori di partenza" }).click();
+
+  // Discreet search and companies to write to without an ad.
+  await page.goto("/profilo");
+  await expect(page.getByText(/Ricerca riservata: Maison Esempio Moda/)).toBeVisible();
+  await page.goto("/percorsi");
+  await assertUiBasics(page);
+  await expect(page.getByText("Cambio di settore: settori vicini")).toBeVisible();
+  await page.getByRole("link", { name: /^Scrivi a / }).first().click();
+  await assertUiBasics(page);
+  await page.getByLabel("Indirizzo e-mail per le candidature").fill("careers@azienda-esempio.example");
+  await page.getByLabel("Dove l'hai trovato").fill("https://azienda-esempio.example/lavora-con-noi");
+  await page.getByRole("button", { name: "Prepara la candidatura" }).click();
+  await expect(page).toHaveURL(/da-inviare/);
+  await expect(page.getByText(/Candidatura spontanea pronta/)).toBeVisible();
+});
+
 test("admin: people, invitation, view-as, catalog, rules, metrics, cron endpoint", async ({ page, request }) => {
   await loginAsAdmin(page);
   await page.goto("/admin/utenti");
@@ -345,7 +409,9 @@ test("student questionnaire: 12 steps, catalog, Altro, automatic focus", async (
   await expect(page.getByText("Passo 4 di 12")).toBeVisible();
   await page.getByText("Estate (giugno-settembre)").click();
   await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 5 di 12")).toBeVisible();
   await page.getByRole("button", { name: "Salta" }).click(); // paga
+  await expect(page.getByText("Passo 6 di 12")).toBeVisible(); // wait for the page before the next click
   await page.getByRole("button", { name: "Salta" }).click(); // lingue
   await expect(page.getByText("Passo 7 di 12")).toBeVisible();
   await page.getByRole("button", { name: "Lo carico più tardi" }).click();
@@ -360,6 +426,7 @@ test("student questionnaire: 12 steps, catalog, Altro, automatic focus", async (
   await page.getByLabel("Cerca un'azienda o un brand").fill("lazard");
   await page.locator("label", { hasText: /^Lazard/ }).first().click();
   await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 11 di 12")).toBeVisible(); // wait for the page before the next click
   await page.getByRole("button", { name: "Avanti" }).click(); // evitare
   await expect(page.getByText("Passo 12 di 12")).toBeVisible();
   await expect(page.getByText("Consiglio")).toBeVisible();

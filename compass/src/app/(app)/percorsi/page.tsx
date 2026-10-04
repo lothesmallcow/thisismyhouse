@@ -1,3 +1,4 @@
+import { sheetFor } from "@/lib/catalog/role-sheets";
 import Link from "next/link";
 import { BackLink } from "@/components/back-link";
 import { Flash } from "@/components/flash";
@@ -6,7 +7,8 @@ import { Button, Card, Chip, Empty, LinkButton, PageHeader, SectionTitle } from 
 import { STAGE_LABELS } from "@/lib/core/career-stage";
 import { getDb } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
-import { careerPaths, experienceCount, interestProfile, studentAdvice, topThemes } from "@/lib/server/career";
+import { careerPaths, experienceCount, interestProfile, outreachTargets, studentAdvice, topThemes } from "@/lib/server/career";
+import { background } from "@/lib/server/person";
 import { setPrefAction } from "../actions";
 
 export const metadata = { title: "Percorsi" };
@@ -16,7 +18,7 @@ export default async function PercorsiPage({ searchParams }: { searchParams: Pro
   const user = await requireUser();
   const db = getDb();
   const ip = await interestProfile(db, user.id);
-  const [paths, nExp] = await Promise.all([careerPaths(db, user.id, 6, ip), experienceCount(db, user.id)]);
+  const [paths, nExp, targets, bg] = await Promise.all([careerPaths(db, user.id, 6, ip), experienceCount(db, user.id), outreachTargets(db, user.id, 10), background(db, user.id, ip.profile)]);
   const themes = topThemes(ip, 6);
   const advice = studentAdvice(ip.profile);
   const back = "/percorsi";
@@ -107,7 +109,15 @@ export default async function PercorsiPage({ searchParams }: { searchParams: Pro
               {p.roles.length > 0 && (
                 <p className="mt-3 text-[13px]">
                   <span className="text-faint">Ruoli da cercare: </span>
-                  {p.roles.join(" · ")}
+                  {p.roles.map((r, i) => {
+                    const sheet = sheetFor(r);
+                    return (
+                      <span key={r}>
+                        {i > 0 && " · "}
+                        {sheet ? <Link href={`/ruoli/${sheet.id}`}>{r}</Link> : r}
+                      </span>
+                    );
+                  })}
                 </p>
               )}
               {p.examples.length > 0 && (
@@ -120,6 +130,40 @@ export default async function PercorsiPage({ searchParams }: { searchParams: Pro
           ))}
         </div>
       )}
+
+      <section id="aziende" className="scroll-mt-20">
+        <SectionTitle>Dove proporti, anche senza un annuncio</SectionTitle>
+        <p className="-mt-1 mb-3 text-[13.5px] text-muted">
+          Aziende a cui scrivere una candidatura spontanea: prima la tua zona e i paesi che hai scelto{bg.currentEmployers.length ? `, mai la tua azienda attuale (${bg.currentEmployers.join(", ")})` : ""}. Il ruolo da proporre lo scegli tu: guarda le <Link href="/ruoli">schede dei ruoli</Link>.
+        </p>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {[
+            { title: "Nel tuo campo: stesso lavoro, nuova azienda", list: targets.inField },
+            { title: "Cambio di settore: settori vicini", list: targets.shift },
+          ].map((block) => (
+            <Card key={block.title} className="!p-4">
+              <p className="text-[14px] font-semibold">{block.title}</p>
+              {block.list.length === 0 ? (
+                <p className="mt-2 text-[13px] text-muted">Aggiungi le tue esperienze o scegli dei settori per avere suggerimenti.</p>
+              ) : (
+                <ul className="mt-2 divide-y divide-line">
+                  {block.list.map((t) => (
+                    <li key={t.company.id} className="flex items-center justify-between gap-3 py-2">
+                      <div className="min-w-0">
+                        <p className="text-[13.5px] font-medium">{t.company.name}</p>
+                        <p className="text-[12px] text-faint">{[t.sector, t.company.city, t.why].filter(Boolean).join(" · ")}</p>
+                      </div>
+                      <LinkButton href={`/percorsi/scrivi?azienda=${t.company.id}`} size="sm" variant="secondary" aria-label={`Scrivi a ${t.company.name}`}>
+                        Scrivi
+                      </LinkButton>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          ))}
+        </div>
+      </section>
 
       <SectionTitle>Vuoi cambiare strada?</SectionTitle>
       <p className="-mt-1 text-[13.5px] text-muted">

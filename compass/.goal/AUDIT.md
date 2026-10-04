@@ -1,5 +1,9 @@
 # Compass audit
 
+> **Update for 0.5.0 (fit score, requirements, role sheets, folders, persona test).** 316
+> unit/integration tests and 21 e2e passed; persona review with evidence in
+> `docs/audit/persona-luxury-retail.md`; UI audit numbers in `docs/audit/ui-report.md`.
+>
 > **Update for 0.3.0 (several people, students, catalog, career panel, redesign).** Re-run on the
 > 0.3.0 commit: **287 unit/integration tests passed** (`npx vitest run`), **19 e2e passed**
 > (`npm run build && npm run test:e2e`), **UI audit 234 screens, 0 axe violations, 0 overflow**

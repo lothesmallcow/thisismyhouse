@@ -10,6 +10,7 @@ export async function login(page: Page, email: string, password = "demo-compass"
 
 export const loginAsHer = (page: Page) => login(page, "demo@example.com");
 export const loginAsStudent = (page: Page) => login(page, "studente@example.com");
+export const loginAsFashion = (page: Page) => login(page, "moda@example.com");
 
 export async function loginAsAdmin(page: Page) {
   await page.goto("/admin/entra");

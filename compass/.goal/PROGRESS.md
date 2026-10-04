@@ -62,6 +62,15 @@ Build **Compass** (the brief calls it "Bussola"), a boomer-proof Italian job fin
 - [x] Ranking: other countries down, chosen region counts as near, "Londra" = "London"
 - [x] 302 unit/integration, 20 e2e, UI audit
 
+### Definition of Done: extension 0.5.0 (persona: luxury store manager, Milan)
+- [x] Fit score /100 in seven parts, optional weights panel, hard limits, levels and order from the score, min-score filter and sort
+- [x] Requirements of each listing vs CV and timeline, with tips; experience (same/nearby sector, level vs years) in the score
+- [x] Role sheets (30): tasks, skills, experience, typical age, pay by employer size adapted to region/country; estimate on offers without pay
+- [x] Career panel: companies in her field and nearby fields, "Scrivi" spontaneous application flow
+- [x] Named folders with starter/demo folders
+- [x] Discreet search (current employer never put forward)
+- [x] Persona seeded (fake), unit + e2e journey, written review with fixes and limits (docs/audit/persona-luxury-retail.md)
+
 ## Plan
 - [x] M0 research + ADRs
 - [x] Scaffold Next 16 + TS + Tailwind 4 + Drizzle/libSQL, design system, auth
@@ -93,6 +102,7 @@ Ordered by what unblocks the most. None of this is needed to try the demo (`npm 
 14. **Keep the schedule alive**: GitHub disables scheduled workflows after 60 days without commits on a public repo.
 15. **Your mother's niche sector**: I don't know it, so it is not in the catalog. She can add it with "Altro" (sector and companies), or tell me the sector and 10-20 companies and I add them with themes.
 16. **Your timeline**: upload your real CV in the app (not in the repo) or the LinkedIn export zip (LinkedIn → Settings → Data privacy → Get a copy of your data → Positions + Education). LinkedIn's API does not give work history, so "connect LinkedIn" is not possible.
+19. **Role sheet figures**: pay, typical age and experience are my estimates (2025-26), labelled as such. If you want them sourced, give me a current source per country (or allow web access) and I recalibrate.
 18. **More companies**: the build could only reach npm, PyPI and GitHub. Wikidata, GLEIF (every company with an LEI) and Companies House would add private companies and SMEs; if you can allow those hosts in the environment's network settings, I extend `scripts/build-world-data.mjs`.
 17. **Eligibility check**: many spring weeks and insight programmes are for students in a specific year and some have minimum-age or right-to-work rules (e.g. London). The app's year rules are general; check each programme's page.
 
@@ -113,6 +123,7 @@ Ordered by what unblocks the most. None of this is needed to try the demo (`npm 
 - Italian number formatting: "1200 €" (CLDR Italian does not group 4-digit numbers); fine.
 
 ## Log
+- 2026-10-04 17:30 Extension 0.5.0: fit score, requirements, role sheets, outreach, folders, discreet search; persona test found 7 issues, all fixed | 316 unit, 21 e2e | this commit
 - 2026-10-04 15:00 Extension 0.4.0: data/world (GeoNames, NACE, FinanceDatabase), countries/regions, catalog search and browse, positions in 4 languages, per-country searches with priority and rotation | 302 unit, 20 e2e | this commit
 - 2026-10-04 13:00 Extension 0.3.0: accounts + migration 0003, per-person server layer, catalog + Altro, focus/filters, stage track, redesign, themes/career panel/fit warnings/timeline/redo questionnaire, year-of-study rules | 287 unit, 19 e2e, audit-ui 234 screens 0 axe, simulate-week OK, perf 2×5,000 | this commit
 - 2026-10-04 09:10 M0 research (Gmail app passwords, Gmail API testing tokens, Apps Script quotas, Adzuna/Jooble/Careerjet, Brave/Tavily/Google CSE/Bing, Vercel/Turso, D.Lgs. 96/2026, comuni datasets) | verified by web search | recorded in ADRs

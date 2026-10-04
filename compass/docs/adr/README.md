@@ -24,3 +24,4 @@ what to re-verify.
 | [0016](0016-experience-timeline.md) | Timeline from the CV text or LinkedIn's data export (the API gives no work history) |
 | [0017](0017-redesign.md) | A quieter, professional design with the same accessibility floor |
 | [0018](0018-world-reference-data.md) | Companies, industries and places for IT/UK/DE/FR; searches only where people want, best fits first |
+| [0019](0019-fit-score.md) | A fit score out of 100 in seven parts, optional weights, hard limits |

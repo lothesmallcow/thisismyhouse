@@ -2,6 +2,7 @@
 // their own view of them in user_jobs: distance from their home, their ranking, their actions.
 // A job is visible to someone if at least one of its sources is shared (userId null) or theirs.
 
+import { background } from "./person";
 import { and, desc, eq, gte, inArray, isNull, like, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { findDuplicate, dedupeKey, type DedupeCandidate } from "../core/dedupe";
 import { distanceKm } from "../core/geo";
@@ -39,7 +40,7 @@ export async function activeAdjustments(db: DB, userId: number): Promise<RankAdj
 
 export async function rankContext(db: DB, userId: number): Promise<RankContext> {
   const profile = await getProfile(db, userId);
-  return { userId, profile, rp: toRankProfile(profile, await rankPrefs(db, userId)), home: homeOf(profile), adj: await activeAdjustments(db, userId) };
+  return { userId, profile, rp: toRankProfile(profile, await rankPrefs(db, userId), await background(db, userId, profile)), home: homeOf(profile), adj: await activeAdjustments(db, userId) };
 }
 
 /** Everyone who gets offers: active people (not admin accounts). */
@@ -76,7 +77,7 @@ function computeFor(job: JobRow, ctx: RankContext, now: Date) {
     ctx.adj,
     now,
   );
-  return { distanceKm: dist, score: r.score, level: r.level, reasons: r.reasons, factors: r.factors, presetMatch: r.presetMatch };
+  return { distanceKm: dist, score: r.score, level: r.level, reasons: r.reasons, factors: r.factors, presetMatch: r.presetMatch, fit: r.fit, parts: r.parts };
 }
 
 /** Who may see a job: null = everyone, else the owners of its private sources. */
@@ -121,6 +122,7 @@ export async function rerankUser(db: DB, userId: number, now = new Date(), ctx?:
       old.score === v.score &&
       old.level === v.level &&
       old.presetMatch === v.presetMatch &&
+      old.fit === v.fit &&
       JSON.stringify(old.reasons) === JSON.stringify(v.reasons) &&
       JSON.stringify(old.factors) === JSON.stringify(v.factors)
     )
@@ -307,6 +309,10 @@ export interface JobFilters {
   /** Only chosen companies, or chosen companies and sectors. */
   focus?: "aziende" | "preferite";
   show?: "nuove" | "tutte" | "scartate";
+  /** Minimum fit score out of 100. */
+  minFit?: number;
+  /** Order: best fit (default), newest, best paid. */
+  sort?: "fit" | "recenti" | "paga";
 }
 
 export const PAGE_SIZE = 10;
@@ -318,6 +324,7 @@ export function filterWhere(userId: number, f: JobFilters, now = new Date()): SQ
   if (f.show === "scartate") where.push(eq(uj.status, "dismissed"));
   else where.push(ne(uj.status, "dismissed"));
   if (f.level && f.level !== "tutte") where.push(eq(uj.level, f.level));
+  if (f.minFit) where.push(gte(uj.fit, f.minFit));
   if (f.maxKm) where.push(or(lte(uj.distanceKm, f.maxKm), eq(j.remote, "remote"))!);
   if (f.minNetMonthly) {
     const gross = netAnnualToGrossAnnual(f.minNetMonthly * MONTHS_PER_YEAR);
@@ -353,13 +360,18 @@ const merged = (r: { j: JobRow; uj: UserJobRow }): Job => ({ ...r.j, ...r.uj, id
 
 export async function listJobs(db: DB, userId: number, f: JobFilters, limit: number, now = new Date()): Promise<{ jobs: Job[]; total: number }> {
   const cond = filterWhere(userId, f, now);
-  const levelOrder = sql`case ${schema.userJobs.level} when 'molto' then 0 when 'adatta' then 1 else 2 end`;
+  const order =
+    f.sort === "recenti"
+      ? [desc(sql`coalesce(${schema.jobs.postedAt}, ${schema.jobs.firstSeenAt})`), desc(schema.userJobs.fit)]
+      : f.sort === "paga"
+        ? [sql`${schema.jobs.salaryMax} is null`, desc(schema.jobs.salaryMax), desc(schema.userJobs.fit)]
+        : [desc(schema.userJobs.fit), desc(schema.userJobs.score), desc(schema.jobs.firstSeenAt)];
   const rows = await db
     .select({ j: schema.jobs, uj: schema.userJobs })
     .from(schema.userJobs)
     .innerJoin(schema.jobs, eq(schema.jobs.id, schema.userJobs.jobId))
     .where(cond)
-    .orderBy(levelOrder, desc(schema.userJobs.score), desc(schema.jobs.firstSeenAt))
+    .orderBy(...order)
     .limit(limit);
   const [{ n }] = await db
     .select({ n: sql<number>`count(*)` })

@@ -6,6 +6,11 @@ import { seedAccounts, seedDemo } from "../src/lib/seed";
 import { listJobs, rerankAll, rerankUser } from "../src/lib/server/jobs";
 import { updateProfile } from "../src/lib/server/profile";
 
+// It writes 10,000 synthetic rows: never into the demo or a real database.
+if (!/perf[^/]*\.db$/.test(process.env.DATABASE_URL ?? "")) {
+  console.error("Run it on its own database: DATABASE_URL=file:data/local/perf.db npx tsx scripts/perf-5000.ts");
+  process.exit(1);
+}
 const db = getDb();
 await migrateDb(db);
 const [lucia, marco] = await seedAccounts(db, {

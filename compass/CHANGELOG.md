@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.0 · 2026-10-04
+
+Tested against a persona: a store manager in high fashion in Milan, open to watches, still employed.
+
+- **Fit score out of 100** in seven parts (role, experience, requirements, place, pay, conditions,
+  choices), optional weights in Profilo → Punteggio, hard limits; levels and order from the score;
+  minimum-score filter and sort (best fit, newest, best paid).
+- **Requirements check** on every offer: years, degree, skills, languages against the CV and the
+  timeline, with tips for each gap; "either-or" requirements read as one.
+- **Experience** in the score: same sector, nearby sector (career change), level vs years.
+- **Role sheets** (30 roles): tasks, skills, experience, typical age, pay by employer size adapted
+  to region and country; offers without pay show the estimate.
+- **Dove proporti**: companies in your field and in nearby fields, region first, and a "Scrivi"
+  flow for spontaneous applications (address published by the company, same guardrails).
+- **Folders**: named folders for saved offers, three starter ones with demo offers.
+- **Discreet search**: the current employer is never suggested or contacted and scores ≤ 10.
+- **Demo**: a third fake person (luxury retail, Milan). Persona review in
+  `docs/audit/persona-luxury-retail.md`.
+- **Tests**: 316 unit/integration, 21 end-to-end.
+
 ## 0.4.0 · 2026-10-04
 
 Four countries, the whole catalog, and searches that spend the free quotas on the best fits.

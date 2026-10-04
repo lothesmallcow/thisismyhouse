@@ -40,7 +40,13 @@ export function JobCard({ job }: { job: Job }) {
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <LevelBadge level={job.level} />
+          <span className="flex items-center gap-1.5">
+            <span className="text-[13px] font-semibold tabular-nums text-ink" aria-label={`Punteggio ${job.fit} su 100`}>
+              {job.fit}
+              <span className="text-[11px] font-normal text-faint">/100</span>
+            </span>
+            <LevelBadge level={job.level} />
+          </span>
           {job.status === "new" && <span className="text-[11.5px] font-medium text-accent">Nuova</span>}
         </div>
       </div>

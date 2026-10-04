@@ -1,7 +1,7 @@
-Full re-rank, both people (first time, 2 x 5,000 rows written): 4158 ms
-Offerte, first page (10): 14 ms
+Full re-rank, both people (first time, 2 x 5,000 rows written): 4714 ms
+Offerte, first page (10): 13 ms
 Offerte, first page again (warm): 9 ms
 Offerte with 3 filters: 10 ms
-Offerte, student, only chosen companies: 6 ms
-Offerte after 'Mostra altre 10' x20 (200 rows): 22 ms
-Re-rank one person after a profile change: 2332 ms
+Offerte, student, only chosen companies: 10 ms
+Offerte after 'Mostra altre 10' x20 (200 rows): 19 ms
+Re-rank one person after a profile change: 2130 ms

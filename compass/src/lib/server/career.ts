@@ -9,7 +9,9 @@ import { STAGE_ADVICE, careerStage, type CareerStage } from "../core/career-stag
 import { THEME_LABELS, TASTES } from "../catalog/data";
 import { extractSector } from "../core/extract";
 import { fold, keyTokens } from "../core/text";
-import { homeCountries, type CountryCode } from "../core/geo";
+import { findPlace, homeCountries, type CountryCode } from "../core/geo";
+import { companyNameMatches } from "../core/rank";
+import { background } from "./person";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { directoryPool, getPrefs, listCompanies, listSectors, type Company, type Sector } from "./catalog";
@@ -284,7 +286,7 @@ export async function careerPaths(db: DB, userId: number, limit = 6, ip?: Intere
     const listed = poolBySector.get(s.id) ?? [];
     const examples = [...companies, ...listed]
       .filter((c) => companySectorIds(c).includes(s.id) && prefs.companies.get(c.id) !== "avoid")
-      .map((c) => ({ c, n: companyThemes(c, sectorsById).filter((t) => p.themes.has(t)).length + (c.city && p.profile.city && fold(c.city) === fold(p.profile.city) ? 1 : 0) }))
+      .map((c) => ({ c, n: companyThemes(c, sectorsById).filter((t) => p.themes.has(t)).length + (c.city && p.profile.city && fold(c.city) === fold(p.profile.city) ? 1 : 0) + (c.source === "curato" ? 1 : 0) }))
       .sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name))
       .slice(0, 4)
       .map((x) => x.c);
@@ -388,4 +390,60 @@ export function todaysPicks<T>(ordered: T[], n: number, day: number): T[] {
   const slots = n - fixed;
   const start = (day * slots) % rest.length;
   return [...ordered.slice(0, fixed), ...[...rest.slice(start), ...rest.slice(0, start)].slice(0, slots)];
+}
+
+// --- Companies to write to (spontaneous applications) ----------------------------------------------
+
+export interface OutreachTarget {
+  company: Company;
+  sector: string;
+  /** Why it is here: same field as their work, or a nearby field (with the shared theme). */
+  why: string;
+}
+
+/**
+ * Companies to propose themselves to without a job ad: in their field, and in nearby fields for a
+ * career change. Their regions and countries first, the current employer never.
+ */
+export async function outreachTargets(db: DB, userId: number, limit = 12): Promise<{ inField: OutreachTarget[]; shift: OutreachTarget[] }> {
+  const profile = await getProfile(db, userId);
+  const bg = await background(db, userId, profile);
+  const sectors = await listSectors(db, userId);
+  const prefs = await getPrefs(db, userId);
+  const byName = new Map(sectors.map((s) => [s.name, s]));
+  const sameIds = new Set([...bg.experienceSectors.filter((x) => x.relation === "same").map((x) => byName.get(x.name)?.id), ...[...prefs.sectors].filter(([, st]) => st === "like").map(([id]) => id)].filter((x): x is number => x != null));
+  const near = new Map(bg.experienceSectors.filter((x) => x.relation === "near").map((x) => [byName.get(x.name)?.id, x.theme] as const).filter(([id]) => id != null && !sameIds.has(id!)) as [number, string | undefined][]);
+  const countries = homeCountries(profile.countries, profile.city);
+  const scope = { countries, regions: profile.regions };
+  const pool = [
+    ...(await listCompanies(db, userId)),
+    ...(await directoryPool(db, [...sameIds, ...near.keys()], { ...scope, limit: 150 })),
+  ];
+  const seen = new Set<number>();
+  const current = bg.currentEmployers;
+  const ok = (c: Company) =>
+    !seen.has(c.id) &&
+    prefs.companies.get(c.id) !== "avoid" &&
+    !current.some((n) => companyNameMatches(c.name, { name: n, aliases: [] })) &&
+    (c.source !== "borsa" || countries.includes(c.country as CountryCode));
+  const homeRegion = profile.city ? findPlace(profile.city)?.region : undefined;
+  // Hand-picked brands first (they are the employers people mean), then place, then size.
+  const rank = (c: Company) => (c.source === "curato" ? 4 : 0) + (c.region && profile.regions.includes(`${c.country}:${c.region}`) ? 2 : 0) + (c.region && c.region === homeRegion ? 1 : 0) + (countries.includes(c.country as CountryCode) ? 1 : 0) + (c.size ?? 1) * 0.5;
+  const sectorName = (id: number | null) => sectors.find((s) => s.id === id)?.name ?? "";
+  const pick = (ids: Set<number> | Map<number, string | undefined>, why: (c: Company) => string) => {
+    const out = pool
+      .filter((c) => companySectorIds(c).some((id) => ids.has(id)) && ok(c))
+      .sort((a, b) => rank(b) - rank(a) || a.name.localeCompare(b.name))
+      .slice(0, limit)
+      .map((c) => ({ company: c, sector: sectorName(c.sectorId), why: why(c) }));
+    out.forEach((t) => seen.add(t.company.id));
+    return out;
+  };
+  const inField = pick(sameIds, () => "Nel tuo campo");
+  for (const c of pool) if (companySectorIds(c).some((id) => sameIds.has(id))) seen.add(c.id); // in their field: not a change
+  const shift = pick(near, (c) => {
+    const theme = companySectorIds(c).map((id) => near.get(id)).find(Boolean);
+    return theme ? `Settore vicino: in comune ${theme}` : "Settore vicino al tuo";
+  });
+  return { inField, shift };
 }

@@ -251,7 +251,8 @@ describe("sending in the database", () => {
         .select({ j: schema.jobs })
         .from(schema.userJobs)
         .innerJoin(schema.jobs, eq(schema.jobs.id, schema.userJobs.jobId))
-        .where(sql`${schema.userJobs.userId} = ${L} and ${schema.jobs.applicationEmail} is not null and ${schema.userJobs.status} != 'applied'`)
+        .where(sql`${schema.userJobs.userId} = ${L} and ${schema.jobs.applicationEmail} is not null and ${schema.userJobs.status} != 'applied' and json_array_length(${schema.jobs.scamFlags}) = 0`)
+        .orderBy(schema.jobs.id)
     ).map((r) => r.j);
 
   it("demo mode: the real SMTP transport is never used, even with the admin switch on", async () => {

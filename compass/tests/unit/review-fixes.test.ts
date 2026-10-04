@@ -33,6 +33,7 @@ const emailJobs = async () =>
       .from(schema.userJobs)
       .innerJoin(schema.jobs, eq(schema.jobs.id, schema.userJobs.jobId))
       .where(sql`${schema.userJobs.userId} = ${L} and ${schema.jobs.applicationEmail} is not null and ${schema.userJobs.status} != 'applied' and json_array_length(${schema.jobs.scamFlags}) = 0`)
+      .orderBy(schema.jobs.id)
   ).map((r) => r.j);
 
 describe("kill switch: her stop vs the admin's stop", () => {

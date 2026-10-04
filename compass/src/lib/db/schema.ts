@@ -109,6 +109,8 @@ export const profile = sqliteTable(
   /** Optional: countries (IT, GB, DE, FR) and regions ("IT:Lombardia") where they want to work. Empty = no limit. */
   countries: json<string[]>("countries").notNull().default([]),
   regions: json<string[]>("regions").notNull().default([]),
+  /** Their own weights for the fit score (Profilo → Punteggio); null = the defaults. */
+  fitWeights: json<Record<string, number> | null>("fit_weights"),
   paidOnly: integer("paid_only", { mode: "boolean" }).notNull().default(false),
   onboardingStep: integer("onboarding_step").notNull().default(1),
   onboardedAt: ts("onboarded_at"),
@@ -182,8 +184,36 @@ export const userJobs = sqliteTable(
     seenAt: ts("seen_at"),
     /** Matches the person's choices: "company" (a chosen company), "sector" (a chosen sector) or null. */
     presetMatch: text("preset_match", { enum: ["company", "sector"] }),
+    /** Fit score out of 100 and its parts (core/fit.ts). */
+    fit: integer("fit").notNull().default(0),
+    parts: json<Record<string, number>>("parts").notNull().default({}),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.jobId] }), index("user_jobs_list_idx").on(t.userId, t.level, t.status)],
+  (t) => [primaryKey({ columns: [t.userId, t.jobId] }), index("user_jobs_list_idx").on(t.userId, t.level, t.status), index("user_jobs_fit_idx").on(t.userId, t.fit)],
+);
+
+/** Named folders where a person saves offers ("Candidarsi presto", "Da tenere d'occhio"...). */
+export const folders = sqliteTable(
+  "folders",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    position: integer("position").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("folders_user_idx").on(t.userId)],
+);
+
+export const folderItems = sqliteTable(
+  "folder_items",
+  {
+    folderId: integer("folder_id").notNull().references(() => folders.id, { onDelete: "cascade" }),
+    jobId: integer("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    note: text("note"),
+    addedAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.folderId, t.jobId] }), index("folder_items_user_idx").on(t.userId, t.jobId)],
 );
 
 export const jobSources = sqliteTable(

@@ -52,6 +52,10 @@ di grave: si riattiva con un tocco. Per qualsiasi dubbio, chiedi a chi ti ha pre
 **Da sapere:** Compass non entra mai nei tuoi account LinkedIn, Indeed o InfoJobs e non manda niente
 di nascosto: ogni invio è scritto in *Candidature*.
 
+**Il punteggio.** Ogni offerta ha un punteggio su 100: aprila per vedere da cosa viene (ruolo, esperienza,
+requisiti, luogo, paga, condizioni, le tue scelte) e quali requisiti hai già. Se vuoi, in *Profilo → Punteggio*
+decidi quanto conta ogni parte. Le offerte che ti piacciono le salvi in una **cartella** (in alto in *Offerte*).
+
 **In più:** in *Aziende* scegli i nomi che ti interessano (se il tuo manca, usa **Altro**) e decidi
 se vedere tutte le offerte con quelle in cima, o solo le tue scelte. In *Profilo → Esperienze* c'è
 la tua storia lavorativa letta dal CV: Compass la usa per suggerirti aziende e percorsi vicini.

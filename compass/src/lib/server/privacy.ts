@@ -23,6 +23,8 @@ async function wipe(tx: Tx, userId: number): Promise<void> {
   await tx.delete(schema.notifications).where(eq(schema.notifications.userId, userId));
   await tx.delete(schema.userPrefs).where(eq(schema.userPrefs.userId, userId));
   await tx.delete(schema.experiences).where(eq(schema.experiences.userId, userId));
+  await tx.delete(schema.folderItems).where(eq(schema.folderItems.userId, userId));
+  await tx.delete(schema.folders).where(eq(schema.folders.userId, userId));
   await tx.delete(schema.userJobs).where(eq(schema.userJobs.userId, userId));
   // Their private sources (own alerts, manual additions), then jobs nobody can see any more.
   await tx.delete(schema.jobSources).where(eq(schema.jobSources.userId, userId));

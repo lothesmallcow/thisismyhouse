@@ -49,9 +49,11 @@ export interface UserSettings {
   goLiveAt: Date | null; // first real send: the "first week at 3 per day" starts here
   digestEnabled: boolean;
   lastDigestDay: string | null;
+  /** The starter folders were created once (deleting them later is their choice). */
+  foldersReady: boolean;
 }
 
-export const DEFAULT_USER_SETTINGS: UserSettings = { killSwitch: false, autopilot: false, goLiveAt: null, digestEnabled: true, lastDigestDay: null };
+export const DEFAULT_USER_SETTINGS: UserSettings = { killSwitch: false, autopilot: false, goLiveAt: null, digestEnabled: true, lastDigestDay: null, foldersReady: false };
 
 type Stored = Omit<AppSettings, "guardrails"> & { guardrails: Omit<GuardrailSettings, "goLiveAt"> & { goLiveAt: string | null } };
 

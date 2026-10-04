@@ -51,7 +51,7 @@ export const RANK_WEIGHTS = {
   unpaid: -15, // unpaid, and they asked for paid only
   paid: 3,
   extraPlaceMatch: 18, // in one of the other cities they chose (e.g. Londra)
-  regionMatch: 14, // in one of the regions they chose (e.g. Lombardia), farther than their radius
+  regionMatch: 8, // in one of the regions they chose (e.g. Lombardia), farther than their radius: OK, not preferred
   outsideCountries: -25, // in a country they did not choose (and not remote)
   // Students, by year of study (see core/career-stage.ts)
   programmeFirstYears: 32, // spring week / insight day: the best fit in the first years
@@ -65,6 +65,21 @@ export const RANK_WEIGHTS = {
   finalYearWelcome: 10, // "for final-year students", and they are
   // Job seekers ("lavoro" track)
   programmeForStudents: -30, // a student programme in a job search
+  // Experience (from the timeline)
+  experienceSameSector: 18, // the listing is in the sector they worked in
+  experienceNearSector: 8, // a sector that shares a theme with it (fashion → watches: "lusso")
+  experienceOtherSector: -6, // something else: a career change, possible but harder
+  levelRight: 8, // a manager role and 5+ years
+  levelTooHigh: -12, // a manager role with under 3 years
+  levelTooLow: -8, // a junior role with 6+ years
+  // Requirements written in the listing (core/requirements.ts)
+  reqMet: 4,
+  reqYearsMet: 8,
+  reqAlmost: -3,
+  reqMissing: -6,
+  reqYearsMissing: -15,
+  reqDegreeMissing: -10,
 } as const;
 
-export const THRESHOLDS = { molto: 45, adatta: 15 } as const;
+/** Levels from the fit score out of 100 (core/fit.ts). */
+export const THRESHOLDS = { molto: 70, adatta: 52 } as const;

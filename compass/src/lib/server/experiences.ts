@@ -5,7 +5,7 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { unzipSync, strFromU8 } from "fflate";
 import { extractSector } from "../core/extract";
 import { companyNameMatches } from "../core/rank";
-import { fold, keyTokens } from "../core/text";
+import { escapeRe, fold, keyTokens } from "../core/text";
 import { parseCvTimeline, parseLinkedInEducation, parseLinkedInPositions, type TimelineItem } from "../core/timeline";
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -44,12 +44,12 @@ async function matcher(db: DB, userId: number) {
     // The sector whose words appear most ("Commessa in una boutique di moda": moda + boutique),
     // then the generic extraction rules ("commessa": vendita).
     const text = `${item.title}\n${item.organization}\n${item.description}`;
-    const tokens = keyTokens(text);
     const folded = fold(text);
     const hits = (s: (typeof sectors)[number]) =>
       [s.name, ...s.keywords].filter((k) => {
         const kt = keyTokens(k);
-        return kt.length === 1 ? kt[0].length >= 4 && tokens.includes(kt[0]) : kt.length > 1 && folded.includes(fold(k));
+        // Whole words only: stems would make "scontrino medio" count as "media".
+        return kt.length === 1 ? kt[0].length >= 4 && new RegExp(`(^|[^a-z0-9])${escapeRe(fold(k))}([^a-z0-9]|$)`).test(folded) : kt.length > 1 && folded.includes(fold(k));
       }).length;
     const best = sectors.map((s) => ({ s, n: hits(s) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n)[0];
     if (best) return { catalogCompanyId: null, sectorId: best.s.id };

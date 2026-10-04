@@ -3,6 +3,8 @@
 // reachable by direct POST) and only touches that person's rows, then redirects with a fixed
 // message code.
 
+import { addToFolder, createFolder, deleteFolder, removeFromFolder, renameFolder } from "@/lib/server/folders";
+import { FIT_AREAS, parseWeights } from "@/lib/core/fit";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -415,4 +417,69 @@ export async function restartQuestionnaireAction() {
   await updateProfile(getDb(), u.id, { onboardingStep: 1 });
   revalidatePath("/", "layout");
   redirect("/benvenuto/1?rifai=1");
+}
+
+export async function saveWeightsAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  if (str(f, "reset") === "1") await updateProfile(db, u.id, { fitWeights: null });
+  else await updateProfile(db, u.id, { fitWeights: parseWeights(Object.fromEntries(FIT_AREAS.map((a) => [a, Number(str(f, a)) * 5]))) });
+  await rerankUser(db, u.id);
+  done("/profilo/punteggio", "punteggio-salvato");
+}
+
+/** A spontaneous application to a catalog company, with the address the person found on its site. */
+export async function startSpontaneousAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const companyId = num(f, "companyId");
+  const email = str(f, "email").trim().toLowerCase();
+  const sourceUrl = str(f, "sourceUrl").trim();
+  const back = `/percorsi/scrivi?azienda=${companyId}`;
+  if (!(await canChoose(db, u.id, "company", companyId))) done("/percorsi", "errore");
+  if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email) || !/^https?:\/\/[^\s]+\.[^\s]+/i.test(sourceUrl)) done(back, "dati-non-validi");
+  const c = (await db.select().from(schema.catalogCompanies).where(eq(schema.catalogCompanies.id, companyId)).get())!;
+  const role = str(f, "role").trim().slice(0, 80);
+  const [sc] = await db
+    .insert(schema.spontaneousCompanies)
+    .values({ userId: u.id, name: c.name, email, sourceUrl, city: c.city, notes: role ? `Ruolo proposto: ${role}` : null, status: "approved" })
+    .returning();
+  const app = await prepareSpontaneous(db, u.id, sc.id);
+  done(app ? "/da-inviare" : back, app ? "spontanea-pronta" : "errore");
+}
+
+// --- Folders -------------------------------------------------------------------------------------
+
+export async function saveToFolderAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const jobId = num(f, "jobId");
+  let folderId = num(f, "folderId");
+  if (!folderId && str(f, "newFolder").trim()) folderId = (await createFolder(db, u.id, str(f, "newFolder"))) ?? 0;
+  const ok = folderId ? await addToFolder(db, u.id, folderId, jobId) : false;
+  done(safeBack(f, `/offerte/${jobId}`), ok ? "salvata-in-cartella" : "errore");
+}
+
+export async function removeFromFolderAction(f: FormData) {
+  const u = await requireUser();
+  await removeFromFolder(getDb(), u.id, num(f, "folderId"), num(f, "jobId"));
+  done(safeBack(f, "/offerte/cartelle"), "tolta-da-cartella");
+}
+
+export async function createFolderAction(f: FormData) {
+  const u = await requireUser();
+  const id = await createFolder(getDb(), u.id, str(f, "name"));
+  done("/offerte/cartelle", id ? "cartella-creata" : "errore");
+}
+
+export async function renameFolderAction(f: FormData) {
+  const u = await requireUser();
+  const ok = await renameFolder(getDb(), u.id, num(f, "folderId"), str(f, "name"));
+  done("/offerte/cartelle", ok ? "cartella-rinominata" : "errore");
+}
+
+export async function deleteFolderAction(f: FormData) {
+  const u = await requireUser();
+  const ok = await deleteFolder(getDb(), u.id, num(f, "folderId"));
+  done("/offerte/cartelle", ok ? "cartella-eliminata" : "errore");
 }

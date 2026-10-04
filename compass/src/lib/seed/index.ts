@@ -2,7 +2,7 @@
 // Two demo people show both modes: Lucia (job search) and Marco (internships, with catalog choices).
 import fs from "node:fs";
 import path from "node:path";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { findPlace } from "../core/geo";
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -12,8 +12,9 @@ import { addCustomCompany, ensureCatalog, setPref } from "../server/catalog";
 import { importFromCvText } from "../server/experiences";
 import { hashPassword } from "../server/passwords";
 import { updateProfile } from "../server/profile";
-import { dedupeCandidates, rankContexts, rerankAll, upsertRawJob } from "../server/jobs";
-import { DEMO_CV_LINES, DEMO_PROFILE, DEMO_SPONTANEOUS, DEMO_STUDENT, DEMO_STUDENT_CV_LINES, DEMO_STUDENT_PREFS, demoJobs, demoStageJobs } from "./demo-data";
+import { dedupeCandidates, rankContexts, rerankAll, rerankUser, upsertRawJob } from "../server/jobs";
+import { addToFolder, listFolders } from "../server/folders";
+import { DEMO_CV_LINES, DEMO_PROFILE, DEMO_SPONTANEOUS, DEMO_STUDENT, DEMO_STUDENT_CV_LINES, DEMO_STUDENT_PREFS, DEMO_FASHION, DEMO_FASHION_CV_LINES, DEMO_FASHION_PREFS, demoFashionJobs, demoJobs, demoStageJobs } from "./demo-data";
 import { textPdf } from "./pdf";
 
 export async function isEmpty(db: DB): Promise<boolean> {
@@ -53,7 +54,7 @@ export async function seedAccounts(db: DB, a: { admin: { email: string; password
 }
 
 /** Full demo dataset for Lucia (job search). `onboarded=false` leaves the questionnaire to be filled in by hand. */
-export async function seedDemo(db: DB, now = new Date(), opts: { onboarded?: boolean; userId?: number; studentId?: number } = {}) {
+export async function seedDemo(db: DB, now = new Date(), opts: { onboarded?: boolean; userId?: number; studentId?: number; fashionId?: number } = {}) {
   await ensureCatalog(db);
   const userId = opts.userId ?? (await db.query.users.findFirst({ where: and(eq(schema.users.role, "user")), orderBy: (u, { asc }) => [asc(u.id)] }))!.id;
   const home = findPlace(DEMO_PROFILE.city)!;
@@ -113,7 +114,9 @@ export async function seedDemo(db: DB, now = new Date(), opts: { onboarded?: boo
     await upsertRawJob(db, j, first < now ? first : now, { cache, contexts, owners: j.source.startsWith("email:") || j.source === "manual" ? [userId] : undefined });
   }
   if (opts.studentId) await seedStudent(db, opts.studentId, now);
+  if (opts.fashionId) await seedFashion(db, opts.fashionId, now);
   await rerankAll(db, now);
+  if (opts.onboarded !== false) for (const id of [userId, opts.studentId].filter((x): x is number => x != null)) await demoFolders(db, id);
 
   // A short history so "Candidature" and the metrics have something to show.
   const byCompany = async (company: string) => (await db.query.jobs.findFirst({ where: eq(schema.jobs.company, company) })) ?? null;
@@ -157,6 +160,37 @@ export async function seedDemo(db: DB, now = new Date(), opts: { onboarded?: boo
 }
 
 /** The demo student: profile, catalog choices (including one "Altro"), CV, internships. */
+/** The third demo person: store manager in high fashion in Milan, curious about watches and jewellery. */
+export async function seedFashion(db: DB, userId: number, now = new Date()) {
+  const home = findPlace(DEMO_FASHION.city)!;
+  await updateProfile(db, userId, { ...DEMO_FASHION, lat: home.lat, lng: home.lng, track: "lavoro", onboardingStep: 99, onboardedAt: now });
+  for (const slug of DEMO_FASHION_PREFS.sectors) {
+    const s = await db.query.catalogSectors.findFirst({ where: eq(schema.catalogSectors.slug, slug) });
+    if (s) await setPref(db, userId, "sector", s.id, "like");
+  }
+  for (const slug of DEMO_FASHION_PREFS.companies) {
+    const c = await db.query.catalogCompanies.findFirst({ where: eq(schema.catalogCompanies.slug, slug) });
+    if (c) await setPref(db, userId, "company", c.id, "like");
+  }
+  const pdf = textPdf(DEMO_FASHION_CV_LINES, "CV Chiara Colombo (demo)");
+  await db.insert(schema.cvs).values({ userId, label: "CV Retail lusso", roleFamily: "Retail", filename: "CV-Chiara-Colombo.pdf", size: pdf.length, data: pdf, text: DEMO_FASHION_CV_LINES.join("\n"), isDefault: true });
+  await importFromCvText(db, userId, DEMO_FASHION_CV_LINES.join("\n"));
+  const cache = await dedupeCandidates(db);
+  const contexts = await rankContexts(db);
+  for (const j of demoFashionJobs(now)) await upsertRawJob(db, j, j.postedAt! < now ? j.postedAt! : now, { cache, contexts });
+  await rerankUser(db, userId, now);
+  await demoFolders(db, userId);
+}
+
+/** Starter folders with a couple of offers in them, as an introduction. */
+export async function demoFolders(db: DB, userId: number) {
+  const folders = await listFolders(db, userId);
+  const best = await db.select({ jobId: schema.userJobs.jobId }).from(schema.userJobs).where(eq(schema.userJobs.userId, userId)).orderBy(desc(schema.userJobs.fit)).limit(3);
+  if (best[0]) await addToFolder(db, userId, folders[0].id, best[0].jobId, "Da preparare questa settimana");
+  if (best[1]) await addToFolder(db, userId, folders[0].id, best[1].jobId);
+  if (best[2]) await addToFolder(db, userId, folders[1].id, best[2].jobId);
+}
+
 export async function seedStudent(db: DB, userId: number, now = new Date()) {
   const home = findPlace(DEMO_STUDENT.city)!;
   await updateProfile(db, userId, { ...DEMO_STUDENT, lat: home.lat, lng: home.lng, track: "stage", onboardingStep: 99, onboardedAt: now });
