@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Flash } from "@/components/flash";
 import { IconCheck, IconMail } from "@/components/icons";
 import { Button, Card, Empty, PageHeader, SectionTitle } from "@/components/ui";
-import { formatDate, romeDateKey } from "@/lib/core/time";
+import { formatDate, nowMs, romeDateKey } from "@/lib/core/time";
 import { getDb, schema } from "@/lib/db";
 import type { ApplicationStatus } from "@/lib/db/schema";
 import { listMine } from "@/lib/server/applications";
@@ -35,7 +35,8 @@ export default async function CandidaturePage({ searchParams }: { searchParams: 
   const replies = await pendingReplies(db);
   const mine = await listMine(db);
   const log = await db.select().from(schema.sendLog).orderBy(desc(schema.sendLog.at)).limit(30);
-  const week = mine.filter((m) => m.app.sentAt && Date.now() - m.app.sentAt.getTime() < 7 * 86400000).length;
+  const now = nowMs();
+  const week = mine.filter((m) => m.app.sentAt && now - m.app.sentAt.getTime() < 7 * 86400000).length;
 
   return (
     <>
@@ -115,7 +116,7 @@ export default async function CandidaturePage({ searchParams }: { searchParams: 
           <ul className="space-y-2">
             {log.map((l) => (
               <li key={l.id} className="rounded-xl border border-line bg-card px-4 py-3 text-[1rem]">
-                {romeDateKey(l.at) === romeDateKey(new Date()) ? "Oggi" : formatDate(l.at)}:{" "}
+                {romeDateKey(l.at) === romeDateKey(new Date(now)) ? "Oggi" : formatDate(l.at)}:{" "}
                 {l.status === "sent"
                   ? `inviata a ${l.company ?? l.toEmail}`
                   : l.status === "simulated"

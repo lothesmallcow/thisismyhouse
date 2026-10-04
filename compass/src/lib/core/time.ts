@@ -76,6 +76,11 @@ export function formatDate(d: Date): string {
   return new Intl.DateTimeFormat("it-IT", { timeZone: TZ, day: "numeric", month: "long", year: "numeric" }).format(d);
 }
 
+/** Current time in ms (kept in one place so render code stays pure). */
+export function nowMs(): number {
+  return Date.now();
+}
+
 export function daysAgoLabel(d: Date, now = new Date()): string {
   const days = Math.floor((now.getTime() - d.getTime()) / 86400000);
   if (days <= 0) return "oggi";

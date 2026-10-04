@@ -32,7 +32,8 @@ const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
 function done(path: string, msg: string): never {
   revalidatePath("/", "layout");
-  redirect(`${path}${path.includes("?") ? "&" : "?"}msg=${msg}`);
+  const [base, hash] = path.split("#");
+  redirect(`${base}${base.includes("?") ? "&" : "?"}msg=${msg}${hash ? `#${hash}` : ""}`);
 }
 
 // --- Offerte -------------------------------------------------------------------------------------

@@ -4,7 +4,9 @@ import { IconPlus } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
 import { Empty, LinkButton, PageHeader } from "@/components/ui";
 import { CONTRACT_LABELS, SECTORS } from "@/lib/core/extract";
-import { LEVEL_LABELS, type Level } from "@/lib/core/rank";
+import type { Level } from "@/lib/core/rank";
+
+const PLURAL: Record<Level, string> = { molto: "Molto adatte", adatta: "Adatte", poco: "Poco adatte" };
 import { getDb } from "@/lib/db";
 import { listJobs, PAGE_SIZE, type JobFilters } from "@/lib/server/jobs";
 import { getProfile } from "@/lib/server/profile";
@@ -38,7 +40,8 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
   const nextParams = new URLSearchParams(Object.entries(sp).flatMap(([k, v]) => (v && k !== "msg" ? [[k, one(v)]] : [])));
   nextParams.set("n", String(limit + PAGE_SIZE));
 
-  let lastLevel: Level | null = null;
+  // A heading before the first job of each level.
+  const headings = jobs.map((j, i) => (!filters.show && (i === 0 || jobs[i - 1].level !== j.level) ? PLURAL[j.level] : null));
   return (
     <>
       <Flash code={sp.msg} />
@@ -138,16 +141,12 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
         </Empty>
       ) : (
         <div className="space-y-5">
-          {jobs.map((j) => {
-            const heading = !filters.show && j.level !== lastLevel ? LEVEL_LABELS[j.level] : null;
-            lastLevel = j.level;
-            return (
-              <div key={j.id}>
-                {heading && <h2 className="mb-3 mt-8 text-[1.45rem] font-semibold first:mt-0">{heading === "Adatta" ? "Adatte" : heading === "Molto adatta" ? "Molto adatte" : "Poco adatte"}</h2>}
-                <JobCard job={j} />
-              </div>
-            );
-          })}
+          {jobs.map((j, i) => (
+            <div key={j.id}>
+              {headings[i] && <h2 className="mb-3 mt-8 text-[1.45rem] font-semibold first:mt-0">{headings[i]}</h2>}
+              <JobCard job={j} />
+            </div>
+          ))}
         </div>
       )}
 

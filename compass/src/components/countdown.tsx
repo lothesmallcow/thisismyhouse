@@ -5,9 +5,12 @@ import { useEffect, useState } from "react";
 export function Countdown({ at }: { at: string }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
-    setNow(Date.now());
+    const first = setTimeout(() => setNow(Date.now()), 0);
     const t = setInterval(() => setNow(Date.now()), 20000);
-    return () => clearInterval(t);
+    return () => {
+      clearTimeout(first);
+      clearInterval(t);
+    };
   }, []);
   if (now == null) return null;
   const mins = Math.max(0, Math.round((new Date(at).getTime() - now) / 60000));

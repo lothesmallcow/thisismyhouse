@@ -2,7 +2,7 @@ import { Countdown } from "@/components/countdown";
 import { Flash } from "@/components/flash";
 import { IconAlert, IconDoc, IconSend, IconStop, IconUndo } from "@/components/icons";
 import { Button, Card, Empty, LevelBadge, LinkButton, Notice, PageHeader, SectionTitle } from "@/components/ui";
-import { formatWhen } from "@/lib/core/time";
+import { formatWhen, nowMs } from "@/lib/core/time";
 import { getDb, schema } from "@/lib/db";
 import { listDrafts, listQueued } from "@/lib/server/applications";
 import { shellData } from "@/lib/server/shell";
@@ -21,7 +21,7 @@ export default async function DaInviarePage({ searchParams }: { searchParams: Pr
   const cvName = (id: number | null) => cvs.find((c) => c.id === id)?.label ?? "Nessun CV";
   const spontaneous = await db.select().from(schema.spontaneousCompanies).where(eq(schema.spontaneousCompanies.status, "approved"));
   const sentSpont = await db.select({ c: schema.applications.spontaneousCompanyId, at: schema.applications.sentAt }).from(schema.applications);
-  const recent = new Set(sentSpont.filter((s) => s.c && s.at && Date.now() - s.at.getTime() < 182 * 86400000).map((s) => s.c));
+  const recent = new Set(sentSpont.filter((s) => s.c && s.at && nowMs() - s.at.getTime() < 182 * 86400000).map((s) => s.c));
   const openSpont = new Set(drafts.filter((d) => d.app.spontaneousCompanyId).map((d) => d.app.spontaneousCompanyId));
   const sendable = drafts.filter((d) => !d.app.warnings.some((w) => isBlocker(w.code)));
 

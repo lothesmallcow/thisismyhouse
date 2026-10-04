@@ -1,5 +1,5 @@
 import { IconArrowLeft, IconX } from "@/components/icons";
-import { Button, Card, LinkButton } from "@/components/ui";
+import { Button, Card, HelpBox, LinkButton } from "@/components/ui";
 import { deleteAllDataAction } from "../../actions";
 
 export const metadata = { title: "Cancella i miei dati" };
@@ -7,7 +7,8 @@ export const metadata = { title: "Cancella i miei dati" };
 export default function CancellaPage() {
   return (
     <div className="mx-auto max-w-xl pt-6">
-      <Card className="rise !p-8 text-center">
+      <HelpBox text="Qui puoi cancellare tutto quello che Compass sa di te." />
+      <Card className="mt-4 rise !p-8 text-center">
         <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose text-rose-ink">
           <IconX size={32} />
         </span>

@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { Flash } from "@/components/flash";
 import { IconArrowLeft, IconCalendar, IconClock, IconDoc, IconEuro, IconExternal, IconLang, IconMail, IconPin, IconSparkle } from "@/components/icons";
-import { Button, Card, ExternalButton, Fact, LevelBadge, LinkButton, Notice, SectionTitle } from "@/components/ui";
-import { CONTRACT_LABELS, HOURS_LABELS, REMOTE_LABELS } from "@/lib/core/extract";
+import { Button, Card, ExternalButton, Fact, HelpBox, LevelBadge, LinkButton, Notice, SectionTitle } from "@/components/ui";
+import { CONTRACT_LABELS, HOURS_LABELS } from "@/lib/core/extract";
 import { SOURCE_LABELS } from "@/lib/core/normalize";
 import { formatSalary } from "@/lib/core/salary";
 import { daysAgoLabel, formatDate } from "@/lib/core/time";
@@ -52,6 +52,8 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
           {job.company ?? "Azienda non indicata"}
           {job.city ? ` · ${job.city}${job.province ? ` (${job.province})` : ""}` : ""}
         </p>
+
+        <HelpBox text="Leggi l'offerta. Se ti piace, premi il pulsante blu grande per candidarti; se non ti interessa, premi Non mi interessa." />
 
         {job.scamFlags.length > 0 && (
           <div className="mt-5">

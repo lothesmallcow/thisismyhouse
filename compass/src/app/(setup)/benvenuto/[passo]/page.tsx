@@ -82,6 +82,7 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
       )}
       <h1 className="text-[2.2rem] font-semibold leading-tight">{synonymsPhase ? "Vanno bene anche questi?" : TITLES[passo]}</h1>
       <p className="mt-3 text-[1.08rem] text-ink-soft">
+        <strong className="text-navy">Cosa faccio qui?</strong>{" "}
         {synonymsPhase ? "Sono lavori simili a quello che cerchi. Tieni la spunta su quelli che vanno bene." : HELP[passo]}
       </p>
 

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { IconArrowLeft, IconSend } from "@/components/icons";
-import { Button, Card, LinkButton } from "@/components/ui";
+import { Button, Card, HelpBox, LinkButton } from "@/components/ui";
 import { getDb, schema } from "@/lib/db";
 import { approveAction } from "../../../actions";
 
@@ -13,7 +13,8 @@ export default async function ConfermaPage({ params }: { params: Promise<{ id: s
   if (!app || app.status !== "draft") notFound();
   return (
     <div className="mx-auto max-w-xl pt-6">
-      <Card className="rise text-center !p-8">
+      <HelpBox text="Controlla il nome dell'azienda: se è giusto premi Sì, invia." />
+      <Card className="mt-4 rise text-center !p-8">
         <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-navy-soft text-navy">
           <IconSend size={32} />
         </span>

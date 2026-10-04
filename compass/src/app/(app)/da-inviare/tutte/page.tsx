@@ -1,5 +1,5 @@
 import { IconArrowLeft, IconSend } from "@/components/icons";
-import { Button, Card, LinkButton } from "@/components/ui";
+import { Button, Card, HelpBox, LinkButton } from "@/components/ui";
 import { getDb } from "@/lib/db";
 import { listDrafts } from "@/lib/server/applications";
 import { approveAllAction } from "../../actions";
@@ -10,7 +10,8 @@ export default async function TuttePage() {
   const drafts = (await listDrafts(getDb())).filter((d) => !d.app.warnings.some((w) => !w.code.startsWith("scam-")));
   return (
     <div className="mx-auto max-w-xl pt-6">
-      <Card className="rise !p-8">
+      <HelpBox text="Controlla l'elenco: se va bene premi Sì, invia tutte." />
+      <Card className="mt-4 rise !p-8">
         <p className="text-center font-serif text-[1.6rem] font-semibold leading-snug">
           Sto per inviare {drafts.length === 1 ? "1 candidatura" : `${drafts.length} candidature`}. Confermi?
         </p>

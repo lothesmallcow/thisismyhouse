@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { eq, sql } from "drizzle-orm";
+import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import { beforeEach, describe, expect, it } from "vitest";
 import { schema, type DB } from "@/lib/db";
 import { OutboxTransport } from "@/lib/mail/transport";
@@ -31,7 +32,7 @@ beforeEach(async () => {
   await seedDemo(db, NOW);
 });
 
-const count = async (t: Parameters<DB["select"]>[0] extends never ? never : any) => Number((await db.select({ n: sql<number>`count(*)` }).from(t))[0].n);
+const count = async (t: SQLiteTable) => Number((await db.select({ n: sql<number>`count(*)` }).from(t))[0].n);
 
 describe("ingest (demo mode: real adapters, fixture network)", () => {
   it("reads the demo mailbox, Adzuna, ATS and the approved W2 site; dedupes across sources", async () => {
