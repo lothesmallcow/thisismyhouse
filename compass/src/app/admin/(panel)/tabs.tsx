@@ -29,7 +29,7 @@ export function AdminTabs() {
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`inline-flex min-h-[44px] items-center rounded-xl px-3.5 text-[0.95rem] font-bold no-underline ${active ? "bg-navy text-white" : "bg-card text-ink border border-line hover:border-navy"}`}
+                className={`inline-flex min-h-[48px] items-center rounded-xl px-3.5 text-[0.95rem] font-bold no-underline ${active ? "bg-navy text-white" : "bg-card text-ink border border-line hover:border-navy"}`}
               >
                 {label}
               </Link>

@@ -90,7 +90,7 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
           </Fact>
           <Fact icon={<IconEuro />} label="Stipendio">
             {salary}
-            {job.salaryNote && job.salaryIsEstimate && <span className="block text-[0.92rem] text-ink-soft">{job.salaryNote}</span>}
+            {job.salaryNote && job.salaryIsEstimate && <span className="block text-[0.95rem] text-ink-soft">{job.salaryNote}</span>}
           </Fact>
           <Fact icon={<IconClock />} label="Orario">
             {HOURS_LABELS[job.hours as keyof typeof HOURS_LABELS]}

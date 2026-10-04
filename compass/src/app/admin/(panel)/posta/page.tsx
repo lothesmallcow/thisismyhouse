@@ -67,7 +67,7 @@ export default async function PostaPage({ searchParams }: { searchParams: Promis
             </p>
             <p className="font-bold">{o.subject}</p>
             {o.attachmentName && <p className="text-ink-soft">Allegato: {o.attachmentName}</p>}
-            <pre className="mt-3 max-h-60 overflow-auto whitespace-pre-wrap rounded-xl bg-paper p-4 font-sans text-[0.95rem]">{o.text}</pre>
+            <pre tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="mt-3 max-h-60 overflow-auto whitespace-pre-wrap rounded-xl bg-paper p-4 font-sans text-[0.95rem]">{o.text}</pre>
             <p className="mt-2 font-mono text-[0.75rem] text-ink-soft">{o.messageId}</p>
           </Card>
         ))}

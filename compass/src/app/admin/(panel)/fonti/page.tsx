@@ -39,7 +39,7 @@ export default async function FontiPage({ searchParams }: { searchParams: Promis
       <p className="mt-2 max-w-3xl text-ink-soft">Ogni fonte è indipendente: se una si rompe, le altre continuano. Qui vedi come stanno.</p>
 
       <SectionTitle>Salute delle fonti</SectionTitle>
-      <div className="overflow-x-auto rounded-2xl border border-line bg-card">
+      <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full min-w-[760px] text-left text-[0.98rem]">
           <thead className="bg-paper">
             <tr>

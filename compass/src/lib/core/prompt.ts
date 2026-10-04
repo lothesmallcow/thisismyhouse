@@ -26,7 +26,7 @@ L'ANNUNCIO
 Ruolo: ${job.title}
 Azienda: ${job.company ?? "non indicata"}
 Città: ${job.city ?? "non indicata"}
-${job.url ? `Link: ${job.url}\n` : ""}Testo dell'annuncio:
+${job.url ? `Indirizzo dell'annuncio: ${job.url}\n` : ""}Testo dell'annuncio:
 """
 ${job.description.trim() || "(testo non disponibile, usa solo i dati sopra)"}
 """

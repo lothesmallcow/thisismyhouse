@@ -101,7 +101,7 @@ export default async function CandidaturePage({ searchParams }: { searchParams: 
                   {app.simulated ? " · in modalità prova" : ""}
                 </p>
                 {job && (
-                  <Link href={`/offerte/${job.id}`} className="mt-2 inline-block font-bold">
+                  <Link href={`/offerte/${job.id}`} className="mt-2 inline-flex min-h-[48px] items-center font-bold">
                     Rivedi l&apos;offerta
                   </Link>
                 )}

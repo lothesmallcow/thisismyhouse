@@ -24,13 +24,13 @@ export function BottomNav({ badges }: { badges: Partial<Record<string, number>> 
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex min-h-[74px] flex-col items-center justify-center gap-1 px-1 text-center text-[0.86rem] font-bold leading-tight no-underline sm:text-[0.95rem] ${active ? "text-navy" : "text-ink-soft hover:text-ink"}`}
+                className={`relative flex min-h-[74px] flex-col items-center justify-center gap-1 px-1 text-center text-[0.95rem] font-bold leading-tight no-underline ${active ? "text-navy" : "text-ink-soft hover:text-ink"}`}
               >
                 {active && <span className="absolute inset-x-5 top-0 h-[4px] rounded-b-full bg-needle" aria-hidden="true" />}
                 <span className="relative">
                   <Icon size={28} strokeWidth={active ? 2.4 : 2} />
                   {n ? (
-                    <span className="absolute -right-3 -top-2 min-w-[24px] rounded-full bg-needle-ink px-1.5 text-[0.8rem] leading-[24px] text-white">{n}</span>
+                    <span className="absolute -right-3 -top-2 min-w-[28px] rounded-full bg-needle-ink px-1.5 text-[0.95rem] leading-[28px] text-white">{n}</span>
                   ) : null}
                 </span>
                 <span>{label}</span>

@@ -109,9 +109,9 @@ export default async function DaInviarePage({ searchParams }: { searchParams: Pr
                   </p>
 
                   <div className="mt-4 rounded-2xl border border-line bg-paper p-4">
-                    <p className="text-[0.92rem] font-bold uppercase tracking-wide text-ink-soft">Anteprima dell&apos;e-mail</p>
+                    <p className="text-[0.95rem] font-bold uppercase tracking-wide text-ink-soft">Anteprima dell&apos;e-mail</p>
                     <p className="mt-2 font-bold">{app.subject}</p>
-                    <div className="mt-2 max-h-56 overflow-auto whitespace-pre-line text-[1rem] leading-relaxed">{app.body}</div>
+                    <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="mt-2 max-h-56 overflow-auto whitespace-pre-line text-[1rem] leading-relaxed">{app.body}</div>
                   </div>
 
                   {warns.map((w) => (

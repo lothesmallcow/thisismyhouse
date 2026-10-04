@@ -21,11 +21,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
         <div className="flex items-center gap-3 text-[0.95rem]">
           <span className="hidden text-ink-soft sm:inline">{admin.email}</span>
-          <Link href="/offerte" className="font-bold">
+          <Link href="/offerte" className="inline-flex min-h-[48px] items-center font-bold">
             Apri l&apos;app di lei
           </Link>
           <form action={adminSignOutAction}>
-            <button className="min-h-[44px] rounded-xl px-3 font-bold text-navy hover:bg-navy-soft">Esci</button>
+            <button className="min-h-[48px] rounded-xl px-3 font-bold text-navy hover:bg-navy-soft">Esci</button>
           </form>
         </div>
       </header>

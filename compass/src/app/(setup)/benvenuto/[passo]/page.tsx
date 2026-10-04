@@ -51,6 +51,9 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
           <IconCheck size={34} />
         </span>
         <h1 className="text-[2rem] font-semibold">Fatto, grazie{p.name ? ` ${p.name.split(" ")[0]}` : ""}!</h1>
+        <p className="mt-3 text-[1.1rem]">
+          <strong className="text-navy">Cosa faccio qui?</strong> Niente di difficile: scegli dove andare.
+        </p>
         <p className="mt-3 text-[1.1rem]">Da domani mattina ti arriva un&apos;e-mail con le offerte nuove. Intanto puoi già guardare quelle che ho trovato.</p>
         <LinkButton href="/offerte" wide className="mt-7">
           Vedi le offerte per te

@@ -40,7 +40,7 @@ export default function AbbonamentoPage() {
             key={p.id}
             className={`relative flex flex-col rounded-[28px] border p-7 shadow-[var(--shadow-card)] ${p.highlight ? "border-navy bg-navy text-white lg:-mt-4 lg:mb-[-1rem]" : "border-line bg-card"}`}
           >
-            {p.highlight && <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-needle px-4 py-1.5 text-[0.9rem] font-bold text-white">Il più scelto</span>}
+            {p.highlight && <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-needle-ink px-4 py-1.5 text-[0.95rem] font-bold text-white">Il più scelto</span>}
             <h2 className={`text-[1.8rem] font-semibold ${p.highlight ? "text-white" : ""}`}>{p.name}</h2>
             <p className={p.highlight ? "text-white/85" : "text-ink-soft"}>{p.tagline}</p>
             <p className="mt-6 flex items-end gap-2">
@@ -68,7 +68,7 @@ export default function AbbonamentoPage() {
 
       <section className="mt-20">
         <h2 className="text-center text-[2rem] font-semibold">Confronta i piani</h2>
-        <div className="mt-6 overflow-x-auto rounded-[var(--radius-card)] border border-line bg-card shadow-[var(--shadow-card)]">
+        <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="mt-6 overflow-x-auto rounded-[var(--radius-card)] border border-line bg-card shadow-[var(--shadow-card)]">
           <table className="w-full min-w-[560px] text-left">
             <thead>
               <tr className="border-b border-line">

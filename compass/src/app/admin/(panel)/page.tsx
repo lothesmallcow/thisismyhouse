@@ -56,7 +56,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
             <li>Pilota automatico: <strong>{s.guardrails.autopilot ? "acceso" : "spento"}</strong></li>
             <li>Ultima raccolta: <strong>{s.lastIngestAt ? formatWhen(new Date(s.lastIngestAt)) : "mai"}</strong></li>
           </ul>
-          <Link href="/admin/invii" className="mt-3 inline-block font-bold">
+          <Link href="/admin/invii" className="mt-3 inline-flex min-h-[48px] items-center font-bold">
             Regole di invio
           </Link>
         </Card>
@@ -100,7 +100,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       )}
 
       <SectionTitle>Ultime esecuzioni programmate</SectionTitle>
-      <div className="overflow-x-auto rounded-2xl border border-line bg-card">
+      <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full text-left text-[0.98rem]">
           <thead className="bg-paper">
             <tr>

@@ -48,6 +48,8 @@ html {
   line-height: 1.55;
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
+  /* long e-mail addresses and links wrap instead of pushing the page sideways */
+  overflow-wrap: break-word;
 }
 
 body {
@@ -130,6 +132,8 @@ input[type="range"] {
 
 input[type="file"] {
   font-size: 1rem;
+  max-width: 100%;
+  width: 100%;
 }
 input[type="file"]::file-selector-button {
   min-height: 52px;

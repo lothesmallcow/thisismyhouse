@@ -19,10 +19,10 @@ export function JobCard({ job }: { job: Job }) {
     <article className="rise group relative rounded-[var(--radius-card)] border border-line bg-card p-5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[0_14px_32px_-14px_rgb(23_34_45/0.35)] sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <LevelBadge level={job.level} />
-        {job.status === "new" && <span className="rounded-full bg-needle-ink px-3 py-1 text-[0.85rem] font-bold text-white">Nuova</span>}
+        {job.status === "new" && <span className="rounded-full bg-needle-ink px-3 py-1 text-[0.95rem] font-bold text-white">Nuova</span>}
       </div>
       <h3 className="mt-3 text-[1.5rem] font-semibold leading-snug">
-        <Link href={`/offerte/${job.id}`} className="text-ink no-underline after:absolute after:inset-0 after:rounded-[var(--radius-card)] after:content-['']">
+        <Link href={`/offerte/${job.id}`} className="inline-block min-h-[48px] text-ink no-underline after:absolute after:inset-0 after:rounded-[var(--radius-card)] after:content-['']">
           {job.title}
         </Link>
       </h3>

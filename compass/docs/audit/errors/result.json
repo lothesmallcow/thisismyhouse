@@ -1,0 +1,36 @@
+{
+  "serviceWorker": {
+    "registered": true,
+    "scope": "http://localhost:3000/",
+    "controlling": true
+  },
+  "manifest": {
+    "name": "Compass: le offerte di lavoro per te",
+    "start_url": "/offerte",
+    "display": "standalone",
+    "icons": [
+      "192x192",
+      "512x512",
+      "512x512 maskable"
+    ]
+  },
+  "session": {
+    "httpOnly": true,
+    "sameSite": "Lax",
+    "daysValid": 180
+  },
+  "offlineCached": true,
+  "offline": "Manca la connessione Non riesco a collegarmi a internet. Controlla il Wi-Fi o i dati del telefono, poi riprova. Riprova",
+  "empty": "Nessuna offerta nuova oggi, ricontrollo domani mattina. | Nessuna offerta, per ora | Prova a togliere qualche filtro.",
+  "serverError": {
+    "status": 500,
+    "text": "Qualcosa non ha funzionato\n\nNon è colpa tua. Riprova tra un minuto; se succede ancora, chiedi aiuto.\n\nRiprovaTorna alle offerte"
+  },
+  "adminAlert": [
+    "oggi alle 12:34: Fonte \"mailbox\": accesso rifiutato. La password (o la chiave) non funziona più: va rigenerata e aggiornata nei segreti. Apri"
+  ],
+  "health": [
+    "mailbox\toggi alle 12:25\toggi alle 12:34 (0)\t5\t0\t0\tattenzione"
+  ],
+  "herViewDuringMailboxFailure": "Compass Ultimo aggiornamento: oggi alle 12:25"
+}

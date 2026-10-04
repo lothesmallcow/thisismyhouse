@@ -7,7 +7,8 @@ import { CONTRACT_LABELS, SECTORS } from "@/lib/core/extract";
 import type { Level } from "@/lib/core/rank";
 
 const PLURAL: Record<Level, string> = { molto: "Molto adatte", adatta: "Adatte", poco: "Poco adatte" };
-import { getDb } from "@/lib/db";
+import { eq, sql } from "drizzle-orm";
+import { getDb, schema } from "@/lib/db";
 import { listJobs, PAGE_SIZE, type JobFilters } from "@/lib/server/jobs";
 import { getProfile } from "@/lib/server/profile";
 import { getSettings } from "@/lib/server/settings";
@@ -34,8 +35,9 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
   const { jobs, total } = await listJobs(db, filters, limit);
   const profile = await getProfile(db);
   const settings = await getSettings(db);
-  const active = Object.entries(filters).filter(([, v]) => v !== undefined).length;
-  const newToday = jobs.filter((j) => j.status === "new").length;
+  const active = Object.entries(filters).filter(([k, v]) => k !== "show" && v !== undefined).length;
+  // Across all offers, not just the filtered page.
+  const [{ n: newToday }] = await db.select({ n: sql<number>`count(*)` }).from(schema.jobs).where(eq(schema.jobs.status, "new"));
 
   const nextParams = new URLSearchParams(Object.entries(sp).flatMap(([k, v]) => (v && k !== "msg" ? [[k, one(v)]] : [])));
   nextParams.set("n", String(limit + PAGE_SIZE));
@@ -47,7 +49,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
       <Flash code={sp.msg} />
       <PageHeader title="Offerte per te" help="Qui trovi le offerte di lavoro scelte per te, le più adatte in alto. Tocca un'offerta per leggerla e candidarti." />
 
-      {settings.lastIngestAt && newToday === 0 && !filters.show && (
+      {settings.lastIngestAt && Number(newToday) === 0 && !filters.show && active === 0 && (
         <p className="mb-5 rounded-2xl bg-card px-4 py-3 text-ink-soft border border-line">Nessuna offerta nuova oggi, ricontrollo domani mattina.</p>
       )}
 
@@ -137,7 +139,11 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
 
       {jobs.length === 0 ? (
         <Empty title={filters.show ? "Nessuna offerta scartata" : "Nessuna offerta, per ora"}>
-          {active ? "Prova a togliere qualche filtro." : "Appena arrivano nuove offerte le trovi qui. Ricontrollo ogni mattina."}
+          {filters.show
+            ? "Quando premi “Non mi interessa” su un'offerta, la ritrovi qui."
+            : active
+              ? "Prova a togliere qualche filtro."
+              : "Appena arrivano nuove offerte le trovi qui. Ricontrollo ogni mattina."}
         </Empty>
       ) : (
         <div className="space-y-5">

@@ -41,7 +41,7 @@ export default async function ClaudePage({ params }: { params: Promise<{ id: str
         <p className="font-bold">1. Copia questo testo</p>
         <p className="text-[0.98rem] text-ink-soft">Contiene l&apos;annuncio, il tuo CV e la regola più importante: non inventare niente.</p>
         <CopyButton text={prompt} label="Copia il testo per Claude" wide primary />
-        <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-paper p-4 font-sans text-[0.95rem]">{prompt}</pre>
+        <pre tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-paper p-4 font-sans text-[0.95rem]">{prompt}</pre>
       </Card>
 
       <Card className="mt-5">

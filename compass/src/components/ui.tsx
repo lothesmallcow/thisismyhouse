@@ -128,7 +128,7 @@ export function Fact({ icon, label, children }: { icon: ReactNode; label: string
     <div className="flex gap-3 rounded-2xl bg-paper px-4 py-3">
       <span className="mt-1 text-navy">{icon}</span>
       <div>
-        <p className="text-[0.9rem] font-bold uppercase tracking-wide text-ink-soft">{label}</p>
+        <p className="text-[0.95rem] font-bold uppercase tracking-wide text-ink-soft">{label}</p>
         <p className="text-[1.02rem]">{children}</p>
       </div>
     </div>

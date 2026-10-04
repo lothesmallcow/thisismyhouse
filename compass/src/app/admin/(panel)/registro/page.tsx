@@ -12,7 +12,7 @@ export default async function RegistroPage() {
     <>
       <h1 className="text-[2.2rem] font-semibold">Registro invii</h1>
       <p className="mt-2 text-ink-soft">Ogni e-mail: a chi, quando, con quale CV e quale lettera, e com&apos;è andata.</p>
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-card">
+      <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="mt-6 overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full min-w-[860px] text-left text-[0.95rem]">
           <thead className="bg-paper">
             <tr>
@@ -40,7 +40,7 @@ export default async function RegistroPage() {
         </table>
       </div>
       <h2 className="mt-10 text-[1.6rem] font-semibold">Tutte le candidature</h2>
-      <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-card">
+      <div tabIndex={0} role="region" aria-label="Contenuto scorrevole" className="mt-4 overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full min-w-[860px] text-left text-[0.95rem]">
           <thead className="bg-paper">
             <tr>
