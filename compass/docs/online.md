@@ -73,7 +73,8 @@ Su un terminale (anche quello del Codespace) esegui tre volte `openssl rand -hex
 
 ## 7. Fonti di offerte (gratuite)
 - Adzuna: developer.adzuna.com → `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` (su Vercel e su GitHub).
-- Tavily: tavily.com, piano gratuito → `TAVILY_API_KEY`.
+- Tavily: tavily.com, piano gratuito → `TAVILY_API_KEY`. **Consigliata**: è il motore di ricerca con
+  cui "Fai web scraping" trova gli annunci di LinkedIn, Indeed e InfoJobs senza entrare in quei siti.
 - Avvisi di LinkedIn, Indeed, InfoJobs: ognuno li crea dal proprio account con i link in
   Profilo → Codice di ricerca, e li inoltra alla Gmail del passo 1 (`docs/setup.md` §2).
 

@@ -34,6 +34,9 @@ import { deleteAllMyData } from "@/lib/server/privacy";
 import { fitWarnings } from "@/lib/server/career";
 import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences, pdfText, rematchExperiences, saveExperiences } from "@/lib/server/experiences";
 import { updateProfile } from "@/lib/server/profile";
+import { after } from "next/server";
+import { quickSearchFor } from "@/lib/pipeline/jobs";
+import { lastQuickSearch, QUICK_SEARCH_EVERY_MIN } from "@/lib/pipeline/quick-search";
 import { updateUserSettings } from "@/lib/server/settings";
 import { confirmReply, dismissReply } from "@/lib/server/replies";
 
@@ -420,6 +423,16 @@ export async function restartQuestionnaireAction(f?: FormData) {
   await updateProfile(getDb(), u.id, { onboardingStep: 1, ...(mode ? { onboardingMode: mode } : {}) });
   revalidatePath("/", "layout");
   redirect("/benvenuto/1?rifai=1");
+}
+
+/** "Cerca ora": a search for this person in the background (at most every half hour). */
+export async function searchNowAction() {
+  const u = await requireUser();
+  const db = getDb();
+  const last = await lastQuickSearch(db, u.id);
+  if (last && Date.now() - last.getTime() < QUICK_SEARCH_EVERY_MIN * 60_000) done("/offerte", "ricerca-recente");
+  after(() => quickSearchFor(getDb(), u.id));
+  done("/offerte", "ricerca-avviata");
 }
 
 /** The positions searched: the ticked ones (current and recommended from the CV) plus one typed. */

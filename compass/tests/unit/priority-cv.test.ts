@@ -83,3 +83,39 @@ describe("posizioni consigliate dal CV", () => {
     expect(recommendPositions({ ...base, experiences: [], cvText: "" })).toEqual([]);
   });
 });
+
+describe("CVs as designed PDFs print them", () => {
+  it("letter-spaced headings are still sections; a sport or volunteer title is not proposed as a job", async () => {
+    const { parseCvTimeline } = await import("@/lib/core/timeline");
+    const text = ["I S T R U Z I O N E", "2026 – oggi Laurea in Economia, Università Esempio, Milano", "E S P E R I E N Z E", "2023 – oggi Allenatore di calcio giovanile, Società Esempio", "AT T I V I T À E X T R A C U R R I C O L A R I", "2014 – 2026 Portiere, calcio dilettantistico", "L I N G U E", "2020 Inglese"].join("\n");
+    const t = parseCvTimeline(text);
+    expect(t.map((e) => [e.kind, e.title])).toEqual([
+      ["studio", "Laurea in Economia"],
+      ["lavoro", "Allenatore di calcio giovanile"],
+      ["volontariato", "Portiere"],
+    ]);
+    const r = recommendPositions({ track: "stage", experiences: t, cvText: text, years: 3, sectors: [], roles: [], priority: "media" });
+    expect(r.map((x) => x.title)).not.toContain("Portiere");
+    expect(r.map((x) => x.title)).not.toContain("Allenatore di calcio giovanile"); // a student's passion, not the internship they look for
+  });
+});
+
+describe("students: where studies and activities point, not past leadership roles", () => {
+  const exps = [
+    { kind: "studio", title: "Laurea in International Economics and Finance", organization: "Università Esempio", current: true },
+    { kind: "lavoro", title: "Allenatore di calcio giovanile", organization: "Società Esempio", current: true },
+    { kind: "volontariato", title: "Co-fondatore e responsabile", organization: "club di finanza della scuola", current: false, description: "Incontri su mercati finanziari e investimenti" },
+    { kind: "volontariato", title: "Portiere", organization: "calcio dilettantistico", current: false },
+  ];
+  it("internships in line with finance and markets, each with its reason; never the degree, the coach, the goalkeeper or 'Studente'", () => {
+    const r = recommendPositions({ track: "lavoro", experiences: exps, cvText: "Competizione sui mercati finanziari: portafoglio +10%", years: 3, sectors: [], roles: ["Studente"], priority: "media" });
+    const titles = r.map((x) => x.title);
+    expect(titles.slice(0, 2)).toEqual(expect.arrayContaining(["Stage corporate finance", "Stage sales & trading"]));
+    expect(r[0]).toMatchObject({ kind: "direzione", why: expect.stringMatching(/^In linea con i tuoi studi e le tue attività: /) });
+    for (const no of ["Laurea in International Economics and Finance", "Allenatore di calcio giovanile", "Portiere", "Co-fondatore e responsabile", "Studente"]) expect(titles).not.toContain(no);
+  });
+  it("someone who is not studying keeps their past roles as positions", () => {
+    const worker = [{ kind: "lavoro", title: "Allenatore di calcio giovanile", organization: "Società Esempio", current: true }];
+    expect(recommendPositions({ track: "lavoro", experiences: worker, cvText: "", years: 6, sectors: [], roles: [], priority: "media" })[0]?.title).toBe("Allenatore di calcio giovanile");
+  });
+});

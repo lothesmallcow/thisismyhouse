@@ -55,6 +55,24 @@ const SECTION_RULES: [TimelineItem["kind"] | "stop", RegExp][] = [
   ["stop", /^(competenze|skills|lingue|languages|interessi|interests|hobby|certificazioni|certifications|patente|referenze|autorizzo)/i],
 ];
 
+/** Headings spelled out with letter spacing ("I S T R U Z I O N E", as many designed CVs print them). */
+const SQUASHED: [TimelineItem["kind"] | "stop", RegExp][] = [
+  ["lavoro", /^(esperienz[ae](professional[ie]|lavorativ[ae])?|esperienzedilavoro|workexperience|experience|professionalexperience|lavoro)$/],
+  ["studio", /^(istruzione(eformazione)?|formazione|studi|titolidistudio|education)$/],
+  ["volontariato", /^(volontariato|volunteering|volunteerexperience|attivit[aà]extra-?curricolari|associazioni|extracurricular(activities)?)$/],
+  ["stop", /^(competenze|skills|lingue|languages|interessi|interests|hobby|certificazioni|certifications|patente|referenze)/],
+];
+
+function sectionOf(line: string): [TimelineItem["kind"] | "stop", RegExp] | undefined {
+  const head = SECTION_RULES.find(([, re]) => re.test(line.replace(/[^\p{L} :'-]/gu, "").trim()));
+  if (head) return head;
+  // Mostly one-letter tokens: compare without spaces.
+  const tokens = line.trim().split(/\s+/);
+  if (tokens.length < 4 || tokens.filter((t) => t.length <= 2).length / tokens.length < 0.7) return undefined;
+  const squashed = line.toLowerCase().replace(/[^\p{L}-]/gu, "");
+  return SQUASHED.find(([, re]) => re.test(squashed));
+}
+
 /** Split "Title, Organization, City" / "Title presso Organization" / "Organization - Title" into parts. */
 export function splitRole(rest: string, kind: TimelineItem["kind"]): { title: string; organization: string; city: string | null } {
   const clean = rest.replace(/\s+/g, " ").trim().replace(/^[-–—•·|:,]\s*/, "");
@@ -83,7 +101,7 @@ export function parseCvTimeline(text: string): TimelineItem[] {
   for (const raw of text.replace(/\r/g, "").split("\n")) {
     const line = raw.replace(/\t/g, " ").trim();
     if (!line) continue;
-    const head = SECTION_RULES.find(([, re]) => re.test(line.replace(/[^\p{L} :'-]/gu, "").trim()));
+    const head = sectionOf(line);
     if (head && line.length < 60) {
       section = head[0];
       last = null;

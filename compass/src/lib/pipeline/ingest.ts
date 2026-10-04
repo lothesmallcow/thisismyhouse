@@ -13,6 +13,7 @@ import { BlockedError, type FetchLike } from "../sources/http";
 import type { Mailbox } from "../sources/mail/types";
 import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
+import { scrapeCareers } from "../sources/web/careers";
 import { dedupeCandidates, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
 import { prioritizedCompanies, todaysPicks } from "../server/career";
 import { getSettings, setSetting } from "../server/settings";
@@ -34,6 +35,8 @@ export interface MailboxRun {
 /** Company career feeds read per run (the admin's watchlist always; chosen companies by fit, in rotation). */
 export const ATS_PER_RUN = 25;
 export const API_CALLS_PER_RUN = 9;
+/** Company career pages scraped per daily run. */
+export const CAREER_SITES_PER_RUN = 15;
 
 export interface IngestDeps {
   db: DB;
@@ -163,6 +166,30 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
       return { items: s.total, failures: 0 };
     }, now);
     summary.sources[key] = r?.items ?? null;
+  }
+
+  // 4b. Career pages of the chosen companies found by the web scraping ("Fai web scraping"),
+  // people interleaved, in rotation: a few sites a day, each at its polite pace.
+  const careers: { id: number; name: string; careersUrl: string }[] = [];
+  const perPerson = [];
+  for (const ctx of contexts) perPerson.push((await prioritizedCompanies(db, ctx.userId)).map((x) => x.company).filter((c) => c.careersUrl && !(c.ats && c.atsSlug)));
+  for (let i = 0; perPerson.some((l) => l[i]); i++) for (const l of perPerson) if (l[i] && !careers.some((c) => c.id === l[i].id)) careers.push({ id: l[i].id, name: l[i].name, careersUrl: l[i].careersUrl! });
+  const todaysSites = todaysPicks(careers, CAREER_SITES_PER_RUN, day);
+  if (todaysSites.length) {
+    const polite = new PoliteFetcher(db, fetchImpl, { sleep: deps.politeSleep });
+    const deadline = Date.now() + 20 * 60_000;
+    await Promise.all(
+      todaysSites.map(async (c) => {
+        const host = new URL(c.careersUrl).host;
+        const r = await runWithHealth(db, `careers:${host}`, async () => {
+          const res = await scrapeCareers(polite, { careersUrl: c.careersUrl }, now, deadline);
+          const s = await store(db, res.jobs.map((j) => ({ ...j, company: j.company || c.name })), now, contexts);
+          summary.newJobs += s.created;
+          return { items: s.total, failures: 0 };
+        }, now);
+        summary.sources[`careers:${host}`] = r?.items ?? null;
+      }),
+    );
   }
 
   // 5. W2: approved sites only (polite fetcher, JSON-LD first)

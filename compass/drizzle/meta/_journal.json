@@ -71,6 +71,20 @@
       "when": 1791137057653,
       "tag": "0009_access_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1791144156330,
+      "tag": "0010_ats_discovery",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1791145025457,
+      "tag": "0011_careers_pages",
+      "breakpoints": true
     }
   ]
 }
