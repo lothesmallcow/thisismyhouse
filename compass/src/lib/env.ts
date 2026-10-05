@@ -31,13 +31,14 @@ export const env = {
   },
   /** "Collega Gmail" (Google sign-in, read-only): an OAuth client of a Google Cloud project, see docs/setup.md. */
   get google(): { clientId: string; clientSecret: string } {
-    return { clientId: process.env.GOOGLE_CLIENT_ID || "", clientSecret: process.env.GOOGLE_CLIENT_SECRET || "" };
+    // Trimmed: a space or a new line pasted with the value is the most common reason Google refuses it.
+    return { clientId: (process.env.GOOGLE_CLIENT_ID || "").trim(), clientSecret: (process.env.GOOGLE_CLIENT_SECRET || "").trim() };
   },
   get cronSecret(): string | undefined {
     return process.env.CRON_SECRET || undefined;
   },
   get appUrl(): string {
-    return (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    return (process.env.APP_URL || "http://localhost:3000").trim().replace(/\/+$/, "");
   },
   get contactEmail(): string {
     return process.env.CONTACT_EMAIL || "";

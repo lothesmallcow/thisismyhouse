@@ -17,7 +17,7 @@ import { alertsDone, alertsReceived, baseMailbox, collegaState, forwardingConfir
 import { background } from "@/lib/server/person";
 import { getProfile } from "@/lib/server/profile";
 import { checkInboxNowAction, collegaStepAction, disconnectGmailAction, linkCompassMailboxAction, toggleAlertDoneAction } from "../actions";
-import { ALERT_SENDERS, getMailConnection, gmailConnectAvailable } from "@/lib/server/mail-connections";
+import { ALERT_SENDERS, getMailConnection, gmailConnectAvailable, googleRedirectUri } from "@/lib/server/mail-connections";
 import { sameMailbox } from "@/lib/core/inbox-address";
 import { env } from "@/lib/env";
 
@@ -39,8 +39,49 @@ const Sub = ({ n, children }: { n: number; children: React.ReactNode }) => (
   </li>
 );
 
+/** Why "Collega Gmail" failed, in words, with the values to compare in Google Cloud (none of them secret). */
+function GmailProblem({ code }: { code: string }) {
+  const c = code.toLowerCase();
+  const fix =
+    c === "stato"
+      ? "Il collegamento è scaduto (più di 15 minuti) o è partito da un altro account Compass. Riprova da qui."
+      : c === "config"
+        ? "Su Vercel mancano GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET (progetto compass → Settings → Environment Variables), oppure non hai fatto Redeploy dopo averli aggiunti."
+        : c.includes("invalid_client") || c.includes("unauthorized_client")
+          ? "Google non riconosce l'ID client o il secret. Su Vercel ricopiali dal file JSON scaricato (client_id e client_secret, senza spazi), controlla che siano del progetto Google giusto, poi Redeploy."
+          : c.includes("redirect_uri")
+            ? "L'indirizzo di ritorno non coincide. In Google Cloud → Client → il tuo client → URI di reindirizzamento autorizzati deve esserci esattamente quello qui sotto."
+            : c.includes("invalid_grant")
+              ? "Google ha rifiutato il codice (scaduto o già usato, oppure l'orologio del server). Riprova una volta sola, senza ricaricare la pagina di ritorno."
+              : c.startsWith("gmail-403") || c.includes("accessnotconfigured") || c.includes("service_disabled")
+                ? "La Gmail API non è attiva nel progetto Google del client. Apri console.cloud.google.com/apis/library/gmail.googleapis.com con il progetto compass selezionato e premi Abilita; poi riprova dopo un minuto."
+                : c === "no-refresh"
+                  ? "Google non ha dato l'accesso permanente. Apri myaccount.google.com/permissions, togli Compass, poi riprova."
+                  : c.includes("admin_policy") || c.includes("org_internal")
+                    ? "L'account Google è di un'organizzazione (università o lavoro) che blocca le app esterne: usa la tua Gmail personale."
+                    : "Errore di Google o di rete. Riprova tra un minuto; se si ripete, il codice qui sotto dice cosa guardare.";
+  return (
+    <div className="mt-4">
+      <Notice tone="warn" title="Perché Collega Gmail non è andato">
+        <p>{fix}</p>
+        <p className="mt-2 text-[13px]">
+          Codice: <code>{code.slice(0, 60)}</code>
+        </p>
+        <p className="mt-1 break-all text-[13px]">
+          Indirizzo di ritorno usato da Compass: <code>{googleRedirectUri()}</code>
+        </p>
+        {env.google.clientId && (
+          <p className="mt-1 break-all text-[13px]">
+            ID client in uso: <code>{env.google.clientId}</code>
+          </p>
+        )}
+      </Notice>
+    </div>
+  );
+}
+
 /** Guided setup, one step per screen: e-mail first (why it matters), then accounts, alerts, check. */
-export default async function CollegaPage({ searchParams }: { searchParams: Promise<{ msg?: string; passo?: string; email?: string }> }) {
+export default async function CollegaPage({ searchParams }: { searchParams: Promise<{ msg?: string; passo?: string; email?: string; motivo?: string }> }) {
   const sp = await searchParams;
   const user = await requireUser();
   const db = getDb();
@@ -96,6 +137,7 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
   return (
     <div className="mx-auto max-w-2xl">
       <Flash code={sp.msg} />
+      {sp.motivo && <GmailProblem code={sp.motivo} />}
       {checking && <AutoRefresh everyMs={5000} times={9} />}
       <h1 className="text-[24px] font-semibold">Collega le fonti</h1>
       <p className="mt-1 text-[14px] text-muted">Quattro passi, circa dieci minuti, da fare una volta sola. Dopo, le offerte arrivano da sole ogni giorno.</p>
