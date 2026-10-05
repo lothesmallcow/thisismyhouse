@@ -364,20 +364,32 @@ test("persona: luxury store manager in Milan, score, requirements, role sheet, f
   await expect(area).not.toBeChecked();
   await expect(page.getByText(/Passo successivo · Il passo dopo "Store Manager"/).first()).toBeVisible();
   await area.check();
-  await page.getByRole("button", { name: "Salva le posizioni" }).click();
+  await page.getByRole("button", { name: "Salva e cerca" }).click();
   await expect(page.getByText(/Posizioni salvate/)).toBeVisible();
   await expect(page.getByRole("checkbox", { name: /^Area manager/ })).toBeChecked();
   await page.goto("/profilo/codice");
   await expect(page.getByText(/area-manager/).first()).toBeVisible();
 
-  // Several careers and several countries at once.
-  await page.goto("/profilo/carriere");
-  await assertUiBasics(page);
+  // Several careers at once (Posizioni e carriere), with the positions of each career to add.
+  await page.goto("/profilo/posizioni");
+  await page.locator("summary", { hasText: /Le tue carriere/ }).click();
   await page.locator("label", { hasText: /^Consulenza strategica/ }).click();
-  await page.locator("label", { hasText: /^Regno Unito$/ }).click();
-  await page.getByLabel("Città in Regno Unito (facoltativa)").fill("London");
   await page.getByRole("button", { name: "Salva e cerca" }).click();
-  await expect(page.getByText(/ora cerco in tutte queste carriere/)).toBeVisible();
+  await expect(page.getByText(/Posizioni salvate/)).toBeVisible();
+  await expect(page.getByText("Aggiungi posizioni delle tue carriere")).toBeVisible();
+  await page.locator("label", { hasText: /^Consulente strategico$/ }).click();
+  await page.getByRole("button", { name: "Salva e cerca" }).click();
+  await expect(page.getByRole("checkbox", { name: "Consulente strategico", exact: true })).toBeChecked();
+  // Several countries, each with its city, on the map (Dove).
+  await page.goto("/profilo/dove");
+  await assertUiBasics(page);
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+  await page.getByRole("button", { name: "Regno Unito" }).click();
+  await page.getByLabel("Città in Regno Unito (facoltativa)").fill("Londo");
+  await page.getByRole("option", { name: /^London/ }).first().click();
+  await expect(page.locator(".leaflet-tooltip", { hasText: "London" })).toBeVisible();
+  await page.getByRole("button", { name: "Salva e cerca" }).click();
+  await expect(page.getByText(/cerco in questi posti/)).toBeVisible();
   await page.goto("/offerte");
   await expect(page.getByText(/Regno Unito \(London\)/)).toBeVisible();
   await expect(page.getByText(/Consulenza strategica/).first()).toBeVisible();
@@ -539,6 +551,10 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await page.getByRole("button", { name: "Fatto", exact: true }).first().click();
   await expect(page.getByRole("button", { name: "Fatto ✓" }).first()).toBeVisible();
   await expect(page.getByText("Consigli per avvisi davvero utili")).toBeVisible();
+  await expect(page.getByText("Scegli quelli che ti interessano di più")).toBeVisible();
+  await expect(page.getByText("consigliato").first()).toBeVisible();
+  await page.goto("/collega?passo=4");
+  await expect(page.getByText(/Ci vuole un po' di pazienza/)).toBeVisible();
 
   await page.goto("/offerte/salva");
   await assertUiBasics(page);

@@ -62,12 +62,16 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
   const platforms = platformsFor(countries, p.track, careers);
   const alerts = planAlerts(code.queries, levelFor(p.track, bg.person.years));
   const senders = platforms.flatMap((pl) => pl.senders);
+  // The first search of each country, on LinkedIn and Indeed: the alerts worth creating first.
+  const firstWhat = new Map<string, string>();
+  for (const a of alerts) if (!firstWhat.has(a.country)) firstWhat.set(a.country, a.what);
+  const recommended = new Set(alerts.filter((a) => firstWhat.get(a.country) === a.what && (a.site === "LinkedIn" || a.site === "Indeed")).map((a) => a.key));
   const now = new Date();
   const lastCheck = typeof checkRow?.value === "string" ? new Date(checkRow.value) : null;
   const checking = lastCheck != null && now.getTime() - lastCheck.getTime() < 45_000;
   const got = (key: string) => [...received.entries()].filter(([s]) => s.startsWith(`email:${key}`)).map(([, d]) => d).sort((a, b) => b.getTime() - a.getTime())[0];
   const emailDone = ownMailbox || state.emailDone || received.size > 0;
-  const stepDone = [emailDone, Boolean(state.accountsDone), alerts.length > 0 && alerts.every((a) => done.has(a.key)), received.size > 0];
+  const stepDone = [emailDone, Boolean(state.accountsDone), alerts.some((a) => done.has(a.key)) /* the ones they care about, not all */, received.size > 0];
   const firstOpen = stepDone.findIndex((d) => !d);
   const n = Math.min(4, Math.max(1, Number(sp.passo) || (firstOpen === -1 ? 4 : firstOpen + 1)));
   const provider = sp.email ?? state.email ?? null;
@@ -271,12 +275,17 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
             <Why>
               un avviso è una ricerca salvata: il sito ti scrive quando escono offerte nuove, e Compass le legge e le ordina per te. Ogni link apre la ricerca già impostata per te (posizione, città, livello, più recenti): tu devi solo salvarla come avviso.
             </Why>
+            <div className="mt-4">
+              <Notice tone="info" title="Scegli quelli che ti interessano di più">
+                Non serve crearli tutti. Parti dai due o tre che senti più tuoi (ti ho segnato i consigliati): avvisi pochi e precisi portano offerte migliori di tanti avvisi generici. Gli altri li aggiungi quando vuoi.
+              </Notice>
+            </div>
             <div className="mt-5 space-y-2">
               {alerts.map((a) => (
                 <div key={a.key} className="rounded-lg border border-line px-3.5 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[14px] font-medium">
-                      {a.site} · {a.what} · {a.where}
+                      {a.site} · {a.what} · {a.where} {recommended.has(a.key) && <Chip tone="accent">consigliato</Chip>}
                     </p>
                     <div className="flex gap-2">
                       <a href={a.url} target="_blank" rel="noopener noreferrer" className={ext}>
@@ -318,7 +327,12 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
         {n === 4 && (
           <>
             <h2 className="text-[18px] font-semibold">4. Verifica</h2>
-            <Why>qui vedi da quali siti stanno già arrivando gli avvisi. Il primo arriva di solito entro un giorno da quando crei l&apos;avviso.</Why>
+            <Why>qui vedi da quali siti stanno già arrivando gli avvisi.</Why>
+            <div className="mt-4">
+              <Notice tone="info" title="Ci vuole un po' di pazienza">
+                I siti mandano gli avvisi una volta al giorno, spesso al mattino: la prima e-mail può arrivare dopo qualche ora o anche dopo uno o due giorni da quando hai creato l&apos;avviso, e solo se nel frattempo esce un&apos;offerta nuova. Se dopo due giorni un sito è ancora &quot;in attesa&quot;, ricontrolla il filtro del passo 1.
+              </Notice>
+            </div>
             <ul className="mt-5 space-y-2.5 text-[14px]">
               {platforms.map((pl) => {
                 const d = got(pl.key);

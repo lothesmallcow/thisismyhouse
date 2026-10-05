@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.16.0 · 2026-10-05
+
+- **Dove** (Profilo): an interactive map with the main city and its radius, more countries each with
+  its city, click on the map to choose a town, city suggestions as you type, regions; it replaces the
+  countries part of "Carriere e paesi".
+- **Posizioni e carriere** (Profilo): "Cerchi ora" first, then the positions of each chosen career to
+  add with a tick (as in the questionnaire), the CV suggestions, every known position as a suggestion,
+  and the careers (several at once); up to six positions searched.
+- Collega le fonti: step 3 suggests starting from the two or three alerts that matter most (marked
+  "consigliato"); step 4 explains that the first alert can take hours or a day or two.
+- Subtle entrance animations (none with reduced motion).
+
 ## 0.15.2 · 2026-10-05
 
 - Collega le fonti is now a 4-step wizard, one step per screen: the e-mail first (why Compass needs

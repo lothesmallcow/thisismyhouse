@@ -55,9 +55,9 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
             {stage ? (
               <Row label="Studi" value={[p.degree, p.university, p.studyYear ? `${p.studyYear}° anno` : ""].filter(Boolean).join(" · ") || "Da compilare"} action={<Edit href={at("studi")} />} />
             ) : (
-              <Row label="Ruoli cercati" value={[...p.roles, ...p.synonyms].join(", ") || "Da compilare"} action={<Edit href={at("ruolo")} />} />
+              <Row label="Posizioni e carriere" value={p.roles.join(", ") || "Da compilare"} action={<Edit href="/profilo/posizioni" />} />
             )}
-            <Row label="Dove" value={p.city ? `${p.city}, ${p.maxKm} km${p.extraPlaces.length ? ` · ${p.extraPlaces.join(", ")}` : ""}${p.remoteOk ? " · anche da remoto" : ""}` : "Da compilare"} action={<Edit href={at("dove")} />} />
+            <Row label="Dove" value={p.city ? `${p.city}, ${p.maxKm} km${p.extraPlaces.length ? ` · ${p.extraPlaces.join(", ")}` : ""}${p.countries.length > 1 ? ` · ${p.countries.length} paesi` : ""}${p.remoteOk ? " · anche da remoto" : ""}` : "Da compilare"} action={<Edit href="/profilo/dove" />} />
             {stage ? (
               <Row label="Quando" value={[p.periods.join(", "), p.paidOnly ? "solo retribuiti" : ""].filter(Boolean).join(" · ") || "Da compilare"} action={<Edit href={at("quando")} />} />
             ) : (
@@ -95,8 +95,6 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
               { href: "/profilo/esperienze", label: "Esperienze", value: exps.length ? `${exps.length} nella tua timeline` : "Dal CV, da LinkedIn o a mano" },
               { href: "/percorsi", label: "Percorsi per te", value: "Settori e ruoli vicini al tuo profilo" },
               { href: "/collega", label: "Collega le fonti", value: "Account e avvisi di LinkedIn, Indeed e altri, inoltrati a Compass" },
-              { href: "/profilo/carriere", label: "Carriere e paesi", value: "Più carriere e più paesi insieme" },
-              { href: "/profilo/posizioni", label: "Posizioni cercate", value: p.roles.length ? p.roles.join(", ") : "Consigliate dal tuo CV" },
               { href: "/profilo/codice", label: "Codice di ricerca", value: "Le ricerche fatte per te e gli avvisi da creare" },
               { href: "/profilo/punteggio", label: "Punteggio", value: p.fitWeights ? "Pesi personalizzati" : "Valori di partenza" },
               { href: "/ruoli", label: "Ruoli e stipendi", value: "Cosa serve e quanto si guadagna, nella tua zona" },
