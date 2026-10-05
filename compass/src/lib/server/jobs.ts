@@ -3,9 +3,10 @@
 // A job is visible to someone if at least one of its sources is shared (userId null) or theirs.
 
 import { background } from "./person";
-import { and, desc, eq, gte, inArray, isNull, like, lte, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, like, ne, or, sql, type SQL } from "drizzle-orm";
 import { findDuplicate, dedupeKey, type DedupeCandidate } from "../core/dedupe";
-import { distanceKm } from "../core/geo";
+import { distanceKm, findPlace } from "../core/geo";
+import type { WherePlace } from "../core/where";
 import { normalizeJob, type RawJob } from "../core/normalize";
 import { rankJob, type Level, type RankAdjustment } from "../core/rank";
 import { MONTHS_PER_YEAR, netAnnualToGrossAnnual } from "../core/salary";
@@ -70,6 +71,7 @@ function computeFor(job: JobRow, ctx: RankContext, now: Date) {
       postedAt: job.postedAt ?? job.firstSeenAt,
       scamFlagCount: job.scamFlags.length,
       city: job.city,
+      country: job.country,
       jobType: job.jobType as never,
       eligibility: job.eligibility as never,
     },
@@ -187,6 +189,8 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
           province: existing.province ?? n.province,
           lat: existing.lat ?? n.lat,
           lng: existing.lng ?? n.lng,
+          country: existing.city ? existing.country : n.country,
+          region: existing.city ? existing.region : n.region,
           languages: n.languages,
           sector: existing.sector ?? n.sector,
           jobType: existing.jobType !== "unknown" ? existing.jobType : n.jobType,
@@ -238,6 +242,8 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
       province: n.province,
       lat: n.lat,
       lng: n.lng,
+      country: n.country,
+      region: n.region,
       description: n.description,
       salaryRaw: n.salary.raw || null,
       salaryMin: n.salary.minAnnualGross,
@@ -295,7 +301,12 @@ export async function dedupeCandidates(db: DB): Promise<DedupeCandidate[]> {
 
 export interface JobFilters {
   level?: Level | "tutte";
-  maxKm?: number;
+  /**
+   * Only jobs in these places (a city with its province, a region, a whole country). Jobs that do not say
+   * where they are stay visible; remote jobs only with `placesRemote`, and only in the chosen countries.
+   */
+  places?: WherePlace[];
+  placesRemote?: boolean;
   /** Minimum pay, net per month (converted to the annual gross used in ads). Unknown pay stays visible. */
   minNetMonthly?: number;
   hours?: "full" | "part";
@@ -325,7 +336,7 @@ export function filterWhere(userId: number, f: JobFilters, now = new Date()): SQ
   else where.push(ne(uj.status, "dismissed"));
   if (f.level && f.level !== "tutte") where.push(eq(uj.level, f.level));
   if (f.minFit) where.push(gte(uj.fit, f.minFit));
-  if (f.maxKm) where.push(or(lte(uj.distanceKm, f.maxKm), eq(j.remote, "remote"))!);
+  if (f.places?.length) where.push(placesWhere(f.places, !!f.placesRemote));
   if (f.minNetMonthly) {
     const gross = netAnnualToGrossAnnual(f.minNetMonthly * MONTHS_PER_YEAR);
     where.push(or(isNull(j.salaryMax), gte(j.salaryMax, gross))!);
@@ -349,6 +360,40 @@ export function filterWhere(userId: number, f: JobFilters, now = new Date()): SQ
 }
 
 /** The filters a person starts from, set by the questionnaire and changeable on "Offerte". */
+function placesWhere(places: WherePlace[], remote: boolean): SQL {
+  const j = schema.jobs;
+  const any: SQL[] = [isNull(j.city)];
+  for (const p of places) {
+    if (p.kind === "paese") any.push(eq(j.country, p.country));
+    else if (p.kind === "regione") any.push(and(eq(j.country, p.country), eq(j.region, p.name))!);
+    else {
+      const town = findPlace(p.name);
+      // An Italian city with its province ("Milano" = Milano, Sesto San Giovanni, Rho…).
+      any.push(town?.country === "IT" && town.province ? and(eq(j.country, "IT"), eq(j.province, town.province))! : and(eq(j.country, p.country), eq(j.city, town?.name ?? p.name))!);
+    }
+  }
+  if (remote) any.push(and(eq(j.remote, "remote"), inArray(j.country, [...new Set(places.map((p) => p.country))]))!);
+  return or(...any)!;
+}
+
+/** Fill in country and region for jobs saved before they were recorded (once, at migration time). */
+export async function backfillJobPlaces(db: DB): Promise<number> {
+  let done = 0;
+  for (;;) {
+    const rows = await db
+      .select({ id: schema.jobs.id, city: schema.jobs.city, province: schema.jobs.province })
+      .from(schema.jobs)
+      .where(and(isNull(schema.jobs.country), sql`${schema.jobs.city} is not null`))
+      .limit(500);
+    if (!rows.length) return done;
+    for (const r of rows) {
+      const place = findPlace(r.province ? `${r.city} (${r.province})` : r.city);
+      await db.update(schema.jobs).set({ country: place?.country ?? "", region: place?.region || null }).where(eq(schema.jobs.id, r.id));
+    }
+    done += rows.length;
+  }
+}
+
 export function defaultFilters(p: Profile): JobFilters {
   const f: JobFilters = {};
   if (p.focus === "preferite") f.focus = p.focusCompaniesOnly ? "aziende" : "preferite";
@@ -436,10 +481,7 @@ export async function dismissJob(db: DB, userId: number, id: number, reason: Dis
 
   let adj: { kind: "company" | "keyword" | "role" | "distance" | "salary"; value: string; label: string } | null = null;
   if (reason === "azienda" && job.company) adj = { kind: "company", value: job.company, label: `Evita l'azienda ${job.company}` };
-  if (reason === "lontano" && job.distanceKm != null) {
-    const cap = Math.max(3, Math.floor(job.distanceKm * 0.9));
-    adj = { kind: "distance", value: String(cap), label: `Distanza massima ridotta a ${cap} km` };
-  }
+  // "Too far": no distance to adjust any more (places are chosen in Profilo → Dove).
   if (reason === "paga" && job.salaryMax != null) {
     const floor = Math.round((job.salaryMax + 500) / 500) * 500;
     adj = { kind: "salary", value: String(floor), label: `Stipendio minimo alzato a ${floor.toLocaleString("it-IT")} € lordi l'anno` };

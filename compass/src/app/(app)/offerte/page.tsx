@@ -9,22 +9,27 @@ import type { Level } from "@/lib/core/rank";
 import { and, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
-import { defaultFilters, listJobs, PAGE_SIZE, type JobFilters } from "@/lib/server/jobs";
+import { defaultFilters, filterWhere, listJobs, PAGE_SIZE, type JobFilters } from "@/lib/server/jobs";
 import { getProfile } from "@/lib/server/profile";
 import { getSettings } from "@/lib/server/settings";
 import { saveDefaultFiltersAction, searchNowAction } from "../actions";
 import { SourcesCard } from "@/components/sources-card";
 import { CareersLine } from "@/components/careers-line";
+import { PlacesPicker } from "@/components/places-picker";
+import { parsePlaceValue, placesFromProfile, type WherePlace } from "@/lib/core/where";
 
 export const metadata = { title: "Offerte" };
 // "Cerca ora" runs a search after the reply: give it time.
 export const maxDuration = 60;
 
 const PLURAL: Record<Level, string> = { molto: "Molto adatte", adatta: "Adatte", poco: "Poco adatte" };
-const FILTER_KEYS = ["km", "netto", "orario", "contratto", "settore", "casa", "giorni", "q", "tipo", "vista", "punteggio", "ordina"] as const;
+const FILTER_KEYS = ["netto", "orario", "contratto", "settore", "casa", "giorni", "q", "tipo", "vista", "punteggio", "ordina"] as const;
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+const all = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []);
+/** Every query value, repeated keys included ("luogo" can appear many times). */
+const pairs = (sp: SP, skip: string[]) => Object.entries(sp).flatMap(([k, v]) => (skip.includes(k) ? [] : all(v).filter(Boolean).map((x) => [k, x] as [string, string])));
 
 export default async function OffertePage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
@@ -38,9 +43,18 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
   const touched = FILTER_KEYS.some((k) => one(sp[k])) || one(sp.tutte) === "1";
   const defaults = touched ? {} : defaultFilters(profile);
   const vista = one(sp.vista) || (defaults.focus ?? "tutte");
+  // Places: the profile's until the person picks others here ("luogo" present, "-" = every place).
+  const mine = placesFromProfile(profile);
+  const picked = sp.luogo !== undefined;
+  const places = picked ? all(sp.luogo).map(parsePlaceValue).filter((x): x is WherePlace => x != null) : mine;
+  const placesRemote = picked ? all(sp.luogo).includes("remoto") : profile.remoteOk;
+  const placesKey = (list: WherePlace[], remote: boolean) => [...list.map((p) => `${p.kind}|${p.country}|${p.name}`).sort(), remote ? "remoto" : ""].join(",");
+  // Applying the filters with the profile's places unchanged is not a change.
+  const placesChanged = picked && placesKey(places, placesRemote) !== placesKey(mine, profile.remoteOk);
   const filters: JobFilters = {
     ...defaults,
-    maxKm: Number(one(sp.km)) || undefined,
+    places,
+    placesRemote,
     minNetMonthly: Number(one(sp.netto)) || defaults.minNetMonthly,
     hours: (one(sp.orario) as "full" | "part") || undefined,
     contract: one(sp.contratto) || undefined,
@@ -56,14 +70,16 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
   };
   const limit = Math.min(200, Math.max(PAGE_SIZE, Number(one(sp.n)) || PAGE_SIZE));
   const { jobs, total } = await listJobs(db, user.id, filters, limit);
-  const active = (["maxKm", "minNetMonthly", "hours", "contract", "sector", "remote", "days", "type", "minFit", "sort"] as const).filter((k) => filters[k] !== undefined).length;
+  const active = (placesChanged ? 1 : 0) + (["minNetMonthly", "hours", "contract", "sector", "remote", "days", "type", "minFit", "sort"] as const).filter((k) => filters[k] !== undefined).length;
   const [{ n: newCount }] = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.userJobs)
-    .where(and(eq(schema.userJobs.userId, user.id), eq(schema.userJobs.status, "new")));
+    .innerJoin(schema.jobs, eq(schema.jobs.id, schema.userJobs.jobId))
+    // The new ones in the places shown (the profile's, or the ones picked here).
+    .where(and(filterWhere(user.id, { places, placesRemote }), eq(schema.userJobs.status, "new")));
 
   const keep = (extra: Record<string, string>) => {
-    const p = new URLSearchParams(Object.entries(sp).flatMap(([k, v]) => (v && k !== "msg" && k !== "n" ? [[k, one(v)]] : [])));
+    const p = new URLSearchParams(pairs(sp, ["msg", "n"]));
     for (const [k, v] of Object.entries(extra)) {
       if (v) p.set(k, v);
       else p.delete(k);
@@ -134,7 +150,9 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
             Cerca per ruolo o azienda
           </label>
           <input id="q" name="q" type="search" defaultValue={filters.q} placeholder="Ruolo o azienda" className="!pl-9" />
-          {Object.entries(sp).map(([k, v]) => (v && !["q", "msg", "n"].includes(k) ? <input key={k} type="hidden" name={k} value={one(v)} /> : null))}
+          {pairs(sp, ["q", "msg", "n"]).map(([k, v]) => (
+            <input key={`${k}=${v}`} type="hidden" name={k} value={v} />
+          ))}
         </form>
       </div>
 
@@ -143,11 +161,12 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
           <Link href="/offerte?tutte=1">Azzera filtri e vista</Link>
         </p>
       )}
-      <details className="mb-6 rounded-[var(--radius-card)] border border-line bg-surface" open={active > 0 && touched}>
+      <details className="mb-6 rounded-[var(--radius-card)] border border-line bg-surface" open={(active > 0 && touched) || placesChanged}>
         <summary className="flex h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 text-[14px]">
           <span className="inline-flex items-center gap-2 font-medium">
             <IconSliders size={16} /> Filtri{active ? ` · ${active} ${active === 1 ? "attivo" : "attivi"}` : ""}
             {!touched && (defaults.minNetMonthly || defaults.focus) ? <span className="font-normal text-faint">(i tuoi predefiniti)</span> : null}
+            <span className="hidden font-normal text-faint sm:inline">· {places.length ? places.map((p) => p.name).join(", ") : "tutti i luoghi"}{placesRemote && places.length ? " e da remoto" : ""}</span>
           </span>
           <span aria-hidden="true" className="text-faint">▾</span>
         </summary>
@@ -158,17 +177,26 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
             <span className="block text-[13px] font-medium">{isStage ? "Rimborso minimo al mese (netto)" : "Stipendio minimo al mese (netto)"}</span>
             <input name="netto" type="text" inputMode="numeric" placeholder="Es. 1300" defaultValue={filters.minNetMonthly ?? ""} />
           </label>
-          <label className="space-y-1.5">
-            <span className="block text-[13px] font-medium">Distanza</span>
-            <select name="km" defaultValue={one(sp.km)}>
-              <option value="">Qualsiasi (profilo: {profile.maxKm} km)</option>
-              {[5, 10, 15, 20, 30, 50].map((k) => (
-                <option key={k} value={k}>
-                  Fino a {k} km
-                </option>
-              ))}
-            </select>
-          </label>
+          <fieldset className="space-y-2 sm:col-span-2 lg:col-span-4">
+            <legend className="mb-1.5 text-[13px] font-medium">Luoghi</legend>
+            <input type="hidden" name="luogo" value="-" />
+            <PlacesPicker
+              key={places.map((p) => `${p.kind}|${p.country}|${p.name}`).join(",")}
+              initial={places}
+              name="luogo"
+              empty="Tutti i luoghi: nessun filtro sul posto."
+              hint="Partono dai luoghi del tuo profilo: cambiali qui per provare, il profilo resta com'è. Una città comprende la sua provincia. Le offerte che non dicono dove sono restano visibili."
+            />
+            <label className="flex min-h-11 items-center gap-2.5 text-[14px]">
+              <input type="checkbox" name="luogo" value="remoto" defaultChecked={placesRemote} />
+              Anche da remoto (nei paesi scelti)
+            </label>
+            {placesChanged && (
+              <p className="text-[13px]">
+                <Link href={keep({ luogo: "" })}>Torna ai luoghi del profilo</Link> · <Link href="/profilo/dove">Cambia i luoghi del profilo</Link>
+              </p>
+            )}
+          </fieldset>
           <label className="space-y-1.5">
             <span className="block text-[13px] font-medium">Tipo</span>
             <select name="tipo" defaultValue={one(sp.tipo)}>

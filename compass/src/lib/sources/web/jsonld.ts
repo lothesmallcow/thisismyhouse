@@ -59,6 +59,14 @@ function salary(base: unknown): { text: string | null; min?: number; max?: numbe
   return { text: `${f(min)}${max !== min ? ` - ${f(max)}` : ""} € ${unitIt}`, min: unit === "YEAR" ? min : undefined, max: unit === "YEAR" ? max : undefined };
 }
 
+/** The country as a word the place lookup understands ("US" → "USA"), so "New York, USA" is not York in England. */
+const COUNTRY_WORD: Record<string, string> = { IT: "Italia", GB: "UK", UK: "UK", DE: "Germany", FR: "France", US: "USA", ES: "Spain", NL: "Netherlands", IE: "Ireland", CH: "Switzerland", BE: "Belgium", LU: "Luxembourg" };
+function countryWord(v: unknown): string | null {
+  const raw = typeof v === "string" ? v : v && typeof v === "object" ? (str((v as Json).name) ?? null) : null;
+  if (!raw?.trim()) return null;
+  return COUNTRY_WORD[raw.trim().toUpperCase()] ?? raw.trim();
+}
+
 export function jobPostingToRaw(o: Json, pageUrl: string): RawJob | null {
   const title = str(o.title) ?? str(o.name);
   if (!title) return null;
@@ -75,7 +83,7 @@ export function jobPostingToRaw(o: Json, pageUrl: string): RawJob | null {
     externalId: str((asArray<Json>(o.identifier as Json)[0] ?? {}).value) ?? null,
     title,
     company: str(org?.name) ?? (typeof o.hiringOrganization === "string" ? (o.hiringOrganization as string) : null),
-    location: [locality, str(addr.addressCountry) === "IT" ? "Italia" : null].filter(Boolean).join(", ") || null,
+    location: [locality, countryWord(addr.addressCountry)].filter(Boolean).join(", ") || null,
     description: htmlToText(str(o.description) ?? ""),
     salaryText: sal.text,
     postedAt: str(o.datePosted) ? new Date(str(o.datePosted)!) : null,

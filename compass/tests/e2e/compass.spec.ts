@@ -57,6 +57,17 @@ test("Offerte (job search): ranked list with reasons, focus switch, search, filt
   await page.getByRole("button", { name: "Applica" }).click();
   await expect(page.getByText(/1 attivo/)).toBeVisible();
 
+  // filters: places start from the profile's; trying another one leaves the profile as it is
+  await page.goto("/offerte");
+  await page.getByText("Filtri").click();
+  await expect(page.getByRole("group", { name: "Luoghi" })).toBeVisible();
+  await expect(page.getByText("Distanza")).toHaveCount(0);
+  await addPlace(page, "Regno", /Regno Unito · tutto il paese/);
+  await page.getByRole("button", { name: "Applica" }).click();
+  await expect(page.getByRole("link", { name: "Torna ai luoghi del profilo" })).toBeVisible();
+  await page.getByRole("link", { name: "Torna ai luoghi del profilo" }).click();
+  await expect(page.getByRole("link", { name: "Torna ai luoghi del profilo" })).toHaveCount(0);
+
   await page.goto("/offerte");
   await cards.first().getByRole("link").first().click();
   await expect(page.getByText(/Perché è (molto )?adatta/)).toBeVisible();

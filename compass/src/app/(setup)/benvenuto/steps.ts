@@ -49,7 +49,7 @@ export const HELP: Record<StepId, (t: Track) => string> = {
   nome: () => "Servono per le candidature: li vedono solo le aziende a cui scrivi.",
   ruolo: () => "Il nome del ruolo come lo scriveresti in un annuncio. Fino a tre.",
   studi: () => "Serve a capire a quali stage puoi accedere: molti chiedono un anno di corso preciso.",
-  dove: (t) => (t === "stage" ? "La tua città, la distanza massima e altre città che ti interessano (anche all'estero)." : "La tua città e quanto lontano puoi spostarti."),
+  dove: () => "Le città, le regioni o i paesi dove vuoi lavorare, anche all'estero.",
   quando: () => "I periodi in cui puoi fare uno stage.",
   contratto: () => "Se va bene tutto, lascia com'è.",
   paga: (t) => (t === "stage" ? "Netto al mese. Facoltativo: molti stage indicano solo un rimborso spese." : "Netto al mese, quello che arriva sul conto. Le offerte sotto finiscono più in basso, o spariscono se scegli di nasconderle."),

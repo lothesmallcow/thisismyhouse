@@ -115,3 +115,18 @@ describe("several careers and several countries at once", () => {
     expect(names).toEqual(expect.arrayContaining(["McKinsey & Company", "Boston Consulting Group", "Bain & Company"]));
   });
 });
+
+describe("career pages of global firms list offers worldwide", () => {
+  it("only offers in the person's countries are kept, plus those that do not say where", async () => {
+    const { keepInCountries } = await import("@/lib/sources/ats");
+    const { extractJobsFromHtml } = await import("@/lib/sources/web/jsonld");
+    const posting = (city: string, country: string) =>
+      `<script type="application/ld+json">${JSON.stringify({ "@type": "JobPosting", title: `Analyst ${city}`, hiringOrganization: { name: "Bank" }, jobLocation: { address: { addressLocality: city, addressCountry: country } }, description: "x" })}</script>`;
+    const jobs = extractJobsFromHtml(posting("New York", "US") + posting("Milano", "IT") + posting("London", "GB"), "https://example.com/careers");
+    expect(jobs.map((j) => j.location)).toEqual(["New York, USA", "Milano, Italia", "London, UK"]);
+    const kept = jobs.filter(keepInCountries(["IT"]));
+    expect(kept.map((j) => j.title)).toEqual(["Analyst Milano"]);
+    expect(jobs.filter(keepInCountries(["IT", "GB"])).map((j) => j.title)).toEqual(["Analyst Milano", "Analyst London"]);
+    expect([{ source: "w2", title: "Analyst", location: null } as never].filter(keepInCountries(["IT"]))).toHaveLength(1);
+  });
+});

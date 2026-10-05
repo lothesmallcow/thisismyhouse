@@ -92,6 +92,8 @@ export interface RankJob {
   postedAt: Date | null;
   scamFlagCount: number;
   city: string | null;
+  /** Country code when known; "" = a place outside the countries we cover (New York, Madrid…). */
+  country?: string | null;
   jobType: JobType;
   eligibility: Eligibility[];
 }
@@ -169,6 +171,8 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
   const kmTooFar = job.distanceKm != null && Math.round(job.distanceKm) > kmCap;
   if (jobPlace && profile.countries.length > 0 && !profile.countries.includes(jobPlace.country) && job.remote !== "remote" && !extraPlace) {
     f.push({ key: "country", points: W.outsideCountries, reason: `In ${countryName(jobPlace.country)}, fuori dai paesi che hai scelto` });
+  } else if (!jobPlace && job.city && job.country === "" && profile.countries.length > 0 && job.remote !== "remote" && !extraPlace) {
+    f.push({ key: "country", points: W.outsideCountries, reason: `A ${job.city}, fuori dai paesi che hai scelto` });
   }
   if (job.remote === "remote" && profile.remoteOk) f.push({ key: "distance", points: W.remoteAccepted, reason: "Da remoto" });
   else if (inRegion && kmTooFar && !extraPlace) f.push({ key: "distance", points: W.regionMatch, reason: `A ${job.city}, in ${inRegion}: una regione che hai scelto` });

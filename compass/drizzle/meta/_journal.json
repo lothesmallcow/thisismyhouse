@@ -92,6 +92,13 @@
       "when": 1791199692447,
       "tag": "0012_alert_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1791206882360,
+      "tag": "0013_job_places",
+      "breakpoints": true
     }
   ]
 }
