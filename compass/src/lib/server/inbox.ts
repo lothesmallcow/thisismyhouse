@@ -60,6 +60,27 @@ export async function alertsReceived(db: DB, userId: number): Promise<Map<string
   return new Map(rows.map((r) => [r.source, new Date(Number(r.last))]));
 }
 
+export interface CollegaState {
+  email?: "gmail" | "outlook" | "altro";
+  emailDone?: boolean;
+  accountsDone?: boolean;
+}
+
+/** Where someone is in Collega le fonti (their e-mail provider, the steps they finished). */
+export async function collegaState(db: DB, userId: number): Promise<CollegaState> {
+  const row = await db.query.settings.findFirst({ where: eq(schema.settings.key, `collega_${userId}`) });
+  try {
+    return typeof row?.value === "string" ? (JSON.parse(row.value) as CollegaState) : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveCollegaState(db: DB, userId: number, s: CollegaState): Promise<void> {
+  const v = JSON.stringify(s);
+  await db.insert(schema.settings).values({ key: `collega_${userId}`, value: v }).onConflictDoUpdate({ target: schema.settings.key, set: { value: v } });
+}
+
 /** The alerts a person marked as created ("Fatto" on Collega le fonti). */
 export async function alertsDone(db: DB, userId: number): Promise<Set<string>> {
   const row = await db.query.settings.findFirst({ where: eq(schema.settings.key, `alerts_done_${userId}`) });

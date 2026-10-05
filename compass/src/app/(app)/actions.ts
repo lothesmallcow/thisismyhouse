@@ -37,7 +37,7 @@ import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences
 import { getProfile, updateProfile } from "@/lib/server/profile";
 import { after } from "next/server";
 import { checkInboxNow, quickSearchFor } from "@/lib/pipeline/jobs";
-import { alertsDone } from "@/lib/server/inbox";
+import { alertsDone, collegaState, saveCollegaState } from "@/lib/server/inbox";
 import { lastQuickSearch, QUICK_SEARCH_EVERY_MIN } from "@/lib/pipeline/quick-search";
 import { updateUserSettings } from "@/lib/server/settings";
 import { confirmReply, dismissReply } from "@/lib/server/replies";
@@ -439,14 +439,28 @@ export async function toggleAlertDoneAction(f: FormData) {
   const v = JSON.stringify([...set].slice(-200));
   await db.insert(schema.settings).values({ key: `alerts_done_${u.id}`, value: v }).onConflictDoUpdate({ target: schema.settings.key, set: { value: v } });
   revalidatePath("/collega");
-  redirect("/collega");
+  redirect("/collega?passo=3");
+}
+
+/** "Avanti" on Collega le fonti: the step is done, on to the next. */
+export async function collegaStepAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const n = Number(str(f, "passo")) || 1;
+  const email = str(f, "email");
+  const s = await collegaState(db, u.id);
+  if (n === 1) Object.assign(s, { emailDone: true, ...(email === "gmail" || email === "outlook" || email === "altro" ? { email } : {}) });
+  if (n === 2) s.accountsDone = true;
+  await saveCollegaState(db, u.id, s);
+  revalidatePath("/collega");
+  redirect(`/collega?passo=${Math.min(4, n + 1)}`);
 }
 
 /** "Controlla ora": read the Compass mailbox now (forwarding code, first alerts), in the background. */
-export async function checkInboxNowAction() {
+export async function checkInboxNowAction(f?: FormData) {
   await requireUser();
   after(() => checkInboxNow(getDb()));
-  done("/collega", "controllo-avviato");
+  done(f ? safeBack(f, "/collega") : "/collega", "controllo-avviato");
 }
 
 /** "Carriere e paesi": several careers (liked sectors) and several countries (each with an optional city). */
