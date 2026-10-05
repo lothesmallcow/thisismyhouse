@@ -15,8 +15,8 @@ export async function CareersLine({ userId }: { userId: number }) {
   });
   return (
     <p className="mb-4 text-[13px] text-muted">
-      <span className="text-ink">Carriere:</span> {careers.length ? careers.join(", ") : "nessuna scelta"} · <span className="text-ink">Paesi:</span> {places.join(", ")} ·{" "}
-      <Link href="/profilo/carriere">Cambia</Link>
+      <span className="text-ink">Carriere:</span> {careers.length ? careers.join(", ") : "nessuna scelta"} (<Link href="/profilo/posizioni">cambia</Link>) · <span className="text-ink">Dove:</span> {places.join(", ")} (
+      <Link href="/profilo/dove">cambia</Link>)
     </p>
   );
 }

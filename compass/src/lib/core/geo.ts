@@ -248,3 +248,19 @@ export function homeCountries(countries: string[], city?: string | null): Countr
   if (valid.length) return valid;
   return [(city ? findPlace(city)?.country : null) ?? "IT"];
 }
+
+/** The known town closest to a point (a click on the map), in these countries. */
+export function nearestPlace(lat: number, lng: number, countries: CountryCode[] = ["IT", "GB", "DE", "FR"]): Place | null {
+  let best: Place | null = null;
+  let bestKm = Infinity;
+  const consider = (p: Place) => {
+    const d = distanceKm({ lat, lng }, p);
+    if (d < bestKm) {
+      best = p;
+      bestKm = d;
+    }
+  };
+  if (countries.includes("IT")) for (const list of getIndex().values()) for (const p of list) consider(p);
+  if (countries.some((c) => c !== "IT")) for (const list of getForeign().values()) for (const p of list) if (countries.includes(p.country)) consider(p);
+  return bestKm <= 60 ? best : null;
+}

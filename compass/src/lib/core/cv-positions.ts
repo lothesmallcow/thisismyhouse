@@ -27,7 +27,7 @@ export interface CvPosition {
 
 const MAX = 8;
 /** How many roles are searched at most (the first ticked). */
-export const MAX_ROLES = 5;
+export const MAX_ROLES = 6;
 /** Studies are never a position to search, whatever section they end up in. */
 const STUDY = /\b(laurea|diploma|universit|degree|bachelor|master|liceo|scuola|corso di|dottorato|phd)/i;
 /** "Studente" is what someone is, not a position. */

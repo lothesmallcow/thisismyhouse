@@ -463,6 +463,21 @@ export async function checkInboxNowAction(f?: FormData) {
   done(f ? safeBack(f, "/collega") : "/collega", "controllo-avviato");
 }
 
+/** "Dove": main city and radius, countries (each with an optional city), regions. */
+export async function saveWhereAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const city = str(f, "city").trim().slice(0, 80);
+  const km = Math.min(100, Math.max(2, Number(str(f, "km")) || 20));
+  const countries = COUNTRIES.map((c) => c.code).filter((cc) => f.getAll("country").map(String).includes(cc));
+  const extraPlaces = str(f, "places").split(",").map((x) => x.trim()).filter(Boolean).slice(0, 6);
+  const regions = f.getAll("region").map(String).filter((r) => /^(IT|GB|DE|FR):/.test(r)).slice(0, 60);
+  await updateProfile(db, u.id, { ...(city ? { city } : {}), maxKm: km, countries: countries.length ? countries : [findPlace(city)?.country ?? "IT"], extraPlaces, regions });
+  await rerankUser(db, u.id);
+  after(() => quickSearchFor(getDb(), u.id));
+  done("/profilo/dove", "dove-salvato");
+}
+
 /** "Carriere e paesi": several careers (liked sectors) and several countries (each with an optional city). */
 export async function saveCareersAction(f: FormData) {
   const u = await requireUser();
@@ -505,8 +520,19 @@ export async function saveRolesAction(f: FormData) {
   const picked = [...f.getAll("role").map(String), str(f, "extraRole")].map((r) => r.replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean);
   const roles = [...new Map(picked.map((r) => [r.toLowerCase(), r])).values()].slice(0, MAX_ROLES);
   await updateProfile(db, u.id, { roles });
+  // Posizioni cercate also holds the careers: the ticked ones are liked, the unticked ones not any more.
+  const shown = f.getAll("shown").map(Number).filter(Boolean);
+  if (shown.length) {
+    const picked = new Set(f.getAll("sector").map(Number));
+    const prefs = await getPrefs(db, u.id);
+    for (const id of shown) {
+      if (picked.has(id)) await setPref(db, u.id, "sector", id, "like");
+      else if (prefs.sectors.get(id) === "like") await setPref(db, u.id, "sector", id, null);
+    }
+  }
   await rerankUser(db, u.id);
   revalidatePath("/", "layout");
+  after(() => quickSearchFor(getDb(), u.id));
   done(safeBack(f, "/profilo/posizioni"), roles.length ? "posizioni-salvate" : "posizioni-vuote");
 }
 
