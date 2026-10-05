@@ -515,20 +515,30 @@ test("quick questionnaire for a new account: 5 questions, a generic role becomes
 
 test("collega le fonti: personal address, the right sites and alerts, and the Salva in Compass button", async ({ page }) => {
   await loginAsStudent(page);
-  await page.goto("/collega");
+  // Step 1: the e-mail first, with the reason, and only the instructions of the chosen provider.
+  await page.goto("/collega?passo=1");
   await assertUiBasics(page);
+  await expect(page.getByText(/Compass trova le offerte leggendo proprio quelle e-mail/)).toBeVisible();
+  await page.getByRole("link", { name: "Gmail", exact: true }).click();
   await expect(page.getByText(/compass\.demo\+cmp-[a-z0-9]{6}@example\.com/).first()).toBeVisible();
-  await expect(page.getByText("LinkedIn", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: /Crea l'account/ }).first()).toHaveAttribute("href", /linkedin\.com\/signup/);
-  const open = page.getByRole("link", { name: /^Apri/ }).first();
-  await expect(open).toHaveAttribute("href", /f_E=1/);
-  await page.getByRole("button", { name: "Fatto", exact: true }).first().click();
-  await expect(page.getByRole("button", { name: "Fatto ✓" }).first()).toBeVisible();
-  await expect(page.getByText(/from:\(jobalerts-noreply@linkedin\.com/).first()).toBeVisible();
-  await expect(page.getByText("Consigli per avvisi davvero utili")).toBeVisible();
+  await expect(page.getByText(/Lascia selezionato/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Scarica il filtro" })).toHaveAttribute("href", "/api/gmail-filter");
+  await expect(page.getByText(/Reindirizza a/)).toHaveCount(0); // not Outlook's steps
   const xml = await page.request.get("/api/gmail-filter");
   expect(xml.status()).toBe(200);
   expect(await xml.text()).toMatch(/forwardTo' value='compass\.demo\+cmp-/);
+  await page.getByRole("button", { name: "Ho finito, avanti" }).click();
+  // Step 2: accounts.
+  await expect(page).toHaveURL(/passo=2/);
+  await expect(page.getByRole("link", { name: /Crea l'account/ }).first()).toHaveAttribute("href", /linkedin\.com\/signup/);
+  await page.getByRole("button", { name: "Avanti" }).click();
+  // Step 3: the alerts, pre-filtered.
+  await expect(page).toHaveURL(/passo=3/);
+  await assertUiBasics(page);
+  await expect(page.getByRole("link", { name: /^Apri/ }).first()).toHaveAttribute("href", /f_E=1/);
+  await page.getByRole("button", { name: "Fatto", exact: true }).first().click();
+  await expect(page.getByRole("button", { name: "Fatto ✓" }).first()).toBeVisible();
+  await expect(page.getByText("Consigli per avvisi davvero utili")).toBeVisible();
 
   await page.goto("/offerte/salva");
   await assertUiBasics(page);

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.15.2 · 2026-10-05
+
+- Collega le fonti is now a 4-step wizard, one step per screen: the e-mail first (why Compass needs
+  the alert e-mails), with only the chosen provider's steps (Gmail, Outlook or other); then the
+  accounts, the alerts and the check. Progress is remembered; Gmail's "Disattiva inoltro" is called out
+  so only the alerts are forwarded.
+
 ## 0.15.1 · 2026-10-05
 
 - Collega le fonti: the Gmail forwarding filter as a file to import in one click; steps for iCloud,

@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { CopyButton } from "@/components/copy-button";
 import { Flash } from "@/components/flash";
 import { IconCheck, IconExternal } from "@/components/icons";
-import { Button, Card, Chip, Notice, PageHeader } from "@/components/ui";
+import { Button, Card, Chip, LinkButton, Notice } from "@/components/ui";
 import { HOW_TO, levelFor, planAlerts } from "@/lib/core/alert-plan";
 import { countryName, homeCountries } from "@/lib/core/geo";
 import { gmailFilter, platformsFor } from "@/lib/core/platforms";
@@ -12,30 +13,36 @@ import { getDb, schema } from "@/lib/db";
 import { searchCodeFor } from "@/lib/pipeline/search-terms";
 import { requireUser } from "@/lib/server/auth";
 import { getPrefs, listSectors } from "@/lib/server/catalog";
-import { alertsDone, alertsReceived, baseMailbox, forwardingConfirmationFor, personalInbox } from "@/lib/server/inbox";
+import { alertsDone, alertsReceived, baseMailbox, collegaState, forwardingConfirmationFor, personalInbox } from "@/lib/server/inbox";
 import { background } from "@/lib/server/person";
 import { getProfile } from "@/lib/server/profile";
-import { checkInboxNowAction, toggleAlertDoneAction } from "../actions";
+import { checkInboxNowAction, collegaStepAction, toggleAlertDoneAction } from "../actions";
 
 export const metadata = { title: "Collega le fonti" };
 export const maxDuration = 60;
 
-const step = (n: number, title: string, done = false) => (
-  <h2 className="flex items-center gap-2.5 text-[16px] font-semibold">
-    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] ${done ? "bg-good-soft text-good" : "bg-subtle text-ink"}`}>{done ? <IconCheck size={15} /> : n}</span>
-    {title}
-  </h2>
+const STEPS = ["La tua e-mail", "Gli account", "Gli avvisi", "Verifica"];
+const ext = "inline-flex h-9 items-center gap-1.5 rounded-lg border border-line-strong px-3.5 text-[13.5px] font-medium text-ink no-underline hover:bg-subtle";
+const Why = ({ children }: { children: React.ReactNode }) => (
+  <div className="mt-3 rounded-lg bg-subtle px-4 py-3 text-[14px] text-muted">
+    <span className="font-semibold text-ink">Perché: </span>
+    {children}
+  </div>
+);
+const Sub = ({ n, children }: { n: number; children: React.ReactNode }) => (
+  <li className="flex gap-3">
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[12.5px] font-semibold text-accent">{n}</span>
+    <div className="min-w-0 flex-1 space-y-2 text-[14px]">{children}</div>
+  </li>
 );
 
-const ext = "inline-flex h-8 items-center gap-1.5 rounded-lg border border-line-strong px-3 text-[13px] font-medium text-ink no-underline hover:bg-subtle";
-
-/** Guided setup: accounts on the right job sites, the right alerts, and the alerts forwarded to Compass. */
-export default async function CollegaPage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
+/** Guided setup, one step per screen: e-mail first (why it matters), then accounts, alerts, check. */
+export default async function CollegaPage({ searchParams }: { searchParams: Promise<{ msg?: string; passo?: string; email?: string }> }) {
   const sp = await searchParams;
   const user = await requireUser();
   const db = getDb();
   const p = await getProfile(db, user.id);
-  const [address, code, done, received, sectors, prefs, bg, fwd, u, checkRow] = await Promise.all([
+  const [address, code, done, received, sectors, prefs, bg, fwd, u, checkRow, state] = await Promise.all([
     personalInbox(db, user.id),
     searchCodeFor(db, user.id),
     alertsDone(db, user.id),
@@ -46,223 +53,298 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
     forwardingConfirmationFor(db, user.id),
     db.query.users.findFirst({ where: eq(schema.users.id, user.id) }),
     db.query.settings.findFirst({ where: eq(schema.settings.key, "inbox_check_at") }),
+    collegaState(db, user.id),
   ]);
   const base = baseMailbox();
-  // Their sign-in address is the mailbox Compass reads: their alerts arrive there already.
   const ownMailbox = Boolean(base && u?.email.toLowerCase() === base.toLowerCase());
   const countries = homeCountries(p.countries, p.city);
   const careers = sectors.filter((s) => prefs.sectors.get(s.id) === "like").map((s) => s.slug);
   const platforms = platformsFor(countries, p.track, careers);
   const alerts = planAlerts(code.queries, levelFor(p.track, bg.person.years));
-  const filter = gmailFilter(platforms);
+  const senders = platforms.flatMap((pl) => pl.senders);
   const now = new Date();
   const lastCheck = typeof checkRow?.value === "string" ? new Date(checkRow.value) : null;
   const checking = lastCheck != null && now.getTime() - lastCheck.getTime() < 45_000;
   const got = (key: string) => [...received.entries()].filter(([s]) => s.startsWith(`email:${key}`)).map(([, d]) => d).sort((a, b) => b.getTime() - a.getTime())[0];
-  const anyReceived = received.size > 0;
+  const emailDone = ownMailbox || state.emailDone || received.size > 0;
+  const stepDone = [emailDone, Boolean(state.accountsDone), alerts.length > 0 && alerts.every((a) => done.has(a.key)), received.size > 0];
+  const firstOpen = stepDone.findIndex((d) => !d);
+  const n = Math.min(4, Math.max(1, Number(sp.passo) || (firstOpen === -1 ? 4 : firstOpen + 1)));
+  const provider = sp.email ?? state.email ?? null;
+
+  const next = (label = "Avanti") => (
+    <form action={collegaStepAction} className="mt-6">
+      <input type="hidden" name="passo" value={n} />
+      {provider && <input type="hidden" name="email" value={provider} />}
+      <Button>{label}</Button>
+    </form>
+  );
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-2xl">
       <Flash code={sp.msg} />
       {checking && <AutoRefresh everyMs={5000} times={9} />}
-      <PageHeader
-        title="Collega le fonti"
-        description="Gli avvisi di LinkedIn, Indeed e degli altri siti sono la fonte migliore di offerte: arrivano ogni giorno, già filtrati. Qui li imposti nel modo giusto e li fai arrivare a Compass, in cinque passi. Nessuna password da dare: Compass legge solo gli avvisi che gli inoltri."
-      />
+      <h1 className="text-[24px] font-semibold">Collega le fonti</h1>
+      <p className="mt-1 text-[14px] text-muted">Quattro passi, circa dieci minuti, da fare una volta sola. Dopo, le offerte arrivano da sole ogni giorno.</p>
 
-      {!base && <Notice tone="warn">La casella e-mail di Compass non è ancora configurata: chiedi all&apos;amministratore (MAILBOX_USER).</Notice>}
+      <nav aria-label="Passi" className="mt-5 grid grid-cols-4 gap-1.5">
+        {STEPS.map((label, i) => (
+          <Link key={label} href={`/collega?passo=${i + 1}`} aria-current={n === i + 1 ? "step" : undefined} className="no-underline">
+            <span className={`block h-1.5 rounded-full ${stepDone[i] ? "bg-good" : n === i + 1 ? "bg-accent" : "bg-subtle"}`} />
+            <span className={`mt-1.5 flex items-center gap-1 text-[12.5px] ${n === i + 1 ? "font-semibold text-ink" : "text-muted"}`}>
+              {stepDone[i] && <IconCheck size={13} className="text-good" />} {i + 1}. {label}
+            </span>
+          </Link>
+        ))}
+      </nav>
 
-      <div className="space-y-4">
-        <Card>
-          {step(1, "Il tuo indirizzo Compass", Boolean(address))}
-          {ownMailbox ? (
-            <p className="mt-2 text-[14px] text-muted">Il tuo indirizzo di accesso è la casella che Compass legge: gli avvisi che arrivano lì sono già tuoi. Puoi saltare il passo 4.</p>
-          ) : address ? (
-            <>
-              <p className="mt-2 text-[14px] text-muted">È il tuo indirizzo personale per gli avvisi: quello che ci arriva lo vedi solo tu.</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <code className="break-all rounded-lg bg-subtle px-3 py-2 text-[14px]">{address}</code>
-                <CopyButton text={address} size="sm" />
+      {!base && (
+        <div className="mt-5">
+          <Notice tone="warn">La casella e-mail di Compass non è ancora configurata: chiedi all&apos;amministratore.</Notice>
+        </div>
+      )}
+
+      <Card className="mt-5">
+        {n === 1 && (
+          <>
+            <h2 className="text-[18px] font-semibold">1. Collega la tua e-mail</h2>
+            <Why>
+              LinkedIn, Indeed e gli altri siti mandano le offerte nuove per e-mail: si chiamano &quot;avvisi&quot;. Compass trova le offerte leggendo proprio quelle e-mail. Per questo prima facciamo arrivare a Compass gli avvisi della tua e-mail, poi li creiamo. Compass riceve solo gli avvisi dei siti di lavoro, mai il resto della tua posta, e non ti chiede password.
+            </Why>
+            {ownMailbox ? (
+              <div className="mt-5">
+                <Notice tone="success">La tua e-mail è già la casella di Compass: è già collegata.</Notice>
+                {next()}
               </div>
-            </>
-          ) : null}
-        </Card>
-
-        <Card>
-          {step(2, "Crea gli account sui siti giusti")}
-          <p className="mt-2 text-[14px] text-muted">
-            Per {p.track === "stage" ? "gli stage" : "il lavoro"} in {countries.map(countryName).join(", ")}
-            {careers.length ? " e per le carriere che hai scelto" : ""}. Usa la tua e-mail di sempre.
-          </p>
-          <ul className="mt-3 space-y-2.5">
-            {platforms.map((pl) => (
-              <li key={pl.key} className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[14px]">
-                  <span className="font-medium">{pl.name}</span> <span className="text-muted">· {pl.why}</span>
-                </span>
-                <a href={pl.signup} target="_blank" rel="noopener noreferrer" className={ext}>
-                  Crea l&apos;account <IconExternal size={13} />
-                </a>
-              </li>
-            ))}
-            {p.track === "stage" && <li className="text-[14px] text-muted">Anche il portale carriere della tua università: lì arrivano stage riservati agli studenti.</li>}
-          </ul>
-        </Card>
-
-        <Card>
-          {step(3, "Crea gli avvisi giusti", alerts.length > 0 && alerts.every((a) => done.has(a.key)))}
-          <p className="mt-2 text-[14px] text-muted">
-            Ogni link apre la ricerca già filtrata (posizione, città, livello, più recenti). Lì salvala come avviso giornaliero, poi spunta &quot;Fatto&quot;. Poche ricerche precise valgono più di tante generiche.
-          </p>
-          <div className="mt-4 space-y-2">
-            {alerts.map((a) => (
-              <div key={a.key} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line px-3.5 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-[14px] font-medium">
-                    {a.site} · {a.what} · {a.where}
-                  </p>
-                  <p className="text-[12.5px] text-faint">
-                    {a.filters}. {HOW_TO[a.site]}
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <a href={a.url} target="_blank" rel="noopener noreferrer" className={ext}>
-                    Apri <IconExternal size={13} />
-                  </a>
-                  <form action={toggleAlertDoneAction}>
-                    <input type="hidden" name="key" value={a.key} />
-                    <Button size="sm" variant={done.has(a.key) ? "secondary" : "primary"}>
-                      {done.has(a.key) ? "Fatto ✓" : "Fatto"}
-                    </Button>
-                  </form>
+            ) : !provider ? (
+              <div className="mt-5">
+                <p className="text-[14px] font-medium">Che e-mail usi per LinkedIn e gli altri siti?</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <LinkButton href="/collega?passo=1&email=gmail">Gmail</LinkButton>
+                  <LinkButton href="/collega?passo=1&email=outlook" variant="secondary">
+                    Outlook / Hotmail
+                  </LinkButton>
+                  <LinkButton href="/collega?passo=1&email=altro" variant="secondary">
+                    Un&apos;altra
+                  </LinkButton>
                 </div>
               </div>
-            ))}
-            {platforms.filter((pl) => !["linkedin", "indeed", "infojobs"].includes(pl.key)).map((pl) => (
-              <p key={pl.key} className="text-[13px] text-muted">
-                Su {pl.name}: crea un avviso con le stesse parole ({alerts[0]?.what ?? "la tua posizione"}) e la stessa città.
-              </p>
-            ))}
-          </div>
-        </Card>
-
-        {!ownMailbox && address && (
-          <Card>
-            {step(4, "Fai arrivare gli avvisi a Compass", anyReceived)}
-            <p className="mt-2 text-[14px] text-muted">Un filtro nella tua e-mail inoltra a Compass solo gli avvisi di questi siti, niente altro. Scegli la tua e-mail:</p>
-            <details className="mt-3 rounded-lg border border-line px-4 py-3" open>
-              <summary className="cursor-pointer text-[14px] font-medium">Gmail</summary>
-              <ol className="mt-2 list-decimal space-y-2 pl-5 text-[14px] text-muted">
-                <li>
-                  Apri{" "}
-                  <a href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" rel="noopener noreferrer">
-                    Impostazioni → Inoltro e POP/IMAP
-                  </a>{" "}
-                  → &quot;Aggiungi un indirizzo di inoltro&quot; → incolla il tuo indirizzo Compass.
-                </li>
-                <li>
-                  Gmail chiede un codice di conferma: arriva a Compass e te lo mostro qui sotto.{" "}
-                  {fwd?.code ? (
-                    <span className="mt-1 flex flex-wrap items-center gap-2">
-                      <strong className="text-ink">Codice: {fwd.code}</strong> <CopyButton text={fwd.code} size="sm" />
-                    </span>
-                  ) : (
-                    <form action={checkInboxNowAction} className="mt-1.5">
-                      <Button size="sm" variant="secondary" disabled={checking}>
-                        {checking ? "Controllo in corso…" : "Ho chiesto il codice: controlla ora"}
-                      </Button>
-                    </form>
+            ) : (
+              <>
+                <p className="mt-5 text-[14px] text-muted">
+                  {provider === "gmail" ? "Gmail" : provider === "outlook" ? "Outlook / Hotmail" : "Altra e-mail"} ·{" "}
+                  <Link href="/collega?passo=1">cambia</Link>
+                </p>
+                <ol className="mt-4 space-y-5">
+                  <Sub n={1}>
+                    <p>Copia il tuo indirizzo Compass: è dove arriveranno i tuoi avvisi, solo tuoi.</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <code className="break-all rounded-lg bg-subtle px-3 py-2 text-[14px]">{address}</code>
+                      {address && <CopyButton text={address} size="sm" />}
+                    </div>
+                  </Sub>
+                  {provider === "gmail" && (
+                    <>
+                      <Sub n={2}>
+                        <p>
+                          Apri le impostazioni di inoltro di Gmail, premi <strong>&quot;Aggiungi un indirizzo di inoltro&quot;</strong>, incolla l&apos;indirizzo, poi &quot;Avanti&quot; e &quot;Procedi&quot;.
+                        </p>
+                        <a href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" rel="noopener noreferrer" className={ext}>
+                          Apri le impostazioni di Gmail <IconExternal size={13} />
+                        </a>
+                      </Sub>
+                      <Sub n={3}>
+                        <p>Gmail manda un codice di conferma al tuo indirizzo Compass. Te lo mostro qui:</p>
+                        {fwd?.code ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <strong className="text-[18px] tracking-wider">{fwd.code}</strong>
+                            <CopyButton text={fwd.code} size="sm" />
+                          </div>
+                        ) : (
+                          <form action={checkInboxNowAction}>
+                            <input type="hidden" name="back" value="/collega?passo=1&email=gmail" />
+                            <Button size="sm" variant="secondary" disabled={checking}>
+                              {checking ? "Sto cercando il codice…" : "Mostra il codice"}
+                            </Button>
+                          </form>
+                        )}
+                        <p>
+                          Incollalo in Gmail e premi &quot;Verifica&quot;. <strong>Lascia selezionato &quot;Disattiva inoltro&quot;</strong>: così non parte tutta la tua posta, ma solo gli avvisi del filtro del punto 4.
+                        </p>
+                      </Sub>
+                      <Sub n={4}>
+                        <p>Crea il filtro che inoltra solo gli avvisi: scarica il file, poi in Gmail apri Filtri → &quot;Importa filtri&quot; → scegli il file → &quot;Apri file&quot; → &quot;Crea filtri&quot;.</p>
+                        <div className="flex flex-wrap gap-2">
+                          <a href="/api/gmail-filter" className={ext}>
+                            Scarica il filtro
+                          </a>
+                          <a href="https://mail.google.com/mail/u/0/#settings/filters" target="_blank" rel="noopener noreferrer" className={ext}>
+                            Apri i filtri di Gmail <IconExternal size={13} />
+                          </a>
+                        </div>
+                        <details className="text-[13px] text-muted">
+                          <summary className="cursor-pointer">Preferisci crearlo a mano?</summary>
+                          <p className="mt-1">Cerca in Gmail questo testo, premi l&apos;icona dei filtri nella barra di ricerca → &quot;Crea filtro&quot; → &quot;Inoltra a&quot; il tuo indirizzo Compass:</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <code className="break-all rounded bg-subtle px-2 py-1 text-[12px]">{gmailFilter(platforms)}</code>
+                            <CopyButton text={gmailFilter(platforms)} size="sm" />
+                          </div>
+                        </details>
+                      </Sub>
+                    </>
                   )}
-                </li>
-                <li>
-                  Il filtro, in un clic: <a href="/api/gmail-filter">scarica il tuo filtro</a>, poi apri{" "}
-                  <a href="https://mail.google.com/mail/u/0/#settings/filters" target="_blank" rel="noopener noreferrer">
-                    Impostazioni → Filtri e indirizzi bloccati
-                  </a>{" "}
-                  → &quot;Importa filtri&quot; → scegli il file → &quot;Apri file&quot; → &quot;Crea filtri&quot;.
-                </li>
-                <li>
-                  Oppure a mano: apri{" "}
-                  <a href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(filter)}`} target="_blank" rel="noopener noreferrer">
-                    questa ricerca in Gmail
-                  </a>
-                  , premi l&apos;icona dei filtri nella barra di ricerca → &quot;Crea filtro&quot; → &quot;Inoltra a&quot; il tuo indirizzo Compass.
-                  <span className="mt-1 flex flex-wrap items-center gap-2">
-                    <code className="break-all rounded bg-subtle px-2 py-1 text-[12px]">{filter}</code>
-                    <CopyButton text={filter} size="sm" label="Copia la ricerca" />
-                  </span>
-                </li>
-              </ol>
-            </details>
-            <details className="mt-2 rounded-lg border border-line px-4 py-3">
-              <summary className="cursor-pointer text-[14px] font-medium">Outlook / Hotmail</summary>
-              <ol className="mt-2 list-decimal space-y-2 pl-5 text-[14px] text-muted">
-                <li>
-                  Apri{" "}
-                  <a href="https://outlook.live.com/mail/0/options/mail/rules" target="_blank" rel="noopener noreferrer">
-                    Impostazioni → Posta → Regole
-                  </a>{" "}
-                  → &quot;Aggiungi una nuova regola&quot;.
-                </li>
-                <li>Condizione &quot;Da&quot;: aggiungi {platforms.flatMap((pl) => pl.senders).join(", ")}.</li>
-                <li>Azione &quot;Reindirizza a&quot; (non &quot;Inoltra&quot;: così il mittente resta quello del sito) → il tuo indirizzo Compass. Salva.</li>
-              </ol>
-            </details>
-            <details className="mt-2 rounded-lg border border-line px-4 py-3">
-              <summary className="cursor-pointer text-[14px] font-medium">iCloud, Libero, Yahoo e altre</summary>
-              <ul className="mt-2 list-disc space-y-2 pl-5 text-[14px] text-muted">
-                <li>
-                  <strong className="text-ink">iCloud Mail</strong>: su icloud.com/mail, ⚙ → Regole → Aggiungi una regola → &quot;Se un messaggio è da&quot; un mittente dell&apos;elenco → &quot;Inoltra a&quot; il tuo indirizzo Compass. Una regola per mittente.
-                </li>
-                <li>
-                  <strong className="text-ink">Libero</strong>: Impostazioni → Filtri → Nuovo filtro → mittente contiene il dominio (per esempio linkedin.com) → Inoltra al tuo indirizzo Compass.
-                </li>
-                <li>
-                  <strong className="text-ink">Yahoo</strong> e caselle senza inoltro automatico: crea gli avvisi di Indeed e InfoJobs direttamente con il tuo indirizzo Compass come e-mail (non serve l&apos;account); per LinkedIn usa Gmail o Outlook.
-                </li>
-                <li>Mittenti da inoltrare: {platforms.flatMap((pl) => pl.senders).join(", ")}.</li>
-              </ul>
-            </details>
-          </Card>
+                  {provider === "outlook" && (
+                    <>
+                      <Sub n={2}>
+                        <p>
+                          Apri le regole di Outlook e premi <strong>&quot;Aggiungi una nuova regola&quot;</strong>. Nome: Compass.
+                        </p>
+                        <a href="https://outlook.live.com/mail/0/options/mail/rules" target="_blank" rel="noopener noreferrer" className={ext}>
+                          Apri le regole di Outlook <IconExternal size={13} />
+                        </a>
+                      </Sub>
+                      <Sub n={3}>
+                        <p>
+                          Condizione <strong>&quot;Da&quot;</strong>: incolla questi mittenti (gli invii degli avvisi).
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <code className="break-all rounded bg-subtle px-2 py-1 text-[12px]">{senders.join("; ")}</code>
+                          <CopyButton text={senders.join("; ")} size="sm" />
+                        </div>
+                      </Sub>
+                      <Sub n={4}>
+                        <p>
+                          Azione <strong>&quot;Reindirizza a&quot;</strong> (non &quot;Inoltra&quot;: così il mittente resta quello del sito) → incolla il tuo indirizzo Compass → Salva.
+                        </p>
+                      </Sub>
+                    </>
+                  )}
+                  {provider === "altro" && (
+                    <Sub n={2}>
+                      <p>Nelle impostazioni della tua e-mail cerca &quot;filtri&quot; o &quot;regole&quot; e fai inoltrare al tuo indirizzo Compass le e-mail di questi mittenti:</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <code className="break-all rounded bg-subtle px-2 py-1 text-[12px]">{senders.join(", ")}</code>
+                        <CopyButton text={senders.join(", ")} size="sm" />
+                      </div>
+                      <ul className="list-disc space-y-1 pl-5 text-muted">
+                        <li>iCloud: icloud.com/mail → ⚙ → Regole → &quot;Se un messaggio è da&quot; → &quot;Inoltra a&quot;.</li>
+                        <li>Libero: Impostazioni → Filtri → Nuovo filtro → mittente → Inoltra.</li>
+                        <li>Yahoo o caselle senza inoltro: al passo 3 crea gli avvisi di Indeed e InfoJobs usando direttamente il tuo indirizzo Compass.</li>
+                      </ul>
+                    </Sub>
+                  )}
+                </ol>
+                {next("Ho finito, avanti")}
+              </>
+            )}
+          </>
         )}
 
-        <Card>
-          <h2 className="text-[16px] font-semibold">Consigli per avvisi davvero utili</h2>
-          <ul className="mt-3 list-disc space-y-2 pl-5 text-[14px] text-muted">
-            <li>Una ricerca per carriera e per paese, con il titolo preciso degli annunci (&quot;Analista M&amp;A&quot;, non &quot;finanza&quot;): sono quelle del passo 3.</li>
-            <li>Frequenza giornaliera: gli stage e le posizioni junior si chiudono in pochi giorni.</li>
-            <li>Su LinkedIn segui le pagine delle aziende che ti interessano: ti avvisa quando pubblicano un&apos;offerta.</li>
-            <li>
-              Su LinkedIn imposta &quot;Disponibile per lavorare&quot; visibile solo ai recruiter
-              {p.track === "stage" ? " e indica che cerchi uno stage" : ""}: sono loro a scriverti.
-            </li>
-            <li>Ogni due o tre settimane guarda qui sotto: se un avviso porta solo offerte poco adatte, rendilo più preciso o cancellalo.</li>
-          </ul>
-        </Card>
-
-        <Card>
-          {step(5, "Verifica", anyReceived)}
-          <ul className="mt-3 space-y-2 text-[14px]">
-            {platforms.map((pl) => {
-              const d = got(pl.key);
-              return (
-                <li key={pl.key} className="flex items-center gap-2">
-                  {d ? <Chip tone="good">arrivato</Chip> : <Chip>in attesa</Chip>}
-                  <span>
-                    {pl.name}
-                    {d ? <span className="text-muted"> · ultimo avviso {formatWhen(d, now)}</span> : <span className="text-faint"> · il primo avviso arriva di solito entro un giorno</span>}
+        {n === 2 && (
+          <>
+            <h2 className="text-[18px] font-semibold">2. Crea gli account sui siti giusti</h2>
+            <Why>
+              gli avvisi si creano dall&apos;account di ogni sito. Questi sono i siti che contano per {p.track === "stage" ? "gli stage" : "il lavoro"} in {countries.map(countryName).join(", ")}
+              {careers.length ? " e per le tue carriere" : ""}. Usa la stessa e-mail del passo 1. Se hai già l&apos;account, salta.
+            </Why>
+            <ul className="mt-5 space-y-3">
+              {platforms.map((pl) => (
+                <li key={pl.key} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line px-3.5 py-2.5">
+                  <span className="min-w-0 text-[14px]">
+                    <span className="font-medium">{pl.name}</span>
+                    <span className="block text-[13px] text-muted">{pl.why}</span>
                   </span>
+                  <a href={pl.signup} target="_blank" rel="noopener noreferrer" className={ext}>
+                    Crea l&apos;account <IconExternal size={13} />
+                  </a>
                 </li>
-              );
-            })}
-          </ul>
-          <form action={checkInboxNowAction} className="mt-4">
-            <Button size="sm" variant="secondary" disabled={checking}>
-              {checking ? "Controllo in corso…" : "Controlla ora"}
-            </Button>
-          </form>
-        </Card>
-      </div>
+              ))}
+              {p.track === "stage" && <li className="text-[14px] text-muted">E il portale carriere della tua università: ci sono stage riservati agli studenti.</li>}
+            </ul>
+            {next()}
+          </>
+        )}
+
+        {n === 3 && (
+          <>
+            <h2 className="text-[18px] font-semibold">3. Crea gli avvisi giusti</h2>
+            <Why>
+              un avviso è una ricerca salvata: il sito ti scrive quando escono offerte nuove, e Compass le legge e le ordina per te. Ogni link apre la ricerca già impostata per te (posizione, città, livello, più recenti): tu devi solo salvarla come avviso.
+            </Why>
+            <div className="mt-5 space-y-2">
+              {alerts.map((a) => (
+                <div key={a.key} className="rounded-lg border border-line px-3.5 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[14px] font-medium">
+                      {a.site} · {a.what} · {a.where}
+                    </p>
+                    <div className="flex gap-2">
+                      <a href={a.url} target="_blank" rel="noopener noreferrer" className={ext}>
+                        Apri <IconExternal size={13} />
+                      </a>
+                      <form action={toggleAlertDoneAction}>
+                        <input type="hidden" name="key" value={a.key} />
+                        <Button size="sm" variant={done.has(a.key) ? "secondary" : "primary"}>
+                          {done.has(a.key) ? "Fatto ✓" : "Fatto"}
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-[12.5px] text-faint">
+                    Filtri già messi: {a.filters}. {HOW_TO[a.site]}
+                  </p>
+                </div>
+              ))}
+              {platforms.filter((pl) => !["linkedin", "indeed", "infojobs"].includes(pl.key)).map((pl) => (
+                <p key={pl.key} className="text-[13px] text-muted">
+                  Su {pl.name}: crea un avviso con le stesse parole ({alerts[0]?.what ?? "la tua posizione"}) e la stessa città.
+                </p>
+              ))}
+            </div>
+            <details className="mt-4 text-[14px]">
+              <summary className="cursor-pointer font-medium">Consigli per avvisi davvero utili</summary>
+              <ul className="mt-2 list-disc space-y-1.5 pl-5 text-muted">
+                <li>Una ricerca per carriera e per paese, con il titolo preciso degli annunci (&quot;Analista M&amp;A&quot;, non &quot;finanza&quot;).</li>
+                <li>Frequenza giornaliera: stage e posizioni junior si chiudono in pochi giorni.</li>
+                <li>Su LinkedIn segui le aziende che ti interessano: ti avvisa quando pubblicano.</li>
+                <li>Su LinkedIn imposta &quot;Disponibile per lavorare&quot; visibile solo ai recruiter: sono loro a scriverti.</li>
+                <li>Se un avviso porta solo offerte poco adatte, rendilo più preciso o cancellalo.</li>
+              </ul>
+            </details>
+            {next()}
+          </>
+        )}
+
+        {n === 4 && (
+          <>
+            <h2 className="text-[18px] font-semibold">4. Verifica</h2>
+            <Why>qui vedi da quali siti stanno già arrivando gli avvisi. Il primo arriva di solito entro un giorno da quando crei l&apos;avviso.</Why>
+            <ul className="mt-5 space-y-2.5 text-[14px]">
+              {platforms.map((pl) => {
+                const d = got(pl.key);
+                return (
+                  <li key={pl.key} className="flex items-center gap-2">
+                    {d ? <Chip tone="good">arrivato</Chip> : <Chip>in attesa</Chip>}
+                    <span>
+                      {pl.name}
+                      {d && <span className="text-muted"> · ultimo avviso {formatWhen(d, now)}</span>}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <form action={checkInboxNowAction}>
+                <input type="hidden" name="back" value="/collega?passo=4" />
+                <Button variant="secondary" disabled={checking}>
+                  {checking ? "Controllo in corso…" : "Controlla ora"}
+                </Button>
+              </form>
+              <LinkButton href="/offerte">Vai alle offerte</LinkButton>
+            </div>
+          </>
+        )}
+      </Card>
     </div>
   );
 }
