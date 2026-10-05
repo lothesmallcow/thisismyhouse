@@ -4,14 +4,14 @@ import fs from "node:fs";
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { levelFor, planAlerts } from "@/lib/core/alert-plan";
-import { forwardingConfirmation, personalAddress, tagOf } from "@/lib/core/inbox-address";
+import { forwardingConfirmation, personalAddress, sameMailbox, tagOf } from "@/lib/core/inbox-address";
 import { gmailFilter, gmailFilterXml, platformsFor } from "@/lib/core/platforms";
 import { buildSearchCode } from "@/lib/core/search-code";
 import { schema } from "@/lib/db";
 import { scanMailbox } from "@/lib/pipeline/mailbox-scan";
 import { parseRawEmail } from "@/lib/sources/mail/parse";
 import type { InboundEmail, Mailbox } from "@/lib/sources/mail/types";
-import { alertsReceived, forwardingConfirmationFor, personalInbox } from "@/lib/server/inbox";
+import { alertsReceived, baseMailbox, forwardingConfirmationFor, linkCompassMailbox, personalInbox } from "@/lib/server/inbox";
 import { freshDb, seedPeople } from "./helpers/db";
 
 vi.mock("server-only", () => ({}));
@@ -50,6 +50,26 @@ describe("personal Compass addresses", () => {
     const marco = await db.select().from(schema.jobSources).where(eq(schema.jobSources.userId, M));
     expect(marco.length).toBeGreaterThan(0);
     expect((await forwardingConfirmationFor(db, M))?.code).toBe("987654321");
+  });
+});
+
+describe("when your e-mail is the Compass mailbox itself (Gmail refuses to forward to yourself)", () => {
+  it("same mailbox: case, spaces, +tags, and Gmail dots and googlemail", () => {
+    const gm = ["gmail", "com"].join(".");
+    expect(sameMailbox(` Nome.Cognome+cmp-abc@${gm.toUpperCase()} `, `nomecognome@${gm}`)).toBe(true);
+    expect(sameMailbox(`nomecognome@${["googlemail", "com"].join(".")}`, `nome.cognome@${gm}`)).toBe(true);
+    expect(sameMailbox("nome.cognome@example.com", "nomecognome@example.com")).toBe(false); // dots count elsewhere
+    expect(sameMailbox("a@example.com", null)).toBe(false);
+  });
+  it("only the person signed in with that address can link it; anyone else needs the administrator", async () => {
+    const db = await freshDb();
+    const { L: lucia } = await seedPeople(db, new Date());
+    await db.update(schema.users).set({ mailboxKey: null }).where(eq(schema.users.id, lucia));
+    expect(await linkCompassMailbox(db, lucia)).toBe(false);
+    expect((await db.query.users.findFirst({ where: eq(schema.users.id, lucia) }))?.mailboxKey).toBeNull();
+    await db.update(schema.users).set({ email: baseMailbox()!.toUpperCase() }).where(eq(schema.users.id, lucia));
+    expect(await linkCompassMailbox(db, lucia)).toBe(true);
+    expect((await db.query.users.findFirst({ where: eq(schema.users.id, lucia) }))?.mailboxKey).toBe("default");
   });
 });
 
