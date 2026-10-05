@@ -30,6 +30,8 @@ export interface MailboxRun {
   mailbox: Mailbox;
   /** The people who use this mailbox: its alerts are private to them, its replies match their applications. */
   owners: number[];
+  /** Called after each read (with the error when it failed): a connected Gmail records it. */
+  done?: (error: unknown) => Promise<void>;
 }
 
 /** Job API calls per run, whatever the number of people (free quotas are small). */
@@ -78,8 +80,10 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
         ? { alerts: summary.mailbox.alerts + r.alerts, jobsNew: summary.mailbox.jobsNew + r.jobsNew, jobsMerged: summary.mailbox.jobsMerged + r.jobsMerged, replies: summary.mailbox.replies + r.replies }
         : r;
       summary.newJobs += r.jobsNew;
+      await m.done?.(null);
       await runWithHealth(db, source, async () => ({ items: r.alerts, failures: 0 }), now);
     } catch (e) {
+      await m.done?.(e);
       await runWithHealth(db, source, async () => { throw e; }, now);
     }
   }

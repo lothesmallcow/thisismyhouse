@@ -28,6 +28,9 @@ export default function PrivacyPage() {
         <li>Profilo e questionario: ruoli, luoghi, stipendio desiderato, preferenze. Servono a cercare e ordinare le offerte per te.</li>
         <li>CV ed esperienze: servono a proporti posizioni, controllare i requisiti delle offerte e preparare le candidature.</li>
         <li>Candidature e risposte delle aziende, se usi l&apos;invio via e-mail: servono a tenere traccia di dove ti sei candidato.</li>
+        <li>
+          Se colleghi Gmail (&quot;Collega Gmail&quot;): un permesso di sola lettura dato da te su Google. Compass chiede a Gmail solo le e-mail degli avvisi dei siti di lavoro (LinkedIn, Indeed e gli altri elencati in Collega le fonti) e ne tiene solo le offerte; il resto della posta non viene mai scaricato e Compass non può scrivere, spostare o cancellare niente. Il permesso è salvato cifrato e lo togli quando vuoi con &quot;Scollega Gmail&quot; (o dal tuo account Google). L&apos;uso dei dati ricevuti dalle API di Google rispetta la Google API Services User Data Policy, compresi i requisiti di Limited Use.
+        </li>
       </ul>
       <p>La base giuridica è il servizio che chiedi (art. 6.1.b GDPR). Non vendiamo né cediamo i tuoi dati, non li usiamo per pubblicità e nessuna decisione con effetti legali è presa in modo automatico: le candidature partono solo se le approvi tu.</p>
 

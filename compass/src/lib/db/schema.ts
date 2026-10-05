@@ -604,3 +604,20 @@ export const jobRuns = sqliteTable("job_runs", {
   ok: integer("ok", { mode: "boolean" }),
   summary: text("summary"),
 });
+
+/**
+ * A person's own mailbox connected with Google sign-in (read-only): Compass reads the job-site
+ * alerts in it directly, no forwarding. The refresh token is stored encrypted (core/token-crypt.ts).
+ */
+export const mailConnections = sqliteTable("mail_connections", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  provider: text("provider", { enum: ["gmail"] }).notNull().default("gmail"),
+  email: text("email").notNull(),
+  refreshTokenEnc: text("refresh_token_enc").notNull(),
+  connectedAt: ts("connected_at").notNull(),
+  lastReadAt: ts("last_read_at"),
+  /** Why the last read failed ("revoked" = access removed in Google: connect again). */
+  lastError: text("last_error"),
+});

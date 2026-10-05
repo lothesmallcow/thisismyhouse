@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.17.0 · 2026-10-05
+
+- **Collega Gmail**: one click with Google sign-in (read-only) instead of forwarding, confirmation code
+  and filter. Compass asks Gmail only for the job sites' alert e-mails (a search on their senders), never
+  the rest of the mailbox, and reads the last 30 days at once, then on every scheduled run and on
+  "Controlla ora". "Scollega Gmail" revokes the access at Google; so do "Cancella tutti i miei dati" and
+  deleting an account. The token is stored encrypted (AES-256-GCM). A revoked access is noticed and
+  the page asks to connect again. Forwarding stays for Outlook, other providers, or by choice.
+- Needs a Google OAuth client (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`): docs/setup.md section 2,
+  ADR 0024. Without it, Collega le fonti offers forwarding as before.
+
 ## 0.16.3 · 2026-10-05
 
 - Collega le fonti, Gmail: when Gmail answers "Non puoi specificare il tuo indirizzo email", the e-mail

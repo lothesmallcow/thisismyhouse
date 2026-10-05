@@ -16,7 +16,8 @@ import { getPrefs, listSectors } from "@/lib/server/catalog";
 import { alertsDone, alertsReceived, baseMailbox, collegaState, forwardingConfirmationFor, personalInbox } from "@/lib/server/inbox";
 import { background } from "@/lib/server/person";
 import { getProfile } from "@/lib/server/profile";
-import { checkInboxNowAction, collegaStepAction, linkCompassMailboxAction, toggleAlertDoneAction } from "../actions";
+import { checkInboxNowAction, collegaStepAction, disconnectGmailAction, linkCompassMailboxAction, toggleAlertDoneAction } from "../actions";
+import { ALERT_SENDERS, getMailConnection, gmailConnectAvailable } from "@/lib/server/mail-connections";
 import { sameMailbox } from "@/lib/core/inbox-address";
 import { env } from "@/lib/env";
 
@@ -57,6 +58,7 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
     db.query.settings.findFirst({ where: eq(schema.settings.key, "inbox_check_at") }),
     collegaState(db, user.id),
   ]);
+  const gmail = await getMailConnection(db, user.id);
   const base = baseMailbox();
   // Their e-mail is the mailbox Compass reads (or the administrator linked it): no forwarding needed.
   const ownMailbox = Boolean(base && (sameMailbox(u?.email, base) || (!env.demoMode && u?.mailboxKey === "default")));
@@ -74,11 +76,14 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
   const lastCheck = typeof checkRow?.value === "string" ? new Date(checkRow.value) : null;
   const checking = lastCheck != null && now.getTime() - lastCheck.getTime() < 45_000;
   const got = (key: string) => [...received.entries()].filter(([s]) => s.startsWith(`email:${key}`)).map(([, d]) => d).sort((a, b) => b.getTime() - a.getTime())[0];
-  const emailDone = ownMailbox || state.emailDone || received.size > 0;
+  const gmailOk = gmailConnectAvailable();
+  const gmailLinked = gmail != null && gmail.lastError !== "revoked";
+  const emailDone = ownMailbox || gmailLinked || state.emailDone || received.size > 0;
   const stepDone = [emailDone, Boolean(state.accountsDone), alerts.some((a) => done.has(a.key)) /* the ones they care about, not all */, received.size > 0];
   const firstOpen = stepDone.findIndex((d) => !d);
   const n = Math.min(4, Math.max(1, Number(sp.passo) || (firstOpen === -1 ? 4 : firstOpen + 1)));
-  const provider = sp.email ?? state.email ?? null;
+  // With "Collega Gmail" available, the forwarding steps only when asked for (?email=…).
+  const provider = sp.email ?? (gmailOk ? null : state.email) ?? null;
 
   const next = (label = "Avanti") => (
     <form action={collegaStepAction} className="mt-6">
@@ -117,14 +122,80 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
           <>
             <h2 className="text-[18px] font-semibold">1. Collega la tua e-mail</h2>
             <Why>
-              LinkedIn, Indeed e gli altri siti mandano le offerte nuove per e-mail: si chiamano &quot;avvisi&quot;. Compass trova le offerte leggendo proprio quelle e-mail. Per questo prima facciamo arrivare a Compass gli avvisi della tua e-mail, poi li creiamo. Compass riceve solo gli avvisi dei siti di lavoro, mai il resto della tua posta, e non ti chiede password.
+              LinkedIn, Indeed e gli altri siti mandano le offerte nuove per e-mail: si chiamano &quot;avvisi&quot;. Compass trova le offerte leggendo proprio quelle e-mail. Per questo prima colleghiamo la tua e-mail, poi creiamo gli avvisi. Compass legge solo gli avvisi dei siti di lavoro, mai il resto della tua posta, e non ti chiede password.
             </Why>
-            {ownMailbox ? (
+            {gmail ? (
+              <div className="mt-5 space-y-4">
+                {gmail.lastError === "revoked" ? (
+                  <Notice tone="warn" title="Gmail non è più collegata">
+                    Google ha tolto l&apos;accesso a Compass (dalle impostazioni del tuo account Google, o perché è passato troppo tempo). Ricollegala: è un clic.
+                  </Notice>
+                ) : (
+                  <Notice tone="success" title={`Gmail collegata: ${gmail.email}`}>
+                    {gmail.lastReadAt ? `Ultima lettura ${formatWhen(gmail.lastReadAt, now)}. ` : "Sto leggendo gli avvisi dell'ultimo mese: le offerte arrivano tra poco in Offerte. "}
+                    Da qui in avanti la leggo da solo più volte al giorno: devi solo creare gli avvisi.
+                  </Notice>
+                )}
+                <details className="text-[13.5px] text-muted">
+                  <summary className="cursor-pointer">Cosa legge Compass, esattamente?</summary>
+                  <p className="mt-1">Solo le e-mail che arrivano da questi mittenti (gli avvisi dei siti di lavoro). Il resto della tua posta non viene mai scaricato, e Compass non può scrivere, spostare o cancellare niente.</p>
+                  <p className="mt-1 break-all text-[12.5px]">{ALERT_SENDERS.join(", ")}</p>
+                </details>
+                <div className="flex flex-wrap items-center gap-2">
+                  {gmail.lastError === "revoked" ? (
+                    <a href="/api/google/connect" className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-[14px] font-medium text-on-primary no-underline hover:bg-primary-hover">
+                      Ricollega Gmail
+                    </a>
+                  ) : (
+                    next()
+                  )}
+                  <form action={disconnectGmailAction} className={gmail.lastError === "revoked" ? "" : "mt-6"}>
+                    <Button variant="secondary">Scollega Gmail</Button>
+                  </form>
+                </div>
+              </div>
+            ) : ownMailbox ? (
               <div className="mt-5">
                 <Notice tone="success" title="Già collegata">
                   Compass legge direttamente la casella {base}: gli avvisi che arrivano lì sono già tuoi, senza inoltro né filtri. Al passo 2 e 3 usa questa e-mail per gli account e gli avvisi.
                 </Notice>
                 {next()}
+              </div>
+            ) : !provider && gmailOk ? (
+              <div className="mt-5 space-y-5">
+                <div className="rounded-xl border border-accent bg-accent-soft/40 p-4">
+                  <p className="text-[15px] font-semibold">Usi Gmail? Collegala con un clic</p>
+                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-[14px]">
+                    <li>Premi &quot;Collega Gmail&quot; e scegli il tuo account Google (quello che usi per LinkedIn).</li>
+                    <li>
+                      Google chiede il permesso di <strong>leggere</strong> le e-mail: lascia spuntata la casella e premi &quot;Continua&quot;.
+                    </li>
+                    <li>Torni qui: fatto. Leggo subito gli avvisi che hai già ricevuto nell&apos;ultimo mese.</li>
+                  </ol>
+                  <a href="/api/google/connect" className="mt-3 inline-flex h-11 items-center rounded-lg bg-primary px-5 text-[15px] font-medium text-on-primary no-underline hover:bg-primary-hover">
+                    Collega Gmail
+                  </a>
+                  <details className="mt-3 text-[13.5px] text-muted">
+                    <summary className="cursor-pointer">Google dice &quot;Google non ha verificato questa app&quot;?</summary>
+                    <p className="mt-1">
+                      È normale: Compass è su invito, e Google fa la verifica (a pagamento) solo per le app aperte a tutti. Premi <strong>&quot;Avanzate&quot;</strong>, poi <strong>&quot;Vai a Compass&quot;</strong>. Compass chiede solo la lettura, legge solo gli avvisi dei siti di lavoro e puoi scollegarla quando vuoi, da qui o dal tuo account Google.
+                    </p>
+                  </details>
+                </div>
+                <div>
+                  <p className="text-[14px] font-medium">Non usi Gmail?</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <LinkButton href="/collega?passo=1&email=outlook" variant="secondary" size="sm">
+                      Outlook / Hotmail
+                    </LinkButton>
+                    <LinkButton href="/collega?passo=1&email=altro" variant="secondary" size="sm">
+                      Un&apos;altra e-mail
+                    </LinkButton>
+                  </div>
+                  <p className="mt-2 text-[13px] text-muted">
+                    Preferisci non dare l&apos;accesso? <Link href="/collega?passo=1&email=gmail">Usa l&apos;inoltro di Gmail</Link> (più passaggi).
+                  </p>
+                </div>
               </div>
             ) : !provider ? (
               <div className="mt-5">

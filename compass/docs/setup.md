@@ -27,7 +27,32 @@ app keeps working in demo mode until the last one.
    With `DEMO_MODE=false` the server **refuses to start** if a required variable is missing or
    weak (it prints which one), so mistakes show up at deploy time, not weeks later.
 
-## 2. Forward the job alerts
+## 2. "Collega Gmail" (recommended: one click for everyone, no forwarding)
+
+Each person connects their own Gmail with Google sign-in, read-only. Compass asks Gmail only for the
+job sites' alert e-mails (`from:` their senders), never the rest. One-time setup, free:
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → new project "Compass".
+2. APIs & Services → Library → **Gmail API** → Enable.
+3. APIs & Services → OAuth consent screen (Google Auth Platform): app name "Compass", support e-mail,
+   audience **External**. Data access → add the scope `https://www.googleapis.com/auth/gmail.readonly`.
+   Branding → app home page and privacy policy: `<APP_URL>` and `<APP_URL>/privacy`.
+4. Audience → **Publish app** (status "In production"). In "Testing" Google lets in only listed test
+   users and **expires their access after 7 days**; in production, without Google's verification,
+   people see "Google hasn't verified this app" (Advanced → Go to Compass) and at most 100 people can
+   connect. Fine for an invite-only Compass; more than 100 needs Google's verification and a yearly
+   security assessment (CASA, paid).
+5. Clients → Create client → **Web application**. Authorized redirect URI:
+   `<APP_URL>/api/google/callback` (e.g. `https://<project>.vercel.app/api/google/callback`).
+6. Put the client ID and secret in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: in Vercel (Settings →
+   Environment Variables) and in GitHub (Settings → Secrets and variables → Actions → **Secrets**), so
+   the scheduled runs read the alerts too. Redeploy.
+
+Tokens are stored encrypted with a key derived from `SESSION_SECRET` (changing it disconnects
+everyone: they connect again). "Scollega Gmail", "Cancella tutti i miei dati" and deleting an account
+revoke the access at Google.
+
+## 2b. Or forward the job alerts (Outlook, other providers, or no Google access)
 
 For each person, in **their** LinkedIn / Indeed / InfoJobs accounts (by hand, in the browser), create job alerts for
 her roles and city, delivered to their normal inbox. Then in that normal Gmail:
