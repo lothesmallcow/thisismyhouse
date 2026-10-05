@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.1 · 2026-10-05
+
+- Collega le fonti: the Gmail forwarding filter as a file to import in one click; steps for iCloud,
+  Libero and Yahoo; tips for alerts that bring the right offers; Offerte points there until the
+  first alerts arrive.
+
 ## 0.15.0 · 2026-10-05
 
 - **Collega le fonti** (guided, 5 steps): the job sites worth an account for each person's

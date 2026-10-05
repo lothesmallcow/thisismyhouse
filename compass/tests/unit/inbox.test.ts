@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { levelFor, planAlerts } from "@/lib/core/alert-plan";
 import { forwardingConfirmation, personalAddress, tagOf } from "@/lib/core/inbox-address";
-import { gmailFilter, platformsFor } from "@/lib/core/platforms";
+import { gmailFilter, gmailFilterXml, platformsFor } from "@/lib/core/platforms";
 import { buildSearchCode } from "@/lib/core/search-code";
 import { schema } from "@/lib/db";
 import { scanMailbox } from "@/lib/pipeline/mailbox-scan";
@@ -74,5 +74,8 @@ describe("the alerts and sites to set up", () => {
     const f = gmailFilter(platformsFor(["IT"], "lavoro", []));
     expect(f).toContain("jobalerts-noreply@linkedin.com");
     expect(f).not.toMatch(/OR linkedin\.com/); // not every LinkedIn message: only the alerts
+    const x = gmailFilterXml(platformsFor(["IT"], "lavoro", []), "compass.demo+cmp-abc123@example.com");
+    expect(x).toContain("<apps:property name='forwardTo' value='compass.demo+cmp-abc123@example.com'/>");
+    expect(x).toContain("jobalerts-noreply@linkedin.com OR");
   });
 });

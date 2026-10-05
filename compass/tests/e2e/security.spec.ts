@@ -16,7 +16,7 @@ test("logged out: every private page and API is closed", async ({ page, request 
     await page.goto(p);
     await expect(page, p).toHaveURL(/\/entra/);
   }
-  for (const api of ["/api/cv/1", "/api/export/jobs", "/api/export/applications", "/api/export/sendlog"]) {
+  for (const api of ["/api/cv/1", "/api/export/jobs", "/api/export/applications", "/api/export/sendlog", "/api/gmail-filter"]) {
     expect((await request.get(api)).status(), api).toBe(401);
   }
   for (const job of ["ingest", "queue", "digest"]) {
