@@ -525,6 +525,10 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await page.getByRole("button", { name: "Fatto", exact: true }).first().click();
   await expect(page.getByRole("button", { name: "Fatto ✓" }).first()).toBeVisible();
   await expect(page.getByText(/from:\(jobalerts-noreply@linkedin\.com/).first()).toBeVisible();
+  await expect(page.getByText("Consigli per avvisi davvero utili")).toBeVisible();
+  const xml = await page.request.get("/api/gmail-filter");
+  expect(xml.status()).toBe(200);
+  expect(await xml.text()).toMatch(/forwardTo' value='compass\.demo\+cmp-/);
 
   await page.goto("/offerte/salva");
   await assertUiBasics(page);

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Flash } from "@/components/flash";
 import { IconFolder, IconPlus, IconSearch, IconSliders } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
-import { Button, Empty, LinkButton, PageHeader } from "@/components/ui";
+import { Button, Empty, LinkButton, Notice, PageHeader } from "@/components/ui";
+import { alertsReceived } from "@/lib/server/inbox";
 import { CONTRACT_LABELS, SECTORS } from "@/lib/core/extract";
 import type { Level } from "@/lib/core/rank";
 import { and, eq, sql } from "drizzle-orm";
@@ -28,6 +29,7 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 export default async function OffertePage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const user = await requireUser();
+  const received = await alertsReceived(getDb(), user.id);
   const db = getDb();
   const profile = await getProfile(db, user.id);
   const settings = await getSettings(db);
@@ -104,6 +106,13 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
         }
       />
 
+      {received.size === 0 && !filters.show && (
+        <div className="mb-4">
+          <Notice tone="info" title="Fai arrivare qui le offerte di LinkedIn e Indeed">
+            Gli avvisi dei siti di lavoro sono la fonte più ricca. <Link href="/collega">Collega le fonti</Link>: in cinque minuti ti guido ad account, avvisi e inoltro.
+          </Notice>
+        </div>
+      )}
       <CareersLine userId={user.id} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div role="group" aria-label="Quali offerte" className="inline-flex rounded-lg border border-line bg-surface p-0.5">

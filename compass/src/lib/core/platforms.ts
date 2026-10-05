@@ -42,3 +42,29 @@ export function platformsFor(countries: CountryCode[], track: "lavoro" | "stage"
 export function gmailFilter(platforms: Platform[]): string {
   return `from:(${platforms.flatMap((p) => p.senders).join(" OR ")})`;
 }
+
+const xml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+/**
+ * The same filter as a file Gmail imports (Impostazioni → Filtri → Importa filtri): it forwards the
+ * alerts to the personal Compass address and labels them. Forwarding works once Gmail has confirmed
+ * the address (the code shown on Collega le fonti).
+ */
+export function gmailFilterXml(platforms: Platform[], forwardTo: string): string {
+  const from = platforms.flatMap((p) => p.senders).join(" OR ");
+  return `<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom' xmlns:apps='http://schemas.google.com/apps/2006'>
+  <title>Compass: avvisi di lavoro</title>
+  <entry>
+    <category term='filter'></category>
+    <title>Compass</title>
+    <content></content>
+    <apps:property name='from' value='${xml(from)}'/>
+    <apps:property name='forwardTo' value='${xml(forwardTo)}'/>
+    <apps:property name='label' value='Compass'/>
+    <apps:property name='sizeOperator' value='s_sl'/>
+    <apps:property name='sizeUnit' value='s_smb'/>
+  </entry>
+</feed>
+`;
+}

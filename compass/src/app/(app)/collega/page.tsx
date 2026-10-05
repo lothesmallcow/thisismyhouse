@@ -175,7 +175,14 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                   )}
                 </li>
                 <li>
-                  Crea il filtro: apri{" "}
+                  Il filtro, in un clic: <a href="/api/gmail-filter">scarica il tuo filtro</a>, poi apri{" "}
+                  <a href="https://mail.google.com/mail/u/0/#settings/filters" target="_blank" rel="noopener noreferrer">
+                    Impostazioni → Filtri e indirizzi bloccati
+                  </a>{" "}
+                  → &quot;Importa filtri&quot; → scegli il file → &quot;Apri file&quot; → &quot;Crea filtri&quot;.
+                </li>
+                <li>
+                  Oppure a mano: apri{" "}
                   <a href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(filter)}`} target="_blank" rel="noopener noreferrer">
                     questa ricerca in Gmail
                   </a>
@@ -202,13 +209,36 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
               </ol>
             </details>
             <details className="mt-2 rounded-lg border border-line px-4 py-3">
-              <summary className="cursor-pointer text-[14px] font-medium">Altre e-mail (Libero, iCloud, Yahoo...)</summary>
-              <p className="mt-2 text-[14px] text-muted">
-                Cerca &quot;filtri&quot; o &quot;regole&quot; nelle impostazioni e inoltra al tuo indirizzo Compass la posta di questi mittenti. Più semplice ancora: su Indeed e InfoJobs puoi creare l&apos;avviso direttamente con il tuo indirizzo Compass come e-mail.
-              </p>
+              <summary className="cursor-pointer text-[14px] font-medium">iCloud, Libero, Yahoo e altre</summary>
+              <ul className="mt-2 list-disc space-y-2 pl-5 text-[14px] text-muted">
+                <li>
+                  <strong className="text-ink">iCloud Mail</strong>: su icloud.com/mail, ⚙ → Regole → Aggiungi una regola → &quot;Se un messaggio è da&quot; un mittente dell&apos;elenco → &quot;Inoltra a&quot; il tuo indirizzo Compass. Una regola per mittente.
+                </li>
+                <li>
+                  <strong className="text-ink">Libero</strong>: Impostazioni → Filtri → Nuovo filtro → mittente contiene il dominio (per esempio linkedin.com) → Inoltra al tuo indirizzo Compass.
+                </li>
+                <li>
+                  <strong className="text-ink">Yahoo</strong> e caselle senza inoltro automatico: crea gli avvisi di Indeed e InfoJobs direttamente con il tuo indirizzo Compass come e-mail (non serve l&apos;account); per LinkedIn usa Gmail o Outlook.
+                </li>
+                <li>Mittenti da inoltrare: {platforms.flatMap((pl) => pl.senders).join(", ")}.</li>
+              </ul>
             </details>
           </Card>
         )}
+
+        <Card>
+          <h2 className="text-[16px] font-semibold">Consigli per avvisi davvero utili</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-[14px] text-muted">
+            <li>Una ricerca per carriera e per paese, con il titolo preciso degli annunci (&quot;Analista M&amp;A&quot;, non &quot;finanza&quot;): sono quelle del passo 3.</li>
+            <li>Frequenza giornaliera: gli stage e le posizioni junior si chiudono in pochi giorni.</li>
+            <li>Su LinkedIn segui le pagine delle aziende che ti interessano: ti avvisa quando pubblicano un&apos;offerta.</li>
+            <li>
+              Su LinkedIn imposta &quot;Disponibile per lavorare&quot; visibile solo ai recruiter
+              {p.track === "stage" ? " e indica che cerchi uno stage" : ""}: sono loro a scriverti.
+            </li>
+            <li>Ogni due o tre settimane guarda qui sotto: se un avviso porta solo offerte poco adatte, rendilo più preciso o cancellalo.</li>
+          </ul>
+        </Card>
 
         <Card>
           {step(5, "Verifica", anyReceived)}
