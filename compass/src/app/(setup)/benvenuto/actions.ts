@@ -5,7 +5,7 @@ import { quickSearchFor } from "@/lib/pipeline/jobs";
 import { redirect } from "next/navigation";
 import { TASTES } from "@/lib/catalog/data";
 import { getDb } from "@/lib/db";
-import { COUNTRIES, findPlace, regionsOf } from "@/lib/core/geo";
+import { parsePlaceValue, profileFromPlaces } from "@/lib/core/where";
 import { requireUser } from "@/lib/server/auth";
 import { rerankUser } from "@/lib/server/jobs";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
@@ -65,25 +65,10 @@ export async function saveStepAction(f: FormData) {
         break;
       }
       case "dove": {
-        const city = str(f, "city");
-        const place = findPlace(city);
-        Object.assign(patch, {
-          city: place?.name ?? city,
-          lat: place?.lat ?? null,
-          lng: place?.lng ?? null,
-          maxKm: Math.max(1, Math.min(100, Number(str(f, "km")) || 20)),
-          remoteOk: str(f, "remote") === "1",
-        });
-        patch.extraPlaces = lines(str(f, "places")).slice(0, 8);
-        const countries = f.getAll("country").map(String).filter((c) => COUNTRIES.some((x) => x.code === c));
-        patch.countries = countries;
-        patch.regions = f
-          .getAll("region")
-          .map(String)
-          .filter((r) => COUNTRIES.some((c) => r.startsWith(`${c.code}:`) && regionsOf(c.code).includes(r.slice(3))))
-          .slice(0, 40);
-        // A region chosen in a country not ticked: that country counts as chosen too.
-        for (const r of patch.regions) if (countries.length && !countries.includes(r.slice(0, 2))) countries.push(r.slice(0, 2));
+        // Cities, regions or whole countries (no distances).
+        const places = f.getAll("place").map(String).map(parsePlaceValue).filter((x): x is NonNullable<typeof x> => x != null);
+        const fields = profileFromPlaces(places);
+        Object.assign(patch, { ...fields, countries: fields.countries, remoteOk: str(f, "remote") === "1" });
         break;
       }
       case "quando":

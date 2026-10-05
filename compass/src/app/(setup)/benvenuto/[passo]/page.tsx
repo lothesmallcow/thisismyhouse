@@ -1,7 +1,8 @@
+import { PlacesPicker } from "@/components/places-picker";
+import { placesFromProfile } from "@/lib/core/where";
 import { RecommendedPositions } from "@/components/recommended-positions";
 import { cvPositionsFor } from "@/lib/server/cv-positions";
 import { PriorityChoice } from "@/components/priority-choice";
-import { COUNTRIES, regionsOf } from "@/lib/core/geo";
 import { isGenericRole, positionsFor } from "@/lib/catalog/positions";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -26,7 +27,7 @@ import { uploadCvAction } from "../../../(app)/actions";
 import { saveStepAction } from "../actions";
 import { HELP, QUICK_STEPS, STEPS, TITLES, stepsFor, type StepId } from "../steps";
 import { chooseModeAction } from "../actions";
-import { KmSlider, NetSalaryField } from "./fields";
+import { NetSalaryField } from "./fields";
 
 export const metadata = { title: "Questionario" };
 // The last answer starts the first search in the background: give it time.
@@ -317,46 +318,7 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
     case "dove":
       return (
         <>
-          <Field label="La tua città" htmlFor="city" hint="Il nome del comune.">
-            <input id="city" name="city" type="text" autoComplete="address-level2" defaultValue={p.city} />
-          </Field>
-          <KmSlider defaultValue={p.maxKm} />
-          <Field label="Altre città (facoltativo)" htmlFor="places" hint="Separate da una virgola, anche all'estero. Es. Londra, Parigi, Monaco di Baviera.">
-            <input id="places" name="places" type="text" defaultValue={p.extraPlaces.join(", ")} />
-          </Field>
-          <fieldset className="space-y-2">
-            <legend className="text-[13px] font-medium">In quali paesi? (facoltativo)</legend>
-            <p className="text-[12.5px] text-faint">Cerchiamo offerte, aziende e suggerimenti solo lì: liste più corte e ricerche che non sprecano richieste. Nessuna scelta = il paese della tua città.</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {COUNTRIES.map((c) => (
-                <ChoiceRow key={c.code} name="country" value={c.code} defaultChecked={p.countries.includes(c.code)}>
-                  {c.name}
-                </ChoiceRow>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="space-y-2">
-            <legend className="text-[13px] font-medium">Solo alcune regioni? (facoltativo)</legend>
-            <p className="text-[12.5px] text-faint">Se non scegli niente, va bene tutto il paese.</p>
-            {COUNTRIES.map((c) => {
-              const chosen = p.regions.filter((r) => r.startsWith(`${c.code}:`)).length;
-              return (
-                <details key={c.code} className="rounded-lg border border-line px-3 py-2" open={chosen > 0}>
-                  <summary className="cursor-pointer py-1 text-[13.5px]">
-                    {c.name}
-                    {chosen > 0 ? ` · ${chosen} scelte` : ""}
-                  </summary>
-                  <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                    {regionsOf(c.code).map((r) => (
-                      <label key={r} className="flex min-h-8 items-center gap-2 text-[13px]">
-                        <input type="checkbox" name="region" value={`${c.code}:${r}`} defaultChecked={p.regions.includes(`${c.code}:${r}`)} /> {r}
-                      </label>
-                    ))}
-                  </div>
-                </details>
-              );
-            })}
-          </fieldset>
+          <PlacesPicker initial={placesFromProfile(p)} />
           <label className="flex min-h-11 items-center gap-2.5 text-[14px]">
             <input type="checkbox" name="remote" value="1" defaultChecked={p.remoteOk} /> Va bene anche da remoto
           </label>

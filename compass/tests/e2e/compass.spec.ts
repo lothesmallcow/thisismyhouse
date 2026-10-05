@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { assertUiBasics, login, loginAsAdmin, loginAsFashion, loginAsHer, loginAsStudent } from "./helpers";
+import { addPlace, assertUiBasics, login, loginAsAdmin, loginAsFashion, loginAsHer, loginAsStudent } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -266,10 +266,8 @@ test("countries and regions, the full company database, NACE industries", async 
   // Questionnaire "dove": optional countries and regions.
   await page.goto("/benvenuto/3?ritorno=profilo");
   await assertUiBasics(page);
-  await page.getByRole("checkbox", { name: "Italia" }).check();
-  await page.getByRole("checkbox", { name: "Regno Unito" }).check();
-  await page.locator("summary", { hasText: "Regno Unito" }).click();
-  await page.getByRole("checkbox", { name: "England" }).check();
+  await addPlace(page, "Italia", /^Italia · tutto il paese/);
+  await addPlace(page, "Engl", /^England · regione/);
   await page.getByRole("button", { name: /Salva|Avanti/ }).first().click();
 
   // Browse everything, page by page, then search a listed UK bank and choose it.
@@ -383,11 +381,8 @@ test("persona: luxury store manager in Milan, score, requirements, role sheet, f
   // Several countries, each with its city, on the map (Dove).
   await page.goto("/profilo/dove");
   await assertUiBasics(page);
-  await expect(page.locator(".leaflet-container")).toBeVisible();
-  await page.getByRole("button", { name: "Regno Unito" }).click();
-  await page.getByLabel("Città in Regno Unito (facoltativa)").fill("Londo");
-  await page.getByRole("option", { name: /^London/ }).first().click();
-  await expect(page.locator(".leaflet-tooltip", { hasText: "London" })).toBeVisible();
+  await addPlace(page, "Londo", /^London · città, Regno Unito/);
+  await expect(page.getByText("London · città, Regno Unito")).toBeVisible();
   await page.getByRole("button", { name: "Salva e cerca" }).click();
   await expect(page.getByText(/cerco in questi posti/)).toBeVisible();
   await page.goto("/offerte");
@@ -501,7 +496,7 @@ test("quick questionnaire for a new account: 5 questions, a generic role becomes
   await expect(page.getByRole("checkbox", { name: "Client advisor" })).toBeChecked();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 3 di 5")).toBeVisible();
-  await page.getByLabel("La tua città").fill("Milano");
+  await addPlace(page, "Milano", /^Milano · città/);
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 4 di 5")).toBeVisible();
   await page.getByRole("button", { name: "Salta" }).click();
@@ -575,8 +570,8 @@ test("student questionnaire: 12 steps, catalog, Altro, automatic focus", async (
   await page.getByLabel("Corso di laurea").fill("Economia");
   await page.getByLabel("Anno di corso").selectOption("1");
   await page.getByRole("button", { name: "Avanti" }).click();
-  await page.getByLabel("La tua città").fill("Milano");
-  await page.getByLabel("Altre città").fill("Londra");
+  await addPlace(page, "Milano", /^Milano · città/);
+  await addPlace(page, "Londo", /^London · città/);
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 4 di 12")).toBeVisible();
   await page.getByText("Estate (giugno-settembre)").click();
@@ -642,7 +637,7 @@ test("CV upload, then delete all data and redo the job questionnaire", async ({ 
   await expect(page.getByText("Receptionist")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 3 di 12")).toBeVisible();
-  await page.getByLabel("La tua città").fill("Moncalieri");
+  await addPlace(page, "Moncalieri", /^Moncalieri · città/);
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByText("Part-time", { exact: true }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
@@ -663,6 +658,6 @@ test("CV upload, then delete all data and redo the job questionnaire", async ({ 
   await expect(page.getByText("(i tuoi predefiniti)")).toBeVisible(); // the salary floor from the questionnaire is a default filter
 
   await page.goto("/profilo");
-  await expect(page.getByText(/Moncalieri, 20 km/)).toBeVisible();
+  await expect(page.getByText(/Moncalieri/)).toBeVisible();
   await expect(page.getByText(/1\.?200 € netti al mese · nascondo quelle sotto/)).toBeVisible();
 });

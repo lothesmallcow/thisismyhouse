@@ -29,6 +29,7 @@ import {
 import { requireUser, signOut } from "@/lib/server/auth";
 import { canChoose, getPrefs, setPref } from "@/lib/server/catalog";
 import { COUNTRIES, findPlace } from "@/lib/core/geo";
+import { parsePlaceValue, profileFromPlaces } from "@/lib/core/where";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
 import { dismissJob, markSeen, rerankUser, restoreJob, setAdjustmentActive, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
 import { deleteAllMyData } from "@/lib/server/privacy";
@@ -463,16 +464,13 @@ export async function checkInboxNowAction(f?: FormData) {
   done(f ? safeBack(f, "/collega") : "/collega", "controllo-avviato");
 }
 
-/** "Dove": main city and radius, countries (each with an optional city), regions. */
+/** "Dove": cities, regions or whole countries, as chosen (no distances). */
 export async function saveWhereAction(f: FormData) {
   const u = await requireUser();
   const db = getDb();
-  const city = str(f, "city").trim().slice(0, 80);
-  const km = Math.min(100, Math.max(2, Number(str(f, "km")) || 20));
-  const countries = COUNTRIES.map((c) => c.code).filter((cc) => f.getAll("country").map(String).includes(cc));
-  const extraPlaces = str(f, "places").split(",").map((x) => x.trim()).filter(Boolean).slice(0, 6);
-  const regions = f.getAll("region").map(String).filter((r) => /^(IT|GB|DE|FR):/.test(r)).slice(0, 60);
-  await updateProfile(db, u.id, { ...(city ? { city } : {}), maxKm: km, countries: countries.length ? countries : [findPlace(city)?.country ?? "IT"], extraPlaces, regions });
+  const places = f.getAll("place").map(String).map(parsePlaceValue).filter((x): x is NonNullable<typeof x> => x != null);
+  const fields = profileFromPlaces(places);
+  await updateProfile(db, u.id, { ...fields, countries: fields.countries.length ? fields.countries : ["IT"], remoteOk: str(f, "remote") === "1" });
   await rerankUser(db, u.id);
   after(() => quickSearchFor(getDb(), u.id));
   done("/profilo/dove", "dove-salvato");

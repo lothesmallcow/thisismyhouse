@@ -1,3 +1,4 @@
+import { placesFromProfile } from "@/lib/core/where";
 import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { Flash } from "@/components/flash";
@@ -57,7 +58,7 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
             ) : (
               <Row label="Posizioni e carriere" value={p.roles.join(", ") || "Da compilare"} action={<Edit href="/profilo/posizioni" />} />
             )}
-            <Row label="Dove" value={p.city ? `${p.city}, ${p.maxKm} km${p.extraPlaces.length ? ` · ${p.extraPlaces.join(", ")}` : ""}${p.countries.length > 1 ? ` · ${p.countries.length} paesi` : ""}${p.remoteOk ? " · anche da remoto" : ""}` : "Da compilare"} action={<Edit href="/profilo/dove" />} />
+            <Row label="Dove" value={[...placesFromProfile(p).map((x) => x.name), p.remoteOk ? "anche da remoto" : ""].filter(Boolean).join(", ") || "Da compilare"} action={<Edit href="/profilo/dove" />} />
             {stage ? (
               <Row label="Quando" value={[p.periods.join(", "), p.paidOnly ? "solo retribuiti" : ""].filter(Boolean).join(" · ") || "Da compilare"} action={<Edit href={at("quando")} />} />
             ) : (

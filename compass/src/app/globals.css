@@ -228,7 +228,4 @@
   .anim-in {
     animation: none;
   }
-  .leaflet-zoom-anim .leaflet-zoom-animated {
-    transition: none !important;
-  }
 }
