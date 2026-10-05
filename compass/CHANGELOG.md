@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.17.1 · 2026-10-05
+
+- Collega Gmail, more robust: the sign-in state is signed and bound to the person (no cookie), so it
+  works whichever of the site's Vercel addresses was used; the connection starts from APP_URL; the
+  Google client ID, secret and APP_URL are trimmed (a pasted space or new line broke them).
+- A failed connection now says why on Collega le fonti (wrong client ID/secret, return address not
+  matching, Gmail API off, expired sign-in...) with the return address and client ID in use to compare
+  in Google Cloud, and logs the short code in Vercel → Logs (never tokens).
+
 ## 0.17.0 · 2026-10-05
 
 - **Collega Gmail**: one click with Google sign-in (read-only) instead of forwarding, confirmation code

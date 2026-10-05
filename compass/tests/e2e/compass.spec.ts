@@ -580,6 +580,11 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await page.getByRole("button", { name: "Scollega Gmail" }).click();
   await expect(page.getByText(/Gmail scollegata/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Collega Gmail" })).toBeVisible();
+  // A failed connection says why, with the return address to compare in Google Cloud.
+  await page.goto("/collega?passo=1&msg=gmail-riprova&motivo=invalid_client");
+  await expect(page.getByText("Perché Collega Gmail non è andato")).toBeVisible();
+  await expect(page.getByText(/Google non riconosce l'ID client o il secret/)).toBeVisible();
+  await expect(page.getByText(/\/api\/google\/callback/)).toBeVisible();
 
   await page.goto("/offerte/salva");
   await assertUiBasics(page);

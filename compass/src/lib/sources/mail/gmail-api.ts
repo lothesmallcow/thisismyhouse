@@ -17,6 +17,17 @@ export class GoogleAccessRevoked extends Error {
   }
 }
 
+/**
+ * A refusal from Google, with only its short code ("invalid_client", "redirect_uri_mismatch",
+ * "gmail-403:accessNotConfigured"...): safe to show and log, never the body (it may carry tokens).
+ */
+export class GoogleError extends Error {
+  constructor(public code: string) {
+    super(`google:${code}`);
+  }
+}
+const safeCode = (v: unknown) => (typeof v === "string" ? v.replace(/[^A-Za-z0-9_.:-]/g, "").slice(0, 60) : "");
+
 export interface GoogleClient {
   clientId: string;
   clientSecret: string;
@@ -41,7 +52,7 @@ async function tokenCall(fetchImpl: FetchLike, body: Record<string, string>): Pr
   const res = await fetchImpl(TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(body).toString() });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (data.error === "invalid_grant") throw new GoogleAccessRevoked();
-  if (!res.ok) throw new Error(`google-token-${res.status}`); // never the response body: it may carry tokens
+  if (!res.ok) throw new GoogleError(safeCode(data.error) || `token-${res.status}`);
   return data;
 }
 
@@ -63,7 +74,11 @@ export async function revokeGoogleToken(fetchImpl: FetchLike, token: string): Pr
 async function api<T>(fetchImpl: FetchLike, token: string, path: string): Promise<T> {
   const res = await fetchImpl(`${API}${path}`, { headers: { Authorization: `Bearer ${token}` } });
   if (res.status === 401) throw new GoogleAccessRevoked();
-  if (!res.ok) throw new Error(`gmail-api-${res.status}`);
+  if (!res.ok) {
+    // e.g. 403 "accessNotConfigured" / "SERVICE_DISABLED": the Gmail API is off in the Google project.
+    const e = ((await res.json().catch(() => ({}))) as { error?: { status?: string; errors?: { reason?: string }[]; details?: { reason?: string }[] } }).error;
+    throw new GoogleError(`gmail-${res.status}:${safeCode(e?.details?.[0]?.reason ?? e?.errors?.[0]?.reason ?? e?.status)}`);
+  }
   return (await res.json()) as T;
 }
 
