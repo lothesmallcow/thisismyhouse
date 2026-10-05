@@ -38,7 +38,7 @@ import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences
 import { getProfile, updateProfile } from "@/lib/server/profile";
 import { after } from "next/server";
 import { checkInboxNow, quickSearchFor } from "@/lib/pipeline/jobs";
-import { alertsDone, collegaState, saveCollegaState } from "@/lib/server/inbox";
+import { alertsDone, collegaState, linkCompassMailbox, saveCollegaState } from "@/lib/server/inbox";
 import { lastQuickSearch, QUICK_SEARCH_EVERY_MIN } from "@/lib/pipeline/quick-search";
 import { updateUserSettings } from "@/lib/server/settings";
 import { confirmReply, dismissReply } from "@/lib/server/replies";
@@ -455,6 +455,15 @@ export async function collegaStepAction(f: FormData) {
   await saveCollegaState(db, u.id, s);
   revalidatePath("/collega");
   redirect(`/collega?passo=${Math.min(4, n + 1)}`);
+}
+
+/** Their e-mail is the Compass mailbox itself: no forwarding, the alerts there are theirs. */
+export async function linkCompassMailboxAction() {
+  const u = await requireUser();
+  const db = getDb();
+  if (!(await linkCompassMailbox(db, u.id))) done("/collega?passo=1&email=gmail", "casella-non-tua");
+  await saveCollegaState(db, u.id, { ...(await collegaState(db, u.id)), emailDone: true, email: "gmail" });
+  done("/collega?passo=2", "casella-collegata");
 }
 
 /** "Controlla ora": read the Compass mailbox now (forwarding code, first alerts), in the background. */

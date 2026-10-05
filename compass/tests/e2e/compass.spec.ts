@@ -539,7 +539,11 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await expect(page.getByText(/Compass trova le offerte leggendo proprio quelle e-mail/)).toBeVisible();
   await page.getByRole("link", { name: "Gmail", exact: true }).click();
   await expect(page.getByText(/compass\.demo\+cmp-[a-z0-9]{6}@example\.com/).first()).toBeVisible();
-  await expect(page.getByText(/Lascia selezionato/)).toBeVisible();
+  await expect(page.getByText(/lascia selezionato/i)).toBeVisible();
+  // Gmail refuses to forward a mailbox to itself: the page explains it and who can link it.
+  await expect(page.getByText(/Non puoi specificare il tuo indirizzo email/)).toBeVisible();
+  await expect(page.getByText(/Admin → Utenti/)).toBeVisible();
+  await expect(page.getByText(/Controllo finale/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Scarica il filtro" })).toHaveAttribute("href", "/api/gmail-filter");
   await expect(page.getByText(/Reindirizza a/)).toHaveCount(0); // not Outlook's steps
   const xml = await page.request.get("/api/gmail-filter");

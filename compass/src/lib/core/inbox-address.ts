@@ -17,6 +17,20 @@ export function personalAddress(base: string, tag: string): string {
   return `${local.split("+")[0]}+${PREFIX}${tag}@${domain}`;
 }
 
+/**
+ * Whether two addresses are the same mailbox: case, spaces and "+tags" aside, and for Gmail also dots
+ * and the googlemail domain ("Nome.Cognome+x" = "nomecognome").
+ */
+export function sameMailbox(a: string | null | undefined, b: string | null | undefined): boolean {
+  const norm = (x: string) => {
+    const [local = "", domain = ""] = x.trim().toLowerCase().split("@");
+    const gmail = domain === "gmail.com" || domain === "googlemail.com";
+    const l = local.split("+")[0];
+    return `${gmail ? l.replace(/\./g, "") : l}@${gmail ? "gmail.com" : domain}`;
+  };
+  return Boolean(a?.includes("@") && b?.includes("@") && norm(a) === norm(b));
+}
+
 /** The tag of the personal address an e-mail was delivered to, if any. */
 export function tagOf(e: Pick<InboundEmail, "to"> & { deliveredTo?: string[] }): string | null {
   for (const a of [...(e.deliveredTo ?? []), ...e.to]) {

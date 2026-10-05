@@ -1,7 +1,7 @@
 // Each person's personal Compass address and what arrived to it: the platforms whose alerts reach
 // Compass, and Gmail's forwarding confirmation code (shown to them to finish the setup).
 import { and, eq, like, sql } from "drizzle-orm";
-import { newAlertTag, personalAddress, type ForwardingConfirmation } from "../core/inbox-address";
+import { newAlertTag, personalAddress, sameMailbox, type ForwardingConfirmation } from "../core/inbox-address";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { env, mailboxConfig } from "../env";
@@ -19,7 +19,7 @@ export async function personalInbox(db: DB, userId: number): Promise<string | nu
   const u = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
   if (!u) return null;
   // Someone who signs in with the very mailbox Compass reads: their alerts are already there.
-  if (!env.demoMode && u.email.toLowerCase() === base.toLowerCase() && !u.mailboxKey) await db.update(schema.users).set({ mailboxKey: "default" }).where(eq(schema.users.id, userId));
+  if (!env.demoMode && sameMailbox(u.email, base) && !u.mailboxKey) await db.update(schema.users).set({ mailboxKey: "default" }).where(eq(schema.users.id, userId));
   let tag = u.alertTag;
   for (let i = 0; !tag && i < 5; i++) {
     const t = newAlertTag();
@@ -31,6 +31,19 @@ export async function personalInbox(db: DB, userId: number): Promise<string | nu
     }
   }
   return tag ? personalAddress(base, tag) : null;
+}
+
+/**
+ * "My e-mail is the Compass mailbox itself" (Gmail refuses to forward a mailbox to itself): link it, so
+ * the alerts already there are read for them. Only for someone who signs in with that very address;
+ * anyone else needs the administrator (Admin → Utenti → Casella), who owns that mailbox.
+ */
+export async function linkCompassMailbox(db: DB, userId: number): Promise<boolean> {
+  const base = baseMailbox();
+  const u = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
+  if (!base || !u || !sameMailbox(u.email, base)) return false;
+  await db.update(schema.users).set({ mailboxKey: "default" }).where(eq(schema.users.id, userId));
+  return true;
 }
 
 const fwdKey = (userId: number) => `forwarding_${userId}`;

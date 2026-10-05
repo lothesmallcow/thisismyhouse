@@ -20,6 +20,8 @@ const MESSAGES: Record<string, { tone: "success" | "info" | "warn" | "danger"; t
   "posizioni-salvate": { tone: "success", text: "Posizioni salvate: le prossime ricerche useranno queste." },
   "posizioni-vuote": { tone: "warn", text: "Nessuna posizione spuntata: le ricerche useranno solo settori e aziende scelti." },
   "carriere-salvate": { tone: "success", text: "Salvato: ora cerco in tutte queste carriere e in tutti questi paesi. Il web scraping parte da solo (se non l'hai lanciato negli ultimi 10 minuti)." },
+  "casella-collegata": { tone: "success", text: "Fatto: Compass legge già la tua Gmail, niente inoltro. Ora gli account." },
+  "casella-non-tua": { tone: "warn", text: "Questa casella è collegata a un altro account: chiedi all'amministratore di collegarla al tuo (Admin → Utenti → Casella)." },
   "controllo-avviato": { tone: "success", text: "Sto leggendo la casella di Compass: la pagina si aggiorna da sola." },
   "dove-salvato": { tone: "success", text: "Salvato: cerco in questi posti. Il web scraping parte da solo (se non l'hai lanciato negli ultimi 10 minuti)." },
   "ricerca-avviata": { tone: "success", text: "Web scraping avviato: siti delle aziende, pagine lavoro e ricerca sul web. Le offerte compaiono qui entro un minuto." },

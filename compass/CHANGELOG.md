@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.16.3 · 2026-10-05
+
+- Collega le fonti, Gmail: when Gmail answers "Non puoi specificare il tuo indirizzo email", the e-mail
+  is the very mailbox Compass reads, so no forwarding is needed. The page explains it, and "È la mia
+  Gmail: collegala" links it for the person signed in with that address. Anyone else is told how the
+  administrator links it (Admin → Utenti → Casella: default), so nobody can claim someone else's mailbox.
+- The same-mailbox check ignores case, spaces, +tags, Gmail dots and googlemail.
+- Step by step made precise: exact Gmail clicks (from a computer, the right account, Inoltro →
+  Aggiungi → Avanti → Procedi → OK, where the code field appears, Verifica, "Disattiva inoltro",
+  importing the filter file by name) and a final check. Outlook steps also name each button, warn
+  about work or university accounts, and end with a final check.
+
 ## 0.16.2 · 2026-10-05
 
 - **Offerte → Filtri → Luoghi** replaces "Distanza": it starts from the profile's places (cities,

@@ -16,7 +16,9 @@ import { getPrefs, listSectors } from "@/lib/server/catalog";
 import { alertsDone, alertsReceived, baseMailbox, collegaState, forwardingConfirmationFor, personalInbox } from "@/lib/server/inbox";
 import { background } from "@/lib/server/person";
 import { getProfile } from "@/lib/server/profile";
-import { checkInboxNowAction, collegaStepAction, toggleAlertDoneAction } from "../actions";
+import { checkInboxNowAction, collegaStepAction, linkCompassMailboxAction, toggleAlertDoneAction } from "../actions";
+import { sameMailbox } from "@/lib/core/inbox-address";
+import { env } from "@/lib/env";
 
 export const metadata = { title: "Collega le fonti" };
 export const maxDuration = 60;
@@ -56,7 +58,9 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
     collegaState(db, user.id),
   ]);
   const base = baseMailbox();
-  const ownMailbox = Boolean(base && u?.email.toLowerCase() === base.toLowerCase());
+  // Their e-mail is the mailbox Compass reads (or the administrator linked it): no forwarding needed.
+  const ownMailbox = Boolean(base && (sameMailbox(u?.email, base) || (!env.demoMode && u?.mailboxKey === "default")));
+  const canLink = sameMailbox(u?.email, base);
   const countries = homeCountries(p.countries, p.city);
   const careers = sectors.filter((s) => prefs.sectors.get(s.id) === "like").map((s) => s.slug);
   const platforms = platformsFor(countries, p.track, careers);
@@ -117,7 +121,9 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
             </Why>
             {ownMailbox ? (
               <div className="mt-5">
-                <Notice tone="success">La tua e-mail è già la casella di Compass: è già collegata.</Notice>
+                <Notice tone="success" title="Già collegata">
+                  Compass legge direttamente la casella {base}: gli avvisi che arrivano lì sono già tuoi, senza inoltro né filtri. Al passo 2 e 3 usa questa e-mail per gli account e gli avvisi.
+                </Notice>
                 {next()}
               </div>
             ) : !provider ? (
@@ -151,14 +157,37 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                     <>
                       <Sub n={2}>
                         <p>
-                          Apri le impostazioni di inoltro di Gmail, premi <strong>&quot;Aggiungi un indirizzo di inoltro&quot;</strong>, incolla l&apos;indirizzo, poi &quot;Avanti&quot; e &quot;Procedi&quot;.
+                          <strong>Dal computer</strong> (dall&apos;app di Gmail sul telefono l&apos;inoltro non si può impostare), apri le impostazioni di inoltro con il pulsante qui sotto. Si apre Gmail su <em>Impostazioni → Inoltro e POP/IMAP</em>.
                         </p>
                         <a href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" rel="noopener noreferrer" className={ext}>
-                          Apri le impostazioni di Gmail <IconExternal size={13} />
+                          Apri Inoltro e POP/IMAP <IconExternal size={13} />
                         </a>
+                        <p className="text-[13px] text-muted">Hai più account Gmail? Controlla in alto a destra che sia quello che usi per LinkedIn e Indeed; se no, cambia account e riapri il link.</p>
                       </Sub>
                       <Sub n={3}>
-                        <p>Gmail manda un codice di conferma al tuo indirizzo Compass. Te lo mostro qui:</p>
+                        <p>
+                          Nella prima sezione, <strong>Inoltro</strong>, premi <strong>&quot;Aggiungi un indirizzo di inoltro&quot;</strong>. Incolla il tuo indirizzo Compass (punto 1) e premi <strong>&quot;Avanti&quot;</strong>. Si apre una finestrella: premi <strong>&quot;Procedi&quot;</strong>, poi <strong>&quot;OK&quot;</strong>.
+                        </p>
+                        <div className="rounded-lg border border-line px-3.5 py-3">
+                          <p className="font-medium">Gmail dice &quot;Indirizzo di inoltro non valido. Non puoi specificare il tuo indirizzo email&quot;?</p>
+                          <p className="mt-1 text-muted">
+                            Vuol dire che la tua Gmail è proprio la casella che Compass legge{base ? ` (${base})` : ""}: l&apos;inoltro non serve, gli avvisi sono già lì. Premi Annulla in Gmail e collega la casella qui:
+                          </p>
+                          {canLink ? (
+                            <form action={linkCompassMailboxAction} className="mt-2">
+                              <Button size="sm">È la mia Gmail: collegala</Button>
+                            </form>
+                          ) : (
+                            <p className="mt-1 text-muted">
+                              Sei entrato in Compass con un&apos;altra e-mail ({u?.email}), quindi per sicurezza la collega l&apos;amministratore: <em>Admin → Utenti → questo account → Casella e-mail: default → Salva</em>. Poi salta al passo 2.
+                            </p>
+                          )}
+                        </div>
+                      </Sub>
+                      <Sub n={4}>
+                        <p>
+                          Gmail manda un <strong>codice di conferma</strong> (9 cifre) al tuo indirizzo Compass. Compass lo legge e te lo mostra qui: premi il pulsante e aspetta circa un minuto.
+                        </p>
                         {fwd?.code ? (
                           <div className="flex flex-wrap items-center gap-2">
                             <strong className="text-[18px] tracking-wider">{fwd.code}</strong>
@@ -173,11 +202,30 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                           </form>
                         )}
                         <p>
-                          Incollalo in Gmail e premi &quot;Verifica&quot;. <strong>Lascia selezionato &quot;Disattiva inoltro&quot;</strong>: così non parte tutta la tua posta, ma solo gli avvisi del filtro del punto 4.
+                          Torna su Gmail, nella stessa pagina: sotto Inoltro è comparso il campo <strong>&quot;Codice di conferma&quot;</strong>. Incolla il codice e premi <strong>&quot;Verifica&quot;</strong>.
+                        </p>
+                        <p>
+                          Dopo la verifica <strong>lascia selezionato &quot;Disattiva inoltro&quot;</strong> e non cambiare altro: così non parte tutta la tua posta, ma solo gli avvisi del filtro del punto 5. Se in fondo alla pagina c&apos;è &quot;Salva modifiche&quot;, premilo.
                         </p>
                       </Sub>
-                      <Sub n={4}>
-                        <p>Crea il filtro che inoltra solo gli avvisi: scarica il file, poi in Gmail apri Filtri → &quot;Importa filtri&quot; → scegli il file → &quot;Apri file&quot; → &quot;Crea filtri&quot;.</p>
+                      <Sub n={5}>
+                        <p>
+                          Crea il filtro che inoltra <strong>solo</strong> gli avvisi dei siti di lavoro (funziona solo dopo la verifica del punto 4):
+                        </p>
+                        <ol className="list-decimal space-y-1 pl-5">
+                          <li>
+                            Premi <strong>&quot;Scarica il filtro&quot;</strong>: scarica il file <code>compass-filtro-gmail.xml</code> (di solito nella cartella Download).
+                          </li>
+                          <li>
+                            Premi <strong>&quot;Apri i filtri di Gmail&quot;</strong>: si apre <em>Impostazioni → Filtri e indirizzi bloccati</em>.
+                          </li>
+                          <li>
+                            Scorri in fondo alla pagina e premi <strong>&quot;Importa filtri&quot;</strong> → <strong>&quot;Scegli file&quot;</strong> → scegli il file scaricato → <strong>&quot;Apri file&quot;</strong>.
+                          </li>
+                          <li>
+                            Compare il filtro &quot;Compass&quot;. Premi <strong>&quot;Crea filtri&quot;</strong>.
+                          </li>
+                        </ol>
                         <div className="flex flex-wrap gap-2">
                           <a href="/api/gmail-filter" className={ext}>
                             Scarica il filtro
@@ -188,12 +236,17 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                         </div>
                         <details className="text-[13px] text-muted">
                           <summary className="cursor-pointer">Preferisci crearlo a mano?</summary>
-                          <p className="mt-1">Cerca in Gmail questo testo, premi l&apos;icona dei filtri nella barra di ricerca → &quot;Crea filtro&quot; → &quot;Inoltra a&quot; il tuo indirizzo Compass:</p>
+                          <p className="mt-1">Copia questo testo e incollalo nella barra di ricerca di Gmail. Premi l&apos;icona dei filtri a destra della barra → &quot;Crea filtro&quot; → spunta &quot;Inoltra a&quot; → scegli il tuo indirizzo Compass → &quot;Crea filtro&quot;.</p>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
                             <code className="break-all rounded bg-subtle px-2 py-1 text-[12px]">{gmailFilter(platforms)}</code>
                             <CopyButton text={gmailFilter(platforms)} size="sm" />
                           </div>
                         </details>
+                      </Sub>
+                      <Sub n={6}>
+                        <p>
+                          <strong>Controllo finale</strong>: in <em>Filtri e indirizzi bloccati</em> c&apos;è una riga che finisce con <em>&quot;Inoltra a {address}&quot;</em>. Se c&apos;è, hai finito.
+                        </p>
                       </Sub>
                     </>
                   )}
@@ -201,15 +254,16 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                     <>
                       <Sub n={2}>
                         <p>
-                          Apri le regole di Outlook e premi <strong>&quot;Aggiungi una nuova regola&quot;</strong>. Nome: Compass.
+                          <strong>Dal computer</strong>, apri le regole di Outlook con il pulsante qui sotto (si apre <em>Impostazioni → Posta → Regole</em>). Premi <strong>&quot;+ Aggiungi una nuova regola&quot;</strong> e come nome scrivi <strong>Compass</strong>.
                         </p>
                         <a href="https://outlook.live.com/mail/0/options/mail/rules" target="_blank" rel="noopener noreferrer" className={ext}>
                           Apri le regole di Outlook <IconExternal size={13} />
                         </a>
+                        <p className="text-[13px] text-muted">Usi Outlook del lavoro o dell&apos;università? Spesso l&apos;inoltro verso fuori è bloccato: in quel caso scegli &quot;Un&apos;altra&quot; qui sopra e usa la tua e-mail personale per gli avvisi.</p>
                       </Sub>
                       <Sub n={3}>
                         <p>
-                          Condizione <strong>&quot;Da&quot;</strong>: incolla questi mittenti (gli invii degli avvisi).
+                          In <strong>&quot;Aggiungi una condizione&quot;</strong> scegli <strong>&quot;Da&quot;</strong> e incolla questi mittenti (sono gli indirizzi da cui partono gli avvisi):
                         </p>
                         <div className="flex flex-wrap items-center gap-2">
                           <code className="break-all rounded bg-subtle px-2 py-1 text-[12px]">{senders.join("; ")}</code>
@@ -218,7 +272,12 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                       </Sub>
                       <Sub n={4}>
                         <p>
-                          Azione <strong>&quot;Reindirizza a&quot;</strong> (non &quot;Inoltra&quot;: così il mittente resta quello del sito) → incolla il tuo indirizzo Compass → Salva.
+                          In <strong>&quot;Aggiungi un&apos;azione&quot;</strong> scegli <strong>&quot;Reindirizza a&quot;</strong> (non &quot;Inoltra a&quot;: così il mittente resta quello del sito e Compass lo riconosce), incolla il tuo indirizzo Compass e premi <strong>&quot;Salva&quot;</strong>.
+                        </p>
+                      </Sub>
+                      <Sub n={5}>
+                        <p>
+                          <strong>Controllo finale</strong>: nell&apos;elenco delle regole c&apos;è &quot;Compass&quot; ed è attiva (l&apos;interruttore è acceso).
                         </p>
                       </Sub>
                     </>
