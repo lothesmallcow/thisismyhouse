@@ -119,8 +119,19 @@ describe("listing and 'Non mi interessa'", () => {
     expect(order.indexOf("poco") === -1 || order.lastIndexOf("molto") < order.indexOf("poco")).toBe(true);
     const part = await listJobs(db, L, { hours: "part" }, 100, NOW);
     expect(part.jobs.every((j) => j.hours !== "full")).toBe(true);
-    const near = await listJobs(db, L, { maxKm: 10 }, 100, NOW);
-    expect(near.jobs.every((j) => j.remote === "remote" || (j.distanceKm ?? 999) <= 10)).toBe(true);
+    // Places instead of kilometres: a city with its province, a region, a country.
+    const everywhere = await listJobs(db, L, {}, 200, NOW);
+    const torino = await listJobs(db, L, { places: [{ kind: "città", country: "IT", name: "Torino" }] }, 200, NOW);
+    expect(torino.jobs.length).toBeGreaterThan(0);
+    expect(torino.jobs.every((j) => j.city == null || j.province === "TO")).toBe(true);
+    const piemonte = await listJobs(db, L, { places: [{ kind: "regione", country: "IT", name: "Piemonte" }] }, 200, NOW);
+    expect(piemonte.jobs.every((j) => j.city == null || j.region === "Piemonte")).toBe(true);
+    expect(piemonte.total).toBeGreaterThanOrEqual(torino.total);
+    const italia = await listJobs(db, L, { places: [{ kind: "paese", country: "IT", name: "Italia" }] }, 200, NOW);
+    expect(italia.jobs.every((j) => j.city == null || j.country === "IT")).toBe(true);
+    expect(italia.total).toBeLessThanOrEqual(everywhere.total);
+    const uk = await listJobs(db, L, { places: [{ kind: "paese", country: "GB", name: "Regno Unito" }] }, 200, NOW);
+    expect(uk.jobs.every((j) => j.city == null || j.country === "GB")).toBe(true);
   });
 
   it("dismissing 'azienda' adds a visible adjustment that can be undone", async () => {

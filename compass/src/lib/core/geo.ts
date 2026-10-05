@@ -157,6 +157,8 @@ const COUNTRY_HINTS: [CountryCode, RegExp][] = [
   ["FR", /\b(france|francia|ile de france|île-de-france|paris|parigi)\b/i],
   ["IT", /\b(italia|italy|italien)\b/i],
 ];
+/** Places outside the countries we cover: their towns must not match ours ("New York" is not York). */
+const ELSEWHERE = /\b(new york|nyc|united states|usa|u\.s\.a?|stati uniti|new jersey|new hampshire|new mexico|new south wales|new zealand|nuova zelanda|canada|toronto|ontario|australia|sydney|melbourne|singapore|singapor|hong kong|dubai|abu dhabi|emirati|uae|spain|spagna|españa|madrid|barcelona|barcellona|netherlands|paesi bassi|olanda|amsterdam|switzerland|svizzera|schweiz|suisse|zurich|zürich|zurigo|geneva|genève|ginevra|luxembourg|lussemburgo|ireland|irlanda|dublin|dublino|belgium|belgio|brussels|bruxelles|india|japan|giappone|tokyo|china|cina|brazil|brasile|mexico|messico)\b/i;
 /** Town names that are also common words: matched abroad only when the country is named. */
 const AMBIGUOUS = new Set(["reading", "bath", "street", "march", "wells", "deal", "hope", "sale", "nice", "essen", "sens", "rain", "hof", "bury", "ware", "goch", "home", "worth", "mold", "ely", "par", "orange", "lens", "tours", "vertou", "sale", "hythe", "barking", "cheddar", "battle", "looe"]);
 
@@ -179,6 +181,7 @@ export function findPlace(location: string | null | undefined, opts: FindOptions
   const hint = provinceHint ? (provinceHint[1] ?? provinceHint[2]) : null;
   const abroad = opts.abroad !== false;
   const named = COUNTRY_HINTS.find(([, re]) => re.test(location))?.[0];
+  if (!named && ELSEWHERE.test(location)) return null;
   const world = abroad ? getForeign() : null;
 
   const lookup = (key: string): Place | null => {

@@ -145,6 +145,9 @@ export const jobs = sqliteTable(
     province: text("province"),
     lat: real("lat"),
     lng: real("lng"),
+    /** Where the job is: country code (IT, GB, DE, FR), "" when the place is elsewhere or unknown, null when not checked yet. */
+    country: text("country"),
+    region: text("region"),
     description: text("description").notNull().default(""),
     salaryRaw: text("salary_raw"),
     salaryMin: integer("salary_min"), // annual gross
@@ -170,7 +173,7 @@ export const jobs = sqliteTable(
     firstSeenAt: ts("first_seen_at").notNull(),
     updatedAt: ts("updated_at").notNull(),
   },
-  (t) => [index("jobs_dedupe_idx").on(t.dedupeKey)],
+  (t) => [index("jobs_dedupe_idx").on(t.dedupeKey), index("jobs_country_idx").on(t.country, t.region)],
 );
 
 /**

@@ -7,7 +7,7 @@ import type { CodeQuery } from "../core/search-code";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { fetchAdzuna } from "../sources/api/adzuna";
-import { fetchAts, type AtsType } from "../sources/ats";
+import { fetchAts, keepInCountries, type AtsType } from "../sources/ats";
 import { discoverAts } from "../sources/ats/discover";
 import type { FetchLike } from "../sources/http";
 import { hitToRawJob, isJobPage, type SearchProvider } from "../sources/web/w1";
@@ -134,7 +134,8 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
         .update(schema.catalogCompanies)
         .set({ careersCheckedAt: now, careersUrl: r.careersUrl, ...(r.ats ? { ats: r.ats.ats, atsSlug: r.ats.slug, atsCheckedAt: now } : {}) })
         .where(eq(schema.catalogCompanies.id, c.id));
-      await save(r.jobs.map((j) => ({ ...j, company: j.company || c.name })));
+      // Big firms list offers worldwide: only those in the person's countries ("New York" is not for Italy).
+      await save(r.jobs.filter(keepInCountries(countries)).map((j) => ({ ...j, company: j.company || c.name })));
       // The site links to an official job board: read its feed now.
       if (r.ats && Date.now() < deadline) {
         out.boardsFound++;

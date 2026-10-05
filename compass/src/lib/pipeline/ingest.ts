@@ -8,7 +8,7 @@ import { schema } from "../db";
 import { env } from "../env";
 import { fetchAdzuna } from "../sources/api/adzuna";
 import { fetchJooble } from "../sources/api/jooble";
-import { atsEndpoint, fetchAts, type AtsType } from "../sources/ats";
+import { atsEndpoint, fetchAts, keepInCountries, type AtsType } from "../sources/ats";
 import { BlockedError, type FetchLike } from "../sources/http";
 import type { Mailbox } from "../sources/mail/types";
 import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
@@ -188,7 +188,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
         const host = new URL(c.careersUrl).host;
         const r = await runWithHealth(db, `careers:${host}`, async () => {
           const res = await scrapeCareers(polite, { careersUrl: c.careersUrl }, now, deadline);
-          const s = await store(db, res.jobs.map((j) => ({ ...j, company: j.company || c.name })), now, contexts);
+          const s = await store(db, res.jobs.filter(keepInCountries(atsCountries)).map((j) => ({ ...j, company: j.company || c.name })), now, contexts);
           summary.newJobs += s.created;
           return { items: s.total, failures: 0 };
         }, now);

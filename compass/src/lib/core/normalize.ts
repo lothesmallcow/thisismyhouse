@@ -84,6 +84,9 @@ export interface NormalizedJob {
   province: string | null;
   lat: number | null;
   lng: number | null;
+  /** Country code of the place, "" when there is a place we do not cover (or cannot read), null when none. */
+  country: string | null;
+  region: string | null;
   distanceKm: number | null;
   description: string;
   salary: Salary;
@@ -134,6 +137,8 @@ export function normalizeJob(raw: RawJob, home: { lat: number; lng: number } | n
     province: place?.province ?? null,
     lat: place?.lat ?? null,
     lng: place?.lng ?? null,
+    country: place?.country ?? (raw.location?.trim() ? "" : null),
+    region: place?.region || null,
     distanceKm: place && home ? distanceKm(home, place) : null,
     description,
     salary,

@@ -56,7 +56,7 @@ const t = async (label: string, f: () => Promise<unknown>) => {
 await t("Full re-rank, both people (first time, 2 x 5,000 rows written)", () => rerankAll(db));
 await t("Offerte, first page (10)", () => listJobs(db, lucia, {}, 10));
 await t("Offerte, first page again (warm)", () => listJobs(db, lucia, {}, 10));
-await t("Offerte with 3 filters", () => listJobs(db, lucia, { maxKm: 20, hours: "part", days: 7 }, 10));
+await t("Offerte with 3 filters", () => listJobs(db, lucia, { places: [{ kind: "regione", country: "IT", name: "Piemonte" }], hours: "part", days: 7 }, 10));
 await t("Offerte, student, only chosen companies", () => listJobs(db, marco, { focus: "aziende" }, 10));
 await t("Offerte after 'Mostra altre 10' x20 (200 rows)", () => listJobs(db, lucia, {}, 200));
 await updateProfile(db, lucia, { maxKm: 10, hours: "part" }); // changes almost every job's score

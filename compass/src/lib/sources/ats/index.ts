@@ -54,13 +54,16 @@ const COUNTRY_WORDS: Record<CountryCode, RegExp> = {
   FR: /\b(france)\b/i,
 };
 /** Offers located in the countries the people chose (Italy when nobody chose). */
-function inCountries(location: string | null | undefined, remote: boolean, countries: CountryCode[]): boolean {
+export function inCountries(location: string | null | undefined, remote: boolean, countries: CountryCode[]): boolean {
   if (!location) return remote;
   if (countries.some((c) => COUNTRY_WORDS[c].test(location))) return true;
   if (/,\s*(usa|us|spain|españa|netherlands|ireland|switzerland)\b/i.test(location)) return false;
   const p = findPlace(location);
   return p != null && countries.includes(p.country);
 }
+
+/** Career-page offers worth keeping: in the chosen countries, or not saying where (then the person's filters decide). */
+export const keepInCountries = (countries: CountryCode[]) => (j: RawJob) => !j.location?.trim() || inCountries(j.location, j.hints?.remote === "remote", countries);
 
 const src = (ats: AtsType) => `ats:${ats}` as SourceKind;
 

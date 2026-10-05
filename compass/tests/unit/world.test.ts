@@ -31,6 +31,13 @@ describe("places in four countries", () => {
     expect(findPlace("Reading, UK")).toMatchObject({ country: "GB" });
     expect(findPlace("Lavoro a Parigi e dintorni", { abroad: false })).toBeNull();
   });
+  it("a place outside the four countries is not one of their towns (New York is not York)", () => {
+    expect(findPlace("New York, NY")).toBeNull();
+    expect(findPlace("New York, USA")).toBeNull();
+    expect(findPlace("Madrid, Spain")).toBeNull();
+    expect(findPlace("York, UK")).toMatchObject({ country: "GB" });
+    expect(findPlace("Milano, Italia")).toMatchObject({ country: "IT" });
+  });
   it("regions per country and city suggestions abroad only when asked", () => {
     expect(regionsOf("IT")).toHaveLength(20);
     expect(regionsOf("DE")).toHaveLength(16);

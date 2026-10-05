@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.16.2 · 2026-10-05
+
+- **Offerte → Filtri → Luoghi** replaces "Distanza": it starts from the profile's places (cities,
+  regions, countries, and remote when accepted) and can be changed there just to try, without touching
+  the profile ("Torna ai luoghi del profilo"). A city includes its province. Offers that do not say
+  where they are stay visible. The "nuove" count follows the same places.
+- Fixed: offers from New York showed up for people who chose only Italy. Career pages of global firms
+  list offers worldwide and were all saved: now only those in the person's countries are kept (as for
+  the official job boards). "New York" was also read as York in England: places outside the four
+  countries are no longer matched to their towns, and JSON-LD offers carry their country.
+- Jobs record their country and region (migration 0013, filled in for existing jobs at deploy).
+- "Non mi interessa: è troppo lontano" no longer adds a kilometre limit.
+
 ## 0.16.1 · 2026-10-05
 
 - **Dove without map or kilometres**: places are chips (a city, a region or a whole country) added by

@@ -8,7 +8,7 @@ const COUNTRY: Record<string, string> = { IT: "Italia", GB: "Regno Unito", DE: "
 const value = (p: WherePlace) => `${p.kind}|${p.country}|${p.name}`;
 const label = (p: WherePlace) => (p.kind === "paese" ? `${p.name} · tutto il paese` : `${p.name} · ${p.kind}, ${COUNTRY[p.country]}`);
 
-export function PlacesPicker({ initial }: { initial: WherePlace[] }) {
+export function PlacesPicker({ initial, name = "place", hint, empty = "Nessun luogo: scrivine uno qui sotto." }: { initial: WherePlace[]; name?: string; hint?: string; empty?: string }) {
   const [places, setPlaces] = useState<WherePlace[]>(initial);
   const [q, setQ] = useState("");
   const [list, setList] = useState<WherePlace[]>([]);
@@ -34,14 +34,14 @@ export function PlacesPicker({ initial }: { initial: WherePlace[] }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2" aria-live="polite">
-        {places.length === 0 && <p className="text-[13px] text-faint">Nessun luogo: scrivine uno qui sotto.</p>}
+        {places.length === 0 && <p className="text-[13px] text-faint">{empty}</p>}
         {places.map((p) => (
           <span key={value(p)} className="anim-in inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-accent bg-accent-soft pl-3.5 pr-1 text-[14px] text-accent">
             {label(p)}
             <button type="button" onClick={() => setPlaces((old) => old.filter((x) => value(x) !== value(p)))} className="flex h-7 w-7 items-center justify-center rounded-full text-[16px] hover:bg-surface" aria-label={`Togli ${p.name}`}>
               ×
             </button>
-            <input type="hidden" name="place" value={value(p)} />
+            <input type="hidden" name={name} value={value(p)} />
           </span>
         ))}
       </div>
@@ -86,7 +86,7 @@ export function PlacesPicker({ initial }: { initial: WherePlace[] }) {
           </ul>
         )}
       </div>
-      <p className="text-[12.5px] text-faint">Puoi mettere più luoghi, anche in paesi diversi: cerco in ognuno, nella sua lingua. La prima città è la tua città.</p>
+      <p className="text-[12.5px] text-faint">{hint ?? "Puoi mettere più luoghi, anche in paesi diversi: cerco in ognuno, nella sua lingua. La prima città è la tua città."}</p>
     </div>
   );
 }
