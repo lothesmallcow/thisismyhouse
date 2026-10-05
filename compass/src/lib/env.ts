@@ -29,6 +29,10 @@ export const env = {
     if (!s && !env.demoMode) throw new Error("SESSION_SECRET is required when DEMO_MODE=false");
     return s || "dev-only-insecure-secret";
   },
+  /** "Collega Gmail" (Google sign-in, read-only): an OAuth client of a Google Cloud project, see docs/setup.md. */
+  get google(): { clientId: string; clientSecret: string } {
+    return { clientId: process.env.GOOGLE_CLIENT_ID || "", clientSecret: process.env.GOOGLE_CLIENT_SECRET || "" };
+  },
   get cronSecret(): string | undefined {
     return process.env.CRON_SECRET || undefined;
   },

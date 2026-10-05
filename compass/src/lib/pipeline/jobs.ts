@@ -17,6 +17,7 @@ import { scanMailbox } from "./mailbox-scan";
 import { runWithHealth } from "./health";
 import { runQuickSearch, type QuickResult } from "./quick-search";
 import { and, eq, gte, isNotNull } from "drizzle-orm";
+import { connectedPeople, connectionMailbox, getMailConnection, markMailRead } from "../server/mail-connections";
 
 /** The first search for one person (after the questionnaire, or "Cerca ora"). Never throws. */
 export async function quickSearchFor(db: DB, userId: number, now = new Date()): Promise<QuickResult | null> {
@@ -72,7 +73,30 @@ export async function mailboxRuns(db: DB): Promise<MailboxRun[]> {
       if (box) out.push({ key, owners, mailbox: new ImapMailbox(box) });
     }
   }
+  // Everyone's own connected Gmail ("Collega Gmail"): only the alerts in it, private to them.
+  for (const id of await connectedPeople(db)) {
+    const mailbox = await connectionMailbox(db, id, env.demoMode ? demoFetch() : fetch);
+    if (mailbox) out.push({ key: `gmail:${id}`, owners: [id], mailbox, done: (e) => markMailRead(db, id, new Date(), e) });
+  }
   return out;
+}
+
+/**
+ * Read one person's connected Gmail now (after connecting, or "Controlla ora"): the last 30 days the
+ * first time, so the alerts they already get count straight away. Never throws.
+ */
+export async function readConnectedGmail(db: DB, userId: number, now = new Date(), lookbackDays?: number) {
+  const mailbox = await connectionMailbox(db, userId, env.demoMode ? demoFetch() : fetch);
+  if (!mailbox) return null;
+  const first = !(await getMailConnection(db, userId))?.lastReadAt;
+  try {
+    const r = await scanMailbox(db, mailbox, [userId], now, { lookbackDays: lookbackDays ?? (first ? 30 : 4) });
+    await markMailRead(db, userId, now);
+    return r;
+  } catch (e) {
+    await markMailRead(db, userId, now, e);
+    return null;
+  }
 }
 
 export async function runJob(db: DB, name: JobName, now = new Date()): Promise<unknown> {
@@ -111,9 +135,15 @@ async function dispatch(db: DB, name: JobName, now: Date): Promise<unknown> {
       const out: Record<string, unknown> = {};
       for (const m of runs) {
         await runWithHealth(db, m.key === "default" ? "mailbox" : `mailbox:${m.key}`, async () => {
-          const s = await scanMailbox(db, m.mailbox, m.owners, now);
-          out[m.key] = s;
-          return { items: s.alerts + s.replies, failures: 0 };
+          try {
+            const s = await scanMailbox(db, m.mailbox, m.owners, now);
+            await m.done?.(null);
+            out[m.key] = s;
+            return { items: s.alerts + s.replies, failures: 0 };
+          } catch (e) {
+            await m.done?.(e);
+            throw e;
+          }
         }, now);
       }
       return out;

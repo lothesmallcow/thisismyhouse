@@ -13,6 +13,8 @@ import { schema } from "../db";
 type Tx = Parameters<Parameters<DB["transaction"]>[0]>[0];
 
 async function wipe(tx: Tx, userId: number): Promise<void> {
+  // Their connected Gmail: the stored access goes too (Google forgets it within days; Scollega revokes it at once).
+  await tx.delete(schema.mailConnections).where(eq(schema.mailConnections.userId, userId));
   await tx.delete(schema.replies).where(eq(schema.replies.userId, userId));
   await tx.delete(schema.sendLog).where(eq(schema.sendLog.userId, userId));
   await tx.delete(schema.applications).where(eq(schema.applications.userId, userId));

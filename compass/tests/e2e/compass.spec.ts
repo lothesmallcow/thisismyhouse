@@ -537,7 +537,9 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await page.goto("/collega?passo=1");
   await assertUiBasics(page);
   await expect(page.getByText(/Compass trova le offerte leggendo proprio quelle e-mail/)).toBeVisible();
-  await page.getByRole("link", { name: "Gmail", exact: true }).click();
+  // Gmail: one click (Google sign-in); forwarding stays as the alternative.
+  await expect(page.getByRole("link", { name: "Collega Gmail" })).toHaveAttribute("href", "/api/google/connect");
+  await page.getByRole("link", { name: "Usa l'inoltro di Gmail" }).click();
   await expect(page.getByText(/compass\.demo\+cmp-[a-z0-9]{6}@example\.com/).first()).toBeVisible();
   await expect(page.getByText(/lascia selezionato/i)).toBeVisible();
   // Gmail refuses to forward a mailbox to itself: the page explains it and who can link it.
@@ -565,6 +567,19 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await expect(page.getByText("consigliato").first()).toBeVisible();
   await page.goto("/collega?passo=4");
   await expect(page.getByText(/Ci vuole un po' di pazienza/)).toBeVisible();
+
+  // "Collega Gmail" (simulated in demo): connected, then disconnected.
+  await page.goto("/collega?passo=1");
+  await page.getByRole("link", { name: "Collega Gmail" }).click();
+  await expect(page).toHaveURL(/passo=2/);
+  await expect(page.getByText(/Gmail collegata\. Sto leggendo gli avvisi/)).toBeVisible();
+  await page.goto("/collega?passo=1");
+  await expect(page.getByText(/Gmail collegata: studente@example\.com/)).toBeVisible();
+  await expect(page.getByText(/Cosa legge Compass, esattamente/)).toBeVisible();
+  await assertUiBasics(page);
+  await page.getByRole("button", { name: "Scollega Gmail" }).click();
+  await expect(page.getByText(/Gmail scollegata/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Collega Gmail" })).toBeVisible();
 
   await page.goto("/offerte/salva");
   await assertUiBasics(page);

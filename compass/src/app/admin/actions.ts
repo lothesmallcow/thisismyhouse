@@ -1,6 +1,7 @@
 "use server";
 // Admin server actions. Every one starts with requireAdmin().
 
+import { deleteMailConnection } from "@/lib/server/mail-connections";
 import fs from "node:fs";
 import path from "node:path";
 import { and, eq } from "drizzle-orm";
@@ -299,6 +300,7 @@ export async function deletePersonAction(f: FormData) {
   await requireAdmin();
   const userId = await person(f);
   if (str(f, "confirm") !== "ELIMINA") back("/admin/utenti", "errore");
+  await deleteMailConnection(getDb(), userId, fetch); // their Gmail access is revoked at Google too
   await deleteAccount(getDb(), userId);
   back("/admin/utenti", "account-eliminato");
 }

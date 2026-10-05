@@ -37,7 +37,8 @@ import { fitWarnings } from "@/lib/server/career";
 import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences, pdfText, rematchExperiences, saveExperiences } from "@/lib/server/experiences";
 import { getProfile, updateProfile } from "@/lib/server/profile";
 import { after } from "next/server";
-import { checkInboxNow, quickSearchFor } from "@/lib/pipeline/jobs";
+import { checkInboxNow, quickSearchFor, readConnectedGmail } from "@/lib/pipeline/jobs";
+import { deleteMailConnection } from "@/lib/server/mail-connections";
 import { alertsDone, collegaState, linkCompassMailbox, saveCollegaState } from "@/lib/server/inbox";
 import { lastQuickSearch, QUICK_SEARCH_EVERY_MIN } from "@/lib/pipeline/quick-search";
 import { updateUserSettings } from "@/lib/server/settings";
@@ -324,6 +325,7 @@ export async function saveTemplateAction(f: FormData) {
 
 export async function deleteAllDataAction() {
   const u = await requireUser();
+  await deleteMailConnection(getDb(), u.id, fetch); // revoked at Google too, not only forgotten here
   await deleteAllMyData(getDb(), u.id);
   revalidatePath("/", "layout");
   redirect("/benvenuto/1?msg=dati-cancellati");
@@ -457,6 +459,13 @@ export async function collegaStepAction(f: FormData) {
   redirect(`/collega?passo=${Math.min(4, n + 1)}`);
 }
 
+/** "Scollega Gmail": the access is given back to Google and the stored token deleted. */
+export async function disconnectGmailAction() {
+  const u = await requireUser();
+  await deleteMailConnection(getDb(), u.id, fetch);
+  done("/collega?passo=1", "gmail-scollegata");
+}
+
 /** Their e-mail is the Compass mailbox itself: no forwarding, the alerts there are theirs. */
 export async function linkCompassMailboxAction() {
   const u = await requireUser();
@@ -466,10 +475,13 @@ export async function linkCompassMailboxAction() {
   done("/collega?passo=2", "casella-collegata");
 }
 
-/** "Controlla ora": read the Compass mailbox now (forwarding code, first alerts), in the background. */
+/** "Controlla ora": read the Compass mailbox and their connected Gmail now, in the background. */
 export async function checkInboxNowAction(f?: FormData) {
-  await requireUser();
-  after(() => checkInboxNow(getDb()));
+  const u = await requireUser();
+  after(async () => {
+    await checkInboxNow(getDb());
+    await readConnectedGmail(getDb(), u.id);
+  });
   done(f ? safeBack(f, "/collega") : "/collega", "controllo-avviato");
 }
 
