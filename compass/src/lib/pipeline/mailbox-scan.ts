@@ -1,7 +1,9 @@
 // One pass over one mailbox: replies to the applications of the people using it first, then job
 // alerts (which stay private to those people). Processed Message-IDs are stored so nothing is
 // parsed twice.
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
+import { forwardingConfirmation, tagOf } from "../core/inbox-address";
+import { saveForwardingConfirmation } from "../server/inbox";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { parseAlert, isJobAlert } from "../sources/alerts";
@@ -23,11 +25,24 @@ export async function scanMailbox(db: DB, mailbox: Mailbox, owners: number[], no
   const summary: MailboxSummary = { alerts: 0, jobsNew: 0, jobsMerged: 0, replies: 0 };
   const emails = await mailbox.fetchSince(new Date(now.getTime() - lookbackDays * 86400000));
   const cache = await dedupeCandidates(db);
+  // Personal Compass addresses: an alert delivered to name+cmp-<tag>@ belongs to that person only.
+  const tagged = await db.select({ id: schema.users.id, tag: schema.users.alertTag }).from(schema.users).where(and(eq(schema.users.active, true), isNotNull(schema.users.alertTag)));
+  const byTag = new Map(tagged.map((u) => [u.tag!, u.id]));
   const perParser = new Map<string, { items: number; failures: number; broken: boolean }>();
 
   for (const e of emails.sort((a, b) => a.date.getTime() - b.date.getTime())) {
     const done = await db.query.processedMessages.findFirst({ where: eq(schema.processedMessages.messageId, e.messageId) });
     if (done) continue;
+    const tag = tagOf(e);
+    const taggedOwner = tag ? byTag.get(tag) : undefined;
+    // Gmail asks to confirm a forwarding address: keep the code for that person to finish the setup.
+    const fwd = forwardingConfirmation(e);
+    if (fwd) {
+      if (taggedOwner) await saveForwardingConfirmation(db, taggedOwner, fwd, now);
+      await db.insert(schema.processedMessages).values({ messageId: e.messageId, kind: "other", parser: "gmail-forwarding", processedAt: now });
+      continue;
+    }
+    const alertOwners = taggedOwner ? [taggedOwner] : owners;
 
     const reply = await matchReply(db, e, owners);
     // A thread match is always a reply. A sender-domain match is only trusted when the e-mail
@@ -45,6 +60,8 @@ export async function scanMailbox(db: DB, mailbox: Mailbox, owners: number[], no
       }
       continue;
     }
+    // An alert nobody owns (no personal address, nobody on this mailbox) is never shown to anyone.
+    if (alertOwners.length === 0) continue;
     const r = parseAlert(e);
     summary.alerts++;
     const stat = perParser.get(r.parser) ?? { items: 0, failures: 0, broken: false };
@@ -53,7 +70,7 @@ export async function scanMailbox(db: DB, mailbox: Mailbox, owners: number[], no
     stat.broken ||= r.templateBroken;
     perParser.set(r.parser, stat);
     for (const raw of r.jobs) {
-      const res = await upsertRawJob(db, raw, now, { cache, owners, contexts: opts.contexts });
+      const res = await upsertRawJob(db, raw, now, { cache, owners: alertOwners, contexts: opts.contexts });
       if (res.created) summary.jobsNew++;
       else summary.jobsMerged++;
     }

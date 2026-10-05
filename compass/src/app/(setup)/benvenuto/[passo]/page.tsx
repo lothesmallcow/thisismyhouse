@@ -82,7 +82,10 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
           Le offerte sono già ordinate per te. Da domani mattina ricevi un&apos;e-mail con le novità. Tutto quello che hai scelto si cambia da Profilo e Aziende.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
-          <LinkButton href="/offerte">{p.track === "stage" ? "Vedi gli stage" : "Vedi le offerte"}</LinkButton>
+          <LinkButton href="/collega">Collega le fonti (5 minuti)</LinkButton>
+          <LinkButton href="/offerte" variant="secondary">
+            {p.track === "stage" ? "Vedi gli stage" : "Vedi le offerte"}
+          </LinkButton>
           <LinkButton href="/benvenuto/risposte" variant="secondary">
             Prepara le risposte per i siti
           </LinkButton>

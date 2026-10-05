@@ -6,23 +6,22 @@ import { getDb, schema } from "@/lib/db";
 import { env, mailboxConfig } from "@/lib/env";
 import { lastQuickResult, lastQuickSearch } from "@/lib/pipeline/quick-search";
 import { AutoRefresh } from "./auto-refresh";
-import { searchCodeFor } from "@/lib/pipeline/search-terms";
+import { alertsReceived } from "@/lib/server/inbox";
 import { searchTargets } from "@/lib/pipeline/targets";
 import { getSettings } from "@/lib/server/settings";
-import { IconExternal } from "./icons";
 import { Button, Card, Chip } from "./ui";
 
 /** Where this person's offers come from, what is still off, and "Cerca ora". */
 export async function SourcesCard({ userId }: { userId: number }) {
   const db = getDb();
-  const [user, picks, settings, code, last, result] = await Promise.all([
+  const [user, picks, settings, last, result] = await Promise.all([
     db.query.users.findFirst({ where: eq(schema.users.id, userId) }),
     searchTargets(db, userId),
     getSettings(db),
-    searchCodeFor(db, userId),
     lastQuickSearch(db, userId),
     lastQuickResult(db, userId),
   ]);
+  const received = await alertsReceived(db, userId);
   const box = env.demoMode ? { user: "la casella demo" } : mailboxConfig(user?.mailboxKey);
   const withBoard = picks.filter((c) => (c.ats && c.atsSlug) || c.careersUrl).length;
   const web = env.demoMode || (Boolean(env.tavilyKey) && settings.w1Enabled);
@@ -62,15 +61,11 @@ export async function SourcesCard({ userId }: { userId: number }) {
       {running && <AutoRefresh everyMs={5000} times={24} />}
       <ul className="mt-4 space-y-3 text-[13.5px]">
         {row(
-          Boolean(box),
+          Boolean(box) || received.size > 0,
           "Avvisi di LinkedIn, Indeed e InfoJobs",
-          box ? (
-            <>
-              La fonte migliore. Crea gli avvisi dai link qui sotto (dal tuo account, una volta sola) e falli arrivare a <strong>{box.user}</strong>: Compass li legge ogni mattina.
-            </>
-          ) : (
-            "Al tuo account non è collegata una casella e-mail: chiedi all'amministratore di collegarla, poi crei gli avvisi dai link."
-          ),
+          <>
+            La fonte migliore: avvisi già filtrati ogni giorno. <Link href="/collega">Collega le fonti</Link>: ti guido a creare gli account e gli avvisi giusti e a farli arrivare a Compass, senza dare password.
+          </>,
         )}
         {row(
           true, // no key needed: always on
@@ -88,15 +83,9 @@ export async function SourcesCard({ userId }: { userId: number }) {
         )}
         {row(api, "Motori di offerte", api ? "Offerte da Adzuna, nelle tue zone." : "Si attiva con una chiave gratuita (ADZUNA_APP_ID) messa dall'amministratore.")}
       </ul>
-      {box && code.alerts.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {code.alerts.map((a) => (
-            <a key={a.url} href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line-strong px-3 text-[13px] font-medium text-ink no-underline hover:bg-subtle">
-              {a.site} · {a.what} <IconExternal size={13} />
-            </a>
-          ))}
-        </div>
-      )}
+      <p className="mt-4 text-[13px] text-muted">
+        Stai guardando un annuncio su LinkedIn o un altro sito? Con il pulsante <Link href="/offerte/salva">Salva in Compass</Link> lo aggiungi con un clic.
+      </p>
     </Card>
   );
 }

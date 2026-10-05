@@ -4,7 +4,7 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 
-const SAFE_DOMAINS = /(^|\.)example(\.(com|it|org))?$|^linkedin\.com$|^indeed\.com$|^infojobs\.(it|net)$|^users\.noreply\.github\.com$|^anthropic\.com$/i;
+const SAFE_DOMAINS = /(^|\.)example(\.(com|it|org))?$|^linkedin\.com$|^indeed\.com$|^infojobs\.(it|net)$|^users\.noreply\.github\.com$|^anthropic\.com$|^google\.com$/i;
 const SAFE_EMAILS = new Set(["lothesmallcow@users.noreply.github.com"]);
 const RULES = [
   ["codice fiscale", /\b[A-Z]{6}\d{2}[A-EHLMPR-T]\d{2}[A-Z]\d{3}[A-Z]\b/g],

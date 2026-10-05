@@ -513,6 +513,28 @@ test("quick questionnaire for a new account: 5 questions, a generic role becomes
   await expect(page.getByLabel("Nome e cognome")).toHaveValue("Sara Prova");
 });
 
+test("collega le fonti: personal address, the right sites and alerts, and the Salva in Compass button", async ({ page }) => {
+  await loginAsStudent(page);
+  await page.goto("/collega");
+  await assertUiBasics(page);
+  await expect(page.getByText(/compass\.demo\+cmp-[a-z0-9]{6}@example\.com/).first()).toBeVisible();
+  await expect(page.getByText("LinkedIn", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Crea l'account/ }).first()).toHaveAttribute("href", /linkedin\.com\/signup/);
+  const open = page.getByRole("link", { name: /^Apri/ }).first();
+  await expect(open).toHaveAttribute("href", /f_E=1/);
+  await page.getByRole("button", { name: "Fatto", exact: true }).first().click();
+  await expect(page.getByRole("button", { name: "Fatto ✓" }).first()).toBeVisible();
+  await expect(page.getByText(/from:\(jobalerts-noreply@linkedin\.com/).first()).toBeVisible();
+
+  await page.goto("/offerte/salva");
+  await assertUiBasics(page);
+  await expect(page.getByRole("link", { name: "Salva in Compass" })).toHaveAttribute("href", /^javascript:/);
+  await page.goto("/offerte/aggiungi?title=Stage%20M%26A&company=Banca%20Esempio&url=https%3A%2F%2Fwww.linkedin.com%2Fjobs%2Fview%2F123%2F&text=Stage%20di%20sei%20mesi%20a%20Milano");
+  await expect(page.getByLabel("Ruolo")).toHaveValue("Stage M&A");
+  await expect(page.getByLabel("Azienda")).toHaveValue("Banca Esempio");
+  await expect(page.getByLabel("Link dell'annuncio")).toHaveValue("https://www.linkedin.com/jobs/view/123/");
+});
+
 test("student questionnaire: 12 steps, catalog, Altro, automatic focus", async ({ page }) => {
   await login(page, "giulia@example.com", "una-password-lunga");
   await expect(page).toHaveURL(/benvenuto\/1/);
