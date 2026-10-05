@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.1 · 2026-10-05
+
+- **Dove without map or kilometres**: places are chips (a city, a region or a whole country) added by
+  typing and picking a suggestion, as many as wanted, in the questionnaire and in Profilo → Dove. The
+  first city is "your city"; only regions or countries also work. The map (its tiles now need a key)
+  and the distance slider are gone.
+
 ## 0.16.0 · 2026-10-05
 
 - **Dove** (Profilo): an interactive map with the main city and its radius, more countries each with

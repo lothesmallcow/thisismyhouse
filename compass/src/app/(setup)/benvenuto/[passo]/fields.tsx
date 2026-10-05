@@ -2,23 +2,6 @@
 import { useMemo, useState } from "react";
 import { MONTHS_PER_YEAR, netAnnualToGrossAnnual } from "@/lib/core/salary";
 
-export function KmSlider({ defaultValue }: { defaultValue: number }) {
-  const [km, setKm] = useState(defaultValue || 20);
-  return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between">
-        <label htmlFor="km" className="text-[13px] font-medium">
-          Distanza massima
-        </label>
-        <span className="text-[14px] font-semibold tabular-nums" aria-live="polite">
-          {km} km
-        </span>
-      </div>
-      <input id="km" name="km" type="range" min={2} max={100} step={1} value={km} onChange={(e) => setKm(Number(e.target.value))} />
-    </div>
-  );
-}
-
 export function NetSalaryField({ defaultValue, stage }: { defaultValue?: number; stage?: boolean }) {
   const [v, setV] = useState(defaultValue ? String(defaultValue) : "");
   const gross = useMemo(() => {

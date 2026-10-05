@@ -42,7 +42,8 @@ const INTERNSHIP: Record<string, string> = { it: "stage", en: "internship", de: 
 export function searchPlan(p: Profile, prefs: RankPrefs): SearchPlan {
   const city = p.city || (p.track === "stage" ? "Milano" : "Torino");
   const companies = prefs.likedCompanies.map((c) => c.name);
-  const home = findPlace(city);
+  // No city chosen (only regions or whole countries): no home town in the searches.
+  const home = p.city ? findPlace(p.city) : null;
   const countries = homeCountries(p.countries, p.city);
   const places = countries.map((cc) => {
     if (home?.country === cc) return { country: cc, where: home.name, distanceKm: p.maxKm || 30 };

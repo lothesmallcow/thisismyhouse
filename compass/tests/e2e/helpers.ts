@@ -44,3 +44,9 @@ export async function assertUiBasics(page: Page) {
   });
   expect(problems, problems.join("\n")).toEqual([]);
 }
+
+/** "Dove": type a place and pick the suggestion (a city, a region or a whole country). */
+export async function addPlace(page: Page, query: string, option: RegExp) {
+  await page.getByLabel("Aggiungi un luogo").fill(query);
+  await page.getByRole("option", { name: option }).first().click();
+}
