@@ -10,9 +10,28 @@ function guessTitle(text: string): string {
   return first ?? "";
 }
 
-export function ManualPrefill() {
-  const [text, setText] = useState("");
-  const [f, setF] = useState({ title: "", company: "", city: "", salary: "", email: "", url: "" });
+export interface Prefilled {
+  title?: string;
+  company?: string;
+  city?: string;
+  url?: string;
+  text?: string;
+}
+
+/** `initial`: what the "Salva in Compass" button read from the page the person was looking at. */
+export function ManualPrefill({ initial = {} }: { initial?: Prefilled }) {
+  const [text, setText] = useState(initial.text ?? "");
+  const [f, setF] = useState(() => {
+    const t = initial.text ?? "";
+    return {
+      title: initial.title || guessTitle(t),
+      company: initial.company ?? "",
+      city: initial.city ?? "",
+      salary: findSalaryText(t) || "",
+      email: extractApplicationEmails(t)[0]?.email ?? "",
+      url: initial.url ?? "",
+    };
+  });
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     if (k === "url") {

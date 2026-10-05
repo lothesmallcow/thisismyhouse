@@ -6,6 +6,8 @@ export interface InboundEmail {
   messageId: string;
   from: { address: string; name: string };
   to: string[];
+  /** Envelope recipients kept by the receiving server (Delivered-To, X-Forwarded-To, X-Original-To). */
+  deliveredTo?: string[];
   subject: string;
   date: Date;
   inReplyTo: string | null;

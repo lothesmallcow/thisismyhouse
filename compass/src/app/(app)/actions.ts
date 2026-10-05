@@ -36,7 +36,8 @@ import { fitWarnings } from "@/lib/server/career";
 import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences, pdfText, rematchExperiences, saveExperiences } from "@/lib/server/experiences";
 import { getProfile, updateProfile } from "@/lib/server/profile";
 import { after } from "next/server";
-import { quickSearchFor } from "@/lib/pipeline/jobs";
+import { checkInboxNow, quickSearchFor } from "@/lib/pipeline/jobs";
+import { alertsDone } from "@/lib/server/inbox";
 import { lastQuickSearch, QUICK_SEARCH_EVERY_MIN } from "@/lib/pipeline/quick-search";
 import { updateUserSettings } from "@/lib/server/settings";
 import { confirmReply, dismissReply } from "@/lib/server/replies";
@@ -424,6 +425,28 @@ export async function restartQuestionnaireAction(f?: FormData) {
   await updateProfile(getDb(), u.id, { onboardingStep: 1, ...(mode ? { onboardingMode: mode } : {}) });
   revalidatePath("/", "layout");
   redirect("/benvenuto/1?rifai=1");
+}
+
+// --- Collega le fonti ---------------------------------------------------------------------------
+
+export async function toggleAlertDoneAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const key = str(f, "key").slice(0, 300);
+  const set = await alertsDone(db, u.id);
+  if (set.has(key)) set.delete(key);
+  else set.add(key);
+  const v = JSON.stringify([...set].slice(-200));
+  await db.insert(schema.settings).values({ key: `alerts_done_${u.id}`, value: v }).onConflictDoUpdate({ target: schema.settings.key, set: { value: v } });
+  revalidatePath("/collega");
+  redirect("/collega");
+}
+
+/** "Controlla ora": read the Compass mailbox now (forwarding code, first alerts), in the background. */
+export async function checkInboxNowAction() {
+  await requireUser();
+  after(() => checkInboxNow(getDb()));
+  done("/collega", "controllo-avviato");
 }
 
 /** "Carriere e paesi": several careers (liked sectors) and several countries (each with an optional city). */

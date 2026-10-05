@@ -25,6 +25,8 @@ export const users = sqliteTable("users", {
   lastLoginAt: ts("last_login_at"),
   /** Asked for access from the public page and waits for the admin (inactive until approved). */
   pendingSince: ts("pending_since"),
+  /** Tag of their personal Compass address (mailbox+cmp-<tag>@...), for forwarded job alerts. */
+  alertTag: text("alert_tag").unique(),
   createdAt: createdAt(),
 });
 

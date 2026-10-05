@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.15.0 · 2026-10-05
+
+- **Collega le fonti** (guided, 5 steps): the job sites worth an account for each person's
+  countries, track and careers (LinkedIn, Indeed, InfoJobs, eFinancialCareers, Reed, Bright
+  Network, StepStone, Welcome to the Jungle); the exact alerts to create, each a link to the search
+  already filtered (words in each country's language, place, internship/entry level, newest first)
+  with "Fatto"; how to forward only the alerts to Compass from Gmail, Outlook or others; and a check
+  of which platforms' alerts have arrived.
+- **Personal Compass address** for everyone (mailbox+cmp-<tag>@…): forwarded alerts are theirs only,
+  no password is shared; Gmail's forwarding confirmation code is read and shown to them; "Controlla
+  ora" reads the mailbox on demand.
+- **Salva in Compass**: a browser bookmark that, on the job page someone is looking at (their own
+  click), opens Compass's "Aggiungi" form already filled in (schema.org data, page blocks or the
+  selected text).
+
 ## 0.14.0 · 2026-10-04
 
 - **Carriere e paesi** (Profilo, and a line on Offerte): choose several careers at once (investment

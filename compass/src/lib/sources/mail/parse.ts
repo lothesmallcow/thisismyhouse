@@ -19,6 +19,10 @@ export async function parseRawEmail(source: string | Buffer): Promise<InboundEma
     messageId: m.messageId ?? `<no-id-${m.date?.getTime() ?? Date.now()}@compass.local>`,
     from: firstAddress(m.from),
     to: allAddresses(m.to),
+    deliveredTo: ["delivered-to", "x-forwarded-to", "x-original-to"].flatMap((h) => {
+      const v = m.headers.get(h);
+      return (Array.isArray(v) ? v : v ? [v] : []).map((x) => String(typeof x === "object" && x && "text" in x ? (x as { text: string }).text : x).toLowerCase().trim());
+    }),
     subject: m.subject ?? "",
     date: m.date ?? new Date(),
     inReplyTo: m.inReplyTo ?? null,

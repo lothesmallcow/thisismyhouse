@@ -31,6 +31,25 @@ export async function quickSearchFor(db: DB, userId: number, now = new Date()): 
   }
 }
 
+/** "Controlla ora" on Collega le fonti: read the main mailbox now (last 2 days), at most once a minute. */
+export async function checkInboxNow(db: DB, now = new Date()): Promise<"done" | "recent" | "no-mailbox"> {
+  const row = await db.query.settings.findFirst({ where: eq(schema.settings.key, "inbox_check_at") });
+  if (typeof row?.value === "string" && now.getTime() - new Date(row.value).getTime() < 60_000) return "recent";
+  const v = now.toISOString();
+  await db.insert(schema.settings).values({ key: "inbox_check_at", value: v }).onConflictDoUpdate({ target: schema.settings.key, set: { value: v } });
+  const run = (await mailboxRuns(db)).find((m) => m.key === "default");
+  if (!run) return "no-mailbox";
+  try {
+    await runWithHealth(db, "mailbox", async () => {
+      const r = await scanMailbox(db, run.mailbox, run.owners, now, { lookbackDays: 2 });
+      return { items: r.alerts, failures: 0 };
+    }, now);
+  } finally {
+    await run.mailbox.close?.();
+  }
+  return "done";
+}
+
 export const JOB_NAMES = ["ingest", "discover", "queue", "replies", "digest"] as const;
 export type JobName = (typeof JOB_NAMES)[number];
 
@@ -42,6 +61,9 @@ export async function mailboxRuns(db: DB): Promise<MailboxRun[]> {
     .where(and(eq(schema.users.role, "user"), eq(schema.users.active, true), isNotNull(schema.users.mailboxKey)));
   const byKey = new Map<string, number[]>();
   for (const p of people) byKey.set(p.key!.toLowerCase(), [...(byKey.get(p.key!.toLowerCase()) ?? []), p.id]);
+  // People with a personal Compass address get their forwarded alerts through the main mailbox.
+  const tagged = await db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.role, "user"), eq(schema.users.active, true), isNotNull(schema.users.alertTag))).limit(1);
+  if (tagged.length && !byKey.has("default")) byKey.set("default", []);
   const out: MailboxRun[] = [];
   for (const [key, owners] of byKey) {
     if (env.demoMode) out.push({ key, owners, mailbox: new DemoMailbox(db, key) });
