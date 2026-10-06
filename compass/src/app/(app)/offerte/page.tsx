@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Flash } from "@/components/flash";
 import { IconFolder, IconPlus, IconSearch, IconSliders } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
-import { Button, Empty, LinkButton, Notice, PageHeader } from "@/components/ui";
+import { Button, Empty, LinkButton, Notice, PageHeader, PillCheck } from "@/components/ui";
 import { alertsReceived } from "@/lib/server/inbox";
 import { CONTRACT_LABELS, SECTORS } from "@/lib/core/extract";
 import type { Level } from "@/lib/core/rank";
@@ -28,6 +28,13 @@ const FILTER_KEYS = ["netto", "orario", "contratto", "settore", "casa", "giorni"
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 const all = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []);
+/** Several choices allowed: undefined when none (no filter). */
+const list = <T,>(v: T[]) => (v.length ? [...new Set(v)] : undefined);
+const TYPE_OPTIONS = [
+  ["lavoro", "Lavoro"],
+  ["stage", "Stage"],
+  ["programma", "Programmi per studenti"],
+] as const;
 /** Every query value, repeated keys included ("luogo" can appear many times). */
 const pairs = (sp: SP, skip: string[]) => Object.entries(sp).flatMap(([k, v]) => (skip.includes(k) ? [] : all(v).filter(Boolean).map((x) => [k, x] as [string, string])));
 
@@ -57,12 +64,12 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
     placesRemote,
     minNetMonthly: Number(one(sp.netto)) || defaults.minNetMonthly,
     hours: (one(sp.orario) as "full" | "part") || undefined,
-    contract: one(sp.contratto) || undefined,
-    sector: one(sp.settore) || undefined,
+    contracts: list(all(sp.contratto).filter((c) => c in CONTRACT_LABELS && c !== "unknown")),
+    sectors: list(all(sp.settore).filter((x) => SECTORS.some(([n]) => n === x))),
     remote: one(sp.casa) === "1" || undefined,
     days: Number(one(sp.giorni)) || undefined,
     q: one(sp.q) || undefined,
-    type: (one(sp.tipo) as JobFilters["type"]) || undefined,
+    types: list(all(sp.tipo).filter((t): t is "lavoro" | "stage" | "programma" => TYPE_OPTIONS.some(([k]) => k === t))),
     focus: vista === "aziende" || vista === "preferite" ? vista : undefined,
     show: one(sp.mostra) === "scartate" ? "scartate" : undefined,
     minFit: Number(one(sp.punteggio)) || undefined,
@@ -70,7 +77,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
   };
   const limit = Math.min(200, Math.max(PAGE_SIZE, Number(one(sp.n)) || PAGE_SIZE));
   const { jobs, total } = await listJobs(db, user.id, filters, limit);
-  const active = (placesChanged ? 1 : 0) + (["minNetMonthly", "hours", "contract", "sector", "remote", "days", "type", "minFit", "sort"] as const).filter((k) => filters[k] !== undefined).length;
+  const active = (placesChanged ? 1 : 0) + (["minNetMonthly", "hours", "contracts", "sectors", "remote", "days", "types", "minFit", "sort"] as const).filter((k) => filters[k] !== undefined).length;
   const [{ n: newCount }] = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.userJobs)
@@ -197,28 +204,43 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
               </p>
             )}
           </fieldset>
-          <label className="space-y-1.5">
-            <span className="block text-[13px] font-medium">Tipo</span>
-            <select name="tipo" defaultValue={one(sp.tipo)}>
-              <option value="">Tutti</option>
-              <option value="lavoro">Lavoro</option>
-              <option value="stage">Stage</option>
-              <option value="programma">Programmi per studenti</option>
-            </select>
-          </label>
-          <label className="space-y-1.5">
-            <span className="block text-[13px] font-medium">Contratto</span>
-            <select name="contratto" defaultValue={one(sp.contratto)}>
-              <option value="">Qualsiasi</option>
-              {Object.entries(CONTRACT_LABELS)
-                .filter(([k]) => k !== "unknown")
-                .map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
+          <div className="space-y-4 sm:col-span-2 lg:col-span-4">
+            <fieldset>
+              <legend className="mb-1.5 text-[13px] font-medium">Tipo <span className="font-normal text-faint">(anche più di uno)</span></legend>
+              <div className="flex flex-wrap gap-2">
+                {TYPE_OPTIONS.map(([k, label]) => (
+                  <PillCheck key={k} name="tipo" value={k} defaultChecked={filters.types?.includes(k)}>
+                    {label}
+                  </PillCheck>
                 ))}
-            </select>
-          </label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend className="mb-1.5 text-[13px] font-medium">Contratto <span className="font-normal text-faint">(anche più di uno; quelli che non lo dicono restano)</span></legend>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(CONTRACT_LABELS)
+                  .filter(([k]) => k !== "unknown")
+                  .map(([k, v]) => (
+                    <PillCheck key={k} name="contratto" value={k} defaultChecked={filters.contracts?.includes(k)}>
+                      {v}
+                    </PillCheck>
+                  ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend className="mb-1.5 text-[13px] font-medium">Settore <span className="font-normal text-faint">(anche più di uno)</span></legend>
+              <div className="flex flex-wrap gap-2">
+                {SECTORS.map(([name]) => (
+                  <PillCheck key={name} name="settore" value={name} defaultChecked={filters.sectors?.includes(name)}>
+                    {name}
+                  </PillCheck>
+                ))}
+              </div>
+            </fieldset>
+            <p className="text-[12.5px] text-faint">Nessuna scelta in un gruppo = tutti.</p>
+          </div>
+
+
           <label className="space-y-1.5">
             <span className="block text-[13px] font-medium">Orario</span>
             <select name="orario" defaultValue={one(sp.orario)}>
@@ -227,17 +249,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
               <option value="part">Part-time</option>
             </select>
           </label>
-          <label className="space-y-1.5">
-            <span className="block text-[13px] font-medium">Settore</span>
-            <select name="settore" defaultValue={one(sp.settore)}>
-              <option value="">Qualsiasi</option>
-              {SECTORS.map(([s]) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
+
           <label className="space-y-1.5">
             <span className="block text-[13px] font-medium">Pubblicate</span>
             <select name="giorni" defaultValue={one(sp.giorni)}>

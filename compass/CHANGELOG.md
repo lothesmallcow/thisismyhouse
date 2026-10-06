@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.2 · 2026-10-06
+
+- Offerte → Filtri: Tipo, Contratto and Settore take several choices at once (pills you tick), e.g.
+  Lavoro + Stage, indeterminato + determinato, two or three sectors. Nothing ticked = all. Offers that
+  do not state the contract stay visible.
+
 ## 0.17.1 · 2026-10-05
 
 - Collega Gmail, more robust: the sign-in state is signed and bound to the person (no cookie), so it

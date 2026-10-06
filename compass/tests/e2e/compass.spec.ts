@@ -62,8 +62,17 @@ test("Offerte (job search): ranked list with reasons, focus switch, search, filt
   await page.getByText("Filtri").click();
   await expect(page.getByRole("group", { name: "Luoghi" })).toBeVisible();
   await expect(page.getByText("Distanza")).toHaveCount(0);
+  // Type, contract and sector: several at once
+  const filtri = page.locator("form").filter({ has: page.getByRole("button", { name: "Applica" }) });
+  await filtri.getByText("Lavoro", { exact: true }).click();
+  await filtri.getByText("Stage", { exact: true }).click();
+  await filtri.getByText("Tempo indeterminato", { exact: true }).click();
+  await filtri.getByText("Tempo determinato", { exact: true }).click();
   await addPlace(page, "Regno", /Regno Unito · tutto il paese/);
   await page.getByRole("button", { name: "Applica" }).click();
+  await expect(page).toHaveURL(/tipo=lavoro&tipo=stage/);
+  await expect(page).toHaveURL(/contratto=indeterminato&contratto=determinato/);
+  await expect(page.getByRole("checkbox", { name: "Stage", exact: true })).toBeChecked();
   await expect(page.getByRole("link", { name: "Torna ai luoghi del profilo" })).toBeVisible();
   await page.getByRole("link", { name: "Torna ai luoghi del profilo" }).click();
   await expect(page.getByRole("link", { name: "Torna ai luoghi del profilo" })).toHaveCount(0);
