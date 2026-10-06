@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.19.1 · 2026-10-06
+
+- Deleting an account or "Cancella tutti i miei dati" now also removes the person's Collega le fonti
+  progress, the alerts they marked, Gmail's forwarding code and their last web scraping (they stayed
+  in the settings table).
+
 ## 0.19.0 · 2026-10-06
 
 - **"Cosa fai ora?"** is the first question: high school, bachelor's, master's, recent graduate, working

@@ -43,7 +43,10 @@ async function wipe(tx: Tx, userId: number): Promise<void> {
   await tx.update(schema.catalogSectors).set({ createdByUserId: null }).where(eq(schema.catalogSectors.createdByUserId, userId));
   await tx.update(schema.catalogCompanies).set({ createdByUserId: null }).where(eq(schema.catalogCompanies.createdByUserId, userId));
   await tx.delete(schema.templates).where(eq(schema.templates.userId, userId));
-  await tx.delete(schema.settings).where(eq(schema.settings.key, `user:${userId}`));
+  // Everything kept per person in settings: their own settings, Collega le fonti progress, the alerts
+  // they marked, Gmail's forwarding code, their last web scraping and its result.
+  const keys = ["user:", "collega_", "alerts_done_", "forwarding_", "quick_search_", "quick_search_result_"].map((k) => `${k}${userId}`);
+  await tx.delete(schema.settings).where(inArray(schema.settings.key, keys));
 }
 
 export async function deleteAllMyData(db: DB, userId: number): Promise<void> {

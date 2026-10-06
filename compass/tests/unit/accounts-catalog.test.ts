@@ -1,6 +1,6 @@
 // Multi-account Compass: isolation between people, accounts and invitations, the catalog
 // ("Mi interessa", "Altro", suggestions), the focus switch, and internship ranking.
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { extractDurationMonths, extractEligibility, extractJobType } from "@/lib/core/extract";
 import { NO_CHOICES, rankJob, type RankJob, type RankProfile } from "@/lib/core/rank";
@@ -78,7 +78,11 @@ describe("isolation between people", () => {
 
   it("deleting an account removes the person and only their private data", async () => {
     const before = (await db.select().from(schema.userJobs).where(eq(schema.userJobs.userId, L))).length;
+    const keys = ["collega_", "alerts_done_", "forwarding_", "quick_search_", "quick_search_result_"].map((k) => `${k}${M}`);
+    for (const key of [...keys, `collega_${L}`]) await db.insert(schema.settings).values({ key, value: "{}" }).onConflictDoNothing();
     await deleteAccount(db, M);
+    expect(await db.select().from(schema.settings).where(inArray(schema.settings.key, keys))).toHaveLength(0); // Collega, alerts, last search...
+    expect(await db.query.settings.findFirst({ where: eq(schema.settings.key, `collega_${L}`) })).toBeTruthy(); // not someone else's
     expect(await db.query.users.findFirst({ where: eq(schema.users.id, M) })).toBeUndefined();
     for (const t of [schema.cvs, schema.userJobs, schema.userPrefs, schema.templates, schema.applications]) {
       expect(await db.select().from(t).where(eq(t.userId, M))).toHaveLength(0);
