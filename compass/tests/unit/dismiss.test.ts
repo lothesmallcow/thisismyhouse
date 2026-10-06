@@ -35,9 +35,9 @@ describe("dismiss", () => {
     expect(await row(L, otherRole.jobId)).toBeTruthy();
     expect(await row(L, otherCity.jobId)).toBeTruthy();
 
-    // After a week it leaves the "Scartate" list by itself and can no longer be undone, but stays blocked.
+    // After 3 days it leaves the "Non mi interessano" list by itself and can no longer be undone, but stays blocked.
     const key = (await dismissedList(db, L, NOW))[0].dedupeKey;
-    const WEEK_ON = new Date(NOW.getTime() + 8 * 86_400_000);
+    const WEEK_ON = new Date(NOW.getTime() + 4 * 86_400_000);
     expect(await dismissedList(db, L, WEEK_ON)).toHaveLength(0);
     await undoDismissal(db, L, key, WEEK_ON);
     expect(await row(L, a.jobId)).toBeUndefined();

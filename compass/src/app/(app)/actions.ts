@@ -78,11 +78,11 @@ export async function quickDismissAction(f: FormData) {
   done(safeBack(f, "/offerte"), "scartata-lista");
 }
 
-/** Undo a dismissal from "Scartate". */
+/** Undo a "Non mi interessa" from its list. */
 export async function undoDismissAction(f: FormData) {
   const u = await requireUser();
   await undoDismissal(getDb(), u.id, str(f, "key"));
-  done("/offerte/scartate", "scarto-annullato");
+  done("/offerte/non-mi-interessano", "scarto-annullato");
 }
 
 export async function restoreAction(f: FormData) {

@@ -41,7 +41,7 @@ const pairs = (sp: SP, skip: string[]) => Object.entries(sp).flatMap(([k, v]) =>
 
 export default async function OffertePage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
-  if (one(sp.mostra) === "scartate") redirect("/offerte/scartate"); // dismissed offers are gone: the list of dismissals
+  if (one(sp.mostra) === "scartate") redirect("/offerte/non-mi-interessano"); // dismissed offers are gone: the list of dismissals
   const user = await requireUser();
   const received = await alertsReceived(getDb(), user.id);
   const db = getDb();
@@ -343,8 +343,8 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
       )}
 
       <div className="mt-10 text-center">
-        <Link href="/offerte/scartate" className="inline-flex min-h-[32px] items-center text-[13px]">
-          Scartate
+        <Link href="/offerte/non-mi-interessano" className="inline-flex min-h-[32px] items-center text-[13px]">
+          Non mi interessano
         </Link>
       </div>
     </>

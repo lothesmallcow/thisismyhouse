@@ -678,7 +678,7 @@ export const dismissedJobs = sqliteTable(
     userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
     dedupeKey: text("dedupe_key").notNull(),
     reason: text("reason"),
-    /** Shown in "Scartate" (the offer itself is gone for them). */
+    /** Shown in "Non mi interessano" (the offer itself is gone for them). */
     title: text("title").notNull().default(""),
     company: text("company"),
     city: text("city"),

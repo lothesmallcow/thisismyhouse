@@ -54,7 +54,7 @@ export default async function RicercaPage({ searchParams }: { searchParams: Prom
         <Button>Salva</Button>
       </form>
 
-      <SectionTitle>Correzioni dalle offerte scartate</SectionTitle>
+      <SectionTitle>Correzioni da “Non mi interessa”</SectionTitle>
       <p className="-mt-1 mb-3 text-[13.5px] text-muted">Quando nascondi un&apos;offerta e dici perché, Compass corregge la classifica. Puoi annullare ogni correzione.</p>
       {adjustments.length === 0 ? (
         <p className="text-[13.5px] text-faint">Nessuna correzione.</p>

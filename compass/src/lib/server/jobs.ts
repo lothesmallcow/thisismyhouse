@@ -570,10 +570,10 @@ async function bannedFor(db: DB, jobId: number, key: string): Promise<Set<number
   return new Set([...byKey, ...byUrl].map((r) => r.u));
 }
 
-/** How long a dismissal can be undone from "Scartate". After that it leaves the list; the offer stays blocked. */
-export const UNDO_DAYS = 7;
+/** How long a "Non mi interessa" can be undone from its list. After that it leaves the list; the offer stays blocked. */
+export const UNDO_DAYS = 3;
 
-/** What they dismissed in the last week, newest first (for "Scartate", where a dismissal can be undone). */
+/** What they dismissed in the last UNDO_DAYS days, newest first (the list where it can be undone). */
 export async function dismissedList(db: DB, userId: number, now = new Date()) {
   const since = new Date(now.getTime() - UNDO_DAYS * 86_400_000);
   return db

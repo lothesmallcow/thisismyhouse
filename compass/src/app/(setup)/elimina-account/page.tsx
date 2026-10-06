@@ -17,7 +17,7 @@ export default async function EliminaAccountPage({ searchParams }: { searchParam
       <Card className="!p-6">
         <h1 className="text-[20px] font-semibold">Eliminare il tuo account?</h1>
         <p className="mt-3 text-[14px] text-muted">
-          Si cancellano l&apos;account ({user.email}) e tutto quello che contiene: profilo e risposte, CV ed esperienze, aziende e settori scelti, offerte salvate e scartate, cartelle, candidature, risposte delle aziende, il collegamento a Gmail (il permesso viene tolto anche su Google). Non si può annullare.
+          Si cancellano l&apos;account ({user.email}) e tutto quello che contiene: profilo e risposte, CV ed esperienze, aziende e settori scelti, offerte salvate e quelle che non ti interessano, cartelle, candidature, risposte delle aziende, il collegamento a Gmail (il permesso viene tolto anche su Google). Non si può annullare.
         </p>
         <p className="mt-2 text-[13px] text-faint">
           Vuoi solo ricominciare da capo con lo stesso account? Usa invece <a href="/profilo/cancella">Cancella tutti i miei dati</a> (dal Profilo). Le e-mail già partite restano nella casella usata per inviarle.

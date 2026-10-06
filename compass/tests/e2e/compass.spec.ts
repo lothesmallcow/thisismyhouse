@@ -84,9 +84,10 @@ test("Offerte (job search): ranked list with reasons, focus switch, search, filt
   await expect(page.getByText(/Cancellata: non te la ripropongo più/)).toBeVisible();
   await expect(page).toHaveURL(/vista=tutte/);
   await expect(cards.filter({ hasText: firstTitle })).toHaveCount(0);
-  // "Scartate": the list of dismissals, each can be undone (then the offer comes back).
-  await page.getByRole("link", { name: "Scartate", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Scartate" })).toBeVisible();
+  // "Non mi interessano": the list of dismissals, each can be undone for 3 days (then the offer comes back).
+  await page.getByRole("link", { name: "Non mi interessano", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Non mi interessano" })).toBeVisible();
+  await expect(page.getByText(/annullabile ancora per 3 giorni/).first()).toBeVisible();
   await assertUiBasics(page);
   await page.getByRole("button", { name: `Annulla lo scarto di ${firstTitle}` }).click();
   await expect(page.getByText(/Annullato/)).toBeVisible();
