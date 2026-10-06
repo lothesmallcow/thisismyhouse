@@ -6,10 +6,12 @@ import { getDb, schema } from "@/lib/db";
 import { env, mailboxConfig } from "@/lib/env";
 import { lastQuickResult, lastQuickSearch } from "@/lib/pipeline/quick-search";
 import { AutoRefresh } from "./auto-refresh";
+import { ScanButton } from "./scan-button";
+import { getScanStatus } from "@/lib/server/plans";
 import { alertsReceived } from "@/lib/server/inbox";
 import { searchTargets } from "@/lib/pipeline/targets";
 import { getSettings } from "@/lib/server/settings";
-import { Button, Card, Chip } from "./ui";
+import { Card, Chip } from "./ui";
 
 /** Where this person's offers come from, what is still off, and "Cerca ora". */
 export async function SourcesCard({ userId }: { userId: number }) {
@@ -22,6 +24,7 @@ export async function SourcesCard({ userId }: { userId: number }) {
     lastQuickResult(db, userId),
   ]);
   const received = await alertsReceived(db, userId);
+  const scan = await getScanStatus(db, userId);
   const box = env.demoMode ? { user: "la casella demo" } : mailboxConfig(user?.mailboxKey);
   const withBoard = picks.filter((c) => (c.ats && c.atsSlug) || c.careersUrl).length;
   const web = env.demoMode || (Boolean(env.tavilyKey) && settings.w1Enabled);
@@ -52,11 +55,7 @@ export async function SourcesCard({ userId }: { userId: number }) {
             Poi ogni mattina, da sola.
           </p>
         </div>
-        <form action={searchNowAction}>
-          <Button size="sm" disabled={running}>
-            {running ? "In corso…" : "Fai web scraping"}
-          </Button>
-        </form>
+        <ScanButton action={searchNowAction} nextAt={scan.nextAt?.toISOString() ?? null} remaining={scan.left} perDay={scan.plan.scansPerDay} plan={scan.plan.name} running={running} />
       </div>
       {running && <AutoRefresh everyMs={5000} times={24} />}
       <ul className="mt-4 space-y-3 text-[13.5px]">

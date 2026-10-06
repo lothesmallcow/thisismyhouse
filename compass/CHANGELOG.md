@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.22.0 · 2026-10-06
+
+- **Plans: Free, Plus, Premium** (`/piano`, lib/core/plans.ts). Free: 3 searches by hand a day,
+  one an hour; Plus (4,99 €): 10, one every 15 minutes; Premium (9,99 €): 30, one every 5 minutes,
+  with the AI assistant, AI cover letters and interview prep marked "In arrivo". The public price page
+  shows the same plans (the old Essenziale / Compass / Famiglia list is gone).
+- **"Fai web scraping" has a countdown**: "Prossima ricerca tra 42:13", and how many searches are
+  left today; the nightly search is unchanged.
+- **Payments are not live**: a paid plan starts as a free trial. The checkout page is ready (Aurora
+  style), but its card fields are never sent and only the test card 4242 4242 4242 4242 is accepted,
+  so nobody types a real card into a page that cannot charge it.
+- **Plans right after the questionnaire** (`/benvenuto/piani`), with "Decido dopo"; the plan is in
+  Profilo.
+- **Lighter deployments**: the company registers (22 MB, used only by the migration script) and
+  libsql's unused musl build are kept out of the server functions (about 54 MB → 22 MB each), and
+  branch pushes (`claude/*`) no longer make preview deployments on Vercel.
+
 ## 0.21.5 · 2026-10-06
 
 - **Company = the name the page repeats most**, when nothing states it: the whole text of the offer's

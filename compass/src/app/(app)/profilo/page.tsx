@@ -1,3 +1,4 @@
+import { getPlan } from "@/lib/server/plans";
 import { placesFromProfile } from "@/lib/core/where";
 import Link from "next/link";
 import { eq } from "drizzle-orm";
@@ -30,6 +31,7 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
   const user = await requireUser();
   const db = getDb();
   const p = await getProfile(db, user.id);
+  const plan = await getPlan(db, user.id);
   const prefs = await getPrefs(db, user.id);
   const { currentEmployers } = await background(db, user.id, p);
   const cvs = await db.select({ id: schema.cvs.id }).from(schema.cvs).where(eq(schema.cvs.userId, user.id));
@@ -53,6 +55,7 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
         <section>
           <SectionTitle className="!mt-0">Il tuo profilo</SectionTitle>
           <List>
+            <Row label="Abbonamento" value={`${plan.name}${plan.price ? " · prova gratuita" : ""} · ${plan.scansPerDay} ricerche a mano al giorno`} action={<Edit href="/piano" />} />
             <Row label="Cosa fai ora" value={situationOf(p.situation)?.label ?? "Da indicare"} action={<Edit href="/profilo/situazione" />} />
             <Row label="Dati di contatto" value={[p.name, p.phone, p.email].filter(Boolean).join(" · ") || "Da compilare"} action={<Edit href={at("nome")} />} />
             {stage ? (

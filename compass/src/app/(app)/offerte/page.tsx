@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Flash } from "@/components/flash";
 import { IconFolder, IconPlus, IconSearch, IconSliders } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
-import { Button, Empty, LinkButton, Notice, PageHeader, PillCheck } from "@/components/ui";
+import { Empty, LinkButton, Notice, PageHeader, PillCheck } from "@/components/ui";
 import { alertsReceived } from "@/lib/server/inbox";
 import { CONTRACT_LABELS, SECTORS } from "@/lib/core/extract";
 import type { Level } from "@/lib/core/rank";
@@ -14,6 +14,8 @@ import { defaultFilters, filterWhere, listJobs, PAGE_SIZE, type JobFilters } fro
 import { getProfile } from "@/lib/server/profile";
 import { getSettings } from "@/lib/server/settings";
 import { dismissQuietAction, saveDefaultFiltersAction, searchNowAction } from "../actions";
+import { ScanButton } from "@/components/scan-button";
+import { getScanStatus } from "@/lib/server/plans";
 import { SourcesCard } from "@/components/sources-card";
 import { CareersLine } from "@/components/careers-line";
 import { PlacesPicker } from "@/components/places-picker";
@@ -47,6 +49,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
   const db = getDb();
   const profile = await getProfile(db, user.id);
   const settings = await getSettings(db);
+  const scan = await getScanStatus(db, user.id);
 
   // The questionnaire's defaults apply until the person touches a filter (or asks for everything).
   const touched = FILTER_KEYS.some((k) => one(sp[k])) || one(sp.tutte) === "1";
@@ -116,11 +119,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
         }
         actions={
           <div className="flex flex-wrap gap-2">
-            <form action={searchNowAction}>
-              <Button size="sm">
-                <IconSearch size={16} /> Fai web scraping
-              </Button>
-            </form>
+            <ScanButton action={searchNowAction} nextAt={scan.nextAt?.toISOString() ?? null} remaining={scan.left} perDay={scan.plan.scansPerDay} plan={scan.plan.name} onHero />
             <LinkButton href="/offerte/cartelle" variant="secondary" size="sm">
               <IconFolder size={16} /> Cartelle
             </LinkButton>

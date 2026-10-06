@@ -43,6 +43,8 @@ import { checkInboxNow, quickSearchFor, readConnectedGmail } from "@/lib/pipelin
 import { deleteMailConnection } from "@/lib/server/mail-connections";
 import { alertsDone, collegaState, linkCompassMailbox, saveCollegaState } from "@/lib/server/inbox";
 import { lastQuickSearch, QUICK_SEARCH_EVERY_MIN } from "@/lib/pipeline/quick-search";
+import { planOf } from "@/lib/core/plans";
+import { getScanStatus, recordScan, setPlan } from "@/lib/server/plans";
 import { updateUserSettings } from "@/lib/server/settings";
 import { confirmReply, dismissReply } from "@/lib/server/replies";
 
@@ -581,14 +583,26 @@ export async function saveCareersAction(f: FormData) {
   done("/profilo/carriere", "carriere-salvate");
 }
 
-/** "Cerca ora": a search for this person in the background (at most every half hour). */
+/** "Fai web scraping": a search for this person in the background, within their plan's searches. */
 export async function searchNowAction() {
   const u = await requireUser();
   const db = getDb();
   const last = await lastQuickSearch(db, u.id);
   if (last && Date.now() - last.getTime() < QUICK_SEARCH_EVERY_MIN * 60_000) done("/offerte", "ricerca-recente");
+  const s = await getScanStatus(db, u.id);
+  if (s.nextAt) done("/offerte", s.left === 0 ? "ricerche-finite" : "ricerca-attendi");
+  await recordScan(db, u.id);
   after(() => quickSearchFor(getDb(), u.id));
   done("/offerte", "ricerca-avviata");
+}
+
+/** Choose a plan. Payments are not live: a paid plan is a free trial, no card data reaches us. */
+export async function choosePlanAction(f: FormData) {
+  const u = await requireUser();
+  const plan = planOf(str(f, "plan"));
+  await setPlan(getDb(), u.id, plan.key);
+  revalidatePath("/", "layout");
+  done(safeBack(f, "/piano"), plan.key === "free" ? "piano-free" : "piano-attivo");
 }
 
 /** The positions searched: the ticked ones (current and recommended from the CV) plus one typed. */
