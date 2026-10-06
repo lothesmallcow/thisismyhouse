@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.6 · 2026-10-06
+
+- **Sign-in**: after a wrong password you can retry at once; only 10 wrong ones in 15 minutes pause
+  that account for one minute (was 5 wrong → 15 minutes). Longer locks set before are lifted.
+
 ## 0.22.5 · 2026-10-06
 
 - **Admin account repaired at every deploy**: from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD (at least 12

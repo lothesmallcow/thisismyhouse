@@ -88,12 +88,12 @@ test("accessibility: axe finds no WCAG 2.1 A/AA problems on key screens, light a
   expect(r.violations.map((v) => v.id)).toEqual([]);
 });
 
-test("sign-in is throttled after 5 wrong passwords", async ({ page }) => {
-  for (let i = 0; i < 5; i++) {
+test("sign-in is paused for a minute after 10 wrong passwords", async ({ page }) => {
+  for (let i = 0; i < 10; i++) {
     await page.goto("/entra");
     await page.getByLabel("E-mail").fill("nessuno@example.com");
     await page.getByLabel("Password").fill("sbagliata");
     await page.getByRole("button", { name: "Entra" }).click();
   }
-  await expect(page.getByText("Troppi tentativi: riprova tra 15 minuti.")).toBeVisible();
+  await expect(page.getByText("Troppi tentativi: riprova tra un minuto.")).toBeVisible();
 });

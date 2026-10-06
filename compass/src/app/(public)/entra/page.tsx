@@ -30,7 +30,7 @@ export default async function EntraPage({ searchParams }: { searchParams: Promis
       {sp.errore && (
         <div className="mt-5">
           <Notice tone={sp.errore === "richiesta" ? "info" : "warn"}>
-            {sp.errore === "attesa" ? "Troppi tentativi: riprova tra 15 minuti." : sp.errore === "richiesta" ? "La tua richiesta di accesso è in attesa: riceverai un'e-mail quando l'amministratore la approva." : "E-mail o password non corrette."}
+            {sp.errore === "attesa" ? "Troppi tentativi: riprova tra un minuto." : sp.errore === "richiesta" ? "La tua richiesta di accesso è in attesa: riceverai un'e-mail quando l'amministratore la approva." : "E-mail o password non corrette."}
           </Notice>
         </div>
       )}

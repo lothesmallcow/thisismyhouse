@@ -168,10 +168,14 @@ describe("other fixes", () => {
     expect((await db.select().from(schema.cvs).where(eq(schema.cvs.userId, M))).length).toBe(1); // his stay
     expect((await db.select().from(schema.userPrefs).where(eq(schema.userPrefs.userId, M))).length).toBeGreaterThan(0);
   });
-  it("sign-in: 5 wrong passwords lock the account for 15 minutes", async () => {
+  it("sign-in: 10 wrong passwords pause the account for a minute; older, longer locks no longer hold", async () => {
     const { signIn } = await import("@/lib/server/auth");
-    for (let i = 0; i < 4; i++) expect(await signIn("u@example.com", "wrong", "user")).toBe("wrong");
+    for (let i = 0; i < 9; i++) expect(await signIn("u@example.com", "wrong", "user")).toBe("wrong");
     expect(await signIn("u@example.com", "wrong", "user")).toBe("locked");
-    expect(await signIn("u@example.com", "x", "user")).toBe("locked"); // even the right password, for now
+    expect(await signIn("u@example.com", "x", "user")).toBe("locked"); // even the right password, for a minute
+    // A 15-minute lock from before: lifted
+    const db = (await import("@/lib/db")).getDb();
+    await db.update(schema.loginAttempts).set({ lockedUntil: new Date(Date.now() + 14 * 60_000) });
+    expect(await signIn("u@example.com", "wrong", "user")).toBe("wrong");
   });
 });
