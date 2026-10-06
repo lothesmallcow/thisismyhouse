@@ -6,7 +6,9 @@ import { Flash } from "@/components/flash";
 import { IconCheck, IconExternal } from "@/components/icons";
 import { Button, Card, Chip, LinkButton, Notice } from "@/components/ui";
 import { HOW_TO, levelFor, planAlerts } from "@/lib/core/alert-plan";
-import { countryName, homeCountries } from "@/lib/core/geo";
+import { countryName, findPlace, homeCountries, type CountryCode } from "@/lib/core/geo";
+import { SITE_GUIDES } from "@/lib/core/site-guides";
+import { AccountChoice } from "@/components/account-choice";
 import { gmailFilter, platformsFor } from "@/lib/core/platforms";
 import { formatWhen } from "@/lib/core/time";
 import { getDb, schema } from "@/lib/db";
@@ -16,7 +18,7 @@ import { getPrefs, listSectors } from "@/lib/server/catalog";
 import { alertsDone, alertsReceived, baseMailbox, collegaState, forwardingConfirmationFor, personalInbox } from "@/lib/server/inbox";
 import { background } from "@/lib/server/person";
 import { getProfile } from "@/lib/server/profile";
-import { checkInboxNowAction, collegaStepAction, disconnectGmailAction, linkCompassMailboxAction, toggleAlertDoneAction } from "../actions";
+import { checkInboxNowAction, collegaStepAction, disconnectGmailAction, linkCompassMailboxAction, setAccountStateAction, toggleAlertDoneAction } from "../actions";
 import { ALERT_SENDERS, getMailConnection, gmailConnectAvailable, googleRedirectUri } from "@/lib/server/mail-connections";
 import { sameMailbox } from "@/lib/core/inbox-address";
 import { env } from "@/lib/env";
@@ -81,7 +83,7 @@ function GmailProblem({ code }: { code: string }) {
 }
 
 /** Guided setup, one step per screen: e-mail first (why it matters), then accounts, alerts, check. */
-export default async function CollegaPage({ searchParams }: { searchParams: Promise<{ msg?: string; passo?: string; email?: string; motivo?: string }> }) {
+export default async function CollegaPage({ searchParams }: { searchParams: Promise<{ msg?: string; passo?: string; email?: string; motivo?: string; cosa?: string; dove?: string }> }) {
   const sp = await searchParams;
   const user = await requireUser();
   const db = getDb();
@@ -109,6 +111,12 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
   const platforms = platformsFor(countries, p.track, careers);
   const alerts = planAlerts(code.queries, levelFor(p.track, bg.person.years));
   const senders = platforms.flatMap((pl) => pl.senders);
+  // The sites they have an account on (all of them until they say).
+  const mine = platforms.some((pl) => state.accounts?.[pl.key]) ? platforms.filter((pl) => state.accounts?.[pl.key]) : platforms;
+  // "I tuoi avvisi": their own search, prepared on each of those sites.
+  const cosa = (sp.cosa ?? "").trim().slice(0, 80);
+  const dove = (sp.dove ?? "").trim().slice(0, 60);
+  const custom = cosa ? { what: cosa, where: dove, country: (findPlace(dove)?.country ?? countries[0] ?? "IT") as CountryCode } : null;
   // The first search of each country, on LinkedIn and Indeed: the alerts worth creating first.
   const firstWhat = new Map<string, string>();
   for (const a of alerts) if (!firstWhat.has(a.country)) firstWhat.set(a.country, a.what);
@@ -120,7 +128,7 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
   const gmailOk = gmailConnectAvailable();
   const gmailLinked = gmail != null && gmail.lastError !== "revoked";
   const emailDone = ownMailbox || gmailLinked || state.emailDone || received.size > 0;
-  const stepDone = [emailDone, Boolean(state.accountsDone), alerts.some((a) => done.has(a.key)) /* the ones they care about, not all */, received.size > 0];
+  const stepDone = [emailDone, Boolean(state.accountsDone) || Object.keys(state.accounts ?? {}).length > 0, alerts.some((a) => done.has(a.key)) /* the ones they care about, not all */, received.size > 0];
   const firstOpen = stepDone.findIndex((d) => !d);
   const n = Math.min(4, Math.max(1, Number(sp.passo) || (firstOpen === -1 ? 4 : firstOpen + 1)));
   // With "Collega Gmail" available, the forwarding steps only when asked for (?email=…).
@@ -418,21 +426,19 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
 
         {n === 2 && (
           <>
-            <h2 className="text-[18px] font-semibold">2. Crea gli account sui siti giusti</h2>
+            <h2 className="text-[18px] font-semibold">2. Gli account sui siti giusti</h2>
             <Why>
               gli avvisi si creano dall&apos;account di ogni sito. Questi sono i siti che contano per {p.track === "stage" ? "gli stage" : "il lavoro"} in {countries.map(countryName).join(", ")}
-              {careers.length ? " e per le tue carriere" : ""}. Usa la stessa e-mail del passo 1. Se hai già l&apos;account, salta.
+              {careers.length ? " e per le tue carriere" : ""}. Per ognuno dimmi se l&apos;account ce l&apos;hai già, oppure crealo ora: usa la stessa e-mail del passo 1{gmail ? ` (${gmail.email})` : ""}.
             </Why>
             <ul className="mt-5 space-y-3">
               {platforms.map((pl) => (
-                <li key={pl.key} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line px-3.5 py-2.5">
-                  <span className="min-w-0 text-[14px]">
+                <li key={pl.key} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line px-3.5 py-3">
+                  <span className="min-w-0 flex-1 text-[14px]">
                     <span className="font-medium">{pl.name}</span>
                     <span className="block text-[13px] text-muted">{pl.why}</span>
                   </span>
-                  <a href={pl.signup} target="_blank" rel="noopener noreferrer" className={ext}>
-                    Crea l&apos;account <IconExternal size={13} />
-                  </a>
+                  <AccountChoice site={pl.key} name={pl.name} signup={pl.signup} initial={state.accounts?.[pl.key] ?? null} save={setAccountStateAction} />
                 </li>
               ))}
               {p.track === "stage" && <li className="text-[14px] text-muted">E il portale carriere della tua università: ci sono stage riservati agli studenti.</li>}
@@ -447,7 +453,11 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
             <Why>
               un avviso è una ricerca salvata: il sito ti scrive quando escono offerte nuove, e Compass le legge e le ordina per te. Ogni link apre la ricerca già impostata per te (posizione, città, livello, più recenti): tu devi solo salvarla come avviso.
             </Why>
-            <div className="mt-4">
+            <p className="mt-3 text-[14px]">
+              Due modi: gli avvisi che ti consiglio qui sotto, già pronti, oppure <a href="#tuoi-avvisi">i tuoi avvisi, per qualunque lavoro</a> ↓
+            </p>
+            <h3 className="mt-6 text-[16px] font-semibold">Gli avvisi che ti consiglio</h3>
+            <div className="mt-2">
               <Notice tone="info" title="Scegli quelli che ti interessano di più">
                 Non serve crearli tutti. Parti dai due o tre che senti più tuoi (ti ho segnato i consigliati): avvisi pochi e precisi portano offerte migliori di tanti avvisi generici. Gli altri li aggiungi quando vuoi.
               </Notice>
@@ -476,12 +486,77 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                   </p>
                 </div>
               ))}
-              {platforms.filter((pl) => !["linkedin", "indeed", "infojobs"].includes(pl.key)).map((pl) => (
-                <p key={pl.key} className="text-[13px] text-muted">
-                  Su {pl.name}: crea un avviso con le stesse parole ({alerts[0]?.what ?? "la tua posizione"}) e la stessa città.
-                </p>
-              ))}
             </div>
+
+            <h3 id="tuoi-avvisi" className="mt-8 scroll-mt-24 text-[16px] font-semibold">I tuoi avvisi, per qualunque lavoro</h3>
+            <p className="mt-1 text-[14px] text-muted">
+              Vuoi ricevere anche altro? Scrivi cosa e dove: preparo la ricerca su ogni sito {mine.length < platforms.length ? "dove hai l'account" : "che conta per te"}, poi ti dico come salvarla come avviso.
+            </p>
+            <form method="get" action="/collega#tuoi-avvisi" className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <input type="hidden" name="passo" value="3" />
+              <label htmlFor="cosa" className="sr-only">
+                Cosa cerchi
+              </label>
+              <input id="cosa" name="cosa" type="text" defaultValue={sp.cosa ?? ""} placeholder="Cosa: es. Analista M&A, Marketing stage" required />
+              <label htmlFor="dove" className="sr-only">
+                Dove
+              </label>
+              <input id="dove" name="dove" type="text" defaultValue={sp.dove ?? ""} placeholder="Dove: es. Milano, Londra" />
+              <Button>Prepara</Button>
+            </form>
+            {custom && (
+              <div className="mt-4 space-y-3">
+                {mine.map((pl) => {
+                  const guide = SITE_GUIDES[pl.key];
+                  if (!guide) return null;
+                  const url = guide.searchUrl(custom.what, custom.where, custom.country);
+                  return (
+                    <div key={pl.key} className="rounded-lg border border-line px-3.5 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-[14px] font-medium">
+                          {pl.name} · {custom.what}
+                          {custom.where ? ` · ${custom.where}` : ""}
+                        </p>
+                        {url && (
+                          <a href={url} target="_blank" rel="noopener noreferrer" className={ext}>
+                            Apri la ricerca <IconExternal size={13} />
+                          </a>
+                        )}
+                      </div>
+                      <ol className="mt-2 list-decimal space-y-1 pl-5 text-[13px] text-muted">
+                        {guide.steps.map((step) => (
+                          <li key={step}>{step}</li>
+                        ))}
+                      </ol>
+                      <p className="mt-1.5 text-[12.5px] text-faint">Controllo: {guide.check}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <details className="mt-6 text-[14px]">
+              <summary className="cursor-pointer font-medium">Come si crea un avviso, sito per sito</summary>
+              <div className="mt-3 space-y-4">
+                {mine.map((pl) => {
+                  const guide = SITE_GUIDES[pl.key];
+                  if (!guide) return null;
+                  return (
+                    <div key={pl.key}>
+                      <p className="font-medium">{pl.name}</p>
+                      <ol className="mt-1 list-decimal space-y-1 pl-5 text-[13px] text-muted">
+                        <li>Fai una ricerca sul sito con le parole e il luogo che vuoi (o usa &quot;Prepara&quot; qui sopra).</li>
+                        {guide.steps.slice(1).map((step) => (
+                          <li key={step}>{step}</li>
+                        ))}
+                      </ol>
+                      <p className="mt-1 text-[12.5px] text-faint">Controllo: {guide.check}</p>
+                    </div>
+                  );
+                })}
+                <p className="text-[13px] text-muted">In ogni sito l&apos;e-mail dell&apos;account deve essere quella collegata a Compass{gmail ? ` (${gmail.email})` : ""}: è lì che arrivano gli avvisi e lì Compass li legge.</p>
+              </div>
+            </details>
             <details className="mt-4 text-[14px]">
               <summary className="cursor-pointer font-medium">Consigli per avvisi davvero utili</summary>
               <ul className="mt-2 list-disc space-y-1.5 pl-5 text-muted">

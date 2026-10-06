@@ -501,6 +501,19 @@ export async function disconnectGmailAction() {
   done("/collega?passo=1", "gmail-scollegata");
 }
 
+/** Collega le fonti, step 2: "Ce l'ho già" / "Crea" for one site (no redirect: the page already shows it). */
+export async function setAccountStateAction(key: string, state: "ho" | "creato" | null) {
+  const u = await requireUser();
+  if (!/^[a-z0-9-]{2,30}$/.test(key) || (state !== null && state !== "ho" && state !== "creato")) return;
+  const db = getDb();
+  const s = await collegaState(db, u.id);
+  const accounts = { ...(s.accounts ?? {}) };
+  if (state) accounts[key] = state;
+  else delete accounts[key];
+  await saveCollegaState(db, u.id, { ...s, accounts });
+  revalidatePath("/collega");
+}
+
 /** Their e-mail is the Compass mailbox itself: no forwarding, the alerts there are theirs. */
 export async function linkCompassMailboxAction() {
   const u = await requireUser();
