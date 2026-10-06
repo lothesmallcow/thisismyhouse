@@ -678,7 +678,24 @@ export const dismissedJobs = sqliteTable(
     userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
     dedupeKey: text("dedupe_key").notNull(),
     reason: text("reason"),
+    /** Shown in "Scartate" (the offer itself is gone for them). */
+    title: text("title").notNull().default(""),
+    company: text("company"),
+    city: text("city"),
     at: ts("at").notNull(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.dedupeKey] }), index("dismissed_jobs_key_idx").on(t.dedupeKey)],
+);
+
+/** The exact links a dismissed offer was found at: never proposed again to that person. */
+export const dismissedUrls = sqliteTable(
+  "dismissed_urls",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    /** The dismissal it belongs to (undone together). */
+    dedupeKey: text("dedupe_key").notNull(),
+    at: ts("at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.url] }), index("dismissed_urls_url_idx").on(t.url)],
 );

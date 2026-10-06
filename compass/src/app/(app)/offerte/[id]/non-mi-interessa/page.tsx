@@ -19,7 +19,7 @@ export default async function NonMiInteressa({ params }: { params: Promise<{ id:
       <Link href={`/offerte/${id}`} className="mb-5 inline-flex h-8 items-center gap-1.5 text-[13px] text-muted no-underline hover:text-ink">
         <IconArrowLeft size={16} /> Offerta
       </Link>
-      <PageHeader title="Nascondi questa offerta" description={`${data.job.title} · ${data.job.company ?? "azienda non indicata"}. Se dici perché, le prossime offerte saranno più precise.`} />
+      <PageHeader title="Non mi interessa" description={`${data.job.title} · ${data.job.company ?? "azienda non indicata"}. La cancello e non te la ripropongo più (né da questo link né lo stesso annuncio altrove). Se dici perché, le prossime offerte saranno più precise.`} />
       <form action={dismissAction} className="space-y-2">
         <input type="hidden" name="jobId" value={id} />
         {Object.entries(DISMISS_LABELS).map(([k, label]) => (
@@ -28,7 +28,7 @@ export default async function NonMiInteressa({ params }: { params: Promise<{ id:
           </ChoiceRow>
         ))}
         <div className="pt-3">
-          <Button wide>Nascondi</Button>
+          <Button wide>Cancella e non riproporla</Button>
         </div>
       </form>
     </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Flash } from "@/components/flash";
 import { IconFolder, IconPlus, IconSearch, IconSliders } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
@@ -40,6 +41,7 @@ const pairs = (sp: SP, skip: string[]) => Object.entries(sp).flatMap(([k, v]) =>
 
 export default async function OffertePage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
+  if (one(sp.mostra) === "scartate") redirect("/offerte/scartate"); // dismissed offers are gone: the list of dismissals
   const user = await requireUser();
   const received = await alertsReceived(getDb(), user.id);
   const db = getDb();
@@ -341,8 +343,8 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
       )}
 
       <div className="mt-10 text-center">
-        <Link href={filters.show ? "/offerte" : "/offerte?mostra=scartate"} className="inline-flex min-h-[32px] items-center text-[13px]">
-          {filters.show ? "Torna alle offerte" : "Offerte scartate"}
+        <Link href="/offerte/scartate" className="inline-flex min-h-[32px] items-center text-[13px]">
+          Scartate
         </Link>
       </div>
     </>

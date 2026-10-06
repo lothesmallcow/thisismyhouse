@@ -44,11 +44,11 @@ describe("one week, then gone", () => {
     // Scores and sources of deleted offers went with them.
     expect(await db.select().from(schema.userJobs).where(eq(schema.userJobs.jobId, plain.jobId))).toHaveLength(0);
 
-    // The same ad comes back: dismissed for Lucia (she said no), new for Marco.
+    // The same ad comes back: never again for Lucia (she said no), new for Marco.
     const again = await upsertRawJob(db, ad("Saldatore a filo"), LATER);
     expect(again.created).toBe(true);
     const row = (u: number) => db.query.userJobs.findFirst({ where: and(eq(schema.userJobs.userId, u), eq(schema.userJobs.jobId, again.jobId)) });
-    expect((await row(L))?.status).toBe("dismissed");
-    expect((await row(M))?.status ?? "new").toBe("new");
+    expect(await row(L)).toBeUndefined();
+    expect((await row(M))?.status).toBe("new");
   });
 });
