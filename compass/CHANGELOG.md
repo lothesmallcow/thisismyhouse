@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.21.4 · 2026-10-06
+
+- **The bank's name from its own page**: offers that arrive without a company (web results, some
+  alerts) get it from the code of the page they link to, the way a person sees it at a glance:
+  structured data (the job's hiring organisation), the site's name, the tab title ("… | Citi
+  Careers"), the logo's alt text, the copyright line, the address (job-board slug or domain); in the
+  catalog's spelling when it is a catalog company, otherwise from the page's text. One polite visit
+  per offer (robots.txt respected, at most 25 a run); LinkedIn, Indeed, InfoJobs and Glassdoor are
+  never visited. Once named, an offer that turns out to be one we already had is merged.
+- **No more company logos** on the cards (they showed a "?" when the company was unknown); the
+  DuckDuckGo icons line is gone from the privacy page.
+
 ## 0.21.3 · 2026-10-06
 
 - **Collega le fonti**: after "Ce l'ho già" (or "Crea") a small panel says that site's alerts must

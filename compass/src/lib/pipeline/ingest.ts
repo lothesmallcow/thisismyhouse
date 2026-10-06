@@ -14,7 +14,9 @@ import type { Mailbox } from "../sources/mail/types";
 import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { scrapeCareers } from "../sources/web/careers";
-import { dedupeCandidates, purgeOldJobs, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
+import { dedupeCandidates, mergeDuplicateJobs, purgeOldJobs, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
+import { lookUpMissingCompanies } from "../server/company-guess";
+
 import { todaysPicks } from "../server/career";
 import { searchTargets } from "./targets";
 import { getSettings, setSetting } from "../server/settings";
@@ -46,6 +48,9 @@ export const CAREER_SITES_PER_RUN = 15;
 
 /** Firms whose official pages are read per daily run (each one at most weekly). */
 const PROGRAMME_LEADS_PER_RUN = 12;
+
+/** Pages visited per run to find the company of offers that do not name it. */
+const COMPANY_LOOKUPS_PER_RUN = 25;
 
 export interface IngestDeps {
   db: DB;
@@ -272,6 +277,19 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
       }, now);
       summary.sources[`w2:${host}`] = r?.items ?? null;
     }
+  }
+
+  // 5b. Offers still without a company: the name from their own page's code (structured data, site
+  // name, tab title, logo, copyright, address), one polite visit each; job platforms are never visited.
+  {
+    const polite = new PoliteFetcher(db, fetchImpl, { sleep: deps.politeSleep });
+    const r = await runWithHealth(db, "aziende", async () => {
+      const fixed = await lookUpMissingCompanies(db, polite, { max: COMPANY_LOOKUPS_PER_RUN, until: Date.now() + 3 * 60_000, now });
+      for (const id of fixed) await rankJobForAll(db, id, now, contexts);
+      if (fixed.length) await mergeDuplicateJobs(db, now); // now named, it may be an offer we already had
+      return { items: fixed.length, failures: 0 };
+    }, now);
+    summary.sources.aziende = r?.items ?? null;
   }
 
   // 6. Geocoder fallback for jobs whose city is not in the offline dataset (off by default)

@@ -6,7 +6,6 @@ import { Button, Empty, PageHeader } from "@/components/ui";
 import { getDb } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
 import { folderJobs } from "@/lib/server/folders";
-import { logoDomains } from "@/lib/server/logos";
 import { removeFromFolderAction } from "../../../actions";
 
 export default async function CartellaPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ msg?: string }> }) {
@@ -15,7 +14,6 @@ export default async function CartellaPage({ params, searchParams }: { params: P
   const user = await requireUser();
   const data = await folderJobs(getDb(), user.id, Number(id));
   if (!data) notFound();
-  const logos = await logoDomains(getDb(), data.jobs);
   const back = `/offerte/cartelle/${data.folder.id}`;
   return (
     <>
@@ -28,7 +26,7 @@ export default async function CartellaPage({ params, searchParams }: { params: P
         <div className="space-y-2.5">
           {data.jobs.map((j) => (
             <div key={j.id}>
-              <JobCard job={j} logo={logos.get(j.id)} />
+              <JobCard job={j} />
               <form action={removeFromFolderAction} className="mt-1 text-right">
                 <input type="hidden" name="folderId" value={data.folder.id} />
                 <input type="hidden" name="jobId" value={j.id} />

@@ -4,6 +4,7 @@
 // read for the offer itself: dates, place, who it is for. Trackers are never the source of an offer.
 import { and, asc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { nameKey, knownNamesIn, listedNamesIn, type KnownCompany } from "../core/company-names";
+import { ATS_HOST, firmFromUrl } from "../core/page-company";
 import type { CountryCode } from "../core/geo";
 import type { RawJob } from "../core/normalize";
 import { fold } from "../core/text";
@@ -35,22 +36,7 @@ export function trackerPages(now: Date): { url: string; kind: string; country: C
 export const AGGREGATOR_HOST =
   /(^|\.)(the-trackr\.com|trakvia\.de|gorizzume\.co\.uk|intervyo\.co\.uk|brightnetwork\.co\.uk|targetjobs\.co\.uk|gradcracker\.com|efinancialcareers\.[a-z.]+|ratemyplacement\.co\.uk|higherin\.com|prospects\.ac\.uk|icasfoundation\.org\.uk|yourfinancejob\.[a-z.]+|wallstreetoasis\.com|reddit\.com|studysmarter\.[a-z.]+|builtin\.com|glassdoor\.[a-z.]+|indeed\.[a-z.]+|linkedin\.com|infojobs\.[a-z.]+|jooble\.[a-z.]+|adzuna\.[a-z.]+)$/i;
 
-/** Job boards firms use for their own offers: an official source. */
-export const ATS_HOST = /(^|\.)(tal\.net|myworkdayjobs\.com|greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|workable\.com|personio\.(de|com)|successfactors\.(com|eu)|oraclecloud\.com|icims\.com|taleo\.net|avature\.net|eightfold\.ai|jobvite\.com|recruitee\.com|teamtailor\.com|breezy\.hr|intervieweb\.it|inrecruiting\.com)$/i;
-
-/** The firm a job-board link belongs to: "rothschildandco.tal.net" → "rothschildandco", "job-boards.greenhouse.io/point72" → "point72". */
-export function firmFromUrl(url: string): string | null {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.toLowerCase();
-    const first = u.pathname.split("/").filter(Boolean)[0] ?? "";
-    if (/greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|workable\.com/.test(host)) return first || null;
-    if (ATS_HOST.test(host)) return host.split(".")[0].replace(/^(careers|jobs|www)$/, "") || null;
-    return host.replace(/^(www|careers|jobs|career|en|uk)\./, "").split(".")[0];
-  } catch {
-    return null;
-  }
-}
+export { ATS_HOST, firmFromUrl };
 
 /** Does this page belong to the firm? Its host or job-board slug contains a word of the firm's name. */
 export function belongsTo(url: string, firm: string): boolean {
