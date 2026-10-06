@@ -3,7 +3,7 @@
 // A job is visible to someone if at least one of its sources is shared (userId null) or theirs.
 
 import { background } from "./person";
-import { and, desc, eq, gte, inArray, isNull, like, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, like, ne, or, sql, type SQL } from "drizzle-orm";
 import { findDuplicate, dedupeKey, type DedupeCandidate } from "../core/dedupe";
 import { distanceKm, findPlace } from "../core/geo";
 import type { WherePlace } from "../core/where";
@@ -72,6 +72,7 @@ function computeFor(job: JobRow, ctx: RankContext, now: Date) {
       scamFlagCount: job.scamFlags.length,
       city: job.city,
       country: job.country,
+      closesAt: job.closesAt,
       jobType: job.jobType as never,
       eligibility: job.eligibility as never,
     },
@@ -166,7 +167,7 @@ export interface UpsertOptions {
 
 /** Insert a raw job, or merge it into an existing duplicate (keeping every source link). */
 export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: UpsertOptions = {}): Promise<UpsertResult> {
-  const n = normalizeJob(raw, null);
+  const n = normalizeJob(raw, null, now);
   const candidates = opts.cache ?? (await dedupeCandidates(db));
   const dupId = findDuplicate({ company: n.company, title: n.title, city: n.city, url: n.url }, candidates);
   const owners = opts.owners?.length ? opts.owners : [null];
@@ -225,6 +226,10 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
         maxAnnualGross: patch.salaryMax ?? existing.salaryMax,
       });
       if (!existing.postedAt && n.postedAt) patch.postedAt = n.postedAt;
+      if (!existing.closesAt && n.closesAt) patch.closesAt = n.closesAt;
+      if (!existing.opensAt && n.opensAt) patch.opensAt = n.opensAt;
+      if (!existing.runsStart && n.runsStart) Object.assign(patch, { runsStart: n.runsStart, runsEnd: n.runsEnd, runsMonthOnly: n.runsMonthOnly });
+      if (!existing.rolling && n.rolling) patch.rolling = true;
     }
     await db.update(schema.jobs).set(patch).where(eq(schema.jobs.id, dupId));
     for (const o of owners) await addSource(db, dupId, raw, n.url, now, o);
@@ -264,6 +269,12 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
       scamFlags: n.scamFlags,
       thin: n.thin,
       postedAt: n.postedAt,
+      closesAt: n.closesAt,
+      opensAt: n.opensAt,
+      runsStart: n.runsStart,
+      runsEnd: n.runsEnd,
+      runsMonthOnly: n.runsMonthOnly,
+      rolling: n.rolling,
       firstSeenAt: now,
       updatedAt: now,
     })
@@ -326,7 +337,7 @@ export interface JobFilters {
   /** Minimum fit score out of 100. */
   minFit?: number;
   /** Order: best fit (default), newest, best paid. */
-  sort?: "fit" | "recenti" | "paga";
+  sort?: "fit" | "recenti" | "paga" | "scadenza";
 }
 
 export const PAGE_SIZE = 10;
@@ -411,7 +422,10 @@ export async function listJobs(db: DB, userId: number, f: JobFilters, limit: num
   const order =
     f.sort === "recenti"
       ? [desc(sql`coalesce(${schema.jobs.postedAt}, ${schema.jobs.firstSeenAt})`), desc(schema.userJobs.fit)]
-      : f.sort === "paga"
+      : f.sort === "scadenza"
+        ? // Open deadlines first, soonest first; then those without a date, best fit first.
+          [sql`case when ${schema.jobs.closesAt} >= ${now.getTime() - 86_400_000} then 0 when ${schema.jobs.closesAt} is null then 1 else 2 end`, asc(schema.jobs.closesAt), desc(schema.userJobs.fit)]
+        : f.sort === "paga"
         ? [sql`${schema.jobs.salaryMax} is null`, desc(schema.jobs.salaryMax), desc(schema.userJobs.fit)]
         : [desc(schema.userJobs.fit), desc(schema.userJobs.score), desc(schema.jobs.firstSeenAt)];
   const rows = await db

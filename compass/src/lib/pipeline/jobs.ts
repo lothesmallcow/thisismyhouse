@@ -117,7 +117,8 @@ async function dispatch(db: DB, name: JobName, now: Date): Promise<unknown> {
   const fetchImpl = demo ? demoFetch() : fetch;
   switch (name) {
     case "ingest": {
-      const summary = await runIngest({ db, fetchImpl, mailboxes: await mailboxRuns(db), demo, now });
+      const key = demo ? "demo" : env.tavilyKey;
+      const summary = await runIngest({ db, fetchImpl, mailboxes: await mailboxRuns(db), demo, now, web: key ? new TavilyProvider(fetchImpl, key) : null });
       const auto = await runAutopilot(db, now);
       return { ...summary, autopilot: auto };
     }

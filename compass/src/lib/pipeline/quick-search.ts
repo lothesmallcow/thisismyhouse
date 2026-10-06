@@ -20,6 +20,9 @@ import { getProfile } from "../server/profile";
 import { getSettings } from "../server/settings";
 import { bump, usageToday, W1_HARD_MAX } from "./discover";
 import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
+import { programmeQueries, searchProgrammes } from "./programmes";
+import { careerStage } from "../core/career-stage";
+import { getPrefs, listSectors } from "../server/catalog";
 
 /** At most one quick search per person in this many minutes ("Cerca ora" can be pressed often). */
 export const QUICK_SEARCH_EVERY_MIN = 10;
@@ -32,6 +35,7 @@ const FEEDS = 15; // job boards read
 const RECHECK_DAYS = 30; // a company without a public board is looked for again after this
 const WEB = 5; // web searches on the job sites (from the shared daily cap)
 const API = 2; // job API calls
+const PROGRAMME_QUERIES = 2; // students: web searches for programme pages
 
 export interface QuickDeps {
   fetchImpl: FetchLike;
@@ -51,6 +55,8 @@ export interface QuickResult {
   pages: number;
   web: number;
   api: number;
+  /** Students: official programme pages found by web search (spring weeks, insight days, internships). */
+  programmes?: number;
   found: number;
   created: number;
   /** When it ended (the start is the rate-limit stamp). */
@@ -163,6 +169,17 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
         // Try again in the daily run.
       }
     }
+  }
+
+  // 2b. Students: web search for the official pages of programmes for their year, career and countries
+  // (aggregator pages found on the way only add firm names to read later).
+  if (deps.web && settings.w1Enabled && profile.track === "stage" && Date.now() < deadline) {
+    const [sectors, prefs] = await Promise.all([listSectors(db, userId), getPrefs(db, userId)]);
+    const careers = sectors.filter((x) => prefs.sectors.get(x.id) === "like").map((x) => x.slug);
+    const queries = programmeQueries({ careers, countries, stage: careerStage(profile.studyYear, profile.degreeYears) }, now, PROGRAMME_QUERIES);
+    const polite = new PoliteFetcher(db, deps.fetchImpl, { sleep: deps.politeSleep });
+    const r = await searchProgrammes(db, queries, { polite, fetchImpl: deps.fetchImpl, web: deps.web, now, countries, searchCap: Math.min(settings.w1DailyCap, W1_HARD_MAX), save }, deadline);
+    out.programmes = r.offers;
   }
 
   // 3. Job API (its key set).

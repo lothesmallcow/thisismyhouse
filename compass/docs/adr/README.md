@@ -30,3 +30,4 @@ what to re-verify.
 | [0022](0022-precise-positions-and-priority.md) | Precise positions for generic roles, quick/complete questionnaire, positions from the CV, job priority |
 | [0023](0023-online-scale-and-access-requests.md) | Online at register scale (full-text and indexed queries), access on request approved by the admin |
 | [0024](0024-collega-gmail.md) | "Collega Gmail": each person's own Gmail, read-only, alerts only, instead of forwarding |
+| [0025](0025-early-careers-programmes.md) | Early-careers programmes: firm names from public trackers, offers only from official pages; dates and eligibility read from the page |

@@ -87,7 +87,7 @@ export function jobPostingToRaw(o: Json, pageUrl: string): RawJob | null {
     description: htmlToText(str(o.description) ?? ""),
     salaryText: sal.text,
     postedAt: str(o.datePosted) ? new Date(str(o.datePosted)!) : null,
-    hints: { ...emp, remote, ...(sal.min ? { minAnnualGross: sal.min, maxAnnualGross: sal.max } : {}) },
+    hints: { ...emp, remote, ...(sal.min ? { minAnnualGross: sal.min, maxAnnualGross: sal.max } : {}), ...(str(o.validThrough) && !Number.isNaN(Date.parse(str(o.validThrough)!)) ? { closesAt: new Date(str(o.validThrough)!) } : {}) },
   };
 }
 

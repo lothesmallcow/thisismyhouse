@@ -170,6 +170,13 @@ export const jobs = sqliteTable(
     scamFlags: json<ScamFlagRow[]>("scam_flags").notNull().default([]),
     thin: integer("thin", { mode: "boolean" }).notNull().default(false),
     postedAt: ts("posted_at"),
+    /** When applications close / open, when the programme runs (core/dates.ts), "rolling" review. */
+    closesAt: ts("closes_at"),
+    opensAt: ts("opens_at"),
+    runsStart: ts("runs_start"),
+    runsEnd: ts("runs_end"),
+    runsMonthOnly: integer("runs_month_only", { mode: "boolean" }).notNull().default(false),
+    rolling: integer("rolling", { mode: "boolean" }).notNull().default(false),
     firstSeenAt: ts("first_seen_at").notNull(),
     updatedAt: ts("updated_at").notNull(),
   },
@@ -621,3 +628,32 @@ export const mailConnections = sqliteTable("mail_connections", {
   /** Why the last read failed ("revoked" = access removed in Google: connect again). */
   lastError: text("last_error"),
 });
+
+/**
+ * Companies that run early-careers programmes (spring weeks, insight days, internships), found as
+ * NAMES ONLY on public trackers or through web search. Nothing else from the trackers is kept: each
+ * company's offers are then read from its own official page or job board (pipeline/programmes.ts).
+ */
+export const programmeLeads = sqliteTable(
+  "programme_leads",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    /** The name folded, without legal suffixes ("barclays"): one lead per company. */
+    nameKey: text("name_key").notNull().unique(),
+    name: text("name").notNull(),
+    /** What the source lists them for: "spring week", "internship"... */
+    kind: text("kind").notNull().default("programme"),
+    /** Where the programme is (country code), when the source is about one country. */
+    country: text("country"),
+    sourceHost: text("source_host").notNull(),
+    catalogCompanyId: integer("catalog_company_id"),
+    /** The official page found for it (firm site or its job board). */
+    officialUrl: text("official_url"),
+    firstSeenAt: ts("first_seen_at").notNull(),
+    lastSeenAt: ts("last_seen_at").notNull(),
+    checkedAt: ts("checked_at"),
+    /** Offers read from the official page the last time. */
+    found: integer("found").notNull().default(0),
+  },
+  (t) => [index("programme_leads_checked_idx").on(t.checkedAt)],
+);

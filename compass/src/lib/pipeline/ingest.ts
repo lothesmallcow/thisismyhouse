@@ -24,6 +24,9 @@ import { homeCountries } from "../core/geo";
 import type { RawJob } from "../core/normalize";
 import { isPaused, runWithHealth } from "./health";
 import { scanMailbox, type MailboxSummary } from "./mailbox-scan";
+import { refreshTrackerLeads, verifyLeads } from "./programmes";
+import { W1_HARD_MAX } from "./discover";
+import type { SearchProvider } from "../sources/web/w1";
 
 export interface MailboxRun {
   key: string;
@@ -41,6 +44,9 @@ export const API_CALLS_PER_RUN = 9;
 /** Company career pages scraped per daily run. */
 export const CAREER_SITES_PER_RUN = 15;
 
+/** Firms whose official pages are read per daily run (each one at most weekly). */
+const PROGRAMME_LEADS_PER_RUN = 12;
+
 export interface IngestDeps {
   db: DB;
   fetchImpl: FetchLike;
@@ -49,6 +55,8 @@ export interface IngestDeps {
   now?: Date;
   /** For tests: skip the 5-second politeness wait. */
   politeSleep?: (ms: number) => Promise<void>;
+  /** Web search (its key set): finds the official pages of programmes. */
+  web?: SearchProvider | null;
 }
 
 export interface IngestSummary {
@@ -199,6 +207,39 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
         summary.sources[`careers:${host}`] = r?.items ?? null;
       }),
     );
+  }
+
+  // 4c. Early-careers programmes, for students: firm names from public trackers once a week (names
+  // only), then each firm's official page or job board for the offer itself (pipeline/programmes.ts).
+  if (contexts.some((c) => c.profile.track === "stage")) {
+    const polite = new PoliteFetcher(db, fetchImpl, { sleep: deps.politeSleep });
+    const r = await runWithHealth(db, "programmi", async () => {
+      const row = await db.query.settings.findFirst({ where: eq(schema.settings.key, "programme_trackers_at") });
+      const last = typeof row?.value === "string" ? new Date(row.value).getTime() : 0;
+      if (now.getTime() - last > 7 * 86_400_000) {
+        await refreshTrackerLeads(db, polite, now);
+        const v = now.toISOString();
+        await db.insert(schema.settings).values({ key: "programme_trackers_at", value: v }).onConflictDoUpdate({ target: schema.settings.key, set: { value: v } });
+      }
+      const v = await verifyLeads(
+        db,
+        {
+          polite,
+          fetchImpl,
+          web: settings.w1Enabled ? (deps.web ?? null) : null,
+          now,
+          countries: atsCountries,
+          searchCap: Math.min(settings.w1DailyCap, W1_HARD_MAX),
+          save: async (jobs) => {
+            const s = await store(db, jobs, now, contexts);
+            summary.newJobs += s.created;
+          },
+        },
+        PROGRAMME_LEADS_PER_RUN,
+      );
+      return { items: v.offers, failures: 0 };
+    }, now);
+    summary.sources.programmi = r?.items ?? null;
   }
 
   // 5. W2: approved sites only (polite fetcher, JSON-LD first)

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Job } from "@/lib/server/jobs";
 import { daysAgoLabel } from "@/lib/core/time";
+import { deadlineText } from "@/lib/core/deadline";
 import { IconMail, IconPin, IconStar } from "./icons";
 import { LevelBadge } from "./ui";
 
@@ -14,8 +15,9 @@ function salaryShort(j: Job): string | null {
 const TYPE_LABEL: Record<string, string> = { stage: "Stage", programma: "Programma studenti" };
 
 export function JobCard({ job }: { job: Job }) {
-  const negative = (r: string) => /lontan|sotto|non è|chiede|evitare|truffa|vecchio|scartato|non cerchi|è part|è a tempo|fuori|pensato per|non retribuito/i.test(r);
+  const negative = (r: string) => /lontan|sotto|non è|chiede|evitare|truffa|vecchio|scartato|non cerchi|è part|è a tempo|fuori|pensato per|non retribuito|riservato|solo per|chiuse|non aperto|per studenti di magistrale|per chi si laurea nel \d{4}, tu/i.test(r);
   const salary = salaryShort(job);
+  const deadline = deadlineText(job, new Date());
   const place = job.remote === "remote" ? "Da remoto" : job.city ? `${job.city}${job.distanceKm != null ? (job.distanceKm < 1 ? "" : ` · ${Math.round(job.distanceKm)} km`) : ""}` : null;
   return (
     <article className="group relative rounded-[var(--radius-card)] border border-line bg-surface p-4 transition-colors hover:border-line-strong sm:p-5">
@@ -63,6 +65,8 @@ export function JobCard({ job }: { job: Job }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-faint">
         {TYPE_LABEL[job.jobType] && <span className="font-medium text-muted">{TYPE_LABEL[job.jobType]}</span>}
+        {deadline && <span className={deadline.urgent ? "font-medium text-warn" : "font-medium text-muted"}>{deadline.text}</span>}
+        {job.rolling && !deadline?.text.startsWith("Candidature chiuse") && <span className="font-medium text-accent">Rolling: candidati presto</span>}
         {salary && <span>{salary}</span>}
         {job.applicationEmail && (
           <span className="inline-flex items-center gap-1">
