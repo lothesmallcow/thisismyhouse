@@ -167,3 +167,28 @@ export async function listPeople(db: DB) {
     .where(eq(schema.users.role, "user"))
     .orderBy(schema.users.id);
 }
+
+/** The admin's own address when the same e-mail is also a person's account: "name+admin@domain". */
+export const adminAlias = (email: string) => {
+  const [local, domain] = email.trim().toLowerCase().split("@");
+  return domain ? `${local}+admin@${domain}` : email;
+};
+
+/**
+ * The admin account from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD, at every deploy: created if missing,
+ * re-enabled and given that password if it exists. If the e-mail is a person's account, the admin
+ * lives on its "+admin" alias (sign-in with the plain e-mail still works, see signIn).
+ */
+export async function ensureAdmin(db: DB, email: string, password: string): Promise<"created" | "updated" | "alias"> {
+  const plain = email.trim().toLowerCase();
+  const taken = await db.query.users.findFirst({ where: eq(schema.users.email, plain) });
+  const address = taken && taken.role !== "admin" ? adminAlias(plain) : plain;
+  const hash = await hashPassword(password);
+  const admin = await db.query.users.findFirst({ where: eq(schema.users.email, address) });
+  if (admin) {
+    await db.update(schema.users).set({ role: "admin", passwordHash: hash, active: true, pendingSince: null }).where(eq(schema.users.id, admin.id));
+  } else {
+    await db.insert(schema.users).values({ role: "admin", email: address, name: "Admin", passwordHash: hash });
+  }
+  return address !== plain ? "alias" : admin ? "updated" : "created";
+}

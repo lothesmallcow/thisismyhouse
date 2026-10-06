@@ -37,9 +37,13 @@ export async function signIn(email: string, password: string, role: Role): Promi
   const now = new Date();
   const attempt = await db.query.loginAttempts.findFirst({ where: eq(schema.loginAttempts.key, key) });
   if (attempt?.lockedUntil && attempt.lockedUntil > now) return "locked";
-  const user = await db.query.users.findFirst({
-    where: and(eq(schema.users.email, email.trim().toLowerCase()), eq(schema.users.role, role)),
-  });
+  const plain = email.trim().toLowerCase();
+  let user = await db.query.users.findFirst({ where: and(eq(schema.users.email, plain), eq(schema.users.role, role)) });
+  // The admin whose e-mail is also a person's account lives on "name+admin@domain" (ensureAdmin).
+  if (!user && role === "admin" && plain.includes("@")) {
+    const [local, domain] = plain.split("@");
+    user = await db.query.users.findFirst({ where: and(eq(schema.users.email, `${local}+admin@${domain}`), eq(schema.users.role, "admin")) });
+  }
   const passwordOk = user ? await verifyPassword(password, user.passwordHash) : false;
   // A request not yet approved: say so, but only to whoever knows the password.
   if (user && passwordOk && !user.active && user.pendingSince) return "pending";

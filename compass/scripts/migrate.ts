@@ -5,8 +5,18 @@ import { getDb, migrateDb } from "../src/lib/db";
 import { ensureCatalog, ensureDirectory, ensureRegisters } from "../src/lib/server/catalog";
 import { backfillJobPlaces, convertOldDismissals, mergeDuplicateJobs } from "../src/lib/server/jobs";
 import { backfillCompanies } from "../src/lib/server/company-guess";
+import { ensureAdmin } from "../src/lib/server/accounts";
 
 await migrateDb(getDb());
+// The admin account from the host's secrets, at every deploy (created, or re-enabled with that password).
+const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim();
+const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "";
+if (adminEmail && adminPassword.length >= 12 && adminPassword !== "admin-compass") {
+  const r = await ensureAdmin(getDb(), adminEmail, adminPassword);
+  console.log(r === "alias" ? "Admin ready (its e-mail is also a person's account: stored with +admin, sign in with the plain e-mail)." : `Admin ${r}.`);
+} else if (adminEmail) {
+  console.log("Admin not updated: SEED_ADMIN_PASSWORD must be at least 12 characters.");
+}
 await backfillJobPlaces(getDb());
 await convertOldDismissals(getDb());
 await backfillCompanies(getDb());
