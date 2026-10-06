@@ -4,7 +4,7 @@ import { Button, Empty, PageHeader } from "@/components/ui";
 import { formatWhen } from "@/lib/core/time";
 import { getDb } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
-import { dismissedList } from "@/lib/server/jobs";
+import { dismissedList, UNDO_DAYS } from "@/lib/server/jobs";
 import { undoDismissAction } from "../../actions";
 
 export const metadata = { title: "Scartate" };
@@ -13,15 +13,16 @@ export const metadata = { title: "Scartate" };
 export default async function ScartatePage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
   const sp = await searchParams;
   const user = await requireUser();
-  const list = await dismissedList(getDb(), user.id);
   const now = new Date();
+  const list = await dismissedList(getDb(), user.id, now);
+  const daysLeft = (at: Date) => Math.max(1, UNDO_DAYS - Math.floor((now.getTime() - at.getTime()) / 86_400_000));
   return (
     <div className="mx-auto max-w-2xl">
       <Flash code={sp.msg} />
       <BackLink href="/offerte">Offerte</BackLink>
       <PageHeader title="Scartate" description="Offerte cancellate con “Non mi interessa”: non te le ripropongo più, né dallo stesso link né lo stesso annuncio su un altro sito. Le altre offerte della stessa azienda restano." />
       {list.length === 0 ? (
-        <Empty title="Nessuna offerta scartata">Quando premi “Non mi interessa” su un&apos;offerta, finisce qui.</Empty>
+        <Empty title="Niente da annullare">Quando premi “Non mi interessa” su un&apos;offerta, resta qui per {UNDO_DAYS} giorni nel caso tu abbia sbagliato.</Empty>
       ) : (
         <ul className="divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface">
           {list.map((d) => (
@@ -29,7 +30,7 @@ export default async function ScartatePage({ searchParams }: { searchParams: Pro
               <span className="min-w-0 text-[14px]">
                 <span className="font-medium">{d.title || "Offerta"}</span>
                 <span className="block text-[13px] text-muted">
-                  {[d.company, d.city].filter(Boolean).join(" · ")} · scartata {formatWhen(d.at, now)}
+                  {[d.company, d.city].filter(Boolean).join(" · ")} · scartata {formatWhen(d.at, now)} · annullabile ancora per {daysLeft(d.at)} {daysLeft(d.at) === 1 ? "giorno" : "giorni"}
                 </span>
               </span>
               <form action={undoDismissAction}>
@@ -42,7 +43,7 @@ export default async function ScartatePage({ searchParams }: { searchParams: Pro
           ))}
         </ul>
       )}
-      <p className="mt-4 text-[12.5px] text-faint">Dopo sei mesi lo scarto si dimentica.</p>
+      <p className="mt-4 text-[12.5px] text-faint">Dopo {UNDO_DAYS} giorni spariscono da questa lista da sole, ma restano scartate: non te le ripropongo comunque.</p>
     </div>
   );
 }

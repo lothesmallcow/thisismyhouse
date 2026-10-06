@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.20.2 · 2026-10-06
+
+- **Scartate** keeps each dismissal for 7 days, with how many days are left to undo it; then it leaves
+  the list by itself and can no longer be undone. The offer stays blocked: it is not proposed again.
+
 ## 0.20.1 · 2026-10-06
 
 - **"Non mi interessa" deletes, for good, and only that offer**: it leaves the person's account and is

@@ -570,13 +570,24 @@ async function bannedFor(db: DB, jobId: number, key: string): Promise<Set<number
   return new Set([...byKey, ...byUrl].map((r) => r.u));
 }
 
-/** What they dismissed, newest first (for "Scartate", where a dismissal can be undone). */
-export async function dismissedList(db: DB, userId: number) {
-  return db.select().from(schema.dismissedJobs).where(eq(schema.dismissedJobs.userId, userId)).orderBy(desc(schema.dismissedJobs.at)).limit(200);
+/** How long a dismissal can be undone from "Scartate". After that it leaves the list; the offer stays blocked. */
+export const UNDO_DAYS = 7;
+
+/** What they dismissed in the last week, newest first (for "Scartate", where a dismissal can be undone). */
+export async function dismissedList(db: DB, userId: number, now = new Date()) {
+  const since = new Date(now.getTime() - UNDO_DAYS * 86_400_000);
+  return db
+    .select()
+    .from(schema.dismissedJobs)
+    .where(and(eq(schema.dismissedJobs.userId, userId), gte(schema.dismissedJobs.at, since)))
+    .orderBy(desc(schema.dismissedJobs.at))
+    .limit(200);
 }
 
 /** Undo a dismissal: the offer comes back if it is still around, and can be proposed again. */
 export async function undoDismissal(db: DB, userId: number, key: string, now = new Date()): Promise<void> {
+  const d = await db.query.dismissedJobs.findFirst({ where: and(eq(schema.dismissedJobs.userId, userId), eq(schema.dismissedJobs.dedupeKey, key)) });
+  if (!d || d.at.getTime() < now.getTime() - UNDO_DAYS * 86_400_000) return; // too late: it stays dismissed
   await db.delete(schema.dismissedJobs).where(and(eq(schema.dismissedJobs.userId, userId), eq(schema.dismissedJobs.dedupeKey, key)));
   await db.delete(schema.dismissedUrls).where(and(eq(schema.dismissedUrls.userId, userId), eq(schema.dismissedUrls.dedupeKey, key)));
   await rerankUser(db, userId, now);
