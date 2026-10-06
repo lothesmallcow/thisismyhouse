@@ -39,7 +39,6 @@ export default function PrivacyPage() {
         <li>Database e sito: Turso (database) e Vercel (hosting), su server nell&apos;Unione Europea.</li>
         <li>E-mail: se al tuo account è collegata una casella Gmail, le candidature e gli avvisi passano da Google.</li>
         <li>Ricerche di offerte: ai servizi di ricerca (es. Adzuna, Tavily) arrivano solo parole come ruolo e città, mai il tuo nome o il tuo CV.</li>
-        <li>Loghi delle aziende: le piccole icone accanto alle offerte sono caricate dal servizio di icone di DuckDuckGo, a cui arriva solo il sito dell&apos;azienda (es. unicreditgroup.eu), mai chi sei o cosa cerchi.</li>
       </ul>
 
       <h2>Per quanto tempo</h2>

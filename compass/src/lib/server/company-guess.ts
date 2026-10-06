@@ -3,6 +3,9 @@
 // text that states it, or the catalog companies the text names. The catalog's spelling wins when it matches.
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { dedupeKey } from "../core/dedupe";
+import { firmFromUrl, pageCompanyClues } from "../core/page-company";
+import { PLATFORM_HOST, type PoliteFetcher } from "../sources/web/polite-fetch";
+import { pageText } from "../sources/web/programme-page";
 import { catalogSpelling, companyFromText, companyFromTitle, companyFromUrl, firstKnownName, mostNamed, nameKey, type KnownCompany } from "../core/company-names";
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -84,5 +87,64 @@ export async function backfillCompanies(db: DB): Promise<number> {
       fixed++;
     }
   }
+  return fixed;
+}
+
+/**
+ * The company from the offer's own page: the clues in its code (structured data, site name, tab
+ * title, logo, copyright, address) in the catalog's spelling when it is a catalog company, else the
+ * first clear name; failing that, the names in the page's text.
+ */
+export async function companyFromPage(db: DB, html: string, url: string, title: string): Promise<string | null> {
+  const known = await knownCompanies(db);
+  const clues = pageCompanyClues(html, url);
+  for (const c of clues) {
+    const hit = catalogSpelling(c, known) ?? firstKnownName(c, known);
+    if (hit) return hit.name;
+  }
+  const slug = firmFromUrl(url);
+  const named = clues.find((c) => c !== slug && /[A-Z]/.test(c)); // a written name, not a bare web address
+  if (named) return named;
+  return guessCompany(db, { title, url, description: pageText(html, 20000).text });
+}
+
+/** Offers still without a company whose link is a page we may read (not a job platform): looked up once each. */
+export async function lookUpMissingCompanies(db: DB, polite: PoliteFetcher, opts: { max: number; until: number; now: Date }): Promise<number[]> {
+  const j = schema.jobs;
+  const triedRow = await db.query.settings.findFirst({ where: eq(schema.settings.key, "company_lookup_tried") });
+  const tried = new Set<number>(Array.isArray(triedRow?.value) ? (triedRow.value as number[]) : []);
+  const rows = await db
+    .select({ id: j.id, title: j.title, city: j.city, url: schema.jobSources.url })
+    .from(j)
+    .innerJoin(schema.jobSources, eq(schema.jobSources.jobId, j.id))
+    .where(and(isNull(j.company), isNotNull(schema.jobSources.url)))
+    .limit(500);
+  const fixed: number[] = [];
+  const seen = new Set<number>();
+  for (const r of rows) {
+    if (seen.size >= opts.max || Date.now() >= opts.until) break;
+    if (seen.has(r.id) || tried.has(r.id) || !r.url) continue;
+    let host: string;
+    try {
+      host = new URL(r.url).hostname;
+    } catch {
+      continue;
+    }
+    if (PLATFORM_HOST.test(host) || polite.isBlocked(host)) continue; // job platforms are never fetched
+    seen.add(r.id);
+    tried.add(r.id);
+    try {
+      const { body } = await polite.get(r.url);
+      const name = await companyFromPage(db, body, r.url, r.title);
+      if (name) {
+        await db.update(j).set({ company: name, dedupeKey: dedupeKey({ company: name, title: r.title, city: r.city }), updatedAt: opts.now }).where(eq(j.id, r.id));
+        fixed.push(r.id);
+      }
+    } catch {
+      /* robots.txt says no, or the page is down: it stays without a company */
+    }
+  }
+  const keep = [...tried].slice(-3000);
+  await db.insert(schema.settings).values({ key: "company_lookup_tried", value: keep }).onConflictDoUpdate({ target: schema.settings.key, set: { value: keep } });
   return fixed;
 }
