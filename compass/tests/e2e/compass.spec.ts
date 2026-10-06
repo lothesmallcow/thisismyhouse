@@ -77,6 +77,16 @@ test("Offerte (job search): ranked list with reasons, focus switch, search, filt
   await page.getByRole("link", { name: "Torna ai luoghi del profilo" }).click();
   await expect(page.getByRole("link", { name: "Torna ai luoghi del profilo" })).toHaveCount(0);
 
+  // "Non mi interessa" right on the card: gone from the list in one click, filters kept.
+  await page.goto("/offerte?vista=tutte");
+  const firstTitle = await cards.first().getByRole("heading").innerText();
+  await cards.first().getByRole("button", { name: /^Non mi interessa/ }).click();
+  await expect(page.getByText(/Tolta dalla lista/)).toBeVisible();
+  await expect(page).toHaveURL(/vista=tutte/);
+  await expect(cards.filter({ hasText: firstTitle })).toHaveCount(0);
+  await page.getByRole("link", { name: "Offerte scartate" }).click();
+  await expect(cards.filter({ hasText: firstTitle }).first()).toBeVisible();
+
   await page.goto("/offerte");
   await cards.first().getByRole("link").first().click();
   await expect(page.getByText(/Perché è (molto )?adatta/)).toBeVisible();

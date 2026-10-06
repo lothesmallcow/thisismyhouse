@@ -14,7 +14,8 @@ function salaryShort(j: Job): string | null {
 
 const TYPE_LABEL: Record<string, string> = { stage: "Stage", programma: "Programma studenti" };
 
-export function JobCard({ job }: { job: Job }) {
+/** `dismiss`: the one-click "Non mi interessa" (the offer leaves the list, and does not come back). */
+export function JobCard({ job, dismiss, back }: { job: Job; dismiss?: (f: FormData) => Promise<void>; back?: string }) {
   const negative = (r: string) => /lontan|sotto|non è|chiede|evitare|truffa|vecchio|scartato|non cerchi|è part|è a tempo|fuori|pensato per|non retribuito|riservato|solo per|chiuse|non aperto|per studenti di magistrale|per chi si laurea nel \d{4}, tu/i.test(r);
   const salary = salaryShort(job);
   const deadline = deadlineText(job, new Date());
@@ -74,6 +75,15 @@ export function JobCard({ job }: { job: Job }) {
           </span>
         )}
         <span>Trovata {daysAgoLabel(job.postedAt ?? job.firstSeenAt)}</span>
+        {dismiss && job.status !== "dismissed" && (
+          <form action={dismiss} className="relative z-10 ml-auto">
+            <input type="hidden" name="jobId" value={job.id} />
+            <input type="hidden" name="back" value={back ?? "/offerte"} />
+            <button className="inline-flex h-8 items-center rounded-lg border border-line px-2.5 text-[12.5px] font-medium text-muted hover:border-line-strong hover:text-ink" aria-label={`Non mi interessa: ${job.title}`}>
+              Non mi interessa
+            </button>
+          </form>
+        )}
       </div>
     </article>
   );

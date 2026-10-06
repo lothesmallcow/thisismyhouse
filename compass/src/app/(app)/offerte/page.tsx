@@ -12,7 +12,7 @@ import { requireUser } from "@/lib/server/auth";
 import { defaultFilters, filterWhere, listJobs, PAGE_SIZE, type JobFilters } from "@/lib/server/jobs";
 import { getProfile } from "@/lib/server/profile";
 import { getSettings } from "@/lib/server/settings";
-import { saveDefaultFiltersAction, searchNowAction } from "../actions";
+import { quickDismissAction, saveDefaultFiltersAction, searchNowAction } from "../actions";
 import { SourcesCard } from "@/components/sources-card";
 import { CareersLine } from "@/components/careers-line";
 import { PlacesPicker } from "@/components/places-picker";
@@ -322,7 +322,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
           {jobs.map((j, i) => (
             <div key={j.id}>
               {headings[i] && <h2 className="mb-2.5 mt-7 text-[12px] font-medium uppercase tracking-[0.08em] text-faint first:mt-0">{headings[i]}</h2>}
-              <JobCard job={j} />
+              <JobCard job={j} dismiss={quickDismissAction} back={keep({})} />
             </div>
           ))}
         </div>

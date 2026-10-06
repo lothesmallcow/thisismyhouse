@@ -20,6 +20,7 @@ const MESSAGES: Record<string, { tone: "success" | "info" | "warn" | "danger"; t
   "posizioni-salvate": { tone: "success", text: "Posizioni salvate: le prossime ricerche useranno queste." },
   "posizioni-vuote": { tone: "warn", text: "Nessuna posizione spuntata: le ricerche useranno solo settori e aziende scelti." },
   "carriere-salvate": { tone: "success", text: "Salvato: ora cerco in tutte queste carriere e in tutti questi paesi. Il web scraping parte da solo (se non l'hai lanciato negli ultimi 10 minuti)." },
+  "scartata-lista": { tone: "success", text: "Tolta dalla lista: non la vedrai più, nemmeno se la ritrovo. Se cambi idea, la ritrovi in fondo alla pagina, in “Offerte scartate”." },
   "solo-titolare": { tone: "warn", text: "Solo la persona titolare può eliminare il proprio account. Da amministratore usa Admin → Utenti." },
   "conferma-elimina": { tone: "warn", text: "Per confermare scrivi ELIMINA nel campo." },
   "password-sbagliata": { tone: "warn", text: "La password non è corretta." },

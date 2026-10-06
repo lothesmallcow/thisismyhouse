@@ -667,3 +667,18 @@ export const programmeLeads = sqliteTable(
   },
   (t) => [index("programme_leads_checked_idx").on(t.checkedAt)],
 );
+
+/**
+ * Offers someone dismissed ("Non mi interessa"), remembered by their dedupe key: offers are deleted
+ * after a week without being seen, and if the same ad comes back it stays dismissed for them.
+ */
+export const dismissedJobs = sqliteTable(
+  "dismissed_jobs",
+  {
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    dedupeKey: text("dedupe_key").notNull(),
+    reason: text("reason"),
+    at: ts("at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.dedupeKey] }), index("dismissed_jobs_key_idx").on(t.dedupeKey)],
+);
