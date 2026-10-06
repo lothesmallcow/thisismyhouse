@@ -12,13 +12,18 @@ async function entraAction(f: FormData) {
   redirect(r === "ok" ? "/offerte" : r === "locked" ? "/entra?errore=attesa" : r === "pending" ? "/entra?errore=richiesta" : "/entra?errore=1");
 }
 
-export default async function EntraPage({ searchParams }: { searchParams: Promise<{ errore?: string }> }) {
+export default async function EntraPage({ searchParams }: { searchParams: Promise<{ errore?: string; msg?: string }> }) {
   if ((await currentUser())?.role === "user") redirect("/offerte");
   const sp = await searchParams;
   return (
     <div className="mx-auto max-w-sm px-4 pt-16">
       <h1 className="text-[24px] font-semibold">Entra in Compass</h1>
       <p className="mt-1.5 text-[14px] text-muted">Resti collegato su questo dispositivo.</p>
+      {sp.msg === "account-eliminato" && (
+        <div className="mt-5">
+          <Notice tone="success">Il tuo account e tutti i tuoi dati sono stati eliminati. Se vuoi tornare, puoi creare un nuovo account.</Notice>
+        </div>
+      )}
       {sp.errore && (
         <div className="mt-5">
           <Notice tone={sp.errore === "richiesta" ? "info" : "warn"}>

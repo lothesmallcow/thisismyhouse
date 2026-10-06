@@ -33,7 +33,8 @@ import { parsePlaceValue, profileFromPlaces } from "@/lib/core/where";
 import { situationOf, workRightsOf } from "@/lib/core/situation";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
 import { dismissJob, markSeen, rerankUser, restoreJob, setAdjustmentActive, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
-import { deleteAllMyData } from "@/lib/server/privacy";
+import { deleteAccount, deleteAllMyData } from "@/lib/server/privacy";
+import { verifyPassword } from "@/lib/server/passwords";
 import { fitWarnings } from "@/lib/server/career";
 import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences, pdfText, rematchExperiences, saveExperiences } from "@/lib/server/experiences";
 import { getProfile, updateProfile } from "@/lib/server/profile";
@@ -330,6 +331,24 @@ export async function deleteAllDataAction() {
   await deleteAllMyData(getDb(), u.id);
   revalidatePath("/", "layout");
   redirect("/benvenuto/1?msg=dati-cancellati");
+}
+
+/**
+ * "Elimina il mio account": everything goes (account, profile, CV, offers, applications, Gmail access,
+ * settings), after the password and the word ELIMINA. Only the person themselves: an administrator
+ * looking at someone's app deletes from Admin → Utenti.
+ */
+export async function deleteMyAccountAction(f: FormData) {
+  const u = await requireUser();
+  if (u.viewer !== "self") done("/elimina-account", "solo-titolare");
+  if (str(f, "confirm").toUpperCase() !== "ELIMINA") done("/elimina-account", "conferma-elimina");
+  const db = getDb();
+  const row = await db.query.users.findFirst({ where: eq(schema.users.id, u.id) });
+  if (!row || row.role !== "user" || !(await verifyPassword(String(f.get("password") ?? ""), row.passwordHash))) done("/elimina-account", "password-sbagliata");
+  await deleteMailConnection(db, u.id, fetch); // the Gmail access is revoked at Google too
+  await deleteAccount(db, u.id);
+  await signOut("user");
+  redirect("/entra?msg=account-eliminato");
 }
 
 export async function signOutAction() {
