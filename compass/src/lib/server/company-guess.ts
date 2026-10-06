@@ -8,7 +8,7 @@ import { fold } from "../core/text";
 import { AGGREGATOR_HOST, firmFromUrl, pageCompanyClues } from "../core/page-company";
 import { PLATFORM_HOST, type PoliteFetcher } from "../sources/web/polite-fetch";
 import { pageText } from "../sources/web/programme-page";
-import { catalogSpelling, companyFromText, companyFromTitle, companyFromUrl, firstKnownName, mostFrequentName, mostNamed, nameKey, type KnownCompany } from "../core/company-names";
+import { catalogSpelling, companyFromText, companyFromTitle, companyFromUrl, firstKnownName, isPlaceName, mostFrequentName, mostNamed, nameKey, type KnownCompany } from "../core/company-names";
 import type { DB } from "../db";
 import { schema } from "../db";
 
@@ -73,6 +73,13 @@ const compactName = (s: string) => nameKey(s).replace(/ /g, "");
  */
 export async function backfillCompanies(db: DB): Promise<number> {
   const j = schema.jobs;
+  // Companies that are not one: a place ("Milano, Lombardia") or the job site ("Reed.co.uk"), read
+  // from result titles before the parser knew better. Emptied, then guessed again below.
+  for (const { company } of await db.selectDistinct({ company: j.company }).from(j).where(isNotNull(j.company))) {
+    if (company && (isPlaceName(company) || /^(?:linkedin|indeed(?:\.com)?|[a-z]{2}\.indeed\.com|infojobs(?:\.it)?|reed(?:\.co\.uk)?|glassdoor|stepstone(?:\.[a-z.]+)?|jobs?|careers?)$/i.test(company.trim()))) {
+      await db.update(j).set({ company: null }).where(eq(j.company, company));
+    }
+  }
   const rows = await db.select({ id: j.id, title: j.title, description: j.description, city: j.city }).from(j).where(isNull(j.company)).limit(5000);
   let fixed = 0;
   for (const r of rows) {

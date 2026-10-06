@@ -16,6 +16,7 @@ import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { scrapeCareers } from "../sources/web/careers";
 import { dedupeCandidates, mergeDuplicateJobs, purgeOldJobs, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
 import { lookUpMissingCompanies } from "../server/company-guess";
+import { pageCompanyClues } from "../core/page-company";
 
 import { todaysPicks } from "../server/career";
 import { searchTargets } from "./targets";
@@ -271,7 +272,9 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
             }
           }
         }
-        const s = await store(db, jobs, now, contexts);
+        // No hiring organisation in the data: whose site it is (its name, title, logo, address).
+        const owner = pageCompanyClues(body, site.startUrl)[0] ?? null;
+        const s = await store(db, jobs.map((j) => ({ ...j, company: j.company || owner })), now, contexts);
         summary.newJobs += s.created;
         return { items: s.total, failures };
       }, now);

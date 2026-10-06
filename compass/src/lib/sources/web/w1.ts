@@ -5,6 +5,8 @@
 
 import type { RawJob } from "../../core/normalize";
 import { request, HttpError, type FetchLike } from "../http";
+import { findPlace } from "../../core/geo";
+import { fold } from "../../core/text";
 
 export interface SearchQuery {
   q: string;
@@ -97,16 +99,43 @@ export function isJobPage(url: string): boolean {
   return !/(\/search|\/jobs\?|\/offerte-lavoro\/?$|[?&]q=)/.test(u);
 }
 
-/** "Impiegata amministrativa - Rossi Srl - Torino | LinkedIn" -> parts. */
+/** Job sites' own names at the end of a result title ("… | LinkedIn", "… - Indeed.com", "… - Reed.co.uk"). */
+const SITE_SUFFIX =
+  /\s*[|–—-]\s*(?:LinkedIn|Indeed(?:\.com)?|[A-Za-z]{2}\.indeed\.com|InfoJobs(?:\.it)?|Reed(?:\.co\.uk)?|Glassdoor|StepStone(?:\.[a-z.]+)?|Welcome to the Jungle|eFinancialCareers|Bright Network|Totaljobs|Monster(?:\.[a-z.]+)?|Jooble|Adzuna|Indeed Italia|Lavoro|Jobs|Careers)\s*$/i;
+/** Parts that are not a company: the site, a generic word, a date. */
+const NOT_COMPANY = /^(?:linkedin|indeed(?:\.com)?|infojobs|reed(?:\.co\.uk)?|glassdoor|stepstone|jobs?|careers?|lavoro|offerte?|offerta di lavoro|annuncio|full[- ]time|part[- ]time|stage|tirocinio|internship|remote|da remoto|ibrido|hybrid|\d{4})$/i;
+
+/** A part of a title that is a place ("Milano, Lombardia", "London, England, United Kingdom", "Roma (RM)"). */
+function isPlacePart(part: string): boolean {
+  const first = part.split(/,|\(/)[0].trim();
+  const p = findPlace(part) ?? findPlace(first);
+  if (!p) return false;
+  const f = (x: string) => fold(x).replace(/[^a-z]/g, "");
+  // The part must BE the place (maybe with region/country after it), not merely contain one.
+  return f(first) === f(p.name) || f(part) === f(p.name);
+}
+
+/**
+ * Result titles as job sites write them, into title, company and place:
+ * "Impiegata amministrativa - Rossi Srl - Torino | LinkedIn", "MUFG hiring DCM Intern in London, England | LinkedIn",
+ * "Stage Asset Management SGR - Milano, Lombardia - Indeed.com" (no company: the place is not taken for one).
+ */
 export function parseResultTitle(raw: string): { title: string; company: string | null; location: string | null } {
-  let t = raw.replace(/\s*[|–-]\s*(LinkedIn|Indeed(\.com)?|InfoJobs)\s*$/i, "").trim();
-  const hiring = t.match(/^(.+?) (?:sta assumendo|is hiring|assume)\s+(?:per\s+)?(.+?)(?: a | in )(.+)$/i);
-  if (hiring) return { company: hiring[1].trim(), title: hiring[2].trim(), location: hiring[3].trim() };
-  const parts = t.split(/\s+[-–|]\s+/);
-  if (parts.length >= 3) return { title: parts[0], company: parts[1], location: parts.slice(2).join(", ") };
-  if (parts.length === 2) return { title: parts[0], company: parts[1], location: null };
+  let t = raw.trim();
+  for (let i = 0; i < 2; i++) t = t.replace(SITE_SUFFIX, "").trim();
+  const hiring = t.match(/^(.+?) (?:sta assumendo|is hiring|hiring|assume|cerca)\s+(?:per\s+)?(.+?)(?:\s+(?:a|in)\s+(.+))?$/i);
+  if (hiring && hiring[1].split(" ").length <= 6 && !/^(?:si|azienda|importante|nota|primaria|società|societa|cliente|we|our|the company|company)\b/i.test(hiring[1])) return { company: hiring[1].trim(), title: hiring[2].trim(), location: hiring[3]?.trim() ?? null };
   t = t.replace(/^offerta di lavoro:?\s*/i, "");
-  return { title: t, company: null, location: null };
+  const parts = t.split(/\s+[-–—|·]\s+/).map((x) => x.trim()).filter(Boolean);
+  const title = parts.shift() ?? t;
+  let company: string | null = null;
+  const places: string[] = [];
+  for (const part of parts) {
+    if (NOT_COMPANY.test(part)) continue;
+    if (isPlacePart(part)) places.push(part);
+    else if (!company) company = part;
+  }
+  return { title, company, location: places.length ? places.join(", ") : null };
 }
 
 export function hitToRawJob(h: SearchHit): RawJob {
