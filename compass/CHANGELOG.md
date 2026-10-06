@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.1 · 2026-10-06
+
+- **Checkout**: any complete card number is accepted for the trial (not only the test card). Still
+  nothing typed in the card fields is sent or saved, and nothing is charged.
+
 ## 0.22.0 · 2026-10-06
 
 - **Plans: Free, Plus, Premium** (`/piano`, lib/core/plans.ts). Free: 3 searches by hand a day,

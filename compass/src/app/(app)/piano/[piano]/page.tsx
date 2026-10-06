@@ -47,7 +47,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
         <Card className="!p-5">
           <p className="mb-1 text-[16px] font-semibold">Pagamento</p>
           <p className="mb-4 text-[13.5px] text-muted">
-            I pagamenti non sono ancora attivi: è una prova gratuita, non ti addebitiamo nulla e quello che scrivi qui non lascia il tuo browser. Usa la carta di prova.
+            I pagamenti non sono ancora attivi: è una prova gratuita, non ti addebitiamo nulla e quello che scrivi qui non viene inviato né salvato.
           </p>
           <DemoCheckout plan={plan.key} back={back} action={choosePlanAction} />
         </Card>

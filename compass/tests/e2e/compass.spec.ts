@@ -737,12 +737,12 @@ test("student questionnaire: 13 steps, catalog, activities, Altro, automatic foc
   // The plans: try Plus with the test card (payments are not live), then the last page.
   await expect(page).toHaveURL(/benvenuto\/piani/);
   await page.getByRole("link", { name: "Prova Plus" }).click();
-  await page.getByLabel("Numero della carta").fill("5555 5555 5555 4444");
+  await page.getByLabel("Numero della carta").fill("5555 55");
+  await page.getByRole("button", { name: /Attiva Plus/ }).click();
+  await expect(page.getByText(/numero di carta completo/)).toBeVisible();
+  await page.getByLabel("Numero della carta").fill("5555 5555 5555 4444"); // any number: nothing is sent
   await page.getByLabel("Scadenza").fill("1230");
   await page.getByLabel("CVC").fill("123");
-  await page.getByRole("button", { name: /Attiva Plus/ }).click();
-  await expect(page.getByText(/usa la carta di prova 4242/)).toBeVisible();
-  await page.getByRole("button", { name: "Usa la carta di prova" }).click();
   await page.getByRole("button", { name: /Attiva Plus/ }).click();
   await expect(page.getByRole("heading", { name: /Fatto, Giulia/ })).toBeVisible();
   await page.getByRole("link", { name: "Vedi gli stage" }).click();
