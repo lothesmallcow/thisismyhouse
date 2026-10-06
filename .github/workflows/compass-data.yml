@@ -6,6 +6,7 @@ name: Compass data
 on:
   workflow_dispatch:
   push:
+    branches-ignore: [main] # on main the data arrives through a pull request, never a direct push
     paths:
       - compass/scripts/import-esco-api.mjs
 permissions:
