@@ -60,6 +60,7 @@ function names(): { occ: Occupation; names: string[] }[] {
 }
 
 export const occupationCount = () => load().occupations.length;
+export const allOccupations = (): Occupation[] => load().occupations;
 
 /** The occupation a typed role is, by any of its names in four languages (exact, after folding). */
 export function findOccupation(role: string): Occupation | null {

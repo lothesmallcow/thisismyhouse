@@ -3,6 +3,8 @@
 // (an Italian "Impiegata amministrativa" is an "Administrative Assistant" in London).
 // Format: it | en | de | fr | sector slug | track (l = lavoro, s = stage, t = both)
 
+import { allOccupations } from "./occupations";
+
 const RAW = `
 Impiegata amministrativa|Administrative assistant|Verwaltungsangestellte|Employée administrative|amministrazione|l
 Impiegato amministrativo|Administrative clerk|Verwaltungsangestellter|Employé administratif|amministrazione|l
@@ -205,6 +207,9 @@ const firstForm = (s: string) => s.split("/")[0].trim();
  */
 function escoPositions(): Position[] {
   if (typeof window !== "undefined") return [];
+  // The full import (data/world/occupations.json): every occupation, with its four names.
+  const all = allOccupations();
+  if (all.length) return all.map((o) => ({ it: firstForm(o.it), en: firstForm(o.en), de: firstForm(o.de), fr: firstForm(o.fr), sector: "", track: "tutti" as const }));
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require("node:fs") as typeof import("node:fs");

@@ -1,6 +1,7 @@
 import { saveRolesAction } from "@/app/(app)/actions";
 import { MAX_ROLES, STUDENT_ROLE, type CvPosition } from "@/lib/core/cv-positions";
 import type { ReactNode } from "react";
+import { RoleInput } from "./role-input";
 import { Button, ChoiceRow, Field, PillCheck } from "./ui";
 
 export interface PositionGroup {
@@ -19,7 +20,6 @@ export function RecommendedPositions({
   before,
   more = [],
   others = [],
-  suggestions = [],
 }: {
   roles: string[];
   recommended: CvPosition[];
@@ -31,8 +31,6 @@ export function RecommendedPositions({
   more?: PositionGroup[];
   /** Positions of the other careers, folded away. */
   others?: PositionGroup[];
-  /** Every known position, for the free field's suggestions. */
-  suggestions?: string[];
 }) {
   const taken = new Set([...roles, ...recommended.map((r) => r.title)].map((x) => x.toLowerCase()));
   const group = (g: PositionGroup) => {
@@ -87,15 +85,8 @@ export function RecommendedPositions({
         </details>
       )}
       <Field label="Un'altra posizione" htmlFor="extraRole" hint={`Scrivi o scegli tra i suggerimenti. Si cercano al massimo ${MAX_ROLES} posizioni: le prime spuntate.`}>
-        <input id="extraRole" name="extraRole" type="text" list={suggestions.length ? "all-positions" : undefined} />
+        <RoleInput id="extraRole" name="extraRole" />
       </Field>
-      {suggestions.length > 0 && (
-        <datalist id="all-positions">
-          {suggestions.map((t) => (
-            <option key={t} value={t} />
-          ))}
-        </datalist>
-      )}
       <Button variant="secondary">{submit}</Button>
     </form>
   );

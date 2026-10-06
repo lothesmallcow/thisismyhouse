@@ -3,7 +3,10 @@ import { placesFromProfile } from "@/lib/core/where";
 import { RecommendedPositions } from "@/components/recommended-positions";
 import { cvPositionsFor } from "@/lib/server/cv-positions";
 import { PriorityChoice } from "@/components/priority-choice";
-import { isGenericRole, positionsFor } from "@/lib/catalog/positions";
+import { isGenericRole } from "@/lib/catalog/positions";
+import { careerMoves, findOccupation, searchOccupations } from "@/lib/catalog/occupations";
+import { CareerGoalFields } from "@/components/career-goal-fields";
+import { RoleInput } from "@/components/role-input";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
@@ -122,8 +125,9 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
   if (!id) notFound();
   if (id !== "risposte" && !back && !p.onboardedAt && n > p.onboardingStep + 1) redirect(`/benvenuto/${p.onboardingStep}`);
   const synonymsPhase = id === "ruolo" && sp.fase === "sinonimi";
-  const prevHref = back ? "/profilo" : Number.isFinite(n) && n > 1 ? `/benvenuto/${synonymsPhase ? n : n - 1}` : null;
-  const title = id === "risposte" ? "Risposte pronte per i siti" : synonymsPhase ? "Vanno bene anche questi ruoli?" : TITLES[id](p.track);
+  const movesPhase = id === "ruolo" && sp.fase === "cambio";
+  const prevHref = back ? "/profilo" : Number.isFinite(n) && n > 1 ? `/benvenuto/${synonymsPhase || movesPhase ? n : n - 1}` : null;
+  const title = id === "risposte" ? "Risposte pronte per i siti" : movesPhase ? "Lavori vicini al tuo" : synonymsPhase ? "Vanno bene anche questi ruoli?" : TITLES[id](p.track);
   const help =
     id === "risposte"
       ? "I moduli online chiedono spesso queste cose: scrivile una volta, poi le copi con un tocco."
@@ -158,7 +162,8 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
           <input type="hidden" name="n" value={Number.isFinite(n) ? n : 0} />
           {back && <input type="hidden" name="ritorno" value="profilo" />}
           {synonymsPhase && <input type="hidden" name="fase" value="sinonimi" />}
-          <StepFields id={id} synonymsPhase={synonymsPhase} p={p} userId={user.id} />
+          {movesPhase && <input type="hidden" name="fase" value="cambio" />}
+          <StepFields id={id} synonymsPhase={synonymsPhase} movesPhase={movesPhase} p={p} userId={user.id} />
           <div className="flex flex-wrap items-center gap-2 pt-2">
             <Button>{back ? "Salva" : n === total ? "Fine" : id === "risposte" ? "Salva" : "Avanti"}</Button>
             {!back && id !== "risposte" && (
@@ -236,7 +241,7 @@ async function CvStep({ p, userId, n, back }: { p: Profile; userId: number; n: n
   );
 }
 
-async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risposte"; synonymsPhase: boolean; p: Profile; userId: number }) {
+async function StepFields({ id, synonymsPhase, movesPhase, p, userId }: { id: StepId | "risposte"; synonymsPhase: boolean; movesPhase: boolean; p: Profile; userId: number }) {
   const db = getDb();
   const stage = p.track === "stage";
   switch (id) {
@@ -257,6 +262,32 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
         </>
       );
     case "ruolo": {
+      if (movesPhase) {
+        // A change, not sure to what: the jobs that need most of the same skills as theirs.
+        const from = findOccupation(p.currentRole) ?? searchOccupations(p.currentRole, 1)[0]?.occ ?? null;
+        const moves = from ? careerMoves(from, 12) : [];
+        return (
+          <>
+            <p className="text-[13.5px] text-muted">
+              Partendo da: <strong>{from ? firstForm(from.it) : p.currentRole || "il tuo lavoro"}</strong>. Più alta la percentuale, più di quello che serve sai già fare.
+            </p>
+            {moves.length ? (
+              <div className="grid grid-cols-1 gap-2">
+                {moves.map((m, i) => (
+                  <ChoiceRow key={m.occ.id} name="role" value={firstForm(m.occ.it)} defaultChecked={i < 3} hint={`${m.score}% delle competenze${m.shared.length ? ` · in comune: ${m.shared.join(", ")}` : ""}`}>
+                    {firstForm(m.occ.it)}
+                  </ChoiceRow>
+                ))}
+              </div>
+            ) : (
+              <Notice tone="info">Non riconosco ancora &quot;{p.currentRole}&quot;: torna indietro e sceglilo dai suggerimenti mentre scrivi, oppure scrivi qui sotto i lavori che vorresti provare.</Notice>
+            )}
+            <Field label="Altri lavori che ti incuriosiscono" htmlFor="extra" hint="Uno per riga. Facoltativo.">
+              <textarea id="extra" name="extra" rows={3} />
+            </Field>
+          </>
+        );
+      }
       if (synonymsPhase) {
         const suggestions = [...new Set([...p.synonyms, ...suggestSynonyms(p.roles)])];
         return (
@@ -280,18 +311,20 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
           </>
         );
       }
+      if (p.track !== "stage")
+        return (
+          <div className="space-y-5">
+            <CareerGoalFields goal={p.careerGoal ?? null} currentRole={p.currentRole} roles={p.roles} />
+            <PriorityChoice value={p.priority} />
+          </div>
+        );
       return (
         <div className="space-y-3">
           {Array.from({ length: Math.min(5, Math.max(3, p.roles.length)) }, (_, i) => i).map((i) => (
             <Field key={i} label={i === 0 ? "Ruolo" : `Un altro ruolo (facoltativo)`} htmlFor={`role${i + 1}`} hint={i === 0 ? "Scrivi o scegli tra i suggerimenti. Lo cerchiamo anche in inglese, tedesco e francese se scegli quei paesi." : undefined}>
-              <input id={`role${i + 1}`} name={`role${i + 1}`} type="text" list="positions" defaultValue={p.roles[i] ?? ""} placeholder={i === 0 ? "Es. Impiegata amministrativa" : ""} />
+              <RoleInput id={`role${i + 1}`} name={`role${i + 1}`} defaultValue={p.roles[i] ?? ""} placeholder={i === 0 ? "Es. Analista finanziario" : ""} />
             </Field>
           ))}
-          <datalist id="positions">
-            {positionsFor(p.track === "stage" ? "stage" : "lavoro").map((x) => (
-              <option key={x.it} value={x.it} />
-            ))}
-          </datalist>
           <PriorityChoice value={p.priority} />
         </div>
       );
@@ -592,3 +625,9 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
 }
 
 export type { Track };
+
+/** "animatore 3D/animatrice 3D" → "Animatore 3D" (as listings write it). */
+function firstForm(s: string): string {
+  const f = s.split("/")[0].trim();
+  return f.charAt(0).toUpperCase() + f.slice(1);
+}

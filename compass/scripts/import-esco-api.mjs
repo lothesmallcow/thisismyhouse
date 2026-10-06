@@ -64,12 +64,18 @@ async function main() {
   };
   const out = [];
   let shapeLogged = false;
+  let failed = 0;
   const queue = [...uris];
   const worker = async () => {
     while (queue.length) {
       const uri = queue.shift();
       // Italian: the skill names in _links come in the language asked; English names from a second call are not needed.
-      const d = await get(`${API}/resource/occupation?uri=${encodeURIComponent(uri)}&language=it`);
+      let d = null;
+      try {
+        d = await get(`${API}/resource/occupation?uri=${encodeURIComponent(uri)}&language=it`, 4);
+      } catch {
+        failed++; // one occupation the API cannot serve today: the others still count
+      }
       if (!d) continue;
       if (!shapeLogged) {
         shapeLogged = true;
@@ -97,7 +103,12 @@ async function main() {
       if (out.length % 250 === 0) console.log(`read ${out.length}`);
     }
   };
-  await Promise.all(Array.from({ length: 6 }, worker));
+  await Promise.all(Array.from({ length: 4 }, worker));
+  console.log(`not served by the API: ${failed}`);
+  if (failed > uris.length * 0.05) {
+    console.log("too many failures: data not written");
+    process.exit(1);
+  }
   out.sort((a, b) => a.en.localeCompare(b.en));
   const file = path.join(process.cwd(), "data/world/occupations.json");
   fs.writeFileSync(file, JSON.stringify({ source: "ESCO, European Commission (https://esco.ec.europa.eu)", fetchedAt: new Date().toISOString().slice(0, 10), skills, occupations: out }));

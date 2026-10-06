@@ -10,22 +10,26 @@ export function RoleInput({ name, id, defaultValue = "", placeholder, required }
   const [active, setActive] = useState(-1);
   const list = useId();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
+  useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
-    if (value.trim().length < 2) {
+  }, []);
+  /** Ask for suggestions a moment after the last key. */
+  const lookUp = (text: string) => {
+    if (timer.current) clearTimeout(timer.current);
+    if (text.trim().length < 2) {
       setItems([]);
       return;
     }
     timer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/ruoli?q=${encodeURIComponent(value.trim())}`);
+        const res = await fetch(`/api/ruoli?q=${encodeURIComponent(text.trim())}`);
         setItems(res.ok ? await res.json() : []);
         setActive(-1);
       } catch {
         setItems([]);
       }
     }, 180);
-  }, [value]);
+  };
   const pick = (label: string) => {
     setValue(label);
     setOpen(false);
@@ -49,6 +53,7 @@ export function RoleInput({ name, id, defaultValue = "", placeholder, required }
         onChange={(e) => {
           setValue(e.target.value);
           setOpen(true);
+          lookUp(e.target.value);
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
