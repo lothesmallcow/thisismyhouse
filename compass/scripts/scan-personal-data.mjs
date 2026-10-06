@@ -1,6 +1,7 @@
 // Personal-data scanner for committed files (runs in pre-commit and CI).
 // Flags: Italian tax codes, IBANs, real-looking phone numbers, e-mail addresses on real
-// domains, and common API-key shapes. Fake data must use ".example" domains.
+// domains, and common API-key shapes. Fake data must use ".example" domains. Public open datasets
+// that hold only numbers and job names (comuni, ESCO occupations: skill codes look like phones) are skipped.
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 
@@ -16,7 +17,7 @@ const EMAIL = /[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
 
 const files = execSync("git ls-files --cached --others --exclude-standard", { encoding: "utf8" })
   .split("\n")
-  .filter((f) => f && !/(^|\/)(package-lock\.json|.*\.(png|jpg|ico|pdf|woff2?))$|^data\/comuni\.json$|^drizzle\/meta\//.test(f))
+  .filter((f) => f && !/(^|\/)(package-lock\.json|.*\.(png|jpg|ico|pdf|woff2?))$|^data\/comuni\.json$|^data\/world\/occupations\.json$|^drizzle\/meta\//.test(f))
   .filter((f) => fs.existsSync(f));
 
 const findings = [];

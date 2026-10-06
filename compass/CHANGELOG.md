@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.1 · 2026-10-06
+
+- CI: the personal-data scan skips the ESCO occupations dataset (public EU data: its long lists of
+  skill codes looked like phone numbers to the scan).
+
 ## 0.23.0 · 2026-10-06
 
 - **Every profession, by every name it goes by**: all ESCO occupations of the European Commission
