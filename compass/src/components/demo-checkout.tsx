@@ -1,11 +1,11 @@
 "use client";
 // The checkout, ready for when payments go live. Today it is a trial: the card fields have no name,
-// so nothing typed in them is ever sent; only the test card is accepted, so nobody types a real one.
+// so nothing typed in them is ever sent or saved; any well-formed number is accepted.
 import { useState } from "react";
 import { buttonClass } from "./ui";
 
 const TEST = "4242424242424242";
-const groups = (s: string) => s.replace(/\D/g, "").slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ");
+const groups = (s: string) => s.replace(/\D/g, "").slice(0, 19).replace(/(\d{4})(?=\d)/g, "$1 ");
 
 export function DemoCheckout({ plan, back, action }: { plan: string; back: string; action: (f: FormData) => Promise<void> }) {
   const [number, setNumber] = useState("");
@@ -24,9 +24,10 @@ export function DemoCheckout({ plan, back, action }: { plan: string; back: strin
     <form
       action={action}
       onSubmit={(e) => {
-        if (number.replace(/\D/g, "") !== TEST) {
+        const digits = number.replace(/\D/g, "");
+        if (digits.length < 13) {
           e.preventDefault();
-          setError("I pagamenti non sono ancora attivi: per la prova usa la carta di prova 4242 4242 4242 4242 (nessun addebito).");
+          setError("Scrivi un numero di carta completo (o usa la carta di prova).");
         } else if (!/^\d{2}\/\d{2}$/.test(expiry) || cvc.length < 3) {
           e.preventDefault();
           setError("Completa scadenza (MM/AA) e CVC.");
