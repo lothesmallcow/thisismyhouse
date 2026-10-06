@@ -310,13 +310,16 @@ export interface JobFilters {
   /** Minimum pay, net per month (converted to the annual gross used in ads). Unknown pay stays visible. */
   minNetMonthly?: number;
   hours?: "full" | "part";
-  contract?: string;
-  sector?: string;
+  /** Any of these contracts (unknown contract stays visible). */
+  contracts?: string[];
+  /** Any of these sectors. */
+  sectors?: string[];
   remote?: boolean;
   days?: number; // recency
   /** Words in the title or company ("analyst", "segretaria", "Lazard"). */
   q?: string;
-  type?: "lavoro" | "stage" | "programma";
+  /** Any of these kinds: job, internship, programme for students. */
+  types?: ("lavoro" | "stage" | "programma")[];
   /** Only chosen companies, or chosen companies and sectors. */
   focus?: "aziende" | "preferite";
   show?: "nuove" | "tutte" | "scartate";
@@ -342,11 +345,11 @@ export function filterWhere(userId: number, f: JobFilters, now = new Date()): SQ
     where.push(or(isNull(j.salaryMax), gte(j.salaryMax, gross))!);
   }
   if (f.hours) where.push(or(eq(j.hours, f.hours), eq(j.hours, "unknown"))!);
-  if (f.contract) where.push(or(eq(j.contract, f.contract), eq(j.contract, "unknown"))!);
-  if (f.sector) where.push(eq(j.sector, f.sector));
+  if (f.contracts?.length) where.push(or(inArray(j.contract, f.contracts), eq(j.contract, "unknown"))!);
+  if (f.sectors?.length) where.push(inArray(j.sector, f.sectors));
   if (f.remote) where.push(inArray(j.remote, ["remote", "hybrid"]));
   if (f.days) where.push(gte(sql`coalesce(${j.postedAt}, ${j.firstSeenAt})`, now.getTime() - f.days * 86400000));
-  if (f.type) where.push(eq(j.jobType, f.type));
+  if (f.types?.length) where.push(inArray(j.jobType, f.types));
   if (f.focus === "aziende") where.push(eq(uj.presetMatch, "company"));
   else if (f.focus === "preferite") where.push(inArray(uj.presetMatch, ["company", "sector"]));
   const q = f.q?.trim().toLowerCase();

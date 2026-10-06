@@ -132,6 +132,19 @@ describe("listing and 'Non mi interessa'", () => {
     expect(italia.total).toBeLessThanOrEqual(everywhere.total);
     const uk = await listJobs(db, L, { places: [{ kind: "paese", country: "GB", name: "Regno Unito" }] }, 200, NOW);
     expect(uk.jobs.every((j) => j.city == null || j.country === "GB")).toBe(true);
+    // Several choices per filter: any of them.
+    const kinds = await listJobs(db, L, { types: ["stage", "programma"] }, 200, NOW);
+    expect(kinds.jobs.every((j) => j.jobType === "stage" || j.jobType === "programma")).toBe(true);
+    const sectors = [...new Set(everywhere.jobs.map((j) => j.sector).filter((x): x is string => !!x))].slice(0, 2);
+    const two = await listJobs(db, L, { sectors }, 200, NOW);
+    expect(two.jobs.length).toBeGreaterThan(0);
+    expect(two.jobs.every((j) => sectors.includes(j.sector!))).toBe(true);
+    if (sectors.length === 2) {
+      const one = await listJobs(db, L, { sectors: [sectors[0]] }, 200, NOW);
+      expect(two.total).toBeGreaterThan(one.total);
+    }
+    const contracts = await listJobs(db, L, { contracts: ["indeterminato", "determinato"] }, 200, NOW);
+    expect(contracts.jobs.every((j) => ["indeterminato", "determinato", "unknown"].includes(j.contract))).toBe(true);
   });
 
   it("dismissing 'azienda' adds a visible adjustment that can be undone", async () => {
