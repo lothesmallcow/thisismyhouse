@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.22.3 · 2026-10-06
+
+- **Company names from web results, fixed at the source**: the result-title parser no longer takes a
+  place ("Milano, Lombardia") or the job site ("Reed.co.uk", "Indeed.com") for the company, and reads
+  LinkedIn's "MUFG hiring … in London". Companies saved wrongly that way are emptied at deploy and
+  guessed again from the text.
+- **A name said once counts when it makes sense**: next to a company cue ("presso X", "X ·",
+  "Company: X", "X is hiring") or in the first lines when it reads as a firm (two words, a legal form
+  like SGR or SpA, an acronym like MUFG). Section words ("Requisiti", "Descrizione") never count.
+- **Approved sites (W2)**: an offer whose data has no hiring organisation takes the site's owner from
+  the page (name, title, logo, address).
+
 ## 0.22.2 · 2026-10-06
 
 - **Offerte header**: the buttons sit together again; under them, one short line "3/3 ricerche

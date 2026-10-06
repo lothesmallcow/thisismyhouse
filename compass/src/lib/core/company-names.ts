@@ -2,6 +2,7 @@
 // mentions, and the names written as the first cell of a table row or the start of a list item next
 // to a programme ("Blackstone - 2027 EMEA Spring Insight"). Only names: dates and texts stay theirs.
 import { parse } from "node-html-parser";
+import { findPlace } from "./geo";
 import { fold } from "./text";
 
 const LEGAL = /\b(?:plc|p l c|inc|incorporated|ltd|limited|llc|llp|lp|s ?p ?a|s ?r ?l|s ?a|ag|se|nv|n v|bv|gmbh|kgaa|corp|corporation|company|group|holdings?|holding|the)\b/g;
@@ -187,9 +188,19 @@ const NOT_EMPLOYER = new Set(
     "investment banking bank banks capital markets debt equity corporate private wealth management asset assets finance financial services m&a mergers acquisitions advisory sales trading research risk operations technology global markets securities " +
     "full time part permanent contract temporary hybrid remote office location locations london milan milano rome roma paris frankfurt new york city united kingdom states italy italia europe emea uk usa " +
     "january february march april may june july august september october november december monday tuesday wednesday thursday friday saturday sunday today yesterday week weeks month months year years day days " +
-    "we you our your the a an and or of in on at to for with by from is are be this that these those it its their us i my me he she they who what when where how why all any more most new"
+    "we you our your the a an and or of in on at to for with by from is are be this that these those it its their us i my me he she they who what when where how why all any more most new " +
+    "descrizione requisiti responsabilita mansioni attivita competenze offriamo offre cerchiamo ricerchiamo profilo ruolo sede orario contratto retribuzione benefit benefits candidati candidatura invia lavorerai lavorare si il lo la le gli un una dei delle degli nel nella per con tra fra " +
+    "requirements responsibilities qualifications description overview summary skills experience education about what who why how apply please you'll you will key duties benefits salary package"
   ).split(" "),
 );
+
+const LEGAL_WORD = /^(?:sgr|sim|spa|srl|srls|sas|snc|ltd|plc|llp|llc|lp|inc|ag|gmbh|kg|sa|sas|nv|bv|se|sarl|group|gruppo|bank|banca|capital|partners|advisors|consulting)$/;
+
+/** A name that reads as a firm on its own: two capitalised words, a legal form, or an acronym (MUFG). */
+function looksLikeFirm(name: string): boolean {
+  const words = name.split(/\s+/);
+  return words.length >= 2 || /^[A-Z0-9&]{3,6}$/.test(name) || words.some((w) => LEGAL_WORD.test(fold(w).replace(/[^a-z]/g, "")));
+}
 
 /**
  * The employer as the most frequent name on the page: catalog companies (counted double) and the
@@ -198,10 +209,10 @@ const NOT_EMPLOYER = new Set(
  */
 export function mostFrequentName<T extends KnownCompany>(text: string, known: T[], opts: { avoid?: string[]; title?: string } = {}): string | null {
   const avoid = new Set([...(opts.avoid ?? []), opts.title ?? ""].flatMap((s) => fold(s).split(/[^a-z0-9&]+/)).filter((w) => w.length > 1));
-  const score = new Map<string, { name: string; n: number }>();
-  const add = (key: string, name: string, n: number) => {
+  const score = new Map<string, { name: string; n: number; at: number; cue: boolean }>();
+  const add = (key: string, name: string, n: number, at = Number.MAX_SAFE_INTEGER, cue = false) => {
     const cur = score.get(key);
-    score.set(key, { name: cur?.name ?? name, n: (cur?.n ?? 0) + n });
+    score.set(key, { name: cur?.name ?? name, n: (cur?.n ?? 0) + n, at: Math.min(cur?.at ?? at, at), cue: (cur?.cue ?? false) || cue });
   };
   // Catalog companies: every mention, counted double.
   const flat = ` ${fold(text).replace(/\./g, "").replace(/[^a-z0-9&]+/g, " ")} `;
@@ -220,6 +231,7 @@ export function mostFrequentName<T extends KnownCompany>(text: string, known: T[
     // Trim menu, role and place words at both ends ("Apply to Citadel" → "Citadel").
     const isNoise = (w: string) => {
       const f = fold(w).replace(/[^a-z0-9&]/g, "");
+      if (LEGAL_WORD.test(f)) return false; // "Sgr", "SpA", "Ltd" stay with the name
       return !f || NOT_EMPLOYER.has(f) || avoid.has(f) || COMMON.has(f) || /^\d+$/.test(f);
     };
     while (words.length && isNoise(words[0])) words.shift();
@@ -228,15 +240,29 @@ export function mostFrequentName<T extends KnownCompany>(text: string, known: T[
     const name = words.join(" ");
     const key = nameKey(name);
     if (key.replace(/[^a-z0-9]/g, "").length < 3 || words.length > 4) continue;
-    add(`name:${key}`, name, 1);
+    if (isPlaceName(name)) continue; // "Milano", "London"
+    // Said once is enough when it sits where a company is written: right after "at", "presso", "·",
+    // "Company:", "by"... or at the very top of the text.
+    const at = m.index ?? 0;
+    const before = text.slice(Math.max(0, at - 18), at);
+    const cue = /(?:\bat|\bpresso|\bpar|\bbei|\bby|\bda|\bcon|\bjoin|\bfor|·|\||@|company|azienda|employer|hiring|organisation|organization|società)\s*[:\-–]?\s*$/i.test(before) || /\s+(?:is hiring|hiring|sta assumendo|cerca|assume|seleziona)\b/i.test(text.slice(at + m[1].length, at + m[1].length + 20));
+    add(`name:${key}`, name, 1, at, cue);
   }
-  let best: { name: string; n: number; catalog: boolean } | null = null;
+  let best: { name: string; n: number; catalog: boolean; at: number } | null = null;
   for (const [k, v] of score) {
     const catalog = k.startsWith("catalog:");
-    if (!catalog && v.n < 2) continue;
-    if (!best || v.n > best.n || (v.n === best.n && catalog && !best.catalog)) best = { ...v, catalog };
+    // Once is enough if it makes sense: next to a company cue, or in the first lines.
+    if (!catalog && v.n < 2 && !(v.cue || (v.at < 300 && looksLikeFirm(v.name)))) continue;
+    if (!best || v.n > best.n || (v.n === best.n && catalog && !best.catalog) || (v.n === best.n && catalog === best.catalog && v.at < best.at)) best = { name: v.name, n: v.n, catalog, at: v.at };
   }
   if (!best) return null;
   // A free name that is a catalog company's: the catalog's spelling.
   return best.catalog ? best.name : (catalogSpelling(best.name, known)?.name ?? best.name);
+}
+
+/** "Milano", "Milano, Lombardia", "London, England": a place, not a company. */
+export function isPlaceName(s: string): boolean {
+  const first = s.split(/,|\(/)[0].trim();
+  const p = findPlace(first);
+  return p != null && fold(p.name).replace(/[^a-z]/g, "") === fold(first).replace(/[^a-z]/g, "");
 }
