@@ -9,11 +9,10 @@ test("public pages: landing, prices, sign-up is a request the admin approves by 
   await assertUiBasics(page);
   await page.getByRole("link", { name: "Prezzi" }).first().click();
   await expect(page.getByRole("heading", { name: "Semplici, senza sorprese" })).toBeVisible();
-  await expect(page.getByText("4,90 €")).toBeVisible();
-  await expect(page.getByText(/Pagamenti non ancora attivi/)).toBeVisible();
-  await page.getByRole("link", { name: /Prova Compass/ }).click();
-  await expect(page.getByText(/nessun addebito/)).toBeVisible();
-  await page.getByRole("link", { name: "Crea un account" }).last().click();
+  await expect(page.getByText("4,99 €")).toBeVisible();
+  await expect(page.getByText(/prova gratuita/).first()).toBeVisible();
+  await page.getByRole("link", { name: /Prova Plus gratis/ }).click();
+  await expect(page.getByText(/i piani a pagamento non sono ancora attivi/)).toBeVisible();
   await expect(page.getByLabel("Codice di invito (se ce l'hai)")).toBeVisible();
   await expect(page.getByRole("button", { name: "Chiedi l'accesso" })).toBeVisible();
   // The privacy notice, linked from the sign-up form, open to everyone.
@@ -584,6 +583,10 @@ test("quick questionnaire for a new account: 5 questions, a generic role becomes
   await page.getByRole("button", { name: "Salta" }).click();
   await expect(page.getByText("Passo 6 di 6")).toBeVisible();
   await page.getByRole("button", { name: "Lo carico più tardi" }).click();
+  // The plans come right after the questionnaire; Free is one click away.
+  await expect(page).toHaveURL(/benvenuto\/piani/);
+  await expect(page.getByRole("region", { name: "Piano Premium" })).toContainText("Assistente AI");
+  await page.getByRole("link", { name: "Decido dopo →" }).click();
   await expect(page).toHaveURL(/benvenuto\/fine/);
   // The search code uses the precise positions, not the generic words.
   await page.goto("/profilo/codice");
@@ -731,6 +734,16 @@ test("student questionnaire: 13 steps, catalog, activities, Altro, automatic foc
   await expect(page.getByText("Consiglio")).toBeVisible();
   await expect(page.getByRole("radio", { name: /Tutte, con priorità/ })).toBeChecked(); // few choices: everything, choices first
   await page.getByRole("button", { name: "Fine" }).click();
+  // The plans: try Plus with the test card (payments are not live), then the last page.
+  await expect(page).toHaveURL(/benvenuto\/piani/);
+  await page.getByRole("link", { name: "Prova Plus" }).click();
+  await page.getByLabel("Numero della carta").fill("5555 5555 5555 4444");
+  await page.getByLabel("Scadenza").fill("1230");
+  await page.getByLabel("CVC").fill("123");
+  await page.getByRole("button", { name: /Attiva Plus/ }).click();
+  await expect(page.getByRole("alert")).toContainText("carta di prova");
+  await page.getByRole("button", { name: "Usa la carta di prova" }).click();
+  await page.getByRole("button", { name: /Attiva Plus/ }).click();
   await expect(page.getByRole("heading", { name: /Fatto, Giulia/ })).toBeVisible();
   await page.getByRole("link", { name: "Vedi gli stage" }).click();
   await expect(page.getByRole("heading", { name: "Stage per te" })).toBeVisible();
@@ -789,6 +802,7 @@ test("CV upload, then delete all data and redo the job questionnaire", async ({ 
   }
   await expect(page.getByText("Passo 13 di 13")).toBeVisible();
   await page.getByRole("button", { name: "Fine" }).click();
+  await page.getByRole("button", { name: "Continua gratis" }).click(); // the plans: stays on Free
   await expect(page.getByRole("heading", { name: /Fatto, Anna/ })).toBeVisible();
   await page.getByRole("link", { name: "Vedi le offerte" }).click();
   await expect(page.getByText("(i tuoi predefiniti)")).toBeVisible(); // the salary floor from the questionnaire is a default filter

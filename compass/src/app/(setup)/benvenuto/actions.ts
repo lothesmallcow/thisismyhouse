@@ -143,7 +143,7 @@ export async function saveStepAction(f: FormData) {
   revalidatePath("/", "layout");
 
   if (back) redirect("/profilo?msg=salvato");
-  if (last) redirect("/benvenuto/fine");
+  if (last) redirect("/benvenuto/piani"); // the plans, then the last page
   if (step === "risposte") redirect("/offerte?msg=salvato");
   redirect(`/benvenuto/${n + 1}`);
 }
