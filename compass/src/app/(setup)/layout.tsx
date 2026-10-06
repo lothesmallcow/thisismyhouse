@@ -7,8 +7,8 @@ export default async function SetupLayout({ children }: { children: React.ReactN
   await requireUser();
   return (
     <div className="min-h-dvh pb-16">
-      <header className="border-b border-line">
-        <div className="mx-auto flex h-14 max-w-2xl items-center px-4 sm:px-6">
+      <header className="glass sticky top-0 z-20 border-b border-line/70">
+        <div className="mx-auto flex h-16 max-w-2xl items-center px-4 sm:px-6">
           <Brand href="/offerte" small />
         </div>
       </header>

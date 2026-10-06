@@ -4,24 +4,24 @@ import { Brand } from "@/components/brand";
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-line">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-8">
+      <header className="glass sticky top-0 z-20 border-b border-line/70">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-8">
           <Brand href="/" small />
           <nav aria-label="Menu" className="flex items-center gap-1">
-            <Link href="/abbonamento" className="inline-flex h-9 items-center rounded-md px-3 text-[14px] text-muted no-underline hover:text-ink">
+            <Link href="/abbonamento" className="inline-flex h-9 items-center rounded-full px-3.5 text-[14px] text-muted no-underline hover:bg-subtle hover:text-ink">
               Prezzi
             </Link>
-            <Link href="/entra" className="inline-flex h-9 items-center rounded-md px-3 text-[14px] text-muted no-underline hover:text-ink">
+            <Link href="/entra" className="inline-flex h-9 items-center rounded-full px-3.5 text-[14px] text-muted no-underline hover:bg-subtle hover:text-ink">
               Entra
             </Link>
-            <Link href="/registrati" className="ml-1 inline-flex h-9 items-center rounded-lg bg-primary px-3.5 text-[14px] font-medium text-on-primary no-underline hover:bg-primary-hover">
+            <Link href="/registrati" className="ml-1 inline-flex h-9 items-center rounded-full bg-primary px-4 text-[14px] font-semibold text-on-primary no-underline shadow-[0_2px_8px_rgb(23_87_180/0.25)] hover:bg-primary-hover">
               Crea un account
             </Link>
           </nav>
         </div>
       </header>
       <main className="flex-1">{children}</main>
-      <footer className="mt-24 border-t border-line">
+      <footer className="mt-24 border-t border-line bg-surface/60">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-[13px] text-faint sm:px-8">
           <p>Compass · progetto indipendente, fatto in Italia.</p>
           <div className="flex flex-wrap gap-5">

@@ -7,14 +7,14 @@ type Variant = "primary" | "secondary" | "ghost" | "danger" | "accent";
 type Size = "sm" | "md";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-medium leading-none text-center whitespace-nowrap transition-colors select-none disabled:opacity-50 disabled:cursor-not-allowed no-underline";
-const sizes: Record<Size, string> = { sm: "h-8 px-3 text-[13px]", md: "h-10 px-4 text-[14px]" };
+  "btn inline-flex items-center justify-center gap-2 rounded-full font-semibold leading-none text-center whitespace-nowrap select-none disabled:opacity-50 disabled:cursor-not-allowed no-underline";
+const sizes: Record<Size, string> = { sm: "h-8 px-3.5 text-[13px]", md: "h-10 px-5 text-[14px]" };
 const variants: Record<Variant, string> = {
-  primary: "bg-primary text-on-primary hover:bg-primary-hover",
-  accent: "bg-accent text-surface hover:opacity-90",
-  secondary: "bg-surface text-ink border border-line-strong hover:bg-subtle",
-  ghost: "bg-transparent text-ink hover:bg-subtle",
-  danger: "bg-surface text-bad border border-line-strong hover:bg-bad-soft",
+  primary: "btn-primary bg-primary text-on-primary shadow-[0_1px_2px_rgb(15_40_80/0.14)] hover:bg-primary-hover",
+  accent: "btn-accent bg-accent text-surface shadow-[0_1px_2px_rgb(15_40_80/0.14)] hover:opacity-90",
+  secondary: "btn-secondary bg-fill text-ink hover:bg-fill-hover",
+  ghost: "btn-ghost bg-transparent text-accent hover:bg-fill",
+  danger: "btn-danger bg-fill text-bad hover:bg-bad-soft",
 };
 export const buttonClass = (variant: Variant = "primary", size: Size = "md", wide = false, extra = "") => `${base} ${sizes[size]} ${variants[variant]} ${wide ? "w-full" : ""} ${extra}`;
 
@@ -32,22 +32,26 @@ export function ExternalButton({ variant = "secondary", size = "md", wide, class
 
 export function Card({ className = "", children, ...rest }: ComponentProps<"div">) {
   return (
-    <div className={`rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-card)] ${className}`} {...rest}>
+    <div className={`rounded-[var(--radius-card)] border border-line/70 bg-surface p-5 shadow-[var(--shadow-card)] ${className}`} {...rest}>
       {children}
     </div>
   );
 }
 
-/** Page title, one line of description, optional actions on the right. */
+/** Page title, one line of description, optional actions: on the blue gradient band. */
 export function PageHeader({ title, description, actions, eyebrow }: { title: string; description?: ReactNode; actions?: ReactNode; eyebrow?: string }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div className="min-w-0">
-        {eyebrow && <p className="mb-1 text-[12px] font-medium uppercase tracking-[0.08em] text-accent">{eyebrow}</p>}
-        <h1 className="text-[24px] font-semibold leading-tight sm:text-[28px]">{title}</h1>
-        {description && <p className="mt-1.5 max-w-2xl text-[14px] text-muted">{description}</p>}
+    <header className="hero rise relative mb-7 overflow-hidden rounded-[24px] px-6 py-7 sm:px-8 sm:py-9">
+      <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
+      <span aria-hidden="true" className="pointer-events-none absolute -bottom-28 right-24 h-48 w-48 rounded-full bg-accent-glow/20 blur-3xl" />
+      <div className="relative flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
+          {eyebrow && <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-white/80">{eyebrow}</p>}
+          <h1 className="text-[28px] font-bold leading-[1.08] tracking-[-0.028em] sm:text-[38px]">{title}</h1>
+          {description && <p className="mt-2.5 max-w-2xl text-[15px] leading-relaxed text-white/90">{description}</p>}
+        </div>
+        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </header>
   );
 }
@@ -62,7 +66,7 @@ export function Notice({ tone = "info", title, children }: { tone?: "info" | "su
   const iconColor = { info: "text-accent", success: "text-good", warn: "text-warn", danger: "text-bad" }[tone];
   const Icon = tone === "success" ? IconCheck : tone === "info" ? IconInfo : IconAlert;
   return (
-    <div role={tone === "danger" || tone === "warn" ? "alert" : "status"} className={`flex gap-3 rounded-lg border px-3.5 py-3 text-[14px] ${styles}`}>
+    <div role={tone === "danger" || tone === "warn" ? "alert" : "status"} className={`flex gap-3 rounded-xl border px-4 py-3.5 text-[14px] ${styles}`}>
       <Icon className={`mt-px shrink-0 ${iconColor}`} size={18} />
       <div className="min-w-0">
         {title && <p className="font-medium">{title}</p>}
@@ -108,7 +112,7 @@ export function Field({ label, hint, children, htmlFor }: { label: string; hint?
 /** A selectable row with a checkbox or radio inside a label. */
 export function ChoiceRow({ type = "checkbox", name, value, defaultChecked, children, hint }: { type?: "checkbox" | "radio"; name: string; value: string; defaultChecked?: boolean; children: ReactNode; hint?: ReactNode }) {
   return (
-    <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-lg border border-line bg-surface px-3.5 py-2.5 transition-colors hover:border-line-strong has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
+    <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface px-3.5 py-2.5 shadow-[0_1px_1px_rgb(15_40_80/0.03)] transition-colors hover:border-line-strong has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:ring-1 has-[:checked]:ring-accent/30">
       <input type={type} name={name} value={value} defaultChecked={defaultChecked} className="mt-[3px]" />
       <span className="min-w-0 text-[14px]">
         {children}
@@ -121,7 +125,7 @@ export function ChoiceRow({ type = "checkbox", name, value, defaultChecked, chil
 /** A pill-shaped checkbox, for long lists (sectors, companies). */
 export function PillCheck({ name, value, defaultChecked, children }: { name: string; value: string; defaultChecked?: boolean; children: ReactNode }) {
   return (
-    <label className="inline-flex min-h-[34px] cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3 text-[13px] transition-colors hover:border-line-strong has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent">
+    <label className="inline-flex min-h-[34px] cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-[13px] transition-colors hover:border-line-strong has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:font-medium has-[:checked]:text-accent">
       <input type="checkbox" name={name} value={value} defaultChecked={defaultChecked} className="sr-only" />
       <span>{children}</span>
     </label>
@@ -131,7 +135,7 @@ export function PillCheck({ name, value, defaultChecked, children }: { name: str
 export function SectionTitle({ children, className = "", action }: { children: ReactNode; className?: string; action?: ReactNode }) {
   return (
     <div className={`mb-3 mt-10 flex items-center justify-between gap-3 ${className}`}>
-      <h2 className="text-[16px] font-semibold">{children}</h2>
+      <h2 className="text-[19px] font-bold tracking-[-0.02em]">{children}</h2>
       {action}
     </div>
   );
@@ -151,8 +155,11 @@ export function Fact({ icon, label, children }: { icon?: ReactNode; label: strin
 
 export function Empty({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-dashed border-line-strong px-6 py-12 text-center">
-      <p className="text-[15px] font-medium">{title}</p>
+    <div className="rounded-[var(--radius-card)] border border-dashed border-line-strong bg-surface/60 px-6 py-12 text-center">
+      <span aria-hidden="true" className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-accent">
+        <IconInfo size={20} />
+      </span>
+      <p className="text-[15.5px] font-semibold">{title}</p>
       {children && <div className="mx-auto mt-1 max-w-md text-[14px] text-muted">{children}</div>}
       {action && <div className="mt-5">{action}</div>}
     </div>
@@ -161,9 +168,9 @@ export function Empty({ title, children, action }: { title: string; children?: R
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
-      <p className="text-[12px] font-medium uppercase tracking-[0.06em] text-faint">{label}</p>
-      <p className="mt-1 text-[22px] font-semibold tabular-nums">{value}</p>
+    <div className="rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]">
+      <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-faint">{label}</p>
+      <p className="mt-1 text-[28px] font-bold tracking-[-0.03em] tabular-nums">{value}</p>
       {hint && <p className="mt-0.5 text-[12.5px] text-muted">{hint}</p>}
     </div>
   );
@@ -183,5 +190,5 @@ export function Row({ label, value, action }: { label: string; value?: ReactNode
 }
 
 export function List({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface ${className}`}>{children}</div>;
+  return <div className={`divide-y divide-line/80 overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface shadow-[var(--shadow-card)] ${className}`}>{children}</div>;
 }
