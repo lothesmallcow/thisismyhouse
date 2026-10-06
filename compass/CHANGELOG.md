@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.20.3 · 2026-10-06
+
+- "Scartate" is now called **Non mi interessano**, like the button (`/offerte/non-mi-interessano`; the
+  old address redirects). A dismissal can be undone for **3 days**, then it leaves the list and stays
+  blocked.
+
 ## 0.20.2 · 2026-10-06
 
 - **Scartate** keeps each dismissal for 7 days, with how many days are left to undo it; then it leaves
