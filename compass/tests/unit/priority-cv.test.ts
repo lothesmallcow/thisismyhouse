@@ -15,7 +15,7 @@ const code: CodeInput = {
   hours: "full",
   contracts: [],
 };
-const api = (i: CodeInput) => buildSearchCode(i).queries.filter((q) => q.channel === "api").map((q) => q.what);
+const api = (i: CodeInput) => buildSearchCode(i).queries.filter((q) => q.channel === "api" && !q.kind).map((q) => q.what); // the role searches (not the sector or variant ones)
 
 describe("priorità di lavoro: the searches", () => {
   it("alta searches more titles (also a step below), bassa only the best one", () => {

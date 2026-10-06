@@ -26,7 +26,7 @@ interface Data {
 }
 
 let data: Data | null = null;
-let index: { occ: Occupation; names: string[] }[] | null = null;
+let index: { occ: Occupation; preferred: string[]; names: string[] }[] | null = null;
 
 function load(): Data {
   if (data) return data;
@@ -51,11 +51,18 @@ export function setOccupationsForTest(d: Data | null) {
   index = null;
 }
 
-const key = (s: string) => fold(s).replace(/[^a-z0-9+#&]+/g, " ").trim();
+/** Words that do not change a job's name ("responsabile delle vendite" = "responsabile vendite"). */
+const FILLER = /\b(?:di|del|della|dello|dei|degli|delle|da|in|e|ed|the|of|and|for|des|du|de|la|le|der|die|das|und|fur)\b/g;
+const key = (s: string) => fold(s).replace(/[^a-z0-9+#&]+/g, " ").replace(FILLER, " ").replace(/\s+/g, " ").trim();
+/** "direttore commerciale/direttrice commerciale" → both forms. */
+const forms = (s: string) => s.split("/").map((x) => x.trim()).filter(Boolean);
 
-function names(): { occ: Occupation; names: string[] }[] {
+function names(): { occ: Occupation; preferred: string[]; names: string[] }[] {
   if (index) return index;
-  index = load().occupations.map((occ) => ({ occ, names: [...new Set([occ.it, occ.en, occ.de, occ.fr, ...occ.alt.it, ...occ.alt.en].filter(Boolean).map(key))] }));
+  index = load().occupations.map((occ) => {
+    const preferred = [...new Set([occ.it, occ.en, occ.de, occ.fr].flatMap(forms).map(key))];
+    return { occ, preferred, names: [...new Set([...preferred, ...[...occ.alt.it, ...occ.alt.en].flatMap(forms).map(key)])] };
+  });
   return index;
 }
 
@@ -66,7 +73,8 @@ export const allOccupations = (): Occupation[] => load().occupations;
 export function findOccupation(role: string): Occupation | null {
   const k = key(role);
   if (!k) return null;
-  return names().find((x) => x.names.includes(k))?.occ ?? null;
+  // Its own name first ("sales manager" is the sales manager, not another job that is sometimes called so).
+  return names().find((x) => x.preferred.includes(k))?.occ ?? names().find((x) => x.names.includes(k))?.occ ?? null;
 }
 
 /**
@@ -88,8 +96,8 @@ export function searchOccupations(q: string, limit = 8): { occ: Occupation; matc
         matched = n;
       }
     }
-    // Italian and English preferred names weigh a little more than the other names.
-    if (best) scored.push({ occ: x.occ, matched, score: best + (matched === key(x.occ.it) || matched === key(x.occ.en) ? 5 : 0) });
+    // Its own names weigh a little more than the other names.
+    if (best) scored.push({ occ: x.occ, matched, score: best + (x.preferred.includes(matched) ? 5 : 0) });
   }
   return scored
     .sort((a, b) => b.score - a.score || a.occ.it.length - b.occ.it.length)

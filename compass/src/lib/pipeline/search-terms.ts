@@ -86,6 +86,8 @@ export async function searchCodeFor(db: DB, userId: number, now = new Date()): P
     hours: profile.hours,
     contracts: profile.contracts,
     priority: profile.priority,
+    synonyms: profile.synonyms,
+    remoteOk: profile.remoteOk,
   });
 }
 

@@ -22,6 +22,10 @@ export interface CodeInput {
   contracts: string[];
   /** alta: also the titles one step below (more offers); bassa: only the best title per role. */
   priority?: "alta" | "media" | "bassa";
+  /** The other names of their roles they accepted ("Direttore commerciale" for "Sales manager"). */
+  synonyms?: string[];
+  /** Remote work is fine. */
+  remoteOk?: boolean;
 }
 
 export type Channel = "api" | "web";
@@ -35,6 +39,10 @@ export interface CodeQuery {
   distanceKm: number;
   /** Web searches: only these sites. */
   sites?: string[];
+  /** Words added to the role, never quoted with it: a company ("Gucci"), a sector ("moda"), "remote". */
+  extra?: string;
+  /** Which family of search it is (for the admin and the tests): role, board, company, sector, variant. */
+  kind?: "ruolo" | "bacheca" | "azienda" | "settore" | "variante";
 }
 
 export interface SearchCode {
@@ -55,8 +63,13 @@ const SITES: Record<CountryCode, string[]> = {
   FR: ["linkedin.com", "fr.indeed.com", "welcometothejungle.com"],
 };
 const slug = (s: string) => fold(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+/** Employers' own boards (searched with the role: each result also reveals a whole board). */
+const BOARDS = ["myworkdayjobs.com", "oraclecloud.com", "eightfold.ai", "boards.greenhouse.io", "jobs.lever.co", "jobs.ashbyhq.com", "jobs.smartrecruiters.com", "apply.workable.com", "jobs.personio.de", "recruitee.com"];
 
 /** Level bracket from years of work: what a listing title should look like. */
+/** The words to send: the role, then the company, sector or "remote" (never quoted together). */
+export const queryWords = (q: Pick<CodeQuery, "what" | "extra">, quote = false) => `${quote ? `"${q.what}"` : q.what}${q.extra ? ` ${q.extra}` : ""}`;
+
 export function levelBracket(years: number | null): "junior" | "middle" | "senior" | "lead" | "?" {
   if (years == null) return "?";
   return years <= 2 ? "junior" : years <= 5 ? "middle" : years <= 10 ? "senior" : "lead";
@@ -97,7 +110,7 @@ export function buildSearchCode(i: CodeInput): SearchCode {
   };
   const queries: CodeQuery[] = [];
   const add = (q: Omit<CodeQuery, "key">) => {
-    const key = `${q.channel}|${q.country}|${fold(q.what)}|${fold(q.where)}|${q.distanceKm}|${(q.sites ?? []).join(",")}`;
+    const key = `${q.channel}|${q.country}|${fold(q.what)}${q.extra ? `+${fold(q.extra)}` : ""}|${fold(q.where)}|${q.distanceKm}|${q.sites && q.sites.length > 3 ? "bacheche" : (q.sites ?? []).join(",")}`;
     if (!queries.some((x) => x.key === key)) queries.push({ ...q, key });
   };
   // Every country gets its best search before any country gets a second one.
@@ -114,7 +127,53 @@ export function buildSearchCode(i: CodeInput): SearchCode {
     const p = i.places[0];
     if (!p) break;
     const lang = COUNTRIES.find((x) => x.code === p.country)!.lang;
-    add({ channel: "web", country: p.country, what: `${c} ${i.track === "stage" ? INTERNSHIP[lang] : (termsFor(lang)[0] ?? "careers")}`, where: p.where, distanceKm: 0 });
+    add({ channel: "web", country: p.country, what: `${c} ${i.track === "stage" ? INTERNSHIP[lang] : (termsFor(lang)[0] ?? "careers")}`, where: p.where, distanceKm: 0, kind: "azienda" });
+  }
+
+  // --- The rest of the grammar: every useful combination, best first. Each search runs at most once
+  // a day (shared cache) and within the daily caps, so the list is worked through over the days.
+  const home = per[0];
+  if (home) {
+    const p = home.p;
+    const lang = COUNTRIES.find((x) => x.code === p.country)!.lang;
+    const roles = home.terms.slice(0, 3);
+    // In Italy many listings use the English title ("Sales manager", "Business analyst").
+    const english = lang === "it" && i.track === "lavoro" ? [...new Set(i.roles.flatMap((r) => translations(r, ["en"])))].filter((t) => !roles.some((r) => fold(r) === fold(t))).slice(0, 2) : [];
+    const synonyms = (i.synonyms ?? []).filter((s) => !roles.some((r) => fold(r) === fold(s))).slice(0, 4);
+    const sectorWords = i.sectors.slice(0, 3).map((s) => s.term);
+    // 1. Employers' own boards (Workday, Oracle, Greenhouse…): role and place.
+    for (const r of [...roles, ...english]) add({ channel: "web", country: p.country, what: r, where: p.where, distanceKm: 0, sites: BOARDS, kind: "bacheca" });
+    // 2. The role at each chosen company: on the boards (no place: big firms list it their way), on LinkedIn.
+    for (const c of i.companies.slice(0, 4)) {
+      for (const r of roles.slice(0, 2)) {
+        add({ channel: "web", country: p.country, what: r, extra: c, where: "", distanceKm: 0, sites: BOARDS, kind: "azienda" });
+        add({ channel: "web", country: p.country, what: r, extra: c, where: p.where, distanceKm: 0, sites: ["linkedin.com"], kind: "azienda" });
+      }
+      add({ channel: "web", country: p.country, what: `${c} ${lang === "it" ? "lavora con noi" : "careers"}`, where: "", distanceKm: 0, kind: "azienda" });
+    }
+    // 3. The role in each chosen sector ("Sales manager moda Milano"): job sites, the API, the boards.
+    for (const s of sectorWords) {
+      for (const r of roles.slice(0, 2)) {
+        add({ channel: "api", country: p.country, what: r, extra: s, where: p.where, distanceKm: p.distanceKm, kind: "settore" });
+        for (const site of SITES[p.country].slice(0, 2)) add({ channel: "web", country: p.country, what: r, extra: s, where: p.where, distanceKm: 0, sites: [site], kind: "settore" });
+        add({ channel: "web", country: p.country, what: r, extra: s, where: "", distanceKm: 0, sites: BOARDS, kind: "settore" });
+      }
+    }
+    // 4. The other names of the role, and its English title in Italy: the API and the job sites.
+    for (const t of [...english, ...synonyms]) {
+      add({ channel: "api", country: p.country, what: t, where: p.where, distanceKm: p.distanceKm, kind: "variante" });
+      for (const site of SITES[p.country]) add({ channel: "web", country: p.country, what: t, where: p.where, distanceKm: 0, sites: [site], kind: "variante" });
+    }
+    // 5. Remote and part-time, when they said so.
+    for (const r of roles.slice(0, 2)) {
+      if (i.remoteOk) add({ channel: "api", country: p.country, what: r, extra: lang === "it" ? "da remoto" : "remote", where: "", distanceKm: 0, kind: "variante" });
+      if (i.hours === "part") add({ channel: "api", country: p.country, what: r, extra: "part time", where: p.where, distanceKm: p.distanceKm, kind: "variante" });
+    }
+    // 6. Students: internships and graduate programmes at their companies and in their sectors, on the boards.
+    if (i.track === "stage") {
+      for (const c of i.companies.slice(0, 4)) add({ channel: "web", country: p.country, what: INTERNSHIP.en, extra: c, where: "", distanceKm: 0, sites: BOARDS, kind: "azienda" });
+      for (const s of sectorWords) add({ channel: "web", country: p.country, what: i.studyStage === "ultimo" ? "graduate program" : INTERNSHIP.en, extra: s, where: p.where, distanceKm: 0, sites: BOARDS, kind: "settore" });
+    }
   }
 
   const alerts: SearchCode["alerts"] = [];

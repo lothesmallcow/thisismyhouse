@@ -21,10 +21,11 @@ import { getProfile } from "../server/profile";
 import { getSettings } from "../server/settings";
 import { bump, usageToday, W1_HARD_MAX } from "./discover";
 import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
+import { queryWords } from "../core/search-code";
 import { programmeQueries, searchProgrammes } from "./programmes";
 import { stageOf } from "../core/rank";
 import { getPrefs, listSectors } from "../server/catalog";
-import { feedFromUrl, FEED_DOMAINS } from "../sources/ats/feeds";
+import { feedFromUrl } from "../sources/ats/feeds";
 import { feedName, learnFeeds, registerFeed } from "../server/feeds";
 import { roleTerms, titleMatches } from "../core/relevance";
 import { searchKeywords } from "./search-terms";
@@ -40,10 +41,9 @@ const BUDGET_MS = 45_000;
 const COMPANIES = 12; // chosen companies looked at, best fits first
 const FEEDS = 15; // job boards read
 const RECHECK_DAYS = 30; // a company without a public board is looked for again after this
-const WEB = 5; // web searches on the job sites (from the shared daily cap)
+const WEB = 6; // web searches per click, one of each family first (from the shared daily cap)
 const API = 2; // job API calls
 const PROGRAMME_QUERIES = 2; // students: web searches for programme pages
-const BOARD_QUERIES = 2; // web searches on employers' boards (Workday, Oracle, Greenhouse…)
 const NEW_BOARDS = 4; // boards found that way read at once
 
 export interface QuickDeps {
@@ -168,48 +168,40 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
     }));
   }
 
-  // 2. Web search on the job sites (its key set): this person's searches, within the shared daily cap.
+  // The search code: every search worth making for this person, best first.
   const code = await searchCodeFor(db, userId, now);
   const settings = await getSettings(db);
 
-  // 1c. Employers' own boards found by searching them (Workday, Oracle, Greenhouse, Lever…): each
-  // result reveals a board, which is then read for their roles. The registry grows with every search.
-  if (deps.web && settings.w1Enabled && keywords.length && Date.now() < deadline) {
-    const where = profile.city || (countries[0] === "GB" ? "London" : countries[0] === "DE" ? "Frankfurt" : countries[0] === "FR" ? "Paris" : "Milano");
-    for (const kw of keywords.slice(0, BOARD_QUERIES)) {
-      if ((await usageToday(db, "w1-queries", now)) >= Math.min(settings.w1DailyCap, W1_HARD_MAX)) break;
+  // 2. Web searches from their search code, a mix of every family each click (the role on the job
+  // sites, on employers' boards, at their companies, in their sectors, its other names), within the
+  // shared daily cap. Each search runs at most once a day; the next clicks take the next ones.
+  if (deps.web && settings.w1Enabled) {
+    const cap = Math.min(settings.w1DailyCap, W1_HARD_MAX);
+    const fresh = await freshQueries(db, code.queries.filter((q) => q.channel === "web"), now);
+    const byKind = new Map<string, typeof fresh>();
+    for (const q of fresh) byKind.set(q.kind ?? "ruolo", [...(byKind.get(q.kind ?? "ruolo") ?? []), q]);
+    const planned: typeof fresh = [];
+    for (let i = 0; planned.length < WEB && [...byKind.values()].some((l) => l[i]); i++) for (const l of byKind.values()) if (l[i] && planned.length < WEB) planned.push(l[i]);
+    for (const q of planned) {
+      if ((await usageToday(db, "w1-queries", now)) >= cap || Date.now() >= deadline) break;
       await bump(db, "w1-queries", now);
       try {
-        const hits = await deps.web.search({ q: `${kw} ${where}`, includeDomains: FEED_DOMAINS });
-        const jobs = hits.filter((h) => feedFromUrl(h.url)).map(hitToRawJob);
-        await save(jobs.filter((j) => titleMatches(j.title, terms)));
+        const quote = profile.track === "lavoro" && Boolean(q.sites?.length);
+        const where = q.kind === "azienda" && !q.where ? "" : q.where;
+        const hits = await deps.web.search({ q: `${queryWords(q, quote)} ${where}`.trim(), ...(q.sites?.length ? { includeDomains: q.sites } : {}) });
+        await markSearched(db, q.key, hits.length, now);
+        const jobs = hits.filter((h) => isJobPage(h.url)).map(hitToRawJob);
+        await save(jobs);
         out.web++;
-        // The boards just learned: read now, for their roles.
+        // Results on employers' boards: those boards are read now, for their roles.
         const seen = new Set<string>();
         for (const j of jobs) {
-          const f = feedFromUrl(j.url!);
+          const f = j.url ? feedFromUrl(j.url) : null;
           if (!f || seen.has(`${f.ats}:${f.slug}`) || seen.size >= NEW_BOARDS || Date.now() >= deadline) continue;
           seen.add(`${f.ats}:${f.slug}`);
           const id = await registerFeed(db, f, j.company ?? null);
           if (id != null) await readFeed({ id, name: j.company || feedName(f), ats: f.ats, atsSlug: f.slug });
         }
-      } catch {
-        // Try again in the daily run.
-      }
-    }
-  }
-  if (deps.web && settings.w1Enabled) {
-    const cap = Math.min(settings.w1DailyCap, W1_HARD_MAX);
-    const planned = (await freshQueries(db, code.queries.filter((q) => q.channel === "web"), now)).slice(0, WEB);
-    for (const q of planned) {
-      if ((await usageToday(db, "w1-queries", now)) >= cap) break;
-      await bump(db, "w1-queries", now);
-      try {
-        const what = profile.track === "lavoro" && q.sites?.length ? `"${q.what}"` : q.what;
-        const hits = await deps.web.search({ q: `${what} ${q.where}`.trim(), ...(q.sites?.length ? { includeDomains: q.sites } : {}) });
-        await markSearched(db, q.key, hits.length, now);
-        await save(hits.filter((h) => isJobPage(h.url)).map(hitToRawJob));
-        out.web++;
       } catch {
         // Try again in the daily run.
       }

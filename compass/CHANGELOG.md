@@ -21,6 +21,14 @@
   every three hours also search those boards directly for everyone's roles and places, and read the
   boards found in rotation. Boards nobody chose keep only offers carrying one of the searched roles.
 - Admin → Aziende accepts a pasted link to any offer to add its board.
+- **The search code becomes a grammar of searches**, best first: the role in each place (job sites,
+  API), the role on employers' boards, the role at each chosen company ("Sales manager" Gucci, on the
+  boards and on LinkedIn, plus "Gucci lavora con noi"), the role in each chosen sector ("Sales
+  manager moda Milano", API, job sites and boards), its English title in Italy and its other names,
+  remote and part-time when wanted; students: internships and graduate programmes at their companies
+  and in their sectors. Each runs at most once a day and in turn within the daily caps, so the whole
+  list is worked through in a few days; each "Fai web scraping" takes one of each family first.
+  Profilo → Il tuo codice shows them all.
 
 ## 0.22.7 · 2026-10-06
 

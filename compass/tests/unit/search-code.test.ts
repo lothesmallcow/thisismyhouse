@@ -22,12 +22,30 @@ const base: CodeInput = {
   contracts: ["indeterminato"],
 };
 
+describe("the grammar of searches", () => {
+  it("role × place, then the boards, the chosen companies, the sectors, the other names", () => {
+    const q = buildSearchCode({ ...base, roles: ["Sales manager"], years: 6, companies: ["Gucci", "Prada"], synonyms: ["Direttore commerciale"], remoteOk: true }).queries;
+    const kinds = q.map((x) => x.kind ?? "ruolo");
+    // The plain role searches come first; the rest follow, best first.
+    expect(kinds.indexOf("bacheca")).toBeGreaterThan(kinds.lastIndexOf("ruolo") - 1);
+    expect(q).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "bacheca", what: "Sales manager", where: "Milano" }),
+      expect.objectContaining({ kind: "azienda", what: "Sales manager", extra: "Gucci", sites: ["linkedin.com"] }),
+      expect.objectContaining({ kind: "settore", channel: "api", what: "Sales manager", extra: "moda" }),
+      expect.objectContaining({ kind: "variante", channel: "api", what: "Direttore commerciale" }),
+      expect.objectContaining({ kind: "variante", extra: "da remoto" }),
+    ]));
+    expect(new Set(q.map((x) => x.key)).size).toBe(q.length); // each once
+    expect(q.length).toBeGreaterThan(20); // one role, two companies, one sector: already more than twenty searches
+  });
+});
+
 describe("search code", () => {
   it("brackets and a stable batch: same answers, same code and same keys", () => {
     const a = buildSearchCode(base);
     expect(a.code).toBe("L · IT:Milano(15) · store-manager + client-advisor · lead · moda-lusso · full + indeterminato");
     expect(buildSearchCode({ ...base }).queries.map((q) => q.key)).toEqual(a.queries.map((q) => q.key));
-    expect(a.queries.filter((q) => q.channel === "api").map((q) => q.what)).toEqual(["Store manager", "Client advisor"]);
+    expect(a.queries.filter((q) => q.channel === "api" && !q.kind).map((q) => q.what)).toEqual(["Store manager", "Client advisor"]);
     expect(a.queries.filter((q) => q.channel === "web").some((q) => q.sites?.[0] === "infojobs.it")).toBe(true);
   });
   it("changing one answer changes only the searches that depend on it", () => {

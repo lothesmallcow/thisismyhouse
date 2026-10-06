@@ -1,4 +1,6 @@
 // W1 discovery job: official search API, hard daily query cap enforced in code.
+import { queryWords } from "../core/search-code";
+import { learnFeeds } from "../server/feeds";
 import { and, eq, sql } from "drizzle-orm";
 import { romeDateKey } from "../core/time";
 import type { DB } from "../db";
@@ -43,8 +45,9 @@ async function plannedQueries(db: DB, max: number, now: Date): Promise<{ q: Sear
     per.push(
       fresh.map((x) => {
         const where = x.where || countryName(x.country);
-        const what = quote && x.sites?.length ? `"${x.what}"` : x.what;
-        return { q: { q: `${what} ${where}`.trim(), ...(x.sites?.length ? { includeDomains: x.sites } : {}) }, userId: ctx.userId, key: x.key };
+        // A role and its place, plus the company or sector when there is one: "Sales manager" Gucci Milano.
+        const where2 = x.kind === "azienda" && !x.where ? "" : where;
+        return { q: { q: `${queryWords(x, quote && Boolean(x.sites?.length))} ${where2}`.trim(), ...(x.sites?.length ? { includeDomains: x.sites } : {}) }, userId: ctx.userId, key: x.key };
       }),
     );
   }
@@ -90,6 +93,8 @@ export async function runDiscover(db: DB, provider: SearchProvider | null, now =
         out.found++;
         if ((await upsertRawJob(db, hitToRawJob(h), now, { cache, contexts })).created) out.created++;
       }
+      // Results on an employer's board reveal the whole board: it joins the registry, read every run.
+      await learnFeeds(db, hits.map(hitToRawJob)).catch(() => 0);
     }
     return { items: out.found, failures: 0 };
   }, now);

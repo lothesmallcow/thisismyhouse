@@ -19,11 +19,22 @@ export async function GET(req: Request) {
     seen.add(f);
     out.push({ label, hint });
   };
+  // The hand-made positions first (the ones with a sector); the ESCO ones come below, by any name.
   for (const p of POSITIONS) {
+    if (!p.sector) continue;
     const names = [p.it, p.en].map(fold);
     if (names.some((n) => n.startsWith(k) || n.includes(` ${k}`))) push(p.it, p.en !== p.it ? p.en : "");
     if (out.length >= 4) break;
   }
-  for (const { occ, matched } of searchOccupations(q, 10)) push(occ.it, matched !== fold(occ.it) ? `anche: ${matched}` : occ.en !== occ.it ? occ.en : "");
+  // "direttore commerciale/direttrice commerciale" → "Direttore commerciale" (as listings write it).
+  const first = (s: string) => {
+    const f = s.split("/")[0].trim();
+    return f.charAt(0).toUpperCase() + f.slice(1);
+  };
+  for (const { occ, matched } of searchOccupations(q, 10)) {
+    const label = first(occ.it);
+    const en = first(occ.en);
+    push(label, fold(matched) !== fold(label) && fold(matched) !== fold(en) ? `${en} · anche: ${matched}` : en !== label ? en : "");
+  }
   return NextResponse.json(out, { headers: { "Cache-Control": "private, max-age=300" } });
 }

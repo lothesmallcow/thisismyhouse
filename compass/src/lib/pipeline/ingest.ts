@@ -16,7 +16,6 @@ import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { scrapeCareers } from "../sources/web/careers";
 import { dedupeCandidates, mergeDuplicateJobs, purgeOldJobs, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
 import { discoveredFeeds, learnFeeds } from "../server/feeds";
-import { feedFromUrl, FEED_DOMAINS } from "../sources/ats/feeds";
 import { roleTerms, titleMatches } from "../core/relevance";
 import { isProgrammeTitle } from "./programmes";
 import { lookUpMissingCompanies } from "../server/company-guess";
@@ -26,14 +25,14 @@ import { todaysPicks } from "../server/career";
 import { searchTargets } from "./targets";
 import { getSettings, setSetting } from "../server/settings";
 import { freshQueries, markSearched, searchCodeFor, searchKeywords } from "./search-terms";
-import type { CodeQuery } from "../core/search-code";
+import { queryWords, type CodeQuery } from "../core/search-code";
 import { homeCountries } from "../core/geo";
 import type { RawJob } from "../core/normalize";
 import { isPaused, runWithHealth } from "./health";
 import { scanMailbox, type MailboxSummary } from "./mailbox-scan";
 import { refreshTrackerLeads, verifyLeads } from "./programmes";
-import { bump, usageToday, W1_HARD_MAX } from "./discover";
-import { hitToRawJob, type SearchProvider } from "../sources/web/w1";
+import { W1_HARD_MAX } from "./discover";
+import type { SearchProvider } from "../sources/web/w1";
 
 export interface MailboxRun {
   key: string;
@@ -52,8 +51,7 @@ export const API_CALLS_PER_RUN = 9;
 export const CAREER_SITES_PER_RUN = 15;
 /** Employer boards found on their own (from links and searches), read per run in rotation. */
 export const DISCOVERED_PER_RUN = 25;
-/** Web searches on employers' boards per run (each keyword and place at most once a day). */
-const BOARD_SEARCHES_PER_RUN = 4;
+
 
 /** Firms whose official pages are read per daily run (each one at most weekly). */
 const PROGRAMME_LEADS_PER_RUN = 12;
@@ -120,8 +118,10 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
     codes.push((await searchCodeFor(db, ctx.userId, now)).queries.filter((q) => q.channel === "api"));
   }
   const calls = new Map<string, CodeQuery>();
-  for (let i = 0; i < 9; i++) for (const list of codes) if (list[i]) calls.set(list[i].key, list[i]);
-  const apiCalls = (await freshQueries(db, [...calls.values()], now)).slice(0, API_CALLS_PER_RUN);
+  // Each person's API searches interleaved, all of them in turn (the shared daily cache runs each once a day).
+  for (let i = 0; codes.some((l) => l[i]); i++) for (const list of codes) if (list[i]) calls.set(list[i].key, list[i]);
+  // The API gets the role plus its extra words ("Sales manager moda", "Analyst da remoto").
+  const apiCalls = (await freshQueries(db, [...calls.values()], now)).slice(0, API_CALLS_PER_RUN).map((q) => ({ ...q, what: queryWords(q) }));
   // Company career feeds: keep the offers located in any country someone chose.
   const atsCountries = [...new Set(contexts.flatMap((c) => homeCountries(c.profile.countries, c.profile.city)))];
 
@@ -215,31 +215,8 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
     summary.sources[key] = r?.items ?? null;
   }
 
-  // 4a. Employers' boards found by searching them (Workday, Oracle, Greenhouse, Lever…) for everyone's
-  // roles and places: each result reveals a board, kept in the registry and read from the next run.
-  if (settings.w1Enabled && deps.web && allKeywords.length) {
-    const r = await runWithHealth(db, "bacheche", async () => {
-      const wanted = contexts.flatMap((c) => {
-        const cc = homeCountries(c.profile.countries, c.profile.city)[0] ?? "IT";
-        const where = c.profile.city || ({ IT: "Milano", GB: "London", DE: "Frankfurt", FR: "Paris" } as Record<string, string>)[cc] || "Milano";
-        return searchKeywords(c.profile.roles, c.profile.synonyms, 2).map((kw) => ({ key: `boards|${kw.toLowerCase()}|${where.toLowerCase()}`, kw, where }));
-      });
-      const fresh = await freshQueries(db, wanted.map((w) => ({ ...w, channel: "web" }) as unknown as CodeQuery), now);
-      let found = 0;
-      for (const q of (fresh as unknown as typeof wanted).slice(0, BOARD_SEARCHES_PER_RUN)) {
-        if ((await usageToday(db, "w1-queries", now)) >= Math.min(settings.w1DailyCap, W1_HARD_MAX)) break;
-        await bump(db, "w1-queries", now);
-        const hits = await deps.web!.search({ q: `${q.kw} ${q.where}`, includeDomains: FEED_DOMAINS });
-        await markSearched(db, q.key, hits.length, now);
-        const jobs = hits.filter((h) => feedFromUrl(h.url)).map(hitToRawJob).filter(relevant);
-        const s = await store(db, jobs, now, contexts);
-        summary.newJobs += s.created;
-        found += jobs.length;
-      }
-      return { items: found, failures: 0 };
-    }, now);
-    summary.sources.bacheche = r?.items ?? null;
-  }
+  // 4a. Searches on employers' boards are part of everyone's search code (pipeline/discover.ts): the
+  // boards they reveal join the registry there and are read here, in rotation.
 
   // 4b. Career pages of the chosen companies found by the web scraping ("Fai web scraping"),
   // people interleaved, in rotation: a few sites a day, each at its polite pace.
