@@ -12,8 +12,9 @@ import { getDb, schema } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
 import { defaultFilters, filterWhere, listJobs, PAGE_SIZE, type JobFilters } from "@/lib/server/jobs";
 import { getProfile } from "@/lib/server/profile";
+import { logoDomains } from "@/lib/server/logos";
 import { getSettings } from "@/lib/server/settings";
-import { quickDismissAction, saveDefaultFiltersAction, searchNowAction } from "../actions";
+import { dismissQuietAction, saveDefaultFiltersAction, searchNowAction } from "../actions";
 import { SourcesCard } from "@/components/sources-card";
 import { CareersLine } from "@/components/careers-line";
 import { PlacesPicker } from "@/components/places-picker";
@@ -79,6 +80,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
   };
   const limit = Math.min(200, Math.max(PAGE_SIZE, Number(one(sp.n)) || PAGE_SIZE));
   const { jobs, total } = await listJobs(db, user.id, filters, limit);
+  const logos = await logoDomains(db, jobs);
   const active = (placesChanged ? 1 : 0) + (["minNetMonthly", "hours", "contracts", "sectors", "remote", "days", "types", "minFit", "sort"] as const).filter((k) => filters[k] !== undefined).length;
   const [{ n: newCount }] = await db
     .select({ n: sql<number>`count(*)` })
@@ -332,7 +334,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
                   {headings[i]}
                 </h2>
               )}
-              <JobCard job={j} dismiss={quickDismissAction} back={keep({})} />
+              <JobCard job={j} dismiss={dismissQuietAction} back={keep({})} logo={logos.get(j.id)} />
             </div>
           ))}
         </div>

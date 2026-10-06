@@ -82,3 +82,42 @@ export function listedNamesIn(html: string, max = 200): string[] {
   }
   return [...out];
 }
+
+/** The catalog company named first in the text (longer names win at the same place: "Banco BPM" over "BPM"). */
+export function firstKnownName<T extends KnownCompany>(text: string, known: T[]): T | null {
+  const t = ` ${fold(text).replace(/\./g, "").replace(/[^a-z0-9&]+/g, " ")} `;
+  let best: { c: T; at: number; len: number } | null = null;
+  for (const c of known) {
+    for (const k of [c.name, ...c.aliases].map(nameKey).filter(usable)) {
+      const at = t.indexOf(` ${k} `);
+      if (at >= 0 && (!best || at < best.at || (at === best.at && k.length > best.len))) best = { c, at, len: k.length };
+    }
+  }
+  return best?.c ?? null;
+}
+
+/** The company in a job link: LinkedIn "…/jobs/view/analyst-at-intesa-sanpaolo-4012345", job boards' "/company/<slug>". */
+export function companyFromUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const path = decodeURIComponent(u.pathname).toLowerCase();
+    const li = path.match(/\/jobs\/view\/[a-z0-9-]*?-(?:at|presso|bei|chez)-([a-z0-9-]+?)-\d{6,}/);
+    const board = path.match(/\/(?:company|companies|azienda|aziende|cmp|employer)\/([a-z0-9-]{2,60})/);
+    const slug = li?.[1] ?? board?.[1];
+    if (!slug) return null;
+    return slug
+      .split("-")
+      .filter(Boolean)
+      .map((w) => (w.length <= 3 && !/^(di|de|la|del|and|e)$/.test(w) ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)))
+      .join(" ");
+  } catch {
+    return null;
+  }
+}
+
+/** The company written in a title: "Analyst at Goldman Sachs", "Stage presso Banca Esempio", "Rossi Srl cerca impiegata". */
+export function companyFromTitle(title: string): string | null {
+  const m = title.match(/\s(?:at|presso|@|bei|chez)\s+([A-Z0-9][\w&.'’ -]{1,50}?)(?:\s*[-–|(,]|$)/) ?? title.match(/^([A-Z0-9][\w&.'’ -]{1,40}?)\s+(?:cerca|assume|is hiring|sta assumendo|seleziona|ricerca)\b/i);
+  return m ? (leadingName(m[1].trim()) ?? null) : null;
+}

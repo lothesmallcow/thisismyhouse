@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.21.1 · 2026-10-06
+
+- **Non mi interessa** on a card is instant: the card goes at once, no reload, no jump to the top, no
+  message (the server forgets the offer in the background). Still undoable for 3 days in "Non mi
+  interessano".
+- **Mi interessa** (theme blue) next to it: pick a folder in one click or create one, then back to the
+  same spot in the list.
+- **Company names found more often**: from the title ("Analyst presso Banca X", "X is hiring"), from
+  the link (LinkedIn's "…-at-intesa-sanpaolo-…"), or from the first catalog company named in the title
+  or the opening text, in the catalog's spelling. Offers saved without a company are fixed at deploy.
+- **Company logos** on the cards: the company site's icon when its site is known (catalog or the
+  offer's own link), otherwise its initial. Icons come from DuckDuckGo's icon service (only the
+  company's domain is sent); privacy page updated.
+
 ## 0.21.0 · 2026-10-06
 
 - **New look, "Aurora"**: Compass's own light-blue palette (airy background, sky-blue accent, page
