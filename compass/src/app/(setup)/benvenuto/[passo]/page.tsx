@@ -87,6 +87,9 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
             </div>
           </fieldset>
         </form>
+        <p className="mt-8 text-[13px] text-faint">
+          Account sbagliato o non ti serve più? <Link href="/elimina-account">Elimina l&apos;account</Link>.
+        </p>
       </div>
     );
   }

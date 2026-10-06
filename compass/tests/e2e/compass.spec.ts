@@ -492,6 +492,24 @@ test("access request: waits, the admin approves, then the person signs in", asyn
   await page.context().clearCookies();
   await login(page, "paola@example.com", "una-password-lunga");
   await expect(page).toHaveURL(/benvenuto\/inizio/);
+
+  // She can delete her own account, even before the questionnaire: password and ELIMINA.
+  await page.getByRole("link", { name: "Elimina l'account" }).click();
+  await expect(page.getByRole("heading", { name: "Eliminare il tuo account?" })).toBeVisible();
+  await assertUiBasics(page);
+  await page.getByLabel("La tua password").fill("non-e-questa");
+  await page.getByLabel("Scrivi ELIMINA per confermare").fill("ELIMINA");
+  await page.getByRole("button", { name: "Elimina il mio account" }).click();
+  await expect(page.getByText("La password non è corretta.")).toBeVisible();
+  await page.getByLabel("La tua password").fill("una-password-lunga");
+  await page.getByLabel("Scrivi ELIMINA per confermare").fill("ELIMINA");
+  await page.getByRole("button", { name: "Elimina il mio account" }).click();
+  await expect(page).toHaveURL(/entra\?msg=account-eliminato/);
+  await expect(page.getByText(/Il tuo account e tutti i tuoi dati sono stati eliminati/)).toBeVisible();
+  await page.getByLabel("E-mail").fill("paola@example.com");
+  await page.getByLabel("Password").fill("una-password-lunga");
+  await page.getByRole("button", { name: "Entra" }).click();
+  await expect(page.getByText("E-mail o password non corrette.")).toBeVisible();
 });
 
 test("quick questionnaire for a new account: 5 questions, a generic role becomes precise positions, complete later", async ({ page }) => {

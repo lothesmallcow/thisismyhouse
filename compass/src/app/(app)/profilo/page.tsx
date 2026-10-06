@@ -139,6 +139,9 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
             <Link href="/profilo/cancella" className="flex items-center justify-between px-4 py-3.5 text-[14px] text-bad no-underline hover:bg-bad-soft">
               Cancella tutti i miei dati <IconArrowRight size={16} />
             </Link>
+            <Link href="/elimina-account" className="flex items-center justify-between px-4 py-3.5 text-[14px] text-bad no-underline hover:bg-bad-soft">
+              Elimina il mio account <IconArrowRight size={16} />
+            </Link>
           </List>
         </section>
       </div>

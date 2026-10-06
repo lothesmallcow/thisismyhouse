@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.19.2 · 2026-10-06
+
+- **Elimina il mio account** inside the app (Profilo, and on the first questionnaire screen for those
+  who have not finished it): password and the word ELIMINA, then everything goes (account, data,
+  Gmail access revoked at Google, settings) and the person is signed out. An administrator viewing
+  someone's app cannot use it (Admin → Utenti instead).
+
 ## 0.19.1 · 2026-10-06
 
 - Deleting an account or "Cancella tutti i miei dati" now also removes the person's Collega le fonti
