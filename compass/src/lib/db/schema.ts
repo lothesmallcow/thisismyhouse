@@ -120,6 +120,16 @@ export const profile = sqliteTable(
   /** Their own weights for the fit score (Profilo → Punteggio); null = the defaults. */
   fitWeights: json<Record<string, number> | null>("fit_weights"),
   paidOnly: integer("paid_only", { mode: "boolean" }).notNull().default(false),
+  /** "Cosa fai ora?" (core/situation.ts): the first answer, it decides the questionnaire. Null = not asked yet. */
+  situation: text("situation").$type<import("../core/situation").Situation>(),
+  /** Work: years of experience as they said it (the CV timeline counts first), current role, notice. */
+  yearsExperience: integer("years_experience"),
+  currentRole: text("current_role").notNull().default(""),
+  noticePeriod: text("notice_period").notNull().default(""),
+  /** Students: what they do besides studying ("associazione", "sport", "volontariato"...). */
+  activities: json<string[]>("activities").notNull().default([]),
+  /** Where they can work without a visa: "UE" (EU citizens), "GB", "US", "CH". */
+  workRights: json<string[]>("work_rights").notNull().default(["UE"]),
   onboardingStep: integer("onboarding_step").notNull().default(1),
   onboardedAt: ts("onboarded_at"),
   updatedAt: ts("updated_at"),

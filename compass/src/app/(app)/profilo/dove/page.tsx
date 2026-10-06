@@ -7,6 +7,7 @@ import { getDb } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
 import { getProfile } from "@/lib/server/profile";
 import { saveWhereAction } from "../../actions";
+import { WorkRightsField } from "@/components/work-rights-field";
 
 export const metadata = { title: "Dove" };
 export const maxDuration = 60;
@@ -27,6 +28,7 @@ export default async function DovePage({ searchParams }: { searchParams: Promise
           <label className="flex min-h-11 items-center gap-2.5 text-[14px]">
             <input type="checkbox" name="remote" value="1" defaultChecked={p.remoteOk} /> Va bene anche da remoto
           </label>
+          <WorkRightsField value={p.workRights} />
         </Card>
         <div className="mt-4">
           <Button>Salva e cerca</Button>

@@ -11,6 +11,7 @@ import { rerankUser } from "@/lib/server/jobs";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
 import { getProfile, suggestSynonyms, updateProfile, type ProfilePatch } from "@/lib/server/profile";
 import { STEPS, stepsFor, type Mode, type StepId } from "./steps";
+import { ACTIVITIES, NOTICE, situationOf, workRightsOf } from "@/lib/core/situation";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const lines = (s: string) => s.split(/\n|,/).map((x) => x.trim()).filter(Boolean);
@@ -51,6 +52,22 @@ export async function saveStepAction(f: FormData) {
         }
         break;
       }
+      case "esperienza": {
+        const years = int(str(f, "yearsExperience"));
+        const notice = str(f, "noticePeriod");
+        Object.assign(patch, {
+          yearsExperience: years != null && years >= 0 && years <= 60 ? years : null,
+          currentRole: str(f, "currentRole").slice(0, 120),
+          ...(NOTICE.some((x) => x.key === notice) ? { noticePeriod: notice } : {}),
+        });
+        // The "available from" answer for job sites, when they have not written one.
+        const label = NOTICE.find((x) => x.key === notice)?.label;
+        if (label && !current.availability) patch.availability = label;
+        break;
+      }
+      case "attivita":
+        patch.activities = f.getAll("activity").map(String).filter((a) => ACTIVITIES.some((x) => x.key === a));
+        break;
       case "studi": {
         const year = int(str(f, "studyYear"));
         const total = int(str(f, "degreeYears"));
@@ -68,7 +85,7 @@ export async function saveStepAction(f: FormData) {
         // Cities, regions or whole countries (no distances).
         const places = f.getAll("place").map(String).map(parsePlaceValue).filter((x): x is NonNullable<typeof x> => x != null);
         const fields = profileFromPlaces(places);
-        Object.assign(patch, { ...fields, countries: fields.countries, remoteOk: str(f, "remote") === "1" });
+        Object.assign(patch, { ...fields, countries: fields.countries, remoteOk: str(f, "remote") === "1", ...workRightsOf(f) });
         break;
       }
       case "quando":
@@ -135,7 +152,10 @@ export async function saveStepAction(f: FormData) {
 export async function chooseModeAction(f: FormData) {
   const user = await requireUser();
   const mode: Mode = str(f, "mode") === "veloce" ? "veloce" : "completo";
-  await updateProfile(getDb(), user.id, { onboardingMode: mode, onboardingStep: 1 });
+  // "Cosa fai ora?" decides the questionnaire: students get studies and activities, workers experience.
+  const sit = situationOf(str(f, "situation"));
+  if (!sit) redirect("/benvenuto/inizio?msg=scegli-situazione");
+  await updateProfile(getDb(), user.id, { onboardingMode: mode, onboardingStep: 1, situation: sit.key, track: sit.track, ...(sit.key === "magistrale" ? { degreeYears: 2 } : {}) });
   revalidatePath("/", "layout");
   redirect("/benvenuto/1");
 }

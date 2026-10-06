@@ -458,9 +458,10 @@ test("admin: people, invitation, view-as, catalog, rules, metrics, cron endpoint
   // First thing in the app: the questionnaire, quick or complete.
   await expect(page).toHaveURL(/benvenuto\/inizio/);
   await assertUiBasics(page);
-  await expect(page.getByRole("button", { name: "Inizia la versione veloce" })).toBeVisible();
+  // "Cosa fai ora?" first: it decides the questions (signed up for internships: a bachelor's, preselected).
+  await expect(page.getByRole("radio", { name: /Faccio la triennale/ })).toBeChecked();
   await page.getByRole("button", { name: "Inizia la versione completa" }).click();
-  await expect(page.getByText("Passo 1 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 1 di 13")).toBeVisible();
 });
 
 test("access request: waits, the admin approves, then the person signs in", async ({ page }) => {
@@ -504,10 +505,13 @@ test("quick questionnaire for a new account: 5 questions, a generic role becomes
   await login(page, "sara@example.com", "una-password-lunga");
   await expect(page).toHaveURL(/benvenuto\/inizio/);
   await page.getByRole("button", { name: "Inizia la versione veloce" }).click();
-  await expect(page.getByText("Passo 1 di 5")).toBeVisible();
+  await expect(page.getByText(/Scegli prima cosa fai ora/)).toBeVisible();
+  await page.getByRole("radio", { name: /Lavoro da meno di 3 anni/ }).check();
+  await page.getByRole("button", { name: "Inizia la versione veloce" }).click();
+  await expect(page.getByText("Passo 1 di 6")).toBeVisible();
   await page.getByLabel("Nome e cognome").fill("Sara Prova");
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 2 di 5")).toBeVisible();
+  await expect(page.getByText("Passo 2 di 6")).toBeVisible();
   await page.getByLabel("Ruolo", { exact: true }).fill("venditrice moda");
   await page.getByText("Alta: mi serve un lavoro presto").click();
   await page.getByRole("button", { name: "Avanti" }).click();
@@ -515,12 +519,20 @@ test("quick questionnaire for a new account: 5 questions, a generic role becomes
   await expect(page.getByText(/è molto generico/)).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Client advisor" })).toBeChecked();
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 3 di 5")).toBeVisible();
-  await addPlace(page, "Milano", /^Milano · città/);
+  // Workers: their experience (students get their studies instead).
+  await expect(page.getByText("Passo 3 di 6")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "La tua esperienza" })).toBeVisible();
+  await page.getByLabel("Anni di esperienza di lavoro").selectOption("1");
+  await page.getByLabel("Ruolo attuale (o l'ultimo)").fill("Commessa");
+  await page.getByText("Entro un mese").click();
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 4 di 5")).toBeVisible();
+  await expect(page.getByText("Passo 4 di 6")).toBeVisible();
+  await addPlace(page, "Milano", /^Milano · città/);
+  await expect(page.getByText("Dove puoi lavorare senza visto?")).toBeVisible();
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 5 di 6")).toBeVisible();
   await page.getByRole("button", { name: "Salta" }).click();
-  await expect(page.getByText("Passo 5 di 5")).toBeVisible();
+  await expect(page.getByText("Passo 6 di 6")).toBeVisible();
   await page.getByRole("button", { name: "Lo carico più tardi" }).click();
   await expect(page).toHaveURL(/benvenuto\/fine/);
   // The search code uses the precise positions, not the generic words.
@@ -535,8 +547,10 @@ test("quick questionnaire for a new account: 5 questions, a generic role becomes
   await expect(page.getByText(/Hai già cercato da poco/)).toBeVisible();
   // Details later: the complete questionnaire, answers kept.
   await page.goto("/profilo");
+  await expect(page.getByText("Lavoro da meno di 3 anni")).toBeVisible();
+  await expect(page.getByText(/1\+ anni · Commessa · Entro un mese/)).toBeVisible();
   await page.getByRole("button", { name: "Completa il questionario" }).click();
-  await expect(page.getByText("Passo 1 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 1 di 13")).toBeVisible();
   await expect(page.getByLabel("Nome e cognome")).toHaveValue("Sara Prova");
 });
 
@@ -604,12 +618,12 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await expect(page.getByLabel("Link dell'annuncio")).toHaveValue("https://www.linkedin.com/jobs/view/123/");
 });
 
-test("student questionnaire: 12 steps, catalog, Altro, automatic focus", async ({ page }) => {
+test("student questionnaire: 13 steps, catalog, activities, Altro, automatic focus", async ({ page }) => {
   await login(page, "giulia@example.com", "una-password-lunga");
   await expect(page).toHaveURL(/benvenuto\/1/);
   await page.getByLabel("Nome e cognome").fill("Giulia Prova");
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 2 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 2 di 13")).toBeVisible();
   await page.getByLabel("Università").fill("Università (esempio)");
   await page.getByLabel("Corso di laurea").fill("Economia");
   await page.getByLabel("Anno di corso").selectOption("1");
@@ -617,29 +631,33 @@ test("student questionnaire: 12 steps, catalog, Altro, automatic focus", async (
   await addPlace(page, "Milano", /^Milano · città/);
   await addPlace(page, "Londo", /^London · città/);
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 4 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 4 di 13")).toBeVisible();
   await page.getByText("Estate (giugno-settembre)").click();
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 5 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 5 di 13")).toBeVisible();
   await page.getByRole("button", { name: "Salta" }).click(); // paga
-  await expect(page.getByText("Passo 6 di 12")).toBeVisible(); // wait for the page before the next click
+  await expect(page.getByText("Passo 6 di 13")).toBeVisible(); // wait for the page before the next click
   await page.getByRole("button", { name: "Salta" }).click(); // lingue
-  await expect(page.getByText("Passo 7 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 7 di 13")).toBeVisible();
   await page.getByRole("button", { name: "Lo carico più tardi" }).click();
+  // Students with a short CV: what they do besides studying.
+  await expect(page.getByRole("heading", { name: "Cosa fai oltre allo studio?" })).toBeVisible();
+  await page.getByText("Club di finanza o investimenti").click();
+  await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByRole("heading", { name: "Quali settori ti interessano?" })).toBeVisible();
   await page.getByText("Investment banking e M&A", { exact: true }).click();
   await page.getByLabel("Altro: un settore che non c'è").fill("Restauro di tessuti antichi");
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 9 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 10 di 13")).toBeVisible();
   await page.getByText("Finanza e mercati").click();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Suggerite per te")).toBeVisible();
   await page.getByLabel("Cerca un'azienda o un brand").fill("lazard");
   await page.locator("label", { hasText: /^Lazard/ }).first().click();
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 11 di 12")).toBeVisible(); // wait for the page before the next click
+  await expect(page.getByText("Passo 12 di 13")).toBeVisible(); // wait for the page before the next click
   await page.getByRole("button", { name: "Avanti" }).click(); // evitare
-  await expect(page.getByText("Passo 12 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 13 di 13")).toBeVisible();
   await expect(page.getByText("Consiglio")).toBeVisible();
   await expect(page.getByRole("radio", { name: /Tutte, con priorità/ })).toBeChecked(); // few choices: everything, choices first
   await page.getByRole("button", { name: "Fine" }).click();
@@ -648,6 +666,7 @@ test("student questionnaire: 12 steps, catalog, Altro, automatic focus", async (
   await expect(page.getByRole("heading", { name: "Stage per te" })).toBeVisible();
   await page.goto("/profilo");
   await expect(page.getByText(/Economia · Università \(esempio\) · 1° anno/)).toBeVisible();
+  await expect(page.getByText("Club di finanza o investimenti")).toBeVisible();
   await page.goto("/aziende");
   await expect(page.locator("label", { hasText: "Restauro di tessuti antichi" })).toBeVisible();
 });
@@ -671,8 +690,9 @@ test("CV upload, then delete all data and redo the job questionnaire", async ({ 
   // Like a new account: first the choice between the quick and the complete questionnaire.
   await expect(page).toHaveURL(/benvenuto\/inizio/);
   await expect(page.getByText("Tutti i tuoi dati sono stati cancellati.")).toBeVisible();
+  await page.getByRole("radio", { name: /Lavoro da 3 anni o più/ }).check();
   await page.getByRole("button", { name: "Inizia la versione completa" }).click();
-  await expect(page.getByText("Passo 1 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 1 di 13")).toBeVisible();
   await page.getByLabel("Nome e cognome").fill("Anna Prova");
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByLabel("Ruolo", { exact: true }).fill("Segretaria");
@@ -680,22 +700,24 @@ test("CV upload, then delete all data and redo the job questionnaire", async ({ 
   await expect(page.getByRole("heading", { name: "Vanno bene anche questi ruoli?" })).toBeVisible();
   await expect(page.getByText("Receptionist")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 3 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 3 di 13")).toBeVisible();
+  await page.getByRole("button", { name: "Salta" }).click(); // esperienza
+  await expect(page.getByText("Passo 4 di 13")).toBeVisible();
   await addPlace(page, "Moncalieri", /^Moncalieri · città/);
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByText("Part-time", { exact: true }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
-  await expect(page.getByText("Passo 5 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 6 di 13")).toBeVisible();
   await page.getByLabel("Euro netti al mese").fill("1200");
   await expect(page.getByText(/lordo annuo/)).toBeVisible();
   await page.getByText(/Nascondi le offerte sotto questa cifra/).click();
   await page.getByRole("button", { name: "Avanti" }).click();
-  for (let i = 6; i <= 11; i++) {
-    await expect(page.getByText(`Passo ${i} di 12`)).toBeVisible();
-    if (i === 7) await page.getByRole("button", { name: "Lo carico più tardi" }).click();
+  for (let i = 7; i <= 12; i++) {
+    await expect(page.getByText(`Passo ${i} di 13`)).toBeVisible();
+    if (i === 8) await page.getByRole("button", { name: "Lo carico più tardi" }).click();
     else await page.getByRole("button", { name: "Salta" }).click();
   }
-  await expect(page.getByText("Passo 12 di 12")).toBeVisible();
+  await expect(page.getByText("Passo 13 di 13")).toBeVisible();
   await page.getByRole("button", { name: "Fine" }).click();
   await expect(page.getByRole("heading", { name: /Fatto, Anna/ })).toBeVisible();
   await page.getByRole("link", { name: "Vedi le offerte" }).click();

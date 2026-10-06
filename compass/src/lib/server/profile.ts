@@ -56,6 +56,8 @@ export function toRankProfile(p: Profile, prefs: RankPrefs = NO_PREFS, bg: Pick<
     studyYear: p.studyYear,
     degreeYears: p.degreeYears,
     graduationYear: p.graduationYear,
+    situation: p.situation,
+    workRights: p.workRights,
     extraPlaces: p.extraPlaces,
     paidOnly: p.paidOnly,
     countries: p.countries,

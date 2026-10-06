@@ -7,6 +7,7 @@ import { schema } from "../db";
 import { getPrefs, listSectors } from "./catalog";
 import { listExperiences } from "./experiences";
 import { getProfile } from "./profile";
+import { ACTIVITIES } from "../core/situation";
 
 export async function cvPositionsFor(db: DB, userId: number): Promise<{ roles: string[]; recommended: CvPosition[]; hasCv: boolean }> {
   const [p, exps, cvs, prefs, sectors] = await Promise.all([
@@ -20,8 +21,9 @@ export async function cvPositionsFor(db: DB, userId: number): Promise<{ roles: s
   const recommended = recommendPositions({
     track: p.track,
     experiences: exps,
-    cvText: cvs.map((c) => c.text ?? "").join("\n"),
-    years: workYears(exps),
+    // Activities they ticked ("club di finanza", "startup") point to directions like CV lines do.
+    cvText: [...cvs.map((c) => c.text ?? ""), ...ACTIVITIES.filter((a) => p.activities.includes(a.key)).map((a) => a.words)].join("\n"),
+    years: workYears(exps) ?? p.yearsExperience,
     sectors: liked,
     roles: p.roles,
     priority: p.priority,

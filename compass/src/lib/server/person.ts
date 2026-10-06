@@ -26,7 +26,15 @@ export async function background(db: DB, userId: number, profile: Profile): Prom
   // Evidence only: the CV and the timeline. What they wish for (presentation, tastes) is not experience.
   const text = fold([...cvs.map((c) => c.text ?? ""), ...exps.map((e) => `${e.title} ${e.organization} ${e.description}`), profile.degree].join("\n"));
   const hasDegree = exps.some((e) => e.kind === "studio" && /laurea|degree|bachelor|master|mba/i.test(`${e.title} ${e.organization}`)) || /\blaurea (in|magistrale|triennale)|\bdegree in\b|bachelor|master of/.test(text);
-  const person: Person = { years: workYears(exps), hasDegree, studying: profile.track === "stage", text };
+  // The CV timeline counts first; without it, what they said in "La tua esperienza" / "Cosa fai ora?".
+  const fromCv = workYears(exps);
+  const sit = profile.situation;
+  const person: Person = {
+    years: fromCv || profile.yearsExperience == null ? fromCv : profile.yearsExperience,
+    hasDegree: hasDegree || sit === "neolaureato" || sit === "magistrale",
+    studying: sit ? sit === "superiori" || sit === "triennale" || sit === "magistrale" : profile.track === "stage",
+    text,
+  };
 
   // Sectors of past work (not studies), from the matched sector or the matched company.
   const byId = new Map(sectors.map((s) => [s.id, s]));

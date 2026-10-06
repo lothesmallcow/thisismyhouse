@@ -30,6 +30,7 @@ import { requireUser, signOut } from "@/lib/server/auth";
 import { canChoose, getPrefs, setPref } from "@/lib/server/catalog";
 import { COUNTRIES, findPlace } from "@/lib/core/geo";
 import { parsePlaceValue, profileFromPlaces } from "@/lib/core/where";
+import { situationOf, workRightsOf } from "@/lib/core/situation";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
 import { dismissJob, markSeen, rerankUser, restoreJob, setAdjustmentActive, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
 import { deleteAllMyData } from "@/lib/server/privacy";
@@ -485,13 +486,24 @@ export async function checkInboxNowAction(f?: FormData) {
   done(f ? safeBack(f, "/collega") : "/collega", "controllo-avviato");
 }
 
+/** "Cosa fai ora?" changed from the profile: the questionnaire track follows (studies or work). */
+export async function saveSituationAction(f: FormData) {
+  const u = await requireUser();
+  const db = getDb();
+  const sit = situationOf(str(f, "situation"));
+  if (!sit) done("/profilo/situazione", "scegli-situazione");
+  await updateProfile(db, u.id, { situation: sit!.key, track: sit!.track, ...(sit!.key === "magistrale" ? { degreeYears: 2 } : {}) });
+  await rerankUser(db, u.id);
+  done("/profilo", "salvato");
+}
+
 /** "Dove": cities, regions or whole countries, as chosen (no distances). */
 export async function saveWhereAction(f: FormData) {
   const u = await requireUser();
   const db = getDb();
   const places = f.getAll("place").map(String).map(parsePlaceValue).filter((x): x is NonNullable<typeof x> => x != null);
   const fields = profileFromPlaces(places);
-  await updateProfile(db, u.id, { ...fields, countries: fields.countries.length ? fields.countries : ["IT"], remoteOk: str(f, "remote") === "1" });
+  await updateProfile(db, u.id, { ...fields, countries: fields.countries.length ? fields.countries : ["IT"], remoteOk: str(f, "remote") === "1", ...workRightsOf(f) });
   await rerankUser(db, u.id);
   after(() => quickSearchFor(getDb(), u.id));
   done("/profilo/dove", "dove-salvato");

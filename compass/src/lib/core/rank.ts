@@ -6,7 +6,8 @@ import type { Contract, Eligibility, Hours, JobType, LanguageReq, Remote } from 
 import { normalizeCompany } from "./dedupe";
 import { escapeRe, fold, keyTokens } from "./text";
 import { PRIORITY_THRESHOLDS, RANK_WEIGHTS as W, THRESHOLDS } from "./rank-config";
-import { careerStage, titleSeniority } from "./career-stage";
+import { careerStage, titleSeniority, type CareerStage } from "./career-stage";
+import { needsVisa, type Situation } from "./situation";
 import { countryName, findPlace } from "./geo";
 import { computeFit, type FitArea, type FitWeights } from "./fit";
 import { checkRequirements, extractRequirements, type Person } from "./requirements";
@@ -43,6 +44,10 @@ export interface RankProfile {
   degreeYears: number | null;
   /** The year they graduate, when they said it (otherwise worked out from year of study and degree length). */
   graduationYear?: number | null;
+  /** "Cosa fai ora?" (core/situation.ts). */
+  situation?: Situation | null;
+  /** Where they can work without a visa ("UE", "GB", "US", "CH"); default EU citizen. */
+  workRights?: string[];
   extraPlaces: string[];
   paidOnly: boolean;
   /** Countries and regions ("IT:Lombardia") they chose; empty = no limit. */
@@ -58,6 +63,13 @@ export interface RankProfile {
   currentEmployers: string[];
   /** How soon they need a job: alta = also a step below and gentler levels, bassa = only the best. */
   priority: "alta" | "media" | "bassa";
+}
+
+/** Where a student is: a recent graduate counts as final year (graduate roles fit), high school as the first years. */
+export function stageOf(p: Pick<RankProfile, "studyYear" | "degreeYears" | "situation">): CareerStage | null {
+  if (p.situation === "neolaureato") return "ultimo";
+  if (p.situation === "superiori") return "primi-anni";
+  return careerStage(p.studyYear, p.degreeYears);
 }
 
 /** The year they graduate: as they said it, or from year of study and degree length (academic years end in summer). */
@@ -293,7 +305,7 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
 
   // 10. Students: is it an internship, and is it right for their year?
   if (profile.track === "stage") {
-    const stage = careerStage(profile.studyYear, profile.degreeYears);
+    const stage = stageOf(profile);
     const seniority = titleSeniority(job.title);
     const summer = /\bsummer\b|estiv/i.test(job.title);
     if (job.jobType === "programma") {
@@ -331,10 +343,10 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
   {
     const el = job.eligibility as string[];
     const where = job.country ?? null;
-    const needsVisa = where === "GB" || (where === "" && job.city != null); // EU citizens: free to work in IT, DE, FR
+    const visa = (where === "" && job.city == null) || where == null ? false : needsVisa(where, profile.workRights ?? ["UE"], profile.countries);
     if (el.includes("solo-uk") && !profile.countries.includes("GB")) f.push({ key: "eligibility", points: W.ukStudentsOnly, reason: "Solo per studenti di università del Regno Unito" });
-    if (el.includes("diritto-lavoro") && needsVisa) f.push({ key: "eligibility", points: W.rightToWork, reason: "Chiede il diritto di lavorare nel paese: con il passaporto UE servirebbe un visto, e non lo sponsorizzano" });
-    else if (el.includes("sponsor-visto") && needsVisa) f.push({ key: "eligibility-open", points: W.visaSponsor, reason: "Offre lo sponsor per il visto" });
+    if (el.includes("diritto-lavoro") && visa) f.push({ key: "eligibility", points: W.rightToWork, reason: "Chiede il diritto di lavorare nel paese: a te servirebbe un visto, e non lo sponsorizzano" });
+    else if (el.includes("sponsor-visto") && visa) f.push({ key: "eligibility-open", points: W.visaSponsor, reason: "Offre lo sponsor per il visto" });
     if (el.includes("riservato")) f.push({ key: "eligibility", points: W.restricted, reason: "Riservato a un gruppo specifico (es. genere o provenienza): controlla di rientrarci" });
     if (profile.track === "stage") {
       if (el.includes("dal-secondo-anno") && profile.studyYear === 1) f.push({ key: "eligibility", points: W.notFirstYear, reason: "Non aperto a chi è al primo anno" });

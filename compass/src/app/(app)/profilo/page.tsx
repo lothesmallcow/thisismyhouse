@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { Flash } from "@/components/flash";
 import { IconArrowRight } from "@/components/icons";
 import { Button, List, PageHeader, Row, SectionTitle } from "@/components/ui";
+import { ACTIVITIES, NOTICE, situationOf } from "@/lib/core/situation";
 import { CONTRACT_LABELS } from "@/lib/core/extract";
 import { TASTES } from "@/lib/catalog/data";
 import { getDb, schema } from "@/lib/db";
@@ -52,13 +53,23 @@ export default async function ProfiloPage({ searchParams }: { searchParams: Prom
         <section>
           <SectionTitle className="!mt-0">Il tuo profilo</SectionTitle>
           <List>
+            <Row label="Cosa fai ora" value={situationOf(p.situation)?.label ?? "Da indicare"} action={<Edit href="/profilo/situazione" />} />
             <Row label="Dati di contatto" value={[p.name, p.phone, p.email].filter(Boolean).join(" · ") || "Da compilare"} action={<Edit href={at("nome")} />} />
             {stage ? (
-              <Row label="Studi" value={[p.degree, p.university, p.studyYear ? `${p.studyYear}° anno` : ""].filter(Boolean).join(" · ") || "Da compilare"} action={<Edit href={at("studi")} />} />
+              <Row label="Studi" value={[p.degree, p.university, p.studyYear ? `${p.studyYear}° anno` : "", p.graduationYear ? `laurea ${p.graduationYear}` : ""].filter(Boolean).join(" · ") || "Da compilare"} action={<Edit href={at("studi")} />} />
             ) : (
               <Row label="Posizioni e carriere" value={p.roles.join(", ") || "Da compilare"} action={<Edit href="/profilo/posizioni" />} />
             )}
-            <Row label="Dove" value={[...placesFromProfile(p).map((x) => x.name), p.remoteOk ? "anche da remoto" : ""].filter(Boolean).join(", ") || "Da compilare"} action={<Edit href="/profilo/dove" />} />
+            {stage ? (
+              <Row label="Attività" value={ACTIVITIES.filter((a) => p.activities.includes(a.key)).map((a) => a.label).join(", ") || "Nessuna indicata"} action={<Edit href={at("attivita")} />} />
+            ) : (
+              <Row
+                label="Esperienza"
+                value={[p.yearsExperience != null ? (p.yearsExperience === 0 ? "meno di un anno" : `${p.yearsExperience}+ anni`) : "", p.currentRole, NOTICE.find((x) => x.key === p.noticePeriod)?.label ?? ""].filter(Boolean).join(" · ") || "Da compilare"}
+                action={<Edit href={at("esperienza")} />}
+              />
+            )}
+            <Row label="Dove" value={[...placesFromProfile(p).map((x) => x.name), p.remoteOk ? "anche da remoto" : "", p.workRights.length ? `senza visto: ${p.workRights.join(", ")}` : ""].filter(Boolean).join(", ") || "Da compilare"} action={<Edit href="/profilo/dove" />} />
             {stage ? (
               <Row label="Quando" value={[p.periods.join(", "), p.paidOnly ? "solo retribuiti" : ""].filter(Boolean).join(" · ") || "Da compilare"} action={<Edit href={at("quando")} />} />
             ) : (

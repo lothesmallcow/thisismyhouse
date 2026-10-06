@@ -20,6 +20,7 @@ const MESSAGES: Record<string, { tone: "success" | "info" | "warn" | "danger"; t
   "posizioni-salvate": { tone: "success", text: "Posizioni salvate: le prossime ricerche useranno queste." },
   "posizioni-vuote": { tone: "warn", text: "Nessuna posizione spuntata: le ricerche useranno solo settori e aziende scelti." },
   "carriere-salvate": { tone: "success", text: "Salvato: ora cerco in tutte queste carriere e in tutti questi paesi. Il web scraping parte da solo (se non l'hai lanciato negli ultimi 10 minuti)." },
+  "scegli-situazione": { tone: "warn", text: "Scegli prima cosa fai ora: serve a farti le domande giuste." },
   "gmail-collegata": { tone: "success", text: "Gmail collegata. Sto leggendo gli avvisi dell'ultimo mese: le offerte arrivano tra poco in Offerte." },
   "gmail-scollegata": { tone: "success", text: "Gmail scollegata: Compass non può più leggerla e il permesso è stato tolto anche su Google." },
   "gmail-annullato": { tone: "info", text: "Collegamento annullato: quando vuoi, riprova." },
