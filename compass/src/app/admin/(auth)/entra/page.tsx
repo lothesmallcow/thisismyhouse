@@ -18,7 +18,7 @@ export default async function AdminEntra({ searchParams }: { searchParams: Promi
         <p className="mt-2 text-muted">Accesso separato per chi gestisce Compass.</p>
         {sp.errore && (
           <div className="mt-5">
-            <Notice tone="warn">{sp.errore === "attesa" ? "Troppi tentativi: riprova tra 15 minuti." : "Credenziali non corrette."}</Notice>
+            <Notice tone="warn">{sp.errore === "attesa" ? "Troppi tentativi: riprova tra un minuto." : "Credenziali non corrette."}</Notice>
           </div>
         )}
         <form action={adminSignInAction} className="mt-6 space-y-5">

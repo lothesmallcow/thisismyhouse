@@ -28,15 +28,19 @@ export const VIEW_AS_COOKIE = "compass_view_as";
 
 export type SignInResult = "ok" | "wrong" | "locked" | "pending";
 
-export const MAX_FAILURES = 5;
-export const LOCK_MINUTES = 15;
+/** Wrong passwords before a pause, and the pause: short, enough to stop someone guessing by machine. */
+export const MAX_FAILURES = 10;
+export const LOCK_MINUTES = 1;
+/** Wrong passwords are counted within this window. */
+const WINDOW_MINUTES = 15;
 
 export async function signIn(email: string, password: string, role: Role): Promise<SignInResult> {
   const db = getDb();
   const key = `${role}:${email.trim().toLowerCase()}`;
   const now = new Date();
   const attempt = await db.query.loginAttempts.findFirst({ where: eq(schema.loginAttempts.key, key) });
-  if (attempt?.lockedUntil && attempt.lockedUntil > now) return "locked";
+  // Locks longer than today's pause (set by older versions) no longer hold.
+  if (attempt?.lockedUntil && attempt.lockedUntil > now && attempt.lockedUntil.getTime() - now.getTime() <= LOCK_MINUTES * 60000) return "locked";
   const plain = email.trim().toLowerCase();
   let user = await db.query.users.findFirst({ where: and(eq(schema.users.email, plain), eq(schema.users.role, role)) });
   // The admin whose e-mail is also a person's account lives on "name+admin@domain" (ensureAdmin).
@@ -48,7 +52,11 @@ export async function signIn(email: string, password: string, role: Role): Promi
   // A request not yet approved: say so, but only to whoever knows the password.
   if (user && passwordOk && !user.active && user.pendingSince) return "pending";
   if (!user || !user.active || !passwordOk) {
-    const fresh = !attempt || now.getTime() - attempt.firstAt.getTime() > LOCK_MINUTES * 60000;
+    // A new count when the window is over, after a pause, or over an older, longer lock.
+    const fresh =
+      !attempt ||
+      now.getTime() - attempt.firstAt.getTime() > WINDOW_MINUTES * 60000 ||
+      (attempt.lockedUntil != null && (attempt.lockedUntil <= now || attempt.lockedUntil.getTime() - now.getTime() > LOCK_MINUTES * 60000));
     const failures = fresh ? 1 : attempt.failures + 1;
     const row = { key, failures, firstAt: fresh ? now : attempt.firstAt, lockedUntil: failures >= MAX_FAILURES ? new Date(now.getTime() + LOCK_MINUTES * 60000) : null };
     await db.insert(schema.loginAttempts).values(row).onConflictDoUpdate({ target: schema.loginAttempts.key, set: row });
