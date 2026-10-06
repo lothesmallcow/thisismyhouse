@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.20.1 · 2026-10-06
+
+- **"Non mi interessa" deletes, for good, and only that offer**: it leaves the person's account and is
+  never proposed again, matched by the exact links it was found at and by the same ad (same title,
+  company and city) on another site. Other roles at the same company, or the same role in another
+  city, are untouched; other people are untouched. An offer only they could see (added by hand,
+  their own alerts) is deleted altogether.
+- **Scartate** (bottom of Offerte): the list of dismissals, each can be undone (the offer comes back if
+  it is still around). Forgotten after six months. Old dismissals are converted at deploy.
+- Migration 0019.
+
 ## 0.20.0 · 2026-10-06
 
 - **Offers last a week**: an offer no source has shown for 7 days is deleted at the next run, with its

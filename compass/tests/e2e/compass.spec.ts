@@ -81,10 +81,16 @@ test("Offerte (job search): ranked list with reasons, focus switch, search, filt
   await page.goto("/offerte?vista=tutte");
   const firstTitle = await cards.first().getByRole("heading").innerText();
   await cards.first().getByRole("button", { name: /^Non mi interessa/ }).click();
-  await expect(page.getByText(/Tolta dalla lista/)).toBeVisible();
+  await expect(page.getByText(/Cancellata: non te la ripropongo più/)).toBeVisible();
   await expect(page).toHaveURL(/vista=tutte/);
   await expect(cards.filter({ hasText: firstTitle })).toHaveCount(0);
-  await page.getByRole("link", { name: "Offerte scartate" }).click();
+  // "Scartate": the list of dismissals, each can be undone (then the offer comes back).
+  await page.getByRole("link", { name: "Scartate", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Scartate" })).toBeVisible();
+  await assertUiBasics(page);
+  await page.getByRole("button", { name: `Annulla lo scarto di ${firstTitle}` }).click();
+  await expect(page.getByText(/Annullato/)).toBeVisible();
+  await page.goto("/offerte?vista=tutte");
   await expect(cards.filter({ hasText: firstTitle }).first()).toBeVisible();
 
   await page.goto("/offerte");
@@ -141,8 +147,8 @@ test("Non mi interessa adds a correction she can undo from her profile", async (
   const company = (await page.locator("h1 + p").innerText()).split("·")[0].trim();
   await page.getByRole("link", { name: "Non mi interessa" }).click();
   await page.getByText("Non mi interessa l'azienda").click();
-  await page.getByRole("button", { name: "Nascondi" }).click();
-  await expect(page.getByText("Offerta nascosta.")).toBeVisible();
+  await page.getByRole("button", { name: "Cancella e non riproporla" }).click();
+  await expect(page.getByText(/Cancellata: non te la ripropongo più/)).toBeVisible();
   await page.goto("/profilo/ricerca");
   await expect(page.getByText(`Evita l'azienda ${company}`)).toBeVisible();
   await page.getByRole("button", { name: "Annulla" }).first().click();

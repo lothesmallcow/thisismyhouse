@@ -95,15 +95,18 @@ export async function rankJobForAll(db: DB, jobId: number, now = new Date(), con
   const job = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, jobId) });
   if (!job) return;
   const who = await audience(db, jobId);
-  // The same ad dismissed before (then deleted after a week): it comes back already dismissed.
-  const dismissed = new Map((await db.select().from(schema.dismissedJobs).where(eq(schema.dismissedJobs.dedupeKey, job.dedupeKey))).map((d) => [d.userId, d.reason]));
+  // Dismissed before (the same exact links, or the same title at the same company and city): never again for them.
+  const banned = await bannedFor(db, jobId, job.dedupeKey);
   for (const ctx of contexts ?? (await rankContexts(db))) {
     if (who && !who.has(ctx.userId)) continue;
+    if (banned.has(ctx.userId)) {
+      await db.delete(schema.userJobs).where(and(eq(schema.userJobs.userId, ctx.userId), eq(schema.userJobs.jobId, jobId)));
+      continue;
+    }
     const v = computeFor(job, ctx, now);
-    const gone = dismissed.has(ctx.userId) ? { status: "dismissed" as const, dismissReason: dismissed.get(ctx.userId) ?? null } : {};
     await db
       .insert(schema.userJobs)
-      .values({ userId: ctx.userId, jobId, ...v, ...gone })
+      .values({ userId: ctx.userId, jobId, ...v })
       .onConflictDoUpdate({ target: [schema.userJobs.userId, schema.userJobs.jobId], set: v });
   }
 }
@@ -116,11 +119,24 @@ export async function rerankUser(db: DB, userId: number, now = new Date(), ctx?:
     .from(schema.jobs)
     .where(sql`exists (select 1 from ${schema.jobSources} s where s.job_id = ${schema.jobs.id} and (s.user_id is null or s.user_id = ${userId}))`);
   const existing = new Map((await db.select().from(schema.userJobs).where(eq(schema.userJobs.userId, userId))).map((r) => [r.jobId, r]));
-  const dismissed = new Map((await db.select().from(schema.dismissedJobs).where(eq(schema.dismissedJobs.userId, userId))).map((d) => [d.dedupeKey, d.reason]));
+  // What they dismissed: exact links and exact title + company + city.
+  const bannedKeys = new Set((await db.select({ k: schema.dismissedJobs.dedupeKey }).from(schema.dismissedJobs).where(eq(schema.dismissedJobs.userId, userId))).map((d) => d.k));
+  const bannedUrls = new Set((await db.select({ u: schema.dismissedUrls.url }).from(schema.dismissedUrls).where(eq(schema.dismissedUrls.userId, userId))).map((d) => d.u));
+  const urlsOf = new Map<number, string[]>();
+  if (bannedUrls.size) {
+    for (const r of await db.select({ jobId: schema.jobSources.jobId, url: schema.jobSources.url }).from(schema.jobSources).where(inArray(schema.jobSources.url, [...bannedUrls]))) {
+      if (r.url) urlsOf.set(r.jobId, [...(urlsOf.get(r.jobId) ?? []), r.url]);
+    }
+  }
+  const isBanned = (job: JobRow) => bannedKeys.has(job.dedupeKey) || urlsOf.has(job.id);
   // Only rows whose values change are written, in batches of 200 statements per round trip
   // (on Turso one batch = one HTTP request instead of one per job).
   const writes = [];
   for (const job of visible) {
+    if (isBanned(job)) {
+      if (existing.has(job.id)) writes.push(db.delete(schema.userJobs).where(and(eq(schema.userJobs.userId, userId), eq(schema.userJobs.jobId, job.id))));
+      continue;
+    }
     const v = computeFor(job, c, now);
     const old = existing.get(job.id);
     if (
@@ -134,11 +150,10 @@ export async function rerankUser(db: DB, userId: number, now = new Date(), ctx?:
       JSON.stringify(old.factors) === JSON.stringify(v.factors)
     )
       continue;
-    const gone = !old && dismissed.has(job.dedupeKey) ? { status: "dismissed" as const, dismissReason: dismissed.get(job.dedupeKey) ?? null } : {};
     writes.push(
       db
         .insert(schema.userJobs)
-        .values({ userId, jobId: job.id, ...v, ...gone })
+        .values({ userId, jobId: job.id, ...v })
         .onConflictDoUpdate({ target: [schema.userJobs.userId, schema.userJobs.jobId], set: v }),
     );
   }
@@ -499,11 +514,7 @@ export async function dismissJob(db: DB, userId: number, id: number, reason: Dis
   const data = await getJob(db, userId, id);
   if (!data) return null;
   const { job } = data;
-  await setUserJobStatus(db, userId, id, { status: "dismissed", dismissReason: reason });
-  await db
-    .insert(schema.dismissedJobs)
-    .values({ userId, dedupeKey: job.dedupeKey, reason, at: now })
-    .onConflictDoUpdate({ target: [schema.dismissedJobs.userId, schema.dismissedJobs.dedupeKey], set: { reason, at: now } });
+  await banJob(db, userId, job, reason, now);
 
   let adj: { kind: "company" | "keyword" | "role" | "distance" | "salary"; value: string; label: string } | null = null;
   if (reason === "azienda" && job.company) adj = { kind: "company", value: job.company, label: `Evita l'azienda ${job.company}` };
@@ -529,10 +540,61 @@ export async function dismissJob(db: DB, userId: number, id: number, reason: Dis
   return null;
 }
 
+/**
+ * "Non mi interessa" = gone for good, for this person only: the offer leaves their account and is
+ * never proposed again, matched by the exact links it was found at and by its exact title, company
+ * and city (the same ad on another site). Other offers of the same company stay. An offer only they
+ * could see (added by hand, their own alerts) is deleted altogether.
+ */
+export async function banJob(db: DB, userId: number, job: { id: number; dedupeKey: string; title: string; company: string | null; city: string | null }, reason: string | null, now: Date): Promise<void> {
+  const ban = { reason, title: job.title, company: job.company, city: job.city, at: now };
+  await db
+    .insert(schema.dismissedJobs)
+    .values({ userId, dedupeKey: job.dedupeKey, ...ban })
+    .onConflictDoUpdate({ target: [schema.dismissedJobs.userId, schema.dismissedJobs.dedupeKey], set: ban });
+  const sources = await db.select({ url: schema.jobSources.url, userId: schema.jobSources.userId }).from(schema.jobSources).where(eq(schema.jobSources.jobId, job.id));
+  for (const url of new Set(sources.map((x) => x.url).filter((u): u is string => !!u))) {
+    await db.insert(schema.dismissedUrls).values({ userId, url, dedupeKey: job.dedupeKey, at: now }).onConflictDoNothing();
+  }
+  await db.delete(schema.userJobs).where(and(eq(schema.userJobs.userId, userId), eq(schema.userJobs.jobId, job.id)));
+  if (sources.length > 0 && sources.every((x) => x.userId === userId)) await db.delete(schema.jobs).where(eq(schema.jobs.id, job.id));
+}
+
+/** The people who dismissed this offer (by one of its links, or by the same title, company and city). */
+async function bannedFor(db: DB, jobId: number, key: string): Promise<Set<number>> {
+  const byKey = await db.select({ u: schema.dismissedJobs.userId }).from(schema.dismissedJobs).where(eq(schema.dismissedJobs.dedupeKey, key));
+  const byUrl = await db
+    .select({ u: schema.dismissedUrls.userId })
+    .from(schema.dismissedUrls)
+    .where(sql`${schema.dismissedUrls.url} in (select ${schema.jobSources.url} from ${schema.jobSources} where ${schema.jobSources.jobId} = ${jobId})`);
+  return new Set([...byKey, ...byUrl].map((r) => r.u));
+}
+
+/** What they dismissed, newest first (for "Scartate", where a dismissal can be undone). */
+export async function dismissedList(db: DB, userId: number) {
+  return db.select().from(schema.dismissedJobs).where(eq(schema.dismissedJobs.userId, userId)).orderBy(desc(schema.dismissedJobs.at)).limit(200);
+}
+
+/** Undo a dismissal: the offer comes back if it is still around, and can be proposed again. */
+export async function undoDismissal(db: DB, userId: number, key: string, now = new Date()): Promise<void> {
+  await db.delete(schema.dismissedJobs).where(and(eq(schema.dismissedJobs.userId, userId), eq(schema.dismissedJobs.dedupeKey, key)));
+  await db.delete(schema.dismissedUrls).where(and(eq(schema.dismissedUrls.userId, userId), eq(schema.dismissedUrls.dedupeKey, key)));
+  await rerankUser(db, userId, now);
+}
+
+/** Dismissals from before (rows marked "dismissed"): turned into bans, rows removed. Once, at deploy. */
+export async function convertOldDismissals(db: DB, now = new Date()): Promise<number> {
+  const rows = await db
+    .select({ userId: schema.userJobs.userId, reason: schema.userJobs.dismissReason, job: schema.jobs })
+    .from(schema.userJobs)
+    .innerJoin(schema.jobs, eq(schema.jobs.id, schema.userJobs.jobId))
+    .where(eq(schema.userJobs.status, "dismissed"));
+  for (const r of rows) await banJob(db, r.userId, r.job, r.reason, now);
+  return rows.length;
+}
+
 export async function restoreJob(db: DB, userId: number, id: number): Promise<void> {
   await setUserJobStatus(db, userId, id, { status: "seen", dismissReason: null });
-  const job = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, id), columns: { dedupeKey: true } });
-  if (job) await db.delete(schema.dismissedJobs).where(and(eq(schema.dismissedJobs.userId, userId), eq(schema.dismissedJobs.dedupeKey, job.dedupeKey)));
 }
 
 /** Offers not seen by any source for this long are deleted (pages and database stay light). */
@@ -556,7 +618,9 @@ export async function purgeOldJobs(db: DB, now = new Date()): Promise<number> {
   for (let i = 0; i < old.length; i += 500) {
     await db.delete(j).where(inArray(j.id, old.slice(i, i + 500).map((r) => r.id)));
   }
-  await db.delete(schema.dismissedJobs).where(lt(schema.dismissedJobs.at, new Date(now.getTime() - 180 * 86_400_000)));
+  const sixMonths = new Date(now.getTime() - 180 * 86_400_000);
+  await db.delete(schema.dismissedJobs).where(lt(schema.dismissedJobs.at, sixMonths));
+  await db.delete(schema.dismissedUrls).where(lt(schema.dismissedUrls.at, sixMonths));
   return old.length;
 }
 

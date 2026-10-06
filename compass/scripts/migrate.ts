@@ -3,10 +3,11 @@
 import "./load-env";
 import { getDb, migrateDb } from "../src/lib/db";
 import { ensureCatalog, ensureDirectory, ensureRegisters } from "../src/lib/server/catalog";
-import { backfillJobPlaces } from "../src/lib/server/jobs";
+import { backfillJobPlaces, convertOldDismissals } from "../src/lib/server/jobs";
 
 await migrateDb(getDb());
 await backfillJobPlaces(getDb());
+await convertOldDismissals(getDb());
 await ensureCatalog(getDb());
 const dir = await ensureDirectory(getDb());
 // ~950,000 register companies (a few minutes the first time). REGISTERS=IT,GB limits them; REGISTERS=none skips (CI, tests).

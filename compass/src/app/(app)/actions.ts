@@ -32,7 +32,7 @@ import { COUNTRIES, findPlace } from "@/lib/core/geo";
 import { parsePlaceValue, profileFromPlaces } from "@/lib/core/where";
 import { situationOf, workRightsOf } from "@/lib/core/situation";
 import { applyPrefsForm } from "@/lib/server/prefs-form";
-import { dismissJob, markSeen, rerankUser, restoreJob, setAdjustmentActive, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
+import { dismissJob, markSeen, rerankUser, restoreJob, undoDismissal, setAdjustmentActive, setApplicationEmail, upsertRawJob, type DismissReason } from "@/lib/server/jobs";
 import { deleteAccount, deleteAllMyData } from "@/lib/server/privacy";
 import { verifyPassword } from "@/lib/server/passwords";
 import { fitWarnings } from "@/lib/server/career";
@@ -76,6 +76,13 @@ export async function quickDismissAction(f: FormData) {
   const u = await requireUser();
   await dismissJob(getDb(), u.id, num(f, "jobId"), "nessuno");
   done(safeBack(f, "/offerte"), "scartata-lista");
+}
+
+/** Undo a dismissal from "Scartate". */
+export async function undoDismissAction(f: FormData) {
+  const u = await requireUser();
+  await undoDismissal(getDb(), u.id, str(f, "key"));
+  done("/offerte/scartate", "scarto-annullato");
 }
 
 export async function restoreAction(f: FormData) {
