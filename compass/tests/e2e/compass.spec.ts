@@ -741,7 +741,7 @@ test("student questionnaire: 13 steps, catalog, activities, Altro, automatic foc
   await page.getByLabel("Scadenza").fill("1230");
   await page.getByLabel("CVC").fill("123");
   await page.getByRole("button", { name: /Attiva Plus/ }).click();
-  await expect(page.getByRole("alert")).toContainText("carta di prova");
+  await expect(page.getByText(/usa la carta di prova 4242/)).toBeVisible();
   await page.getByRole("button", { name: "Usa la carta di prova" }).click();
   await page.getByRole("button", { name: /Attiva Plus/ }).click();
   await expect(page.getByRole("heading", { name: /Fatto, Giulia/ })).toBeVisible();
