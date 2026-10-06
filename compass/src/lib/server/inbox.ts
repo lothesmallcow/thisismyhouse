@@ -77,6 +77,8 @@ export interface CollegaState {
   email?: "gmail" | "outlook" | "altro";
   emailDone?: boolean;
   accountsDone?: boolean;
+  /** Per site: they already had an account, or created it from here. */
+  accounts?: Record<string, "ho" | "creato">;
 }
 
 /** Where someone is in Collega le fonti (their e-mail provider, the steps they finished). */

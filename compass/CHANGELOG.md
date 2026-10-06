@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.21.2 · 2026-10-06
+
+- **Collega le fonti, accounts**: for each site "Ce l'ho già" or "Crea" (opens the sign-up page);
+  the answer is saved at once and remembered, and the alert guides then cover those sites.
+- **Collega le fonti, alerts**: besides the recommended alerts, "I tuoi avvisi, per qualunque lavoro":
+  write what and where, Compass prepares the search on each of your sites (LinkedIn, Indeed,
+  InfoJobs, eFinancialCareers, Reed, StepStone, Welcome to the Jungle; Bright Network by
+  preferences) with the step-by-step to save it as a daily e-mail alert and where to check it is on.
+  A "sito per sito" guide is always there too.
+
 ## 0.21.1 · 2026-10-06
 
 - **Non mi interessa** on a card is instant: the card goes at once, no reload, no jump to the top, no

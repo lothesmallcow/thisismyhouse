@@ -627,7 +627,13 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await page.getByRole("button", { name: "Ho finito, avanti" }).click();
   // Step 2: accounts.
   await expect(page).toHaveURL(/passo=2/);
-  await expect(page.getByRole("link", { name: /Crea l'account/ }).first()).toHaveAttribute("href", /linkedin\.com\/signup/);
+  // For each site: "Ce l'ho già" or "Crea" (the sign-up page), saved at once.
+  await expect(page.getByRole("link", { name: "Crea l'account LinkedIn" })).toHaveAttribute("href", /linkedin\.com\/signup/);
+  await page.getByRole("button", { name: "Ho già l'account LinkedIn" }).click();
+  await expect(page.getByText("✓ Ce l'hai").first()).toBeVisible();
+  await page.waitForTimeout(500);
+  await page.reload();
+  await expect(page.getByText("✓ Ce l'hai").first()).toBeVisible(); // remembered
   await page.getByRole("button", { name: "Avanti" }).click();
   // Step 3: the alerts, pre-filtered.
   await expect(page).toHaveURL(/passo=3/);
@@ -638,6 +644,14 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await expect(page.getByText("Consigli per avvisi davvero utili")).toBeVisible();
   await expect(page.getByText("Scegli quelli che ti interessano di più")).toBeVisible();
   await expect(page.getByText("consigliato").first()).toBeVisible();
+  // Their own alerts, for any job: the search prepared on the sites they have, with the steps.
+  await page.getByPlaceholder(/Cosa: es\./).fill("Analista M&A");
+  await page.getByPlaceholder(/Dove: es\./).fill("Milano");
+  await page.getByRole("button", { name: "Prepara" }).click();
+  await expect(page.getByText(/LinkedIn · Analista M&A · Milano/)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Apri la ricerca/ }).first()).toHaveAttribute("href", /linkedin\.com\/jobs\/search\/\?keywords=Analista/);
+  await expect(page.getByText(/Imposta avviso/).first()).toBeVisible();
+  await assertUiBasics(page);
   await page.goto("/collega?passo=4");
   await expect(page.getByText(/Ci vuole un po' di pazienza/)).toBeVisible();
 
