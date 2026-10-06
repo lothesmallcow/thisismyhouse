@@ -16,6 +16,8 @@ export interface SearchHit {
   url: string;
   snippet: string;
   publishedAt: Date | null;
+  /** The page's text as the search API read it (for the company and "expired"; not stored). */
+  page?: string | null;
 }
 
 export interface SearchProvider {
@@ -35,17 +37,18 @@ export class TavilyProvider implements SearchProvider {
         search_depth: "basic", // 1 credit per query
         max_results: 10,
         include_answer: false,
-        include_raw_content: false,
+        include_raw_content: true, // the page's text: the company and "ad expired" are in it (same credit)
         ...(q.includeDomains?.length ? { include_domains: q.includeDomains } : {}),
       }),
     });
     if (!res.ok) throw new HttpError(res.status, "tavily");
-    const data = (await res.json()) as { results?: { title: string; url: string; content: string; published_date?: string }[] };
+    const data = (await res.json()) as { results?: { title: string; url: string; content: string; raw_content?: string | null; published_date?: string }[] };
     return (data.results ?? []).map((r) => ({
       title: r.title,
       url: r.url,
       snippet: r.content ?? "",
       publishedAt: r.published_date ? new Date(r.published_date) : null,
+      page: r.raw_content ? r.raw_content.slice(0, 40000) : null,
     }));
   }
 }
@@ -117,6 +120,7 @@ export function hitToRawJob(h: SearchHit): RawJob {
     description: h.snippet,
     postedAt: h.publishedAt,
     thin: true,
+    pageText: h.page ?? null,
   };
 }
 

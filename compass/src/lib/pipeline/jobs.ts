@@ -81,8 +81,11 @@ export async function mailboxRuns(db: DB): Promise<MailboxRun[]> {
   return out;
 }
 
+/** The first reading of a connected Gmail goes back this many days: older alerts are often closed ads. */
+export const FIRST_READ_DAYS = 10;
+
 /**
- * Read one person's connected Gmail now (after connecting, or "Controlla ora"): the last 30 days the
+ * Read one person's connected Gmail now (after connecting, or "Controlla ora"): the last FIRST_READ_DAYS days the
  * first time, so the alerts they already get count straight away. Never throws.
  */
 export async function readConnectedGmail(db: DB, userId: number, now = new Date(), lookbackDays?: number) {
@@ -90,7 +93,7 @@ export async function readConnectedGmail(db: DB, userId: number, now = new Date(
   if (!mailbox) return null;
   const first = !(await getMailConnection(db, userId))?.lastReadAt;
   try {
-    const r = await scanMailbox(db, mailbox, [userId], now, { lookbackDays: lookbackDays ?? (first ? 30 : 4) });
+    const r = await scanMailbox(db, mailbox, [userId], now, { lookbackDays: lookbackDays ?? (first ? FIRST_READ_DAYS : 4) });
     await markMailRead(db, userId, now);
     return r;
   } catch (e) {

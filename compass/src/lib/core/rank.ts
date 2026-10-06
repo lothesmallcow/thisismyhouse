@@ -232,10 +232,13 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
   }
 
   // 6. Recency
+  // An old ad with no deadline still ahead may well be closed: said, and ranked lower.
+  const stillOpen = job.closesAt != null && job.closesAt.getTime() >= now.getTime();
   if (job.postedAt) {
     const days = (now.getTime() - job.postedAt.getTime()) / 86400000;
     if (days <= W.recentDays) f.push({ key: "recency", points: W.recent, reason: "Pubblicata da poco" });
-    else if (days > W.oldDays) f.push({ key: "recency", points: W.old, reason: "Annuncio vecchio di oltre un mese" });
+    else if (days > W.oldDays && !stillOpen) f.push({ key: "recency", points: W.old, reason: "Pubblicata oltre un mese fa: probabilmente scaduta" });
+    else if (days > W.maybeExpiredDays && !stillOpen) f.push({ key: "recency", points: W.maybeExpired, reason: `Pubblicata ${Math.floor(days / 7)} settimane fa: potrebbe essere scaduta` });
   }
 
   // 7. Languages
@@ -347,6 +350,7 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     if (el.includes("solo-uk") && !profile.countries.includes("GB")) f.push({ key: "eligibility", points: W.ukStudentsOnly, reason: "Solo per studenti di università del Regno Unito" });
     if (el.includes("diritto-lavoro") && visa) f.push({ key: "eligibility", points: W.rightToWork, reason: "Chiede il diritto di lavorare nel paese: a te servirebbe un visto, e non lo sponsorizzano" });
     else if (el.includes("sponsor-visto") && visa) f.push({ key: "eligibility-open", points: W.visaSponsor, reason: "Offre lo sponsor per il visto" });
+    if (el.includes("scaduto")) f.push({ key: "deadline", points: W.applicationsClosed, reason: "L'annuncio risulta scaduto" });
     if (el.includes("riservato")) f.push({ key: "eligibility", points: W.restricted, reason: "Riservato a un gruppo specifico (es. genere o provenienza): controlla di rientrarci" });
     if (profile.track === "stage") {
       if (el.includes("dal-secondo-anno") && profile.studyYear === 1) f.push({ key: "eligibility", points: W.notFirstYear, reason: "Non aperto a chi è al primo anno" });

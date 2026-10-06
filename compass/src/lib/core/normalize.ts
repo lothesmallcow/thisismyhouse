@@ -76,6 +76,9 @@ export interface RawJob {
   hints?: { contract?: Contract; hours?: Hours; remote?: Remote; minAnnualGross?: number; maxAnnualGross?: number; closesAt?: Date | null };
   /** Thin record: only title/snippet/url (W1, some alerts). */
   thin?: boolean;
+  /** The page's full text when the source gives it (the search API's copy): read for the company and
+   *  for "ad expired", never stored. */
+  pageText?: string | null;
 }
 
 export interface NormalizedJob {

@@ -23,7 +23,9 @@ export const RANK_WEIGHTS = {
   recentDays: 3,
   recent: 8,
   oldDays: 30,
-  old: -10,
+  old: -20, // over a month old, no deadline ahead: probably closed
+  maybeExpiredDays: 14,
+  maybeExpired: -8, // two to four weeks old, no deadline ahead: may be closed
   languageKnown: 3,
   languageMissingFluent: -15,
   languageMissing: -8,

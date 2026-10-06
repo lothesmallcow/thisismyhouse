@@ -182,7 +182,7 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                   </Notice>
                 ) : (
                   <Notice tone="success" title={`Gmail collegata: ${gmail.email}`}>
-                    {gmail.lastReadAt ? `Ultima lettura ${formatWhen(gmail.lastReadAt, now)}. ` : "Sto leggendo gli avvisi dell'ultimo mese: le offerte arrivano tra poco in Offerte. "}
+                    {gmail.lastReadAt ? `Ultima lettura ${formatWhen(gmail.lastReadAt, now)}. ` : "Sto leggendo gli avvisi degli ultimi 10 giorni: le offerte arrivano tra poco in Offerte. "}
                     Da qui in avanti la leggo da solo più volte al giorno: devi solo creare gli avvisi.
                   </Notice>
                 )}
@@ -220,7 +220,7 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                     <li>
                       Google chiede il permesso di <strong>leggere</strong> le e-mail: lascia spuntata la casella e premi &quot;Continua&quot;.
                     </li>
-                    <li>Torni qui: fatto. Leggo subito gli avvisi che hai già ricevuto nell&apos;ultimo mese.</li>
+                    <li>Torni qui: fatto. Leggo subito gli avvisi che hai già ricevuto negli ultimi 10 giorni (i più vecchi spesso sono già scaduti).</li>
                   </ol>
                   <a href="/api/google/connect" className="mt-3 inline-flex h-11 items-center rounded-lg bg-primary px-5 text-[15px] font-medium text-on-primary no-underline hover:bg-primary-hover">
                     Collega Gmail

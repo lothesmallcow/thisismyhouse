@@ -18,9 +18,14 @@ const LEVEL_BAR = { molto: "before:bg-level-molto", adatta: "before:bg-level-ada
 
 /** `dismiss`: the instant "Non mi interessa" (the card goes at once and never comes back), with "Mi interessa" next to it. */
 export function JobCard({ job, dismiss, back }: { job: Job; dismiss?: (jobId: number) => Promise<void>; back?: string }) {
-  const negative = (r: string) => /lontan|sotto|non è|chiede|evitare|truffa|vecchio|scartato|non cerchi|è part|è a tempo|fuori|pensato per|non retribuito|riservato|solo per|chiuse|non aperto|per studenti di magistrale|per chi si laurea nel \d{4}, tu/i.test(r);
+  const negative = (r: string) => /lontan|sotto|non è|chiede|evitare|truffa|vecchio|scadut|scartato|non cerchi|è part|è a tempo|fuori|pensato per|non retribuito|riservato|solo per|chiuse|non aperto|per studenti di magistrale|per chi si laurea nel \d{4}, tu/i.test(r);
   const salary = salaryShort(job);
-  const deadline = deadlineText(job, new Date());
+  // An ad weeks old with no deadline ahead may be closed: said on the card, not only in the score.
+  const now = new Date();
+  const ageDays = job.postedAt ? (now.getTime() - job.postedAt.getTime()) / 86_400_000 : 0;
+  const expired = (job.eligibility as string[]).includes("scaduto");
+  const maybeExpired = !expired && ageDays > 14 && !(job.closesAt && job.closesAt.getTime() >= now.getTime());
+  const deadline = deadlineText(job, now);
   const place = job.remote === "remote" ? "Da remoto" : job.city ? `${job.city}${job.distanceKm != null ? (job.distanceKm < 1 ? "" : ` · ${Math.round(job.distanceKm)} km`) : ""}` : null;
   return (
     <article
@@ -80,7 +85,9 @@ export function JobCard({ job, dismiss, back }: { job: Job; dismiss?: (jobId: nu
             <IconMail size={13} /> Candidatura via e-mail
           </span>
         )}
-        <span>Trovata {daysAgoLabel(job.postedAt ?? job.firstSeenAt)}</span>
+        <span>{job.postedAt ? "Pubblicata" : "Trovata"} {daysAgoLabel(job.postedAt ?? job.firstSeenAt)}</span>
+        {expired && <span className="font-semibold text-warn">Annuncio scaduto</span>}
+        {maybeExpired && <span className="font-medium text-warn">{ageDays > 30 ? "Probabilmente scaduta" : "Potrebbe essere scaduta"}: controlla prima di candidarti</span>}
         {dismiss && job.status !== "dismissed" && <CardActions jobId={job.id} title={job.title} back={back ?? "/offerte"} dismiss={dismiss} />}
       </div>
     </article>

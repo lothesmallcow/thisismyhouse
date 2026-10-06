@@ -15,7 +15,8 @@ import type { Company } from "../server/catalog";
 import { searchTargets } from "./targets";
 import { scrapeCareers } from "../sources/web/careers";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
-import { dedupeCandidates, rankContexts, rerankUser, upsertRawJob } from "../server/jobs";
+import { dedupeCandidates, mergeDuplicateJobs, rankContexts, rerankUser, upsertRawJob } from "../server/jobs";
+import { lookUpMissingCompanies } from "../server/company-guess";
 import { getProfile } from "../server/profile";
 import { getSettings } from "../server/settings";
 import { bump, usageToday, W1_HARD_MAX } from "./discover";
@@ -26,6 +27,8 @@ import { getPrefs, listSectors } from "../server/catalog";
 
 /** At most one quick search per person in this many minutes ("Cerca ora" can be pressed often). */
 export const QUICK_SEARCH_EVERY_MIN = 10;
+/** Pages of offers without a company read per click. */
+const QUICK_COMPANY_LOOKUPS = 10;
 /** Company websites read per click (in parallel; each site at its own polite pace). */
 const SITES = 12;
 /** Stop starting new page requests after this long, so a click answers within a minute. */
@@ -195,6 +198,13 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
         // Try again in the daily run.
       }
     }
+  }
+
+  // 4. Offers still without a company (also older ones): the name from their page, a few per click.
+  if (Date.now() < deadline) {
+    const polite = new PoliteFetcher(db, deps.fetchImpl, { sleep: deps.politeSleep });
+    const fixed = await lookUpMissingCompanies(db, polite, { max: QUICK_COMPANY_LOOKUPS, until: deadline, now }).catch(() => []);
+    if (fixed.length) await mergeDuplicateJobs(db, now);
   }
 
   await rerankUser(db, userId, now);

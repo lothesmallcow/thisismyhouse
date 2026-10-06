@@ -4,7 +4,7 @@
 // read for the offer itself: dates, place, who it is for. Trackers are never the source of an offer.
 import { and, asc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { nameKey, knownNamesIn, listedNamesIn, type KnownCompany } from "../core/company-names";
-import { ATS_HOST, firmFromUrl } from "../core/page-company";
+import { AGGREGATOR_HOST, ATS_HOST, firmFromUrl } from "../core/page-company";
 import type { CountryCode } from "../core/geo";
 import type { RawJob } from "../core/normalize";
 import { fold } from "../core/text";
@@ -32,11 +32,7 @@ export function trackerPages(now: Date): { url: string; kind: string; country: C
   ];
 }
 
-/** Aggregators and job boards: a page there gives names, never an offer. */
-export const AGGREGATOR_HOST =
-  /(^|\.)(the-trackr\.com|trakvia\.de|gorizzume\.co\.uk|intervyo\.co\.uk|brightnetwork\.co\.uk|targetjobs\.co\.uk|gradcracker\.com|efinancialcareers\.[a-z.]+|ratemyplacement\.co\.uk|higherin\.com|prospects\.ac\.uk|icasfoundation\.org\.uk|yourfinancejob\.[a-z.]+|wallstreetoasis\.com|reddit\.com|studysmarter\.[a-z.]+|builtin\.com|glassdoor\.[a-z.]+|indeed\.[a-z.]+|linkedin\.com|infojobs\.[a-z.]+|jooble\.[a-z.]+|adzuna\.[a-z.]+)$/i;
-
-export { ATS_HOST, firmFromUrl };
+export { AGGREGATOR_HOST, ATS_HOST, firmFromUrl };
 
 /** Does this page belong to the firm? Its host or job-board slug contains a word of the firm's name. */
 export function belongsTo(url: string, firm: string): boolean {

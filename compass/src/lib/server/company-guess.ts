@@ -3,10 +3,12 @@
 // text that states it, or the catalog companies the text names. The catalog's spelling wins when it matches.
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { dedupeKey } from "../core/dedupe";
-import { firmFromUrl, pageCompanyClues } from "../core/page-company";
+import { EXPIRED_AD, type Eligibility } from "../core/extract";
+import { fold } from "../core/text";
+import { AGGREGATOR_HOST, firmFromUrl, pageCompanyClues } from "../core/page-company";
 import { PLATFORM_HOST, type PoliteFetcher } from "../sources/web/polite-fetch";
 import { pageText } from "../sources/web/programme-page";
-import { catalogSpelling, companyFromText, companyFromTitle, companyFromUrl, firstKnownName, mostNamed, nameKey, type KnownCompany } from "../core/company-names";
+import { catalogSpelling, companyFromText, companyFromTitle, companyFromUrl, firstKnownName, mostFrequentName, mostNamed, nameKey, type KnownCompany } from "../core/company-names";
 import type { DB } from "../db";
 import { schema } from "../db";
 
@@ -34,18 +36,21 @@ export const resetKnownCompanies = () => (cache = null);
  * first catalog company in the title and opening lines, then the catalog company the whole text names
  * most. The catalog's spelling wins whenever it is the same company.
  */
-export async function guessCompany(db: DB, j: { title: string; url: string | null; description: string }): Promise<string | null> {
+export async function guessCompany(db: DB, j: { title: string; url: string | null; description: string; page?: string | null; avoid?: string[] }): Promise<string | null> {
   const known = await knownCompanies(db);
   const spelled = (name: string) => catalogSpelling(name, known)?.name ?? firstKnownName(name, known)?.name ?? name;
   const fromTitle = companyFromTitle(j.title);
   if (fromTitle) return spelled(fromTitle);
   const fromUrl = companyFromUrl(j.url);
   if (fromUrl) return spelled(fromUrl);
-  const stated = companyFromText(j.description);
-  if (stated) return spelled(stated);
+  const stated = companyFromText(j.description) ?? (j.page ? companyFromText(j.page) : null);
+  if (stated && !(j.avoid ?? []).some((a) => nameKey(a) === nameKey(stated))) return spelled(stated);
   const opening = firstKnownName(`${j.title}\n${j.description.slice(0, 800)}`, known);
   if (opening) return opening.name;
-  return mostNamed(`${j.title}\n${j.description}`, known)?.name ?? null;
+  const named = mostNamed(`${j.title}\n${j.description}`, known);
+  if (named) return named.name;
+  // Last: the name the whole text (and the page, when we have it) repeats most.
+  return mostFrequentName(`${j.description}\n${j.page ?? ""}`, known, { title: j.title, avoid: j.avoid });
 }
 
 /** The catalog's spelling of a company the source did name ("JPMorgan Chase" → the catalog's "J.P. Morgan"). */
@@ -95,26 +100,37 @@ export async function backfillCompanies(db: DB): Promise<number> {
  * title, logo, copyright, address) in the catalog's spelling when it is a catalog company, else the
  * first clear name; failing that, the names in the page's text.
  */
-export async function companyFromPage(db: DB, html: string, url: string, title: string): Promise<string | null> {
+export async function companyFromPage(db: DB, html: string, url: string, title: string, description = ""): Promise<string | null> {
   const known = await knownCompanies(db);
   const clues = pageCompanyClues(html, url);
   for (const c of clues) {
     const hit = catalogSpelling(c, known) ?? firstKnownName(c, known);
     if (hit) return hit.name;
   }
+  let host = "";
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    /* no address */
+  }
+  const thirdParty = AGGREGATOR_HOST.test(host);
   const slug = firmFromUrl(url);
   const named = clues.find((c) => c !== slug && /[A-Z]/.test(c)); // a written name, not a bare web address
   if (named) return named;
-  return guessCompany(db, { title, url, description: pageText(html, 20000).text });
+  // The whole page: the name it repeats most (on a job site, never the site's own name).
+  const siteName = html.match(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']{2,60})["']/i)?.[1];
+  const avoid = thirdParty ? [siteName ?? "", host.replace(/^www\./, "").split(".")[0]] : [];
+  return guessCompany(db, { title, url, description, page: pageText(html, 40000).text, avoid });
 }
 
-/** Offers still without a company whose link is a page we may read (not a job platform): looked up once each. */
+/** Offers still without a company whose link is a page we may read (not a job platform): looked up once each.
+ *  The same visit tells whether the page says the ad has expired. */
 export async function lookUpMissingCompanies(db: DB, polite: PoliteFetcher, opts: { max: number; until: number; now: Date }): Promise<number[]> {
   const j = schema.jobs;
-  const triedRow = await db.query.settings.findFirst({ where: eq(schema.settings.key, "company_lookup_tried") });
+  const triedRow = await db.query.settings.findFirst({ where: eq(schema.settings.key, "company_lookup_tried_v2") });
   const tried = new Set<number>(Array.isArray(triedRow?.value) ? (triedRow.value as number[]) : []);
   const rows = await db
-    .select({ id: j.id, title: j.title, city: j.city, url: schema.jobSources.url })
+    .select({ id: j.id, title: j.title, city: j.city, description: j.description, eligibility: j.eligibility, url: schema.jobSources.url })
     .from(j)
     .innerJoin(schema.jobSources, eq(schema.jobSources.jobId, j.id))
     .where(and(isNull(j.company), isNotNull(schema.jobSources.url)))
@@ -135,9 +151,17 @@ export async function lookUpMissingCompanies(db: DB, polite: PoliteFetcher, opts
     tried.add(r.id);
     try {
       const { body } = await polite.get(r.url);
-      const name = await companyFromPage(db, body, r.url, r.title);
-      if (name) {
-        await db.update(j).set({ company: name, dedupeKey: dedupeKey({ company: name, title: r.title, city: r.city }), updatedAt: opts.now }).where(eq(j.id, r.id));
+      const name = await companyFromPage(db, body, r.url, r.title, r.description);
+      const expired = EXPIRED_AD.test(fold(pageText(body, 40000).text)) && !(r.eligibility as string[]).includes("scaduto");
+      if (name || expired) {
+        await db
+          .update(j)
+          .set({
+            ...(name ? { company: name, dedupeKey: dedupeKey({ company: name, title: r.title, city: r.city }) } : {}),
+            ...(expired ? { eligibility: [...(r.eligibility as Eligibility[]), "scaduto" as const] } : {}),
+            updatedAt: opts.now,
+          })
+          .where(eq(j.id, r.id));
         fixed.push(r.id);
       }
     } catch {
@@ -145,6 +169,6 @@ export async function lookUpMissingCompanies(db: DB, polite: PoliteFetcher, opts
     }
   }
   const keep = [...tried].slice(-3000);
-  await db.insert(schema.settings).values({ key: "company_lookup_tried", value: keep }).onConflictDoUpdate({ target: schema.settings.key, set: { value: keep } });
+  await db.insert(schema.settings).values({ key: "company_lookup_tried_v2", value: keep }).onConflictDoUpdate({ target: schema.settings.key, set: { value: keep } });
   return fixed;
 }

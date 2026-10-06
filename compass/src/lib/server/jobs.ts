@@ -9,6 +9,10 @@ import { distanceKm, findPlace } from "../core/geo";
 import type { WherePlace } from "../core/where";
 import { canonicalCompany, guessCompany } from "./company-guess";
 import { normalizeJob, type RawJob } from "../core/normalize";
+import { EXPIRED_AD } from "../core/extract";
+import { AGGREGATOR_HOST } from "../core/page-company";
+import { PLATFORM_HOST } from "../sources/web/polite-fetch";
+import { fold } from "../core/text";
 import { rankJob, type Level, type RankAdjustment } from "../core/rank";
 import { MONTHS_PER_YEAR, netAnnualToGrossAnnual } from "../core/salary";
 import { scamFlags } from "../core/scam-rules";
@@ -174,6 +178,17 @@ export async function rerankAll(db: DB, now = new Date()): Promise<number> {
 
 // --- Storing -------------------------------------------------------------------------------------
 
+/** A job site's own name, from its address ("uk.indeed.com" → indeed): never taken for the employer. */
+function siteNamesOf(url: string | null | undefined): string[] {
+  try {
+    const host = new URL(url ?? "").hostname;
+    if (!PLATFORM_HOST.test(host) && !AGGREGATOR_HOST.test(host)) return []; // the firm's own site: its name is the answer
+    return [host.replace(/^(www|it|uk|de|fr|m|jobs|careers)\./, "").split(".")[0]];
+  } catch {
+    return [];
+  }
+}
+
 export interface UpsertResult {
   jobId: number;
   created: boolean;
@@ -190,8 +205,10 @@ export interface UpsertOptions {
 export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: UpsertOptions = {}): Promise<UpsertResult> {
   const n = normalizeJob(raw, null, now);
   // No company in the source: from the title, the link or the catalog names in the text.
-  if (!n.company) n.company = await guessCompany(db, { title: n.title, url: raw.url ?? n.url, description: n.description }); // the original link: the clean one drops the slug
+  if (!n.company) n.company = await guessCompany(db, { title: n.title, url: raw.url ?? n.url, description: n.description, page: raw.pageText, avoid: siteNamesOf(raw.url) }); // the original link: the clean one drops the slug
   else n.company = await canonicalCompany(db, n.company); // one spelling per company, so its ads meet
+  // The page says the ad has expired ("Annuncio di lavoro scaduto", "No longer accepting applications").
+  if (raw.pageText && EXPIRED_AD.test(fold(raw.pageText)) && !n.eligibility.includes("scaduto")) n.eligibility.push("scaduto");
   const candidates = opts.cache ?? (await dedupeCandidates(db));
   const dupId = findDuplicate({ company: n.company, title: n.title, city: n.city, url: n.url }, candidates);
   const owners = opts.owners?.length ? opts.owners : [null];
@@ -251,6 +268,7 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
       });
       if (!existing.postedAt && n.postedAt) patch.postedAt = n.postedAt;
       if (!existing.company && n.company) patch.company = n.company;
+      if (n.eligibility.includes("scaduto") && !(existing.eligibility as string[]).includes("scaduto")) patch.eligibility = [...((patch.eligibility ?? existing.eligibility) as typeof n.eligibility), "scaduto"];
       if (!existing.closesAt && n.closesAt) patch.closesAt = n.closesAt;
       if (!existing.opensAt && n.opensAt) patch.opensAt = n.opensAt;
       if (!existing.runsStart && n.runsStart) Object.assign(patch, { runsStart: n.runsStart, runsEnd: n.runsEnd, runsMonthOnly: n.runsMonthOnly });
