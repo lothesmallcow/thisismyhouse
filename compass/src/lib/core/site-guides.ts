@@ -10,6 +10,8 @@ export interface SiteGuide {
   steps: string[];
   /** Where to check that the alert e-mails are on. */
   check: string;
+  /** Where to see, and change, the e-mail address of the account (the alerts go there). */
+  email: string;
 }
 
 const q = encodeURIComponent;
@@ -26,6 +28,7 @@ export const SITE_GUIDES: Record<string, SiteGuide> = {
       "Nella finestrella scegli frequenza \"Ogni giorno\" e notifica \"E-mail e notifiche\".",
     ],
     check: "LinkedIn → foto in alto → Impostazioni → Comunicazioni → E-mail → \"Ricerca di lavoro\": \"Avvisi di offerte\" acceso.",
+    email: "LinkedIn → foto in alto → Impostazioni → Accesso e sicurezza → \"Indirizzi e-mail\": aggiungi quella giusta e rendila principale.",
   },
   indeed: {
     searchUrl: (what, where, cc) => `https://${INDEED[cc]}/jobs?${new URLSearchParams({ q: what, l: where, sort: "date", fromage: "7" })}`,
@@ -36,6 +39,7 @@ export const SITE_GUIDES: Record<string, SiteGuide> = {
       "Conferma l'e-mail se Indeed te lo chiede: deve essere la stessa collegata a Compass.",
     ],
     check: "Indeed → il tuo profilo → \"Avvisi di lavoro\": l'avviso è nell'elenco, frequenza giornaliera.",
+    email: "Indeed → il tuo profilo → Impostazioni account → \"Indirizzo e-mail\" → Modifica.",
   },
   infojobs: {
     searchUrl: (what, where) => `https://www.infojobs.it/offerte-lavoro?keyword=${q(what)}&location=${q(where)}&sortBy=PUBLICATION_DATE`,
@@ -46,6 +50,7 @@ export const SITE_GUIDES: Record<string, SiteGuide> = {
       "Scegli ricezione via e-mail, ogni giorno.",
     ],
     check: "InfoJobs → Area personale → \"I miei alert\": l'alert è attivo.",
+    email: "InfoJobs → Area personale → Impostazioni / Dati di accesso → \"E-mail\".",
   },
   efinancialcareers: {
     searchUrl: (what, where) => `https://www.efinancialcareers.com/jobs?${new URLSearchParams({ q: what, location: where })}`,
@@ -56,11 +61,13 @@ export const SITE_GUIDES: Record<string, SiteGuide> = {
       "Frequenza giornaliera, invio all'e-mail del tuo account.",
     ],
     check: "eFinancialCareers → il tuo account → \"Job alerts\": l'avviso è attivo.",
+    email: "eFinancialCareers → My account → Account settings → \"Email\".",
   },
   reed: {
     searchUrl: (what, where) => `https://www.reed.co.uk/jobs/${slug(what)}-jobs-in-${slug(where || "london")}`,
     steps: ["Apri la ricerca qui sotto.", "Usa i filtri a sinistra se servono (Graduate, Contract type…).", "Clicca \"Create job alert\" sopra i risultati, frequenza giornaliera."],
     check: "Reed → My account → \"Job alerts\".",
+    email: "Reed → My account → Account settings → \"Email address\".",
   },
   brightnetwork: {
     searchUrl: () => "https://www.brightnetwork.co.uk/graduate-jobs/",
@@ -70,15 +77,18 @@ export const SITE_GUIDES: Record<string, SiteGuide> = {
       "In \"Email preferences\" attiva le e-mail con le nuove opportunità.",
     ],
     check: "Bright Network → Account → \"Email preferences\": opportunità attive.",
+    email: "Bright Network → Account → Settings → \"Email\".",
   },
   stepstone: {
     searchUrl: (what, where) => `https://www.stepstone.de/jobs/${slug(what)}${where ? `/in-${slug(where)}` : ""}`,
     steps: ["Apri la ricerca qui sotto.", "Usa i filtri (Berufserfahrung, Anstellungsart) se servono.", "Clicca \"Job-Agent erstellen\" (crea un avviso), invio giornaliero per e-mail."],
     check: "StepStone → Mein Konto → \"Job-Agenten\".",
+    email: "StepStone → Mein Konto (o \"Il mio account\") → Einstellungen → \"E-Mail-Adresse\".",
   },
   wttj: {
     searchUrl: (what, where) => `https://www.welcometothejungle.com/fr/jobs?${new URLSearchParams({ query: what, aroundQuery: where })}`,
     steps: ["Apri la ricerca qui sotto.", "Usa i filtri (Contrat: Stage, CDI…; Expérience) se servono.", "Clicca \"Créer une alerte\" sopra i risultati, ricezione per e-mail."],
     check: "Welcome to the Jungle → il tuo profilo → \"Alertes\".",
+    email: "Welcome to the Jungle → il tuo profilo → Impostazioni → \"E-mail\".",
   },
 };

@@ -631,6 +631,12 @@ test("collega le fonti: personal address, the right sites and alerts, and the Sa
   await expect(page.getByRole("link", { name: "Crea l'account LinkedIn" })).toHaveAttribute("href", /linkedin\.com\/signup/);
   await page.getByRole("button", { name: "Ho già l'account LinkedIn" }).click();
   await expect(page.getByText("✓ Ce l'hai").first()).toBeVisible();
+  // Right after: where LinkedIn's alerts must arrive, and where to check it.
+  const panel = page.getByRole("region", { name: "Avvisi di LinkedIn sulla tua e-mail" });
+  await expect(panel).toContainText("l'unica casella che Compass legge");
+  await expect(panel).toContainText("Accesso e sicurezza");
+  await panel.getByRole("button", { name: "Ok, fatto" }).click();
+  await expect(panel).toBeHidden();
   await page.waitForTimeout(500);
   await page.reload();
   await expect(page.getByText("✓ Ce l'hai").first()).toBeVisible(); // remembered

@@ -9,6 +9,7 @@ describe("alert guides per site", () => {
       expect(SITE_GUIDES[p.key], p.key).toBeTruthy();
       expect(SITE_GUIDES[p.key].steps.length).toBeGreaterThanOrEqual(3);
       expect(SITE_GUIDES[p.key].check.length).toBeGreaterThan(10);
+      expect(SITE_GUIDES[p.key].email.length).toBeGreaterThan(10);
     }
   });
   it("search links with the person's words and place", () => {

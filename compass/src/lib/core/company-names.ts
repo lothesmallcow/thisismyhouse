@@ -121,3 +121,59 @@ export function companyFromTitle(title: string): string | null {
   const m = title.match(/\s(?:at|presso|@|bei|chez)\s+([A-Z0-9][\w&.'’ -]{1,50}?)(?:\s*[-–|(,]|$)/) ?? title.match(/^([A-Z0-9][\w&.'’ -]{1,40}?)\s+(?:cerca|assume|is hiring|sta assumendo|seleziona|ricerca)\b/i);
   return m ? (leadingName(m[1].trim()) ?? null) : null;
 }
+
+/** The catalog company the text names most (at least twice), or the only one it names at all. */
+export function mostNamed<T extends KnownCompany>(text: string, known: T[]): T | null {
+  const t = ` ${fold(text).replace(/\./g, "").replace(/[^a-z0-9&]+/g, " ")} `;
+  const counts: { c: T; n: number }[] = [];
+  for (const c of known) {
+    let n = 0;
+    for (const k of new Set([c.name, ...c.aliases].map(nameKey).filter(usable))) {
+      for (let at = t.indexOf(` ${k} `); at >= 0; at = t.indexOf(` ${k} `, at + 1)) n++;
+    }
+    if (n) counts.push({ c, n });
+  }
+  if (!counts.length) return null;
+  counts.sort((a, b) => b.n - a.n);
+  if (counts.length === 1) return counts[0].c;
+  return counts[0].n >= 2 && counts[0].n > counts[1].n ? counts[0].c : null;
+}
+
+/** Words that follow "About"/"Join" without being a company ("About Us", "Join Our Team"). */
+const NOT_A_NAME = new Set("us you me we our the this that a an role team job position opportunity company azienda ruolo posizione noi il lo la un una nostro nostra nostri siamo".split(" "));
+/** Words that describe a firm without naming it ("Società di consulenza", "Primaria banca italiana"). */
+const GENERIC = new Set("societa di consulenza cliente client clients azienda aziende gruppo group firm bank banca importante primaria primario prestigiosa prestigioso multinazionale realta leader settore nel nella del della dei italiana italiano internazionale international leading global studio agenzia agency".split(" "));
+
+const LABELLED = [
+  // "Azienda: Banca Esempio", "Company: Acme Ltd", "Employer – Acme"
+  /(?:^|\n)\s*(?:azienda|società|societa|company|employer|datore di lavoro|organisation|organization|unternehmen|entreprise)\s*[:\-–]\s*([^\n]{2,60})/gi,
+  // "About Banca Esempio", "Join Acme in Milan", "Lavora con Acme"
+  /\b(?:[Aa]bout|[Jj]oin|[Ll]avora con|[Ee]ntra in|[Üü]ber)\s+([A-Z0-9][\w&.'’ -]{1,40}?)(?=[\n.,:;!?(]|\s+(?:in|a|as|come|and|e|is|è|team)\b|$)/g,
+  // "Banca Esempio is a leading…", "Banca Esempio è una società…", "Banca Esempio, leader nel…"
+  /(?:^|[\n.]\s*)([A-Z0-9][\w&.'’ -]{1,40}?)(?:\s+(?:is|è|est|ist)\s+(?:a|an|the|una?|uno|il|la|une?|eine?|der|die)\s+(?:leading|global|international|world|società|azienda|banca|gruppo|realtà|leader|multinazionale|company|firm|bank|group|société|entreprise|unternehmen)|,\s+(?:leader|a leading|a global|società|azienda|gruppo)\b)/g,
+];
+
+/** A company the text states plainly ("Azienda: X", "About X", "X is a leading…"): the first one. */
+export function companyFromText(text: string): string | null {
+  let best: { name: string; at: number } | null = null;
+  for (const re of LABELLED) {
+    for (const m of text.matchAll(re)) {
+      const raw = m[1].split(/(?<=[a-zà-ü]{2})\.\s+/).pop()!.trim(); // the last sentence ("Il ruolo. Fondo Alfa"), not "J.P. Morgan"
+      const first = fold(raw.split(/\s+/)[0] ?? "").replace(/[^a-z0-9&]/g, "");
+      if (NOT_A_NAME.has(first)) continue;
+      const words = fold(raw).replace(/[^a-z0-9& ]/g, " ").split(/\s+/).filter(Boolean);
+      if (words.every((w) => NOT_A_NAME.has(w) || GENERIC.has(w) || COMMON.has(w))) continue;
+      const name = leadingName(raw);
+      if (name && (!best || (m.index ?? 0) < best.at)) best = { name, at: m.index ?? 0 };
+    }
+  }
+  return best?.name ?? null;
+}
+
+/** The catalog's spelling of a name when it is the same company ("J.P. Morgan" → "JPMorgan Chase" if listed so). */
+export function catalogSpelling<T extends KnownCompany>(name: string, known: T[]): T | null {
+  const k = nameKey(name);
+  if (!usable(k)) return null;
+  const compact = k.replace(/ /g, "");
+  return known.find((c) => [c.name, ...c.aliases].some((a) => nameKey(a).replace(/ /g, "") === compact)) ?? null;
+}
