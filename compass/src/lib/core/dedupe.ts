@@ -1,6 +1,6 @@
 // Duplicate detection across sources (email alerts, APIs, W1, W2, W3, manual).
 // Primary key: normalized company + title + city. Fuzzy fallback: same company and city,
-// titles with Jaccard similarity >= 0.6. Thin records without company dedupe on their URL.
+// titles with Jaccard similarity >= 0.6. Without a company: the link, or the same precise title in the same city.
 
 import { fold, jaccard, keyTokens } from "./text";
 
@@ -66,6 +66,14 @@ export interface DedupeCandidate {
   urls: string[];
 }
 
+/** The company with no spaces: "J.P. Morgan" and "JPMorgan", "Intesa San Paolo" and "Intesa Sanpaolo" are the same. */
+export function companyKey(company: string | null | undefined): string {
+  return normalizeCompany(company).replace(/ /g, "");
+}
+
+/** A title precise enough to recognise an ad without its company: three words or more. */
+const specific = (normTitle: string) => normTitle.split(" ").filter(Boolean).length >= 3;
+
 /**
  * Find an existing job that is the same as `incoming`. Returns its id or null.
  */
@@ -78,18 +86,24 @@ export function findDuplicate(
     const hit = existing.find((e) => e.urls.some((u) => canonicalUrl(u) === url));
     if (hit) return hit.id;
   }
-  const comp = normalizeCompany(incoming.company);
+  const comp = companyKey(incoming.company);
   const city = normalizeCity(incoming.city);
-  if (!comp) return null; // thin record: only URL dedupe is safe
-  const key = dedupeKey(incoming);
-  const exact = existing.find((e) => dedupeKey(e) === key);
+  const nt = normalizeTitle(incoming.title);
+  // One of the two does not name the company (a web result, a short alert): the same precise title,
+  // in the same city, is the same ad. Two different firms rarely write the very same three words.
+  if (city && specific(nt)) {
+    const hit = existing.find((e) => (!comp || !companyKey(e.company)) && normalizeCity(e.city) === city && normalizeTitle(e.title) === nt);
+    if (hit) return hit.id;
+  }
+  if (!comp) return null; // no company and no precise title: only the link is safe
+  const exact = existing.find((e) => companyKey(e.company) === comp && normalizeTitle(e.title) === nt && normalizeCity(e.city) === city);
   if (exact) return exact.id;
   // Titles sometimes carry the company name ("Impiegato amministrativo - Rossi Srl"): drop it.
-  const compTokens = new Set(keyTokens(comp));
+  const compTokens = new Set(keyTokens(normalizeCompany(incoming.company)));
   const titleTokens = (t: string) => normalizeTitle(t).split(" ").filter((w) => w && !compTokens.has(w));
   const tt = titleTokens(incoming.title);
   for (const e of existing) {
-    if (normalizeCompany(e.company) !== comp) continue;
+    if (companyKey(e.company) !== comp) continue;
     const ec = normalizeCity(e.city);
     if (city && ec && city !== ec) continue;
     const et = titleTokens(e.title);

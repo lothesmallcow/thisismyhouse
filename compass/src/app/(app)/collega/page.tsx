@@ -438,7 +438,16 @@ export default async function CollegaPage({ searchParams }: { searchParams: Prom
                     <span className="font-medium">{pl.name}</span>
                     <span className="block text-[13px] text-muted">{pl.why}</span>
                   </span>
-                  <AccountChoice site={pl.key} name={pl.name} signup={pl.signup} initial={state.accounts?.[pl.key] ?? null} save={setAccountStateAction} />
+                  <AccountChoice
+                    site={pl.key}
+                    name={pl.name}
+                    signup={pl.signup}
+                    initial={state.accounts?.[pl.key] ?? null}
+                    save={setAccountStateAction}
+                    mail={gmailLinked ? gmail!.email : ownMailbox ? (u?.email ?? null) : null}
+                    emailWhere={SITE_GUIDES[pl.key]?.email}
+                    alertsWhere={SITE_GUIDES[pl.key]?.check}
+                  />
                 </li>
               ))}
               {p.track === "stage" && <li className="text-[14px] text-muted">E il portale carriere della tua università: ci sono stage riservati agli studenti.</li>}

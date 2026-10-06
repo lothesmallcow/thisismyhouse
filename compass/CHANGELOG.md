@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.21.3 · 2026-10-06
+
+- **Collega le fonti**: after "Ce l'ho già" (or "Crea") a small panel says that site's alerts must
+  arrive at the mailbox Compass reads (the Gmail you linked, or the one of step 1), where the site
+  shows the account's e-mail and how to change it, and where alert e-mails are turned on.
+- **Company recognised from the whole ad**: besides title and link, a sentence that states it
+  ("Azienda: X", "About X", "X è una società…", "X is a leading…"), then the catalog companies in the
+  opening lines, then the one the whole text names most (a client named once among others is not
+  taken). Company names given by the source take the catalog's spelling ("JPMorgan" → "J.P. Morgan").
+- **Fewer duplicate offers**: the same company written another way ("J.P. Morgan" / "JPMorgan",
+  "Intesa San Paolo" / "Intesa Sanpaolo") is one company; a copy without the company matches the one
+  with it when the title (three words or more) and the city are the same. Duplicates already stored
+  are merged at deploy: the older offer keeps every link, folder, application and person.
+
 ## 0.21.2 · 2026-10-06
 
 - **Collega le fonti, accounts**: for each site "Ce l'ho già" or "Crea" (opens the sign-up page);

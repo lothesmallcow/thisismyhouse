@@ -4,10 +4,10 @@
 
 import { background } from "./person";
 import { and, asc, desc, eq, gte, inArray, isNull, like, lt, ne, or, sql, type SQL } from "drizzle-orm";
-import { findDuplicate, dedupeKey, type DedupeCandidate } from "../core/dedupe";
+import { canonicalUrl, companyKey, findDuplicate, dedupeKey, normalizeCity, normalizeTitle, type DedupeCandidate } from "../core/dedupe";
 import { distanceKm, findPlace } from "../core/geo";
 import type { WherePlace } from "../core/where";
-import { guessCompany } from "./company-guess";
+import { canonicalCompany, guessCompany } from "./company-guess";
 import { normalizeJob, type RawJob } from "../core/normalize";
 import { rankJob, type Level, type RankAdjustment } from "../core/rank";
 import { MONTHS_PER_YEAR, netAnnualToGrossAnnual } from "../core/salary";
@@ -191,6 +191,7 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
   const n = normalizeJob(raw, null, now);
   // No company in the source: from the title, the link or the catalog names in the text.
   if (!n.company) n.company = await guessCompany(db, { title: n.title, url: raw.url ?? n.url, description: n.description }); // the original link: the clean one drops the slug
+  else n.company = await canonicalCompany(db, n.company); // one spelling per company, so its ads meet
   const candidates = opts.cache ?? (await dedupeCandidates(db));
   const dupId = findDuplicate({ company: n.company, title: n.title, city: n.city, url: n.url }, candidates);
   const owners = opts.owners?.length ? opts.owners : [null];
@@ -320,6 +321,70 @@ async function addSource(db: DB, jobId: number, raw: RawJob, url: string | null,
   });
   if (dup) return;
   await db.insert(schema.jobSources).values({ jobId, source: raw.source, url, externalId: raw.externalId ?? null, userId, seenAt: now });
+}
+
+/**
+ * Merge offers stored twice (before the duplicate check knew company spellings and offers without a
+ * company): the older one stays and takes the other's links, folders, applications and people.
+ * Run at deploy; returns how many were merged away.
+ */
+export async function mergeDuplicateJobs(db: DB, now = new Date()): Promise<number> {
+  const all = (await dedupeCandidates(db)).sort((a, b) => a.id - b.id);
+  const byUrl = new Map<string, number>();
+  const byCompany = new Map<string, DedupeCandidate[]>();
+  const byTitleCity = new Map<string, DedupeCandidate[]>();
+  const push = <K,>(m: Map<K, DedupeCandidate[]>, k: K, c: DedupeCandidate) => m.set(k, [...(m.get(k) ?? []), c]);
+  let merged = 0;
+  for (const c of all) {
+    const urls = c.urls.map(canonicalUrl);
+    let keep = urls.map((u) => byUrl.get(u)).find((id) => id != null) ?? null;
+    if (keep == null) {
+      const near = [...(byCompany.get(companyKey(c.company)) ?? []), ...(byTitleCity.get(`${normalizeTitle(c.title)}|${normalizeCity(c.city)}`) ?? [])];
+      keep = findDuplicate({ company: c.company, title: c.title, city: c.city, url: null }, near);
+    }
+    if (keep == null || keep === c.id) {
+      for (const u of urls) if (!byUrl.has(u)) byUrl.set(u, c.id);
+      if (companyKey(c.company)) push(byCompany, companyKey(c.company), c);
+      push(byTitleCity, `${normalizeTitle(c.title)}|${normalizeCity(c.city)}`, c);
+      continue;
+    }
+    for (const u of urls) if (!byUrl.has(u)) byUrl.set(u, keep);
+    await mergeJobInto(db, c.id, keep, now);
+    merged++;
+  }
+  return merged;
+}
+
+async function mergeJobInto(db: DB, dropId: number, keepId: number, now: Date): Promise<void> {
+  const drop = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, dropId) });
+  const keep = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, keepId) });
+  if (!drop || !keep) return;
+  // Facts the kept one lacks, only from an offer everyone could see (private text stays private).
+  const dropSources = await db.select({ userId: schema.jobSources.userId }).from(schema.jobSources).where(eq(schema.jobSources.jobId, dropId));
+  if (dropSources.some((x) => x.userId == null)) {
+    const patch: Partial<JobRow> = {};
+    for (const k of ["company", "city", "province", "closesAt", "opensAt", "postedAt", "applicationEmail", "salaryRaw", "salaryMin", "salaryMax"] as const) {
+      if (keep[k] == null && drop[k] != null) Object.assign(patch, { [k]: drop[k] });
+    }
+    if (keep.thin && !drop.thin) Object.assign(patch, { description: drop.description, thin: false });
+    if (Object.keys(patch).length) await db.update(schema.jobs).set({ ...patch, updatedAt: now }).where(eq(schema.jobs.id, keepId));
+  }
+  await db.update(schema.jobSources).set({ jobId: keepId }).where(eq(schema.jobSources.jobId, dropId));
+  await db.update(schema.applications).set({ jobId: keepId }).where(eq(schema.applications.jobId, dropId));
+  for (const f of await db.select().from(schema.folderItems).where(eq(schema.folderItems.jobId, dropId))) {
+    await db.insert(schema.folderItems).values({ ...f, jobId: keepId }).onConflictDoNothing();
+  }
+  for (const u of await db.select().from(schema.userJobs).where(eq(schema.userJobs.jobId, dropId))) {
+    await db.insert(schema.userJobs).values({ ...u, jobId: keepId }).onConflictDoNothing();
+    if (u.status === "applied") await db.update(schema.userJobs).set({ status: "applied" }).where(and(eq(schema.userJobs.userId, u.userId), eq(schema.userJobs.jobId, keepId)));
+  }
+  // Who said "Non mi interessa" to one of the two does not see the other: its links (now the kept
+  // one's) are banned for them, so the offer stays out; undoing it brings the merged offer back.
+  const banned = new Set([...(await bannedFor(db, keepId, drop.dedupeKey)), ...(await bannedFor(db, keepId, keep.dedupeKey))]);
+  for (const u of banned) {
+    await db.delete(schema.userJobs).where(and(eq(schema.userJobs.userId, u), eq(schema.userJobs.jobId, keepId)));
+  }
+  await db.delete(schema.jobs).where(eq(schema.jobs.id, dropId));
 }
 
 export async function dedupeCandidates(db: DB): Promise<DedupeCandidate[]> {
