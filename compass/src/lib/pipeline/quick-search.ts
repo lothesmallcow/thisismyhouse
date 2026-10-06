@@ -21,7 +21,7 @@ import { getSettings } from "../server/settings";
 import { bump, usageToday, W1_HARD_MAX } from "./discover";
 import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
 import { programmeQueries, searchProgrammes } from "./programmes";
-import { careerStage } from "../core/career-stage";
+import { stageOf } from "../core/rank";
 import { getPrefs, listSectors } from "../server/catalog";
 
 /** At most one quick search per person in this many minutes ("Cerca ora" can be pressed often). */
@@ -176,7 +176,7 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
   if (deps.web && settings.w1Enabled && profile.track === "stage" && Date.now() < deadline) {
     const [sectors, prefs] = await Promise.all([listSectors(db, userId), getPrefs(db, userId)]);
     const careers = sectors.filter((x) => prefs.sectors.get(x.id) === "like").map((x) => x.slug);
-    const queries = programmeQueries({ careers, countries, stage: careerStage(profile.studyYear, profile.degreeYears) }, now, PROGRAMME_QUERIES);
+    const queries = programmeQueries({ careers, countries, stage: stageOf(profile) }, now, PROGRAMME_QUERIES);
     const polite = new PoliteFetcher(db, deps.fetchImpl, { sleep: deps.politeSleep });
     const r = await searchProgrammes(db, queries, { polite, fetchImpl: deps.fetchImpl, web: deps.web, now, countries, searchCap: Math.min(settings.w1DailyCap, W1_HARD_MAX), save }, deadline);
     out.programmes = r.offers;

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.19.0 · 2026-10-06
+
+- **"Cosa fai ora?"** is the first question: high school, bachelor's, master's, recent graduate, working
+  less than 3 years, 3 years or more, career change. It decides the questionnaire (studies and
+  activities for students, experience for workers) and can be changed from Profilo → Cosa fai ora.
+- **La tua esperienza** (workers): years of experience, current role, when they could start (it also
+  fills the "available from" answer for job sites). Counts until the CV timeline gives the years.
+- **Cosa fai oltre allo studio?** (students): clubs, finance or consulting clubs, competitions,
+  projects or startups, sport, volunteering, part-time jobs, time abroad, coding. They point the
+  position suggestions like CV lines do (never searched as positions).
+- **Studies by situation**: school and diploma year for high school, graduation year for recent
+  graduates, expected graduation for students (programmes ask for it).
+- **Where you can work without a visa** (EU, UK, US, Switzerland) in Dove: ads asking for the right to
+  work score lower only when you would need a visa, with the reason.
+- A recent graduate counts as "final year" for the ranking (graduate roles fit). Migration 0017.
+
 ## 0.18.0 · 2026-10-06
 
 - **Programmes for students** (spring weeks, insight days, internships), found two ways:

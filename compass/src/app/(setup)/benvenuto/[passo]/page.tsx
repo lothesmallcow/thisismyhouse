@@ -25,8 +25,10 @@ import { listExperiences } from "@/lib/server/experiences";
 import { formatPeriod } from "@/lib/core/timeline";
 import { uploadCvAction } from "../../../(app)/actions";
 import { saveStepAction } from "../actions";
-import { HELP, QUICK_STEPS, STEPS, TITLES, stepsFor, type StepId } from "../steps";
+import { HELP, STEPS, TITLES, stepsFor, type StepId } from "../steps";
 import { chooseModeAction } from "../actions";
+import { ACTIVITIES, NOTICE, SITUATIONS } from "@/lib/core/situation";
+import { WorkRightsField } from "@/components/work-rights-field";
 import { NetSalaryField } from "./fields";
 
 export const metadata = { title: "Questionario" };
@@ -45,29 +47,46 @@ export default async function WizardPage({ params, searchParams }: { params: Pro
   // New accounts first choose the version of the questionnaire.
   if (passo !== "inizio" && passo !== "fine" && passo !== "risposte" && !back && !p.onboardedAt && !p.onboardingMode) redirect(`/benvenuto/inizio${sp.msg ? `?msg=${encodeURIComponent(sp.msg)}` : ""}`);
   if (passo === "inizio") {
+    // A situation already given (e.g. changed from the profile) is preselected; otherwise from the sign-up choice.
+    const pre = p.situation ?? (p.track === "stage" ? (p.degreeYears === 2 ? "magistrale" : "triennale") : null);
     return (
       <div className="py-4">
         <Flash code={sp.msg} />
         <h1 className="text-[24px] font-semibold">Benvenuta, benvenuto in Compass</h1>
-        <p className="mt-2 text-[15px] text-muted">Qualche domanda per cercare le offerte giuste per te. Scegli quanto tempo hai: puoi sempre completare o cambiare le risposte dal Profilo.</p>
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <form action={chooseModeAction} className="flex flex-col rounded-[var(--radius-card)] border border-line bg-surface p-5">
-            <input type="hidden" name="mode" value="veloce" />
-            <p className="text-[16px] font-semibold">Veloce</p>
-            <p className="mt-1 text-[13px] text-faint">{QUICK_STEPS[p.track].length} domande · circa 2 minuti</p>
-            <p className="mt-3 flex-1 text-[14px] text-muted">
-              {p.track === "stage" ? "Studi, dove, settori e CV." : "Ruolo, dove, stipendio minimo e CV."} Le offerte arrivano subito; i dettagli li aggiungi quando vuoi.
-            </p>
-            <Button className="mt-4">Inizia la versione veloce</Button>
-          </form>
-          <form action={chooseModeAction} className="flex flex-col rounded-[var(--radius-card)] border border-accent bg-surface p-5">
-            <input type="hidden" name="mode" value="completo" />
-            <p className="text-[16px] font-semibold">Completo · consigliato</p>
-            <p className="mt-1 text-[13px] text-faint">{STEPS[p.track].length} domande · circa 8-10 minuti</p>
-            <p className="mt-3 flex-1 text-[14px] text-muted">Anche contratto, lingue, settori, gusti, aziende e cosa evitare: punteggi e ricerche molto più precisi fin dal primo giorno.</p>
-            <Button className="mt-4">Inizia la versione completa</Button>
-          </form>
-        </div>
+        <p className="mt-2 text-[15px] text-muted">Prima di tutto: cosa fai ora? Così ti faccio le domande giuste (a chi studia non chiedo gli anni di lavoro, a chi lavora non chiedo l&apos;anno di corso).</p>
+        <form action={chooseModeAction} className="mt-6 space-y-6">
+          <fieldset>
+            <legend className="mb-2 text-[15px] font-semibold">Cosa fai ora?</legend>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {SITUATIONS.map((x) => (
+                <ChoiceRow key={x.key} type="radio" name="situation" value={x.key} defaultChecked={pre === x.key} hint={x.hint}>
+                  {x.label}
+                </ChoiceRow>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend className="mb-2 text-[15px] font-semibold">Quanto tempo hai?</legend>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col rounded-[var(--radius-card)] border border-line bg-surface p-5">
+                <p className="text-[16px] font-semibold">Veloce</p>
+                <p className="mt-1 text-[13px] text-faint">5 o 6 domande · circa 2 minuti</p>
+                <p className="mt-3 flex-1 text-[14px] text-muted">Solo quello che serve per partire. Le offerte arrivano subito; i dettagli li aggiungi quando vuoi.</p>
+                <Button className="mt-4" name="mode" value="veloce">
+                  Inizia la versione veloce
+                </Button>
+              </div>
+              <div className="flex flex-col rounded-[var(--radius-card)] border border-accent bg-surface p-5">
+                <p className="text-[16px] font-semibold">Completo · consigliato</p>
+                <p className="mt-1 text-[13px] text-faint">13 domande · circa 8-10 minuti</p>
+                <p className="mt-3 flex-1 text-[14px] text-muted">Anche contratto, lingue, attività, settori, gusti, aziende e cosa evitare: punteggi e ricerche molto più precisi fin dal primo giorno.</p>
+                <Button className="mt-4" name="mode" value="completo">
+                  Inizia la versione completa
+                </Button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
       </div>
     );
   }
@@ -274,15 +293,67 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
         </div>
       );
     }
-    case "studi":
+    case "esperienza":
       return (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Università" htmlFor="university">
-              <input id="university" name="university" type="text" defaultValue={p.university} placeholder="Es. Università Bocconi" list="universita" />
+            <Field label="Anni di esperienza di lavoro" htmlFor="yearsExperience">
+              <select id="yearsExperience" name="yearsExperience" defaultValue={p.yearsExperience ?? ""}>
+                <option value="">-</option>
+                {[
+                  [0, "Meno di un anno"],
+                  [1, "1-2 anni"],
+                  [3, "3-4 anni"],
+                  [5, "5-9 anni"],
+                  [10, "10 anni o più"],
+                ].map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {l}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label="Corso di laurea" htmlFor="degree">
-              <input id="degree" name="degree" type="text" defaultValue={p.degree} placeholder="Es. Economia e finanza" />
+            <Field label="Ruolo attuale (o l'ultimo)" htmlFor="currentRole">
+              <input id="currentRole" name="currentRole" type="text" defaultValue={p.currentRole} placeholder="Es. Analista contabile" />
+            </Field>
+          </div>
+          <fieldset>
+            <legend className="mb-2 text-[13px] font-medium">Quando potresti iniziare?</legend>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {NOTICE.map((x) => (
+                <ChoiceRow key={x.key} type="radio" name="noticePeriod" value={x.key} defaultChecked={p.noticePeriod === x.key}>
+                  {x.label}
+                </ChoiceRow>
+              ))}
+            </div>
+          </fieldset>
+          <p className="text-[12.5px] text-faint">Se carichi il CV, gli anni li conto dalle tue esperienze; questa risposta vale finché non c&apos;è.</p>
+        </>
+      );
+    case "attivita":
+      return (
+        <>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {ACTIVITIES.map((x) => (
+              <ChoiceRow key={x.key} name="activity" value={x.key} defaultChecked={p.activities.includes(x.key)}>
+                {x.label}
+              </ChoiceRow>
+            ))}
+          </div>
+          <p className="text-[12.5px] text-faint">Ruoli da capitano, fondatore o volontario dicono chi sei, non il lavoro che cerchi: li uso per capire le direzioni giuste, non come posizioni da cercare.</p>
+        </>
+      );
+    case "studi": {
+      const school = p.situation === "superiori";
+      const graduated = p.situation === "neolaureato";
+      return (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label={school ? "Scuola" : "Università"} htmlFor="university">
+              <input id="university" name="university" type="text" defaultValue={p.university} placeholder={school ? "Es. Liceo scientifico Volta" : "Es. Università Bocconi"} list={school ? undefined : "universita"} />
+            </Field>
+            <Field label={school ? "Indirizzo" : "Corso di laurea"} htmlFor="degree">
+              <input id="degree" name="degree" type="text" defaultValue={p.degree} placeholder={school ? "Es. Scientifico" : "Es. Economia e finanza"} />
             </Field>
           </div>
           <datalist id="universita">
@@ -291,30 +362,36 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
             ))}
           </datalist>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Anno di corso" htmlFor="studyYear">
-              <select id="studyYear" name="studyYear" defaultValue={p.studyYear ?? ""}>
-                <option value="">-</option>
-                {[1, 2, 3, 4, 5].map((y) => (
-                  <option key={y} value={y}>
-                    {y}° anno
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Durata del corso" htmlFor="degreeYears">
-              <select id="degreeYears" name="degreeYears" defaultValue={p.degreeYears ?? 3}>
-                <option value={3}>Triennale (3 anni)</option>
-                <option value={2}>Magistrale (2 anni)</option>
-                <option value={5}>Ciclo unico (5 anni)</option>
-              </select>
-            </Field>
-            <Field label="Laurea prevista" htmlFor="graduationYear">
-              <input id="graduationYear" name="graduationYear" type="number" min={2024} max={2040} defaultValue={p.graduationYear ?? ""} />
+            {!graduated && (
+              <Field label="Anno di corso" htmlFor="studyYear">
+                <select id="studyYear" name="studyYear" defaultValue={p.studyYear ?? ""}>
+                  <option value="">-</option>
+                  {[1, 2, 3, 4, 5].map((y) => (
+                    <option key={y} value={y}>
+                      {y}° anno
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+            {!school && !graduated && (
+              <Field label="Durata del corso" htmlFor="degreeYears">
+                <select id="degreeYears" name="degreeYears" defaultValue={p.degreeYears ?? (p.situation === "magistrale" ? 2 : 3)}>
+                  <option value={3}>Triennale (3 anni)</option>
+                  <option value={2}>Magistrale (2 anni)</option>
+                  <option value={5}>Ciclo unico (5 anni)</option>
+                </select>
+              </Field>
+            )}
+            {school && <input type="hidden" name="degreeYears" value={5} />}
+            <Field label={graduated ? "Anno di laurea" : school ? "Anno del diploma" : "Laurea prevista"} htmlFor="graduationYear" hint={graduated || school ? undefined : "Molti programmi la chiedono (\u201cgraduating in 2029\u201d)."}>
+              <input id="graduationYear" name="graduationYear" type="number" min={2015} max={2040} defaultValue={p.graduationYear ?? ""} />
             </Field>
           </div>
           <PriorityChoice value={p.priority} />
         </>
       );
+    }
     case "dove":
       return (
         <>
@@ -322,6 +399,7 @@ async function StepFields({ id, synonymsPhase, p, userId }: { id: StepId | "risp
           <label className="flex min-h-11 items-center gap-2.5 text-[14px]">
             <input type="checkbox" name="remote" value="1" defaultChecked={p.remoteOk} /> Va bene anche da remoto
           </label>
+          <WorkRightsField value={p.workRights} />
         </>
       );
     case "quando":
