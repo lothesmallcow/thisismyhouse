@@ -61,7 +61,10 @@ Su un terminale (anche quello del Codespace) esegui tre volte `openssl rand -hex
    l'account admin (5-20 minuti). Da lì i lavori partono da soli ogni giorno.
 
 ## 6. Chi può entrare
-1. Vai su `<indirizzo>/admin/entra` ed entra con `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD`.
+1. Vai su `<indirizzo>/entra`, spunta "Sono l'amministratore" ed entra con `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD`.
+   L'account admin si ripara da solo a ogni lavoro programmato (e a ogni deploy, se le stesse variabili
+   sono anche su Vercel): creato se manca, riattivato e con la password del secret. Per cambiare la
+   password admin: aggiorna il secret `SEED_ADMIN_PASSWORD` (almeno 12 caratteri) e lancia "Compass jobs".
 2. Predefinito: **su richiesta**. Chiunque abbia il link chiede l'accesso da "Crea un account";
    l'account resta bloccato, a te (`ADMIN_ALERT_EMAIL`) arriva un'e-mail, e in Admin → Persone →
    "Richieste di accesso" premi **Approva** (la persona riceve un'e-mail e può entrare) o **Rifiuta**

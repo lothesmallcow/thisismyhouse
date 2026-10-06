@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.22.5 · 2026-10-06
+
+- **Admin account repaired at every deploy**: from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD (at least 12
+  characters) in the host's secrets, the admin is created if missing, or re-enabled with that password.
+  Before, it was silently not created when the same e-mail was already a person's account (e-mails
+  are unique): now the admin lives on the "+admin" alias of that e-mail, and signing in as admin with
+  the plain e-mail ("Sono l'amministratore") finds it.
+
 ## 0.22.4 · 2026-10-06
 
 - **Login**: "Sono l'amministratore" on the sign-in page opens the admin area with the admin account
