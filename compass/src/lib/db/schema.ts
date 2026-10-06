@@ -125,6 +125,8 @@ export const profile = sqliteTable(
   /** Work: years of experience as they said it (the CV timeline counts first), current role, notice. */
   yearsExperience: integer("years_experience"),
   currentRole: text("current_role").notNull().default(""),
+  /** Work: "stesso" (the same job), "cambio" (a different one they name), "esplora" (change, not sure to what). */
+  careerGoal: text("career_goal").$type<"stesso" | "cambio" | "esplora">(),
   noticePeriod: text("notice_period").notNull().default(""),
   /** Students: what they do besides studying ("associazione", "sport", "volontariato"...). */
   activities: json<string[]>("activities").notNull().default([]),

@@ -32,12 +32,14 @@ async function get(url, tries = 5) {
 /** All occupation URIs, by paging the search (no text: everything). */
 async function listOccupations() {
   const uris = new Set();
-  for (let offset = 0; ; offset += 100) {
-    const d = await get(`${API}/search?type=occupation&language=en&limit=100&offset=${offset}&full=false`);
+  // ESCO's "offset" is the page number, not the item number.
+  for (let page = 0; page < 200; page++) {
+    const d = await get(`${API}/search?type=occupation&language=en&limit=100&offset=${page}&full=false`);
     const results = d?._embedded?.results ?? [];
-    if (offset === 0) console.log(`search: total ${d?.total ?? "?"}, first page ${results.length}`);
+    if (page === 0) console.log(`search: total ${d?.total ?? "?"}, first page ${results.length}`);
+    const before = uris.size;
     for (const r of results) if (r.uri) uris.add(r.uri);
-    if (!results.length || uris.size >= LIMIT || (d?.total && offset + 100 >= d.total)) break;
+    if (!results.length || uris.size === before || uris.size >= LIMIT || (d?.total && uris.size >= d.total)) break;
   }
   return [...uris].slice(0, LIMIT === Infinity ? undefined : LIMIT);
 }
@@ -52,12 +54,12 @@ async function main() {
   const uris = await listOccupations();
   console.log(`occupations listed: ${uris.length}`);
   const skillIndex = new Map(); // skill uri -> index
-  const skills = []; // [it label, en label]
-  const skillId = (uri, it, en) => {
+  const skills = []; // Italian names (the occupation is read in Italian, its skill links come so)
+  const skillId = (uri, it) => {
     if (!skillIndex.has(uri)) {
       skillIndex.set(uri, skills.length);
-      skills.push([it ?? en ?? "", en ?? it ?? ""]);
-    } else if (it && !skills[skillIndex.get(uri)][0]) skills[skillIndex.get(uri)][0] = it;
+      skills.push(it ?? "");
+    }
     return skillIndex.get(uri);
   };
   const out = [];
@@ -78,8 +80,8 @@ async function main() {
       if (!names.en) continue;
       const alt = d.alternativeLabel ?? d.alternativeLabels ?? {};
       const links = d._links ?? {};
-      const ess = (links.hasEssentialSkill ?? []).map((s) => skillId(s.uri, s.title, null));
-      const opt = (links.hasOptionalSkill ?? []).map((s) => skillId(s.uri, s.title, null));
+      const ess = (links.hasEssentialSkill ?? []).map((s) => skillId(s.uri, s.title));
+      const opt = (links.hasOptionalSkill ?? []).map((s) => skillId(s.uri, s.title));
       const isco = (links.broaderIscoGroup ?? []).map((g) => g.code ?? (g.uri ?? "").split("/").pop()).find(Boolean) ?? (d.code ?? "").split(".")[0] ?? "";
       out.push({
         id: uri.split("/").pop(),
