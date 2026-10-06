@@ -20,6 +20,7 @@ import {
   type Remote,
 } from "./extract";
 import { distanceKm, findPlace } from "./geo";
+import { keyDates } from "./dates";
 import { findSalaryText, parseSalary, type Salary } from "./salary";
 import { scamFlags, type ScamFlag } from "./scam-rules";
 import { truncate } from "./text";
@@ -72,7 +73,7 @@ export interface RawJob {
   salaryText?: string | null;
   postedAt?: Date | null;
   /** Structured hints when the source has them (JSON-LD, APIs). */
-  hints?: { contract?: Contract; hours?: Hours; remote?: Remote; minAnnualGross?: number; maxAnnualGross?: number };
+  hints?: { contract?: Contract; hours?: Hours; remote?: Remote; minAnnualGross?: number; maxAnnualGross?: number; closesAt?: Date | null };
   /** Thin record: only title/snippet/url (W1, some alerts). */
   thin?: boolean;
 }
@@ -104,9 +105,16 @@ export interface NormalizedJob {
   scamFlags: ScamFlag[];
   thin: boolean;
   url: string | null;
+  /** When applications close and open, when it runs, and whether they are reviewed as they arrive (core/dates.ts). */
+  closesAt: Date | null;
+  opensAt: Date | null;
+  runsStart: Date | null;
+  runsEnd: Date | null;
+  runsMonthOnly: boolean;
+  rolling: boolean;
 }
 
-export function normalizeJob(raw: RawJob, home: { lat: number; lng: number } | null): NormalizedJob {
+export function normalizeJob(raw: RawJob, home: { lat: number; lng: number } | null, now = new Date()): NormalizedJob {
   const title = raw.title.replace(/\s+/g, " ").trim();
   const description = (raw.description ?? "").replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").trim();
   const all = `${title}\n${raw.location ?? ""}\n${description}`;
@@ -129,6 +137,7 @@ export function normalizeJob(raw: RawJob, home: { lat: number; lng: number } | n
   const company = raw.company?.trim() || null;
   const remote = raw.hints?.remote ?? extractRemote(all);
   const applicationEmail = emails[0]?.email ?? null;
+  const dates = keyDates(`${title}\n${description}`, raw.postedAt ?? now);
 
   return {
     title: truncate(title, 200),
@@ -156,5 +165,11 @@ export function normalizeJob(raw: RawJob, home: { lat: number; lng: number } | n
     scamFlags: scamFlags({ title, company, description, applicationEmail, maxAnnualGross: salary.maxAnnualGross }),
     thin: raw.thin ?? description.length < 120,
     url: raw.url ? canonicalUrl(raw.url) : null,
+    closesAt: raw.hints?.closesAt ?? dates.closesAt,
+    opensAt: dates.opensAt,
+    runsStart: dates.runs?.start ?? null,
+    runsEnd: dates.runs?.end ?? null,
+    runsMonthOnly: dates.runs?.monthOnly ?? false,
+    rolling: dates.rolling,
   };
 }

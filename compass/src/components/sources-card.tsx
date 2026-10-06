@@ -47,7 +47,7 @@ export async function SourcesCard({ userId }: { userId: number }) {
             {running
               ? `Web scraping in corso: ${result?.sites ?? 0} siti e ${result?.feeds ?? 0} pagine lavoro letti finora, ${result?.found ?? 0} offerte trovate (${result?.created ?? 0} nuove). Le offerte compaiono qui man mano.`
               : last && result
-                ? `Ultimo web scraping ${formatWhen(last, now)}: ${result.sites} siti di aziende e ${result.feeds} pagine lavoro letti${result.web ? `, ${result.web} ricerche sul web` : ""}; ${result.found} offerte trovate, ${result.created} nuove.`
+                ? `Ultimo web scraping ${formatWhen(last, now)}: ${result.sites} siti di aziende e ${result.feeds} pagine lavoro letti${result.web ? `, ${result.web} ricerche sul web` : ""}${result.programmes ? `, ${result.programmes} programmi per studenti dalle pagine ufficiali` : ""}; ${result.found} offerte trovate, ${result.created} nuove.`
                 : "Nessuna ricerca ancora."}{" "}
             Poi ogni mattina, da sola.
           </p>

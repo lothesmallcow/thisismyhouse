@@ -41,6 +41,8 @@ export interface RankProfile {
   // Students
   studyYear: number | null;
   degreeYears: number | null;
+  /** The year they graduate, when they said it (otherwise worked out from year of study and degree length). */
+  graduationYear?: number | null;
   extraPlaces: string[];
   paidOnly: boolean;
   /** Countries and regions ("IT:Lombardia") they chose; empty = no limit. */
@@ -56,6 +58,14 @@ export interface RankProfile {
   currentEmployers: string[];
   /** How soon they need a job: alta = also a step below and gentler levels, bassa = only the best. */
   priority: "alta" | "media" | "bassa";
+}
+
+/** The year they graduate: as they said it, or from year of study and degree length (academic years end in summer). */
+export function graduationYearOf(p: Pick<RankProfile, "graduationYear" | "studyYear" | "degreeYears">, now: Date): number | null {
+  if (p.graduationYear) return p.graduationYear;
+  if (!p.studyYear || !p.degreeYears) return null;
+  const endOfThisYear = now.getUTCMonth() >= 7 ? now.getUTCFullYear() + 1 : now.getUTCFullYear();
+  return endOfThisYear + Math.max(0, p.degreeYears - p.studyYear);
 }
 
 /** A job seeker with no catalog choices and no student fields (handy defaults for tests and tools). */
@@ -94,6 +104,8 @@ export interface RankJob {
   city: string | null;
   /** Country code when known; "" = a place outside the countries we cover (New York, Madrid…). */
   country?: string | null;
+  /** When applications close (null = not stated). */
+  closesAt?: Date | null;
   jobType: JobType;
   eligibility: Eligibility[];
 }
@@ -313,6 +325,30 @@ export function rankJob(job: RankJob, profile: RankProfile, adjustments: RankAdj
     else if (el.includes("retribuito")) f.push({ key: "pay", points: W.paid, reason: "Retribuito" });
   } else if (job.jobType === "programma") {
     f.push({ key: "type", points: W.programmeForStudents, reason: "È un programma per studenti" });
+  }
+
+  // 10b. Who can apply: stated in the ad. Never hidden; a low score and the reason instead.
+  {
+    const el = job.eligibility as string[];
+    const where = job.country ?? null;
+    const needsVisa = where === "GB" || (where === "" && job.city != null); // EU citizens: free to work in IT, DE, FR
+    if (el.includes("solo-uk") && !profile.countries.includes("GB")) f.push({ key: "eligibility", points: W.ukStudentsOnly, reason: "Solo per studenti di università del Regno Unito" });
+    if (el.includes("diritto-lavoro") && needsVisa) f.push({ key: "eligibility", points: W.rightToWork, reason: "Chiede il diritto di lavorare nel paese: con il passaporto UE servirebbe un visto, e non lo sponsorizzano" });
+    else if (el.includes("sponsor-visto") && needsVisa) f.push({ key: "eligibility-open", points: W.visaSponsor, reason: "Offre lo sponsor per il visto" });
+    if (el.includes("riservato")) f.push({ key: "eligibility", points: W.restricted, reason: "Riservato a un gruppo specifico (es. genere o provenienza): controlla di rientrarci" });
+    if (profile.track === "stage") {
+      if (el.includes("dal-secondo-anno") && profile.studyYear === 1) f.push({ key: "eligibility", points: W.notFirstYear, reason: "Non aperto a chi è al primo anno" });
+      if (el.includes("magistrale") && profile.degreeYears != null && profile.degreeYears <= 3) f.push({ key: "eligibility", points: W.mastersOnly, reason: "Per studenti di magistrale" });
+      const years = el.filter((e) => /^laurea-\d{4}$/.test(e)).map((e) => Number(e.slice(7)));
+      const grad = graduationYearOf(profile, now);
+      if (years.length && grad) {
+        if (years.includes(grad)) f.push({ key: "eligibility-open", points: W.gradYearMatch, reason: `Per chi si laurea nel ${grad}: è il tuo anno` });
+        else f.push({ key: "eligibility", points: W.gradYearOther, reason: `Per chi si laurea nel ${years.join(" o ")}, tu nel ${grad}` });
+      }
+    }
+    if (job.closesAt && job.closesAt.getTime() < now.getTime() - 86_400_000) {
+      f.push({ key: "deadline", points: W.applicationsClosed, reason: `Candidature chiuse il ${job.closesAt.toLocaleDateString("it-IT", { day: "numeric", month: "long", timeZone: "UTC" })}` });
+    }
   }
 
   // 11. Experience: the listing's sector and level against what they have done.

@@ -4,7 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { Flash } from "@/components/flash";
 import { IconArrowLeft, IconExternal, IconMail, IconSparkle, IconStar } from "@/components/icons";
 import { Button, Card, Chip, ExternalButton, Fact, LevelBadge, LinkButton, Notice } from "@/components/ui";
-import { CONTRACT_LABELS, ELIGIBILITY_LABELS, HOURS_LABELS, type Eligibility } from "@/lib/core/extract";
+import { CONTRACT_LABELS, eligibilityLabel, HOURS_LABELS } from "@/lib/core/extract";
+import { deadlineText, ROLLING_TEXT, runsText } from "@/lib/core/deadline";
 import { SOURCE_LABELS } from "@/lib/core/normalize";
 import { formatSalary } from "@/lib/core/salary";
 import { daysAgoLabel, formatDate } from "@/lib/core/time";
@@ -124,7 +125,14 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
             {job.languages.length > 0 && (
               <Fact label="Lingue">{job.languages.map((l) => `${l.language[0].toUpperCase()}${l.language.slice(1)}${l.level === "richiesto" ? "" : ` ${l.level}`}`).join(", ")}</Fact>
             )}
-            {job.eligibility.length > 0 && <Fact label="Per chi">{(job.eligibility as Eligibility[]).map((e) => ELIGIBILITY_LABELS[e]).join(", ")}</Fact>}
+            {job.eligibility.length > 0 && <Fact label="Per chi">{job.eligibility.map(eligibilityLabel).join(", ")}</Fact>}
+            {(deadlineText(job, new Date()) || job.rolling || runsText(job)) && (
+              <Fact label="Date">
+                {[deadlineText(job, new Date())?.text, runsText(job)].filter(Boolean).join(" · ")}
+                {job.rolling && <span className="block text-[12.5px] text-accent">{ROLLING_TEXT}</span>}
+                <span className="block text-[12.5px] text-faint">Lette dall&apos;annuncio: controllale sulla pagina ufficiale prima di candidarti.</span>
+              </Fact>
+            )}
             <Fact label="Trovata">{job.postedAt ? formatDate(job.postedAt) : daysAgoLabel(job.firstSeenAt)}</Fact>
           </div>
 

@@ -33,7 +33,7 @@ export function areaOf(key: string): FitArea | null {
   if (key === "req" || key.startsWith("lang-") || key.startsWith("eligibility")) return "requisiti";
   if (key === "distance" || key === "remote" || key === "country") return "luogo";
   if (key === "salary" || key === "pay") return "paga";
-  if (key === "hours" || key === "contract" || key === "recency") return "condizioni";
+  if (key === "hours" || key === "contract" || key === "recency" || key === "deadline") return "condizioni";
   if (key === "company-liked" || key === "sector-liked" || key.startsWith("avoid-")) return "scelte";
   return null;
 }

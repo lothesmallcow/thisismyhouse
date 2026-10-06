@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.18.0 · 2026-10-06
+
+- **Programmes for students** (spring weeks, insight days, internships), found two ways:
+  - public trackers are read once a week for the NAMES of the firms only; each firm's offer is then
+    read from its own job board, careers site or official page (found by web search), never from the
+    tracker;
+  - for students, web search by year of study, career and country finds official programme pages
+    directly ("Fai web scraping" and the daily run).
+- **Dates read from every offer**, in English, Italian, German and French: deadline ("Scade il 16
+  ottobre, tra 10 giorni", in amber in the last week), opening date, when the programme runs ("Si
+  svolge 20-22 aprile 2027") and "rolling" review ("candidati presto"). New order "Scadenza più vicina".
+- **Who can apply**, read from the ad: UK universities only, right to work / no visa sponsorship,
+  visa sponsorship, restricted to a group, second year onwards, master's only, graduation year. Never
+  hidden: the score goes down and the reason is shown ("Per chi si laurea nel 2027, tu nel 2029").
+  Closed applications also score low, with the date.
+- Migrations 0015 (job dates) and 0016 (programme leads). ADR 0025.
+
 ## 0.17.2 · 2026-10-06
 
 - Offerte → Filtri: Tipo, Contratto and Settore take several choices at once (pills you tick), e.g.

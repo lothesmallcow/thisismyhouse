@@ -220,9 +220,28 @@ export function extractJobType(title: string, text: string): JobType {
   return "unknown";
 }
 
-export type Eligibility = "laurea-richiesta" | "fine-studi" | "penultimo-anno" | "primo-anno" | "esperienza" | "retribuito" | "non-retribuito";
+export type Eligibility =
+  | "laurea-richiesta"
+  | "fine-studi"
+  | "penultimo-anno"
+  | "primo-anno"
+  | "esperienza"
+  | "retribuito"
+  | "non-retribuito"
+  /** Only students of UK universities, or based in the UK. */
+  | "solo-uk"
+  /** Asks for the right to work in the country (no visa sponsorship). */
+  | "diritto-lavoro"
+  | "sponsor-visto"
+  /** For a specific group (gender, background, socio-economic criteria). */
+  | "riservato"
+  /** Not for first-year students (second year onwards). */
+  | "dal-secondo-anno"
+  | "magistrale"
+  /** "Graduating in 2029", "class of 2029": the years of graduation it is for. */
+  | `laurea-${number}`;
 
-export const ELIGIBILITY_LABELS: Record<Eligibility, string> = {
+export const ELIGIBILITY_LABELS: Record<string, string> = {
   "laurea-richiesta": "Chiede la laurea",
   "fine-studi": "Per chi sta per laurearsi",
   "penultimo-anno": "Per il penultimo anno",
@@ -230,20 +249,42 @@ export const ELIGIBILITY_LABELS: Record<Eligibility, string> = {
   esperienza: "Chiede esperienza",
   retribuito: "Retribuito",
   "non-retribuito": "Non retribuito",
+  "solo-uk": "Solo per studenti di università del Regno Unito",
+  "diritto-lavoro": "Chiede il diritto di lavorare nel paese (niente visto)",
+  "sponsor-visto": "Offre lo sponsor per il visto",
+  riservato: "Riservato a un gruppo specifico",
+  "dal-secondo-anno": "Dal secondo anno in poi",
+  magistrale: "Per studenti di magistrale",
 };
+
+export const eligibilityLabel = (e: string) => ELIGIBILITY_LABELS[e] ?? (/^laurea-\d{4}$/.test(e) ? `Per chi si laurea nel ${e.slice(7)}` : e);
 
 /** Who the ad is for, as codes the ranking understands. Each rule is a phrase found in the text. */
 export function extractEligibility(text: string): Eligibility[] {
-  const t = fold(text);
+  const t = fold(text).replace(/\s+/g, " ");
   const out = new Set<Eligibility>();
-  const finalYear = /laureand|final[- ]year|last year of (?:your|their) (?:studies|degree)|in procinto di laurearsi|graduating in/.test(t);
+  const finalYear = /laureand|final[- ]year|last year of (?:your|their) (?:studies|degree)|in procinto di laurearsi/.test(t);
   if (finalYear) out.add("fine-studi");
   if (/neolaureat|laurea (?:gia )?conseguita|recent graduates?|graduate (?:programme|program|scheme)|(?:have|hold) (?:a|an) (?:bachelor|master)'?s? degree|completed (?:a|your) degree/.test(t) && !/laureand/.test(t)) out.add("laurea-richiesta");
-  if (/penultimate year|penultimo anno|second[- ]to[- ]last year/.test(t)) out.add("penultimo-anno");
-  if (/first[- ]year|primo anno|1st[- ]year|any year of (?:study|studies)|all years of study|qualsiasi anno/.test(t)) out.add("primo-anno");
+  if (/(?<!pre[- ])penultimate year|penultimo anno|second[- ]to[- ]last year/.test(t)) out.add("penultimo-anno");
+  const notFirst = /not (?:open|eligible|available) (?:to|for) first[- ]years?|(?:second|2nd|third|3rd)[- ]year (?:students|undergraduates) (?:only|and above)|(?:from|in) (?:your|their) (?:second|2nd) year (?:onwards|or above)|dal secondo anno/.test(t);
+  if (notFirst) out.add("dal-secondo-anno");
+  if (!notFirst && /first[- ]year|primo anno|1st[- ]year|pre[- ]penultimate|any year of (?:study|studies)|all years of study|qualsiasi anno/.test(t)) out.add("primo-anno");
   if (EXPERIENCE_RE.test(t)) out.add("esperienza");
   if (/non retribuit|unpaid|senza rimborso|a titolo gratuito/.test(t)) out.add("non-retribuito");
   else if (/rimborso spese|indennita di (?:stage|tirocinio|partecipazione)|paid internship|stipend|retribuit|compenso mensile|\bsalary\b|\bpaid\b/.test(t)) out.add("retribuito");
+  // Who can apply at all: phrases from the ads themselves.
+  if (/(?:studying|enrolled|registered) (?:at|in) (?:a )?uk (?:university|universities|institution)|attend(?:ing)? (?:a )?uk universit|uk[- ]based (?:students|universit)|(?:must|need to) (?:be )?(?:studying|based|resident) in the uk|universities in the uk only|uk universities only/.test(t)) out.add("solo-uk");
+  if (/(?:full |unrestricted |existing )?right to work in the (?:uk|us|usa|united kingdom|united states|country)|(?:do not|don.t|cannot|can.t|are unable to|unable to|will not) (?:offer |provide )?(?:visa )?sponsor|no (?:visa )?sponsorship|sponsorship (?:is )?not (?:available|offered)/.test(t)) out.add("diritto-lavoro");
+  else if (/visa sponsorship (?:is |may be )?(?:available|offered|provided)|(?:can|will|may) sponsor (?:your |a )?(?:visa|work permit)/.test(t)) out.add("sponsor-visto");
+  if (/(?:open|available|exclusively) (?:only )?(?:to|for) (?:women|female|black|ethnic minority|students who identify as)|(?:women|female)[- ]only|for (?:women|female students)|underrepresented (?:groups|backgrounds)|socio-?economic(?:ally)? (?:disadvantaged|background|criteria)|from (?:a )?(?:lower|low) (?:income|socio)|first[- ]generation (?:students|university|to attend)|social mobility (?:programme|program|scheme)|riservat[oa] (?:a|alle) (?:donne|studentesse)/.test(t)) out.add("riservato");
+  if (/(?:master'?s|msc|mba|postgraduate) (?:students )?only|(?:enrolled|studying) (?:in|on) a master|iscritt[oi] (?:a|ad) (?:una )?(?:laurea )?magistrale|studenti (?:di|della) (?:laurea )?magistrale/.test(t)) out.add("magistrale");
+  // "Graduating in 2029", "class of 2029", "graduation date between 2028 and 2029", "laurea prevista nel 2029"
+  for (const m of t.matchAll(/(?:graduat(?:ing|ion)(?: date)?|class of|expected to graduate|laurea (?:prevista )?(?:nel|entro il)|laureandi (?:nel|del))\D{0,25}(20[2-3]\d)(?:\s*(?:-|–|or|and|to|e|o)\s*(20[2-3]\d))?/g)) {
+    const a = +m[1];
+    const b = m[2] ? +m[2] : a;
+    for (let y = Math.min(a, b); y <= Math.max(a, b) && y - Math.min(a, b) < 4; y++) out.add(`laurea-${y}`);
+  }
   return [...out];
 }
 

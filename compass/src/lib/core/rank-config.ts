@@ -47,6 +47,16 @@ export const RANK_WEIGHTS = {
   finalYearOnly: -12, // for students about to graduate
   penultimateOnly: -10, // for the penultimate year, and they are earlier
   firstYearWelcome: 10, // explicitly open to first-year students
+  // Who can apply (anyone, not only students): low score with the reason, never hidden
+  ukStudentsOnly: -30, // only students of UK universities
+  rightToWork: -25, // asks the right to work in a country where they would need a visa
+  visaSponsor: 4, // offers visa sponsorship where they would need one
+  restricted: -20, // for a specific group (gender, background): they check whether they fall in it
+  notFirstYear: -30, // second year onwards, and they are in their first
+  mastersOnly: -25, // for master's students, and they are in a bachelor's
+  gradYearMatch: 10, // "graduating in 2029" and they graduate in 2029
+  gradYearOther: -30, // another graduation year
+  applicationsClosed: -45, // the deadline has passed
   experienceRequired: -20, // asks for years of experience
   unpaid: -15, // unpaid, and they asked for paid only
   paid: 3,

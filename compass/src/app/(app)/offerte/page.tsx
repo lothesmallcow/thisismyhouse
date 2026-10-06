@@ -73,7 +73,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
     focus: vista === "aziende" || vista === "preferite" ? vista : undefined,
     show: one(sp.mostra) === "scartate" ? "scartate" : undefined,
     minFit: Number(one(sp.punteggio)) || undefined,
-    sort: one(sp.ordina) === "recenti" || one(sp.ordina) === "paga" ? (one(sp.ordina) as "recenti" | "paga") : undefined,
+    sort: ["recenti", "paga", "scadenza"].includes(one(sp.ordina)) ? (one(sp.ordina) as "recenti" | "paga" | "scadenza") : undefined,
   };
   const limit = Math.min(200, Math.max(PAGE_SIZE, Number(one(sp.n)) || PAGE_SIZE));
   const { jobs, total } = await listJobs(db, user.id, filters, limit);
@@ -276,6 +276,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
               <option value="">Le più adatte a te</option>
               <option value="recenti">Le più recenti</option>
               <option value="paga">Le più pagate</option>
+              <option value="scadenza">Scadenza più vicina</option>
             </select>
           </label>
           <label className="flex min-h-11 items-center gap-2.5 self-end text-[14px]">
