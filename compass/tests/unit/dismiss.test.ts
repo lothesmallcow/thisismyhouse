@@ -35,9 +35,16 @@ describe("dismiss", () => {
     expect(await row(L, otherRole.jobId)).toBeTruthy();
     expect(await row(L, otherCity.jobId)).toBeTruthy();
 
-    await undoDismissal(db, L, (await dismissedList(db, L))[0].dedupeKey, NOW);
+    // After a week it leaves the "Scartate" list by itself and can no longer be undone, but stays blocked.
+    const key = (await dismissedList(db, L, NOW))[0].dedupeKey;
+    const WEEK_ON = new Date(NOW.getTime() + 8 * 86_400_000);
+    expect(await dismissedList(db, L, WEEK_ON)).toHaveLength(0);
+    await undoDismissal(db, L, key, WEEK_ON);
+    expect(await row(L, a.jobId)).toBeUndefined();
+    // Within the week: undone, the offer comes back.
+    await undoDismissal(db, L, key, NOW);
     expect(await row(L, a.jobId)).toBeTruthy();
-    expect(await dismissedList(db, L)).toHaveLength(0);
+    expect(await dismissedList(db, L, NOW)).toHaveLength(0);
   });
 
   it("an offer only they could see (added by hand) is deleted altogether", async () => {
