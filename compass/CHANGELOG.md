@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.21.0 · 2026-10-06
+
+- **New look, "Aurora"**: Compass's own light-blue palette (airy background, sky-blue accent, page
+  titles on a blue gradient band) with an Apple-like finish: frosted-glass top and bottom bars, SF Pro
+  on Apple devices (Inter elsewhere), pill-shaped buttons and controls, rounder cards with soft depth.
+  Dark mode follows the same palette.
+- **Subtle motion**: buttons give way slightly the moment they are pressed, cards lift on hover, each
+  section fades in when opened, offer lists arrive one card after another, filters open softly, the
+  active tab settles with a small spring. Nothing loops; all of it stops when the system asks for less
+  motion.
+- Offer cards: a coloured bar on the left by fit (green very fit, amber fit, grey less fit), the score
+  large on the right, "Nuova" as a badge next to the title.
+- Offerte: views and search in one panel, Filtri with an icon and an arrow that turns, level headings
+  with a coloured dot.
+- Layout only: no behaviour, text, link or route changed.
+
 ## 0.20.3 · 2026-10-06
 
 - "Scartate" is now called **Non mi interessano**, like the button (`/offerte/non-mi-interessano`; the

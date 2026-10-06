@@ -84,7 +84,7 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
               </Chip>
             )}
           </div>
-          <h1 className="mt-3 text-[24px] font-semibold leading-tight sm:text-[28px]">{job.title}</h1>
+          <h1 className="mt-3 text-[28px] font-bold leading-[1.1] tracking-[-0.028em] sm:text-[36px]">{job.title}</h1>
           <p className="mt-1 text-[15px] text-muted">
             {job.company ?? "Azienda non indicata"}
             {job.city ? ` · ${job.city}${job.province ? ` (${job.province})` : ""}` : ""}

@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const s = await shellData(db, user.id);
   const initials = (profile.name || user.name || user.email).split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <div className="min-h-dvh pb-20 md:pb-12">
+    <div className="min-h-dvh pb-24 md:pb-12">
       {(s.demo || user.viewer === "admin") && (
         <div className="border-b border-line bg-subtle px-4 py-1.5 text-center text-[12.5px] text-muted">
           {s.demo && <span>Modalità prova: nessun invio è reale.</span>}
@@ -30,15 +30,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           )}
         </div>
       )}
-      <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+      <header className="glass sticky top-0 z-20 border-b border-line/70">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-6">
             <Brand small />
             <TopNav badges={s.badges} />
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-[12.5px] text-faint lg:inline">{s.lastUpdate}</span>
-            <Link href="/profilo" aria-label="Il tuo profilo" className="flex h-8 w-8 items-center justify-center rounded-full bg-subtle text-[12px] font-semibold text-ink no-underline ring-1 ring-line">
+            <Link href="/profilo" aria-label="Il tuo profilo" className="flex h-9 w-9 items-center justify-center rounded-full bg-[image:var(--hero)] text-[12px] font-semibold text-white no-underline shadow-[0_2px_8px_rgb(23_87_180/0.3)] ring-2 ring-surface transition-[scale,box-shadow] duration-200 hover:shadow-[0_4px_14px_rgb(23_87_180/0.4)] active:scale-95">
               {initials || "?"}
             </Link>
           </div>
@@ -46,7 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </header>
       {s.notes.length > 0 && (
         <aside aria-label="Novità" className="mx-auto mt-4 max-w-5xl px-4 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-2.5 text-[14px]">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/20 bg-accent-soft px-4 py-2.5 text-[14px] shadow-[var(--shadow-card)]">
             <ul className="flex flex-wrap gap-x-4 gap-y-1">
               {s.notes.map((n) => (
                 <li key={n.id} className="flex items-center gap-2">
@@ -56,7 +56,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               ))}
             </ul>
             <form action={readNotificationsAction}>
-              <button className="h-8 rounded-md px-2.5 text-[13px] text-muted hover:bg-subtle hover:text-ink">Segna come letti</button>
+              <button className="h-8 rounded-lg px-2.5 text-[13px] font-medium text-muted hover:bg-surface hover:text-ink">Segna come letti</button>
             </form>
           </div>
         </aside>

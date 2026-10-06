@@ -139,15 +139,15 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
         </div>
       )}
       <CareersLine userId={user.id} />
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div role="group" aria-label="Quali offerte" className="inline-flex rounded-lg border border-line bg-surface p-0.5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-2 shadow-[var(--shadow-card)]">
+        <div role="group" aria-label="Quali offerte" className="inline-flex max-w-full overflow-x-auto rounded-full bg-fill/70 p-1">
           {views.map((v) => (
             <Link
               key={v.key}
               href={keep({ vista: v.key, tutte: v.key === "tutte" ? "1" : "" })}
               title={v.hint}
               aria-current={vista === v.key ? "true" : undefined}
-              className={`inline-flex h-8 items-center rounded-md px-3 text-[13px] no-underline ${vista === v.key ? "bg-primary font-medium text-on-primary" : "text-muted hover:text-ink"}`}
+              className={`inline-flex h-8 items-center whitespace-nowrap rounded-full px-3.5 text-[13px] no-underline transition-[background-color,color,box-shadow] duration-300 ${vista === v.key ? "bg-surface font-semibold text-ink shadow-[0_1px_3px_rgb(15_40_80/0.12)]" : "text-muted hover:text-ink"}`}
             >
               {v.label}
             </Link>
@@ -158,7 +158,7 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
           <label htmlFor="q" className="sr-only">
             Cerca per ruolo o azienda
           </label>
-          <input id="q" name="q" type="search" defaultValue={filters.q} placeholder="Ruolo o azienda" className="!pl-9" />
+          <input id="q" name="q" type="search" defaultValue={filters.q} placeholder="Ruolo o azienda" className="!rounded-full !border-transparent !bg-fill/70 !pl-9 focus:!border-accent focus:!bg-surface" />
           {pairs(sp, ["q", "msg", "n"]).map(([k, v]) => (
             <input key={`${k}=${v}`} type="hidden" name={k} value={v} />
           ))}
@@ -170,14 +170,17 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
           <Link href="/offerte?tutte=1">Azzera filtri e vista</Link>
         </p>
       )}
-      <details className="mb-6 rounded-[var(--radius-card)] border border-line bg-surface" open={(active > 0 && touched) || placesChanged}>
-        <summary className="flex h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 text-[14px]">
-          <span className="inline-flex items-center gap-2 font-medium">
-            <IconSliders size={16} /> Filtri{active ? ` · ${active} ${active === 1 ? "attivo" : "attivi"}` : ""}
+      <details className="group/filters mb-6 overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]" open={(active > 0 && touched) || placesChanged}>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-[14px] hover:bg-subtle/60">
+          <span className="inline-flex flex-wrap items-center gap-2 font-semibold">
+            <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-accent">
+              <IconSliders size={15} />
+            </span>
+            Filtri{active ? ` · ${active} ${active === 1 ? "attivo" : "attivi"}` : ""}
             {!touched && (defaults.minNetMonthly || defaults.focus) ? <span className="font-normal text-faint">(i tuoi predefiniti)</span> : null}
             <span className="hidden font-normal text-faint sm:inline">· {places.length ? places.map((p) => p.name).join(", ") : "tutti i luoghi"}{placesRemote && places.length ? " e da remoto" : ""}</span>
           </span>
-          <span aria-hidden="true" className="text-faint">▾</span>
+          <span aria-hidden="true" className="text-faint transition-[rotate] duration-300 ease-[var(--ease-out)] group-open/filters:rotate-180">▾</span>
         </summary>
         <form method="get" className="grid grid-cols-1 gap-4 border-t border-line p-4 sm:grid-cols-2 lg:grid-cols-4">
           <input type="hidden" name="vista" value={vista} />
@@ -286,16 +289,16 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
             Solo da remoto o ibride
           </label>
           <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-4">
-            <button className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-[14px] font-medium text-on-primary hover:bg-primary-hover">Applica</button>
+            <button className="inline-flex h-10 items-center rounded-full bg-primary px-6 text-[14px] font-semibold text-on-primary shadow-[0_1px_2px_rgb(15_40_80/0.14)] hover:bg-primary-hover">Applica</button>
           </div>
         </form>
-        <form action={saveDefaultFiltersAction} className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3 text-[13px] text-muted">
+        <form action={saveDefaultFiltersAction} className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-subtle/50 px-4 py-3 text-[13px] text-muted">
           <input type="hidden" name="focus" value={vista} />
           <input type="hidden" name="netto" value={filters.minNetMonthly ?? ""} />
           <span>
             Usa la vista e la retribuzione minima attuali ogni volta che apri Offerte. Il punteggio si regola in <Link href="/profilo/punteggio">Profilo → Punteggio</Link>.
           </span>
-          <button className="inline-flex h-8 items-center rounded-lg border border-line-strong px-3 text-[13px] font-medium text-ink hover:bg-subtle">Salva come predefiniti</button>
+          <button className="inline-flex h-8 items-center rounded-full bg-fill px-3.5 text-[13px] font-semibold text-ink hover:bg-fill-hover">Salva come predefiniti</button>
         </form>
       </details>
 
@@ -320,10 +323,15 @@ export default async function OffertePage({ searchParams }: { searchParams: Prom
         </Empty>
       ) : null}
       {jobs.length > 0 && (
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {jobs.map((j, i) => (
-            <div key={j.id}>
-              {headings[i] && <h2 className="mb-2.5 mt-7 text-[12px] font-medium uppercase tracking-[0.08em] text-faint first:mt-0">{headings[i]}</h2>}
+            <div key={j.id} className="list-in" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+              {headings[i] && (
+                <h2 className="mb-3 mt-8 flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-[0.1em] text-muted first:mt-0">
+                  <span aria-hidden="true" className={`h-2 w-2 rounded-full ${j.level === "molto" ? "bg-level-molto" : j.level === "adatta" ? "bg-level-adatta" : "bg-level-poco"}`} />
+                  {headings[i]}
+                </h2>
+              )}
               <JobCard job={j} dismiss={quickDismissAction} back={keep({})} />
             </div>
           ))}

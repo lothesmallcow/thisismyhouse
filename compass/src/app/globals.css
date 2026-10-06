@@ -1,57 +1,81 @@
 @import "tailwindcss";
 
 /*
-  Compass design tokens: neutral, quiet, one accent (pine). Light and dark.
-  Text pairs meet WCAG AA at least (body text >= 7:1 in light mode).
+  Compass design tokens ("Aurora"): Compass's own light-blue palette (airy background, sky-blue accent,
+  blue gradient band for page titles), with an Apple-like finish: frosted-glass bars, soft depth,
+  calm motion. Light and dark.
+  Text pairs meet WCAG AA at least (body text >= 7:1 in light mode, white on the hero >= 4.5:1).
 */
 :root {
-  --bg: #fafaf9;
+  --bg: #f2f6fb;
   --surface: #ffffff;
-  --subtle: #f4f4f2;
-  --line: #e7e5e2;
-  --line-strong: #d4d2cd;
-  --ink: #1c1917;
-  --muted: #57534e;
-  --faint: #6f6a65;
-  --primary: #1c1917;
-  --primary-hover: #33302c;
+  --subtle: #ebf1f8;
+  --fill: #e3ebf5;
+  --fill-hover: #d6e1ef;
+  --line: #e0e7f0;
+  --line-strong: #c9d4e2;
+  --ink: #0f1a2a;
+  --muted: #4a586b;
+  --faint: #5f6c7e;
+  --primary: #1f6fd1;
+  --primary-hover: #195fb6;
   --on-primary: #ffffff;
-  --accent: #1f5f53;
-  --accent-soft: #e8f1ef;
+  --accent: #1a6acb;
+  --accent-soft: #e6f0fd;
+  --accent-glow: #8fd0ff;
   --good: #166534;
-  --good-soft: #ecf7ef;
+  --good-soft: #eaf7ee;
   --warn: #8a4b08;
-  --warn-soft: #fdf5e6;
+  --warn-soft: #fdf4e3;
   --bad: #9f1f17;
-  --bad-soft: #fcf0ee;
-  --focus: #1f5f53;
-  --shadow: 0 1px 2px rgb(28 25 23 / 0.04), 0 1px 1px rgb(28 25 23 / 0.02);
+  --bad-soft: #fcefed;
+  --level-molto: #22a06b;
+  --level-adatta: #e0a43a;
+  --level-poco: #b6c0cd;
+  --focus: #1a6acb;
+  --glass: rgb(248 251 255 / 0.74);
+  --hero: radial-gradient(90% 120% at 100% 0%, rgb(143 208 255 / 0.55) 0%, rgb(143 208 255 / 0) 60%), linear-gradient(135deg, #2272d0 0%, #1d65c4 55%, #1757b4 100%);
+  --page-glow: radial-gradient(1100px 380px at 50% -160px, rgb(143 208 255 / 0.32), rgb(143 208 255 / 0));
+  --shadow: 0 1px 2px rgb(15 40 80 / 0.05), 0 4px 16px rgb(23 87 180 / 0.06);
+  --shadow-lift: 0 4px 10px rgb(15 40 80 / 0.06), 0 16px 36px rgb(23 87 180 / 0.13);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f0e0d;
-    --surface: #171615;
-    --subtle: #1f1d1b;
-    --line: #2c2926;
-    --line-strong: #3d3935;
-    --ink: #f5f5f4;
-    --muted: #b5b0aa;
-    --faint: #9a948d;
-    --primary: #f5f5f4;
-    --primary-hover: #dedcd9;
-    --on-primary: #171615;
-    --accent: #6cc3b0;
-    --accent-soft: #15302b;
+    --bg: #0a0f16;
+    --surface: #111924;
+    --subtle: #17212e;
+    --fill: #1d2938;
+    --fill-hover: #253446;
+    --line: #213042;
+    --line-strong: #2e4157;
+    --ink: #eef3f9;
+    --muted: #a7b5c6;
+    --faint: #8d9cae;
+    --primary: #8ec8ff;
+    --primary-hover: #a9d5ff;
+    --on-primary: #06182e;
+    --accent: #8ec8ff;
+    --accent-soft: #11253d;
+    --accent-glow: #5fb2ff;
     --good: #7bd498;
     --good-soft: #13281a;
     --warn: #f0b765;
     --warn-soft: #2d2212;
     --bad: #f39a8f;
     --bad-soft: #2f1714;
-    --focus: #6cc3b0;
-    --shadow: none;
+    --level-molto: #4cc78f;
+    --level-adatta: #e8b45a;
+    --level-poco: #4a5a6e;
+    --focus: #8ec8ff;
+    --glass: rgb(14 21 31 / 0.74);
+    --hero: radial-gradient(90% 120% at 100% 0%, rgb(95 178 255 / 0.35) 0%, rgb(95 178 255 / 0) 60%), linear-gradient(135deg, #1b4f92 0%, #153f78 55%, #0f2f5c 100%);
+    --page-glow: radial-gradient(1100px 380px at 50% -160px, rgb(95 178 255 / 0.14), rgb(95 178 255 / 0));
+    --shadow: 0 0 0 1px rgb(255 255 255 / 0.03);
+    --shadow-lift: 0 0 0 1px rgb(255 255 255 / 0.05), 0 16px 36px rgb(0 0 0 / 0.45);
     color-scheme: dark;
   }
 }
@@ -76,11 +100,19 @@
   --color-warn-soft: var(--warn-soft);
   --color-bad: var(--bad);
   --color-bad-soft: var(--bad-soft);
+  --color-accent-glow: var(--accent-glow);
+  --color-fill: var(--fill);
+  --color-fill-hover: var(--fill-hover);
+  --color-level-molto: var(--level-molto);
+  --color-level-adatta: var(--level-adatta);
+  --color-level-poco: var(--level-poco);
 
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* SF Pro on Apple devices, Inter (bundled) everywhere else. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
 
-  --radius-card: 12px;
+  --radius-card: 18px;
   --shadow-card: var(--shadow);
+  --shadow-lift: var(--shadow-lift);
 }
 
 /* Base styles live in the base layer so Tailwind utilities always win. */
@@ -93,13 +125,15 @@
     line-height: 1.5;
     font-feature-settings: "cv11", "ss01";
     -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
     /* long e-mail addresses and links wrap instead of pushing the page sideways */
     overflow-wrap: break-word;
   }
 
   body {
     min-height: 100dvh;
-    background: var(--bg);
+    background: var(--page-glow) no-repeat, var(--bg);
     font-size: 15px;
   }
 
@@ -107,7 +141,7 @@
   h2,
   h3 {
     color: var(--ink);
-    letter-spacing: -0.015em;
+    letter-spacing: -0.022em;
     text-wrap: balance;
   }
 
@@ -124,9 +158,32 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--focus);
+    outline: 3px solid color-mix(in srgb, var(--focus) 55%, transparent);
     outline-offset: 2px;
-    border-radius: 6px;
+    border-radius: 8px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
+  }
+
+  /* Press feedback on every control, from pointer-down (Apple: respond the instant it is touched). */
+  button,
+  summary,
+  input[type="submit"],
+  .btn {
+    transition:
+      scale 0.18s var(--ease-out),
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.25s ease,
+      color 0.2s ease,
+      opacity 0.2s ease;
+  }
+  button:active:not(:disabled),
+  input[type="submit"]:active:not(:disabled),
+  a.btn:active {
+    scale: 0.97;
   }
 
   input[type="text"],
@@ -145,8 +202,11 @@
     color: var(--ink);
     background: var(--surface);
     border: 1px solid var(--line-strong);
-    border-radius: 8px;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    border-radius: 12px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.25s var(--ease-out),
+      background-color 0.2s ease;
   }
   textarea {
     min-height: 120px;
@@ -161,7 +221,7 @@
   textarea:focus {
     border-color: var(--accent);
     outline: none;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 20%, transparent);
   }
 
   input[type="checkbox"],
@@ -193,14 +253,14 @@
     color: var(--ink);
     background: var(--subtle);
     border: 1px solid var(--line-strong);
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .rise {
-    animation: rise 0.25s ease-out both;
+    animation: rise 0.5s var(--ease-out) both;
   }
   @keyframes rise {
     from {
@@ -222,10 +282,145 @@
   }
 }
 .anim-in {
-  animation: anim-in 220ms ease-out both;
+  animation: anim-in 280ms var(--ease-out) both;
 }
 @media (prefers-reduced-motion: reduce) {
   .anim-in {
     animation: none;
+  }
+}
+
+/*
+  Page headers sit on the blue gradient ("hero"). Buttons inside turn light so they stay
+  readable; unlayered on purpose so these win over the variant utilities.
+*/
+.hero {
+  background: var(--hero);
+  color: #fff;
+}
+.hero h1 {
+  color: #fff;
+}
+.hero a:not(.btn) {
+  color: #fff;
+}
+.hero .btn-primary,
+.hero .btn-accent {
+  background: #fff;
+  color: #134c9c;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 2px rgb(10 30 70 / 0.15);
+}
+.hero .btn-primary:hover,
+.hero .btn-accent:hover {
+  background: #eef5ff;
+}
+.hero .btn-secondary,
+.hero .btn-ghost,
+.hero .btn-danger {
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / 0.28);
+}
+.hero .btn-secondary:hover,
+.hero .btn-ghost:hover,
+.hero .btn-danger:hover {
+  background: rgb(255 255 255 / 0.22);
+}
+.hero :focus-visible {
+  outline-color: #fff;
+}
+
+.hero {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    var(--shadow-lift);
+}
+
+/* Frosted glass, as Apple's bars: translucent, blurred, slightly saturated. */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/*
+  Motion. Short and calm (0.2-0.5 s), ease-out curves, nothing loops.
+  Everything stops for people who ask the system for less motion.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  /* Each section fades up when you open it. */
+  .page-in {
+    animation: page-in 0.45s var(--ease-out) both;
+  }
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      translate: 0 10px;
+    }
+  }
+
+  /* Lists arrive one item after another (delay set inline, capped). */
+  .list-in {
+    animation: list-in 0.5s var(--ease-out) both;
+  }
+  @keyframes list-in {
+    from {
+      opacity: 0;
+      translate: 0 12px;
+      scale: 0.985;
+    }
+  }
+
+  /* Opening a disclosure reveals its content softly. */
+  details[open] > :not(summary) {
+    animation: reveal 0.32s var(--ease-out) both;
+  }
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      translate: 0 -6px;
+    }
+  }
+
+  /* Cards you can open lift on hover and give way when pressed. */
+  .lift {
+    transition:
+      translate 0.35s var(--ease-out),
+      scale 0.2s var(--ease-out),
+      box-shadow 0.35s var(--ease-out),
+      border-color 0.2s ease;
+  }
+  .lift:hover {
+    translate: 0 -2px;
+    box-shadow: var(--shadow-lift);
+  }
+  .lift:active {
+    scale: 0.99;
+  }
+
+  /* The active tab's icon settles in with a small spring. */
+  .tab-pop {
+    animation: tab-pop 0.4s var(--ease-spring) both;
+  }
+  @keyframes tab-pop {
+    from {
+      scale: 0.8;
+      opacity: 0.4;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled),
+  input[type="submit"]:active:not(:disabled),
+  a.btn:active {
+    scale: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }
