@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.4 · 2026-10-06
+
+- **Login**: "Sono l'amministratore" on the sign-in page opens the admin area with the admin account
+  (same limits on wrong passwords); unticked, it is the usual sign-in.
+
 ## 0.22.3 · 2026-10-06
 
 - **Company names from web results, fixed at the source**: the result-title parser no longer takes a

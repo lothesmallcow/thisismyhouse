@@ -27,6 +27,12 @@ test("wrong password gives one clear sentence", async ({ page }) => {
   await page.getByLabel("Password").fill("sbagliata");
   await page.getByRole("button", { name: "Entra" }).click();
   await expect(page.getByText("E-mail o password non corrette.")).toBeVisible();
+  // The same page opens the admin area for the administrator.
+  await page.getByLabel("E-mail").fill("admin@example.com");
+  await page.getByLabel("Password").fill("admin-compass");
+  await page.getByLabel("Sono l'amministratore").check();
+  await page.getByRole("button", { name: "Entra" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
 });
 
 test("Offerte (job search): ranked list with reasons, focus switch, search, filters, detail", async ({ page }) => {
