@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.21.5 · 2026-10-06
+
+- **Company = the name the page repeats most**, when nothing states it: the whole text of the offer's
+  page (from the search API's copy of the page, or our own visit) is scanned, catalog companies count
+  double, and menus, roles, places, months and the job site's own name never count. On job sites and
+  aggregators (Reed, Bright Network, eFinancialCareers…) only the job's own data, the company in the
+  address and the text count, never the site's name. The lookup now also runs on "Cerca ora" (10
+  offers per click), not only in the nightly run, and offers already looked at are looked at again.
+- **Expired ads**: a page that says so ("Annuncio di lavoro scaduto", "No longer accepting
+  applications", "This job has expired"…) marks the offer "Annuncio scaduto", ranked very low. An ad
+  published more than two weeks ago with no deadline ahead says "Potrebbe essere scaduta: controlla
+  prima di candidarti" (over a month: "Probabilmente scaduta") and ranks lower.
+- **Gmail**: the first reading goes back 10 days instead of a month (older alerts are often closed).
+- Cards say "Pubblicata …" when the ad's date is known, "Trovata …" otherwise.
+
 ## 0.21.4 · 2026-10-06
 
 - **The bank's name from its own page**: offers that arrive without a company (web results, some

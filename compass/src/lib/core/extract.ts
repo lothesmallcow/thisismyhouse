@@ -238,6 +238,8 @@ export type Eligibility =
   /** Not for first-year students (second year onwards). */
   | "dal-secondo-anno"
   | "magistrale"
+  /** The page says the ad has expired or no longer takes applications. */
+  | "scaduto"
   /** "Graduating in 2029", "class of 2029": the years of graduation it is for. */
   | `laurea-${number}`;
 
@@ -255,7 +257,12 @@ export const ELIGIBILITY_LABELS: Record<string, string> = {
   riservato: "Riservato a un gruppo specifico",
   "dal-secondo-anno": "Dal secondo anno in poi",
   magistrale: "Per studenti di magistrale",
+  scaduto: "Annuncio scaduto",
 };
+
+/** "Annuncio di lavoro scaduto", "No longer accepting applications", "This job has expired"… (folded text). */
+export const EXPIRED_AD =
+  /annuncio (?:di lavoro )?scaduto|offerta (?:di lavoro )?(?:scaduta|non piu disponibile)|non accetta piu candidature|(?:la )?posizione (?:e )?(?:stata )?(?:chiusa|coperta)|no longer accepting applications|(?:this |the )?(?:job|position|vacancy|role|posting|listing|advert) (?:has |is )?(?:expired|closed|been filled|no longer (?:available|open|active|accepting))|(?:this )?job (?:ad|posting) (?:has )?expired|applications (?:are |have )?(?:now )?closed for this|stellenangebot ist (?:nicht mehr|abgelaufen)|nicht mehr verfugbar|(?:cette )?offre (?:a )?expire|cette offre n.est plus (?:disponible|en ligne)/;
 
 export const eligibilityLabel = (e: string) => ELIGIBILITY_LABELS[e] ?? (/^laurea-\d{4}$/.test(e) ? `Per chi si laurea nel ${e.slice(7)}` : e);
 
@@ -278,6 +285,7 @@ export function extractEligibility(text: string): Eligibility[] {
   if (/(?:full |unrestricted |existing )?right to work in the (?:uk|us|usa|united kingdom|united states|country)|(?:do not|don.t|cannot|can.t|are unable to|unable to|will not) (?:offer |provide )?(?:visa )?sponsor|no (?:visa )?sponsorship|sponsorship (?:is )?not (?:available|offered)/.test(t)) out.add("diritto-lavoro");
   else if (/visa sponsorship (?:is |may be )?(?:available|offered|provided)|(?:can|will|may) sponsor (?:your |a )?(?:visa|work permit)/.test(t)) out.add("sponsor-visto");
   if (/(?:open|available|exclusively) (?:only )?(?:to|for) (?:women|female|black|ethnic minority|students who identify as)|(?:women|female)[- ]only|for (?:women|female students)|underrepresented (?:groups|backgrounds)|socio-?economic(?:ally)? (?:disadvantaged|background|criteria)|from (?:a )?(?:lower|low) (?:income|socio)|first[- ]generation (?:students|university|to attend)|social mobility (?:programme|program|scheme)|riservat[oa] (?:a|alle) (?:donne|studentesse)/.test(t)) out.add("riservato");
+  if (EXPIRED_AD.test(t)) out.add("scaduto");
   if (/(?:master'?s|msc|mba|postgraduate) (?:students )?only|(?:enrolled|studying) (?:in|on) a master|iscritt[oi] (?:a|ad) (?:una )?(?:laurea )?magistrale|studenti (?:di|della) (?:laurea )?magistrale/.test(t)) out.add("magistrale");
   // "Graduating in 2029", "class of 2029", "graduation date between 2028 and 2029", "laurea prevista nel 2029"
   for (const m of t.matchAll(/(?:graduat(?:ing|ion)(?: date)?|class of|expected to graduate|laurea (?:prevista )?(?:nel|entro il)|laureandi (?:nel|del))\D{0,25}(20[2-3]\d)(?:\s*(?:-|–|or|and|to|e|o)\s*(20[2-3]\d))?/g)) {

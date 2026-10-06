@@ -4,6 +4,10 @@
 import { parse } from "node-html-parser";
 import { fold } from "./text";
 
+/** Aggregators and job boards: a page there gives names, never an offer. */
+export const AGGREGATOR_HOST =
+  /(^|\.)(the-trackr\.com|trakvia\.de|gorizzume\.co\.uk|intervyo\.co\.uk|brightnetwork\.co\.uk|targetjobs\.co\.uk|gradcracker\.com|efinancialcareers\.[a-z.]+|ratemyplacement\.co\.uk|higherin\.com|prospects\.ac\.uk|icasfoundation\.org\.uk|yourfinancejob\.[a-z.]+|wallstreetoasis\.com|reddit\.com|studysmarter\.[a-z.]+|builtin\.com|glassdoor\.[a-z.]+|indeed\.[a-z.]+|linkedin\.com|infojobs\.[a-z.]+|jooble\.[a-z.]+|adzuna\.[a-z.]+|reed\.co\.uk|totaljobs\.com|cv-library\.co\.uk|monster\.[a-z.]+|stepstone\.[a-z.]+|welcometothejungle\.com|jobs\.ac\.uk|graduateland\.com|milkround\.com|handshake\.com|joinhandshake\.com|subito\.it|bakeca\.it|kijiji\.it|trovit\.[a-z.]+|careerjet\.[a-z.]+|jobrapido\.com|simplyhired\.[a-z.]+|ziprecruiter\.[a-z.]+|talent\.com)$/i;
+
 /** Job boards firms use for their own offers: an official source. */
 export const ATS_HOST = /(^|\.)(tal\.net|myworkdayjobs\.com|greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|workable\.com|personio\.(de|com)|successfactors\.(com|eu)|oraclecloud\.com|icims\.com|taleo\.net|avature\.net|eightfold\.ai|jobvite\.com|recruitee\.com|teamtailor\.com|breezy\.hr|intervieweb\.it|inrecruiting\.com)$/i;
 
@@ -47,6 +51,14 @@ function clean(s: string | null | undefined): string | null {
 
 /** Every name the page's code gives for its owner, best first (duplicates removed). */
 export function pageCompanyClues(html: string, url: string): string[] {
+  let host = "";
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    /* no address */
+  }
+  // On a job site or aggregator the page is theirs: only the job's own data and the company in the address count.
+  const thirdParty = AGGREGATOR_HOST.test(host);
   const out: string[] = [];
   const add = (s: string | null | undefined) => {
     const c = clean(s);
@@ -56,6 +68,12 @@ export function pageCompanyClues(html: string, url: string): string[] {
   for (const m of html.matchAll(/"hiringOrganization"\s*:\s*(?:\{[^{}]*?"name"\s*:\s*"([^"\\]{2,80})"|"([^"\\]{2,80})")/g)) add(m[1] ?? m[2]);
   for (const m of html.matchAll(/"@type"\s*:\s*"(?:Organization|Corporation|BankOrCreditUnion|FinancialService)"[^{}]*?"name"\s*:\s*"([^"\\]{2,80})"/g)) add(m[1]);
   for (const m of html.matchAll(/"(?:companyName|company_name|employerName|organizationName|hiringCompany)"\s*:\s*"([^"\\]{2,80})"/g)) add(m[1]);
+  if (thirdParty) {
+    // "/graduate-jobs/citadel/…", "/employer/citadel", "/company/citadel"
+    const slug = url.match(/\/(?:graduate-jobs|internships?|employers?|company|companies|organisations?|recruiters?|azienda|aziende|cmp)\/([a-z0-9-]{2,60})(?:\/|$|\?)/i)?.[1];
+    if (slug && !/^(?:search|all|jobs?|london|uk|it|latest|new)$/i.test(slug)) add(slug.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "));
+    return out;
+  }
   const root = parse(html, { blockTextElements: { script: false, style: false } });
   const meta = (sel: string) => root.querySelector(sel)?.getAttribute("content");
   // 2. The site's own name.

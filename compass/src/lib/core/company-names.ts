@@ -177,3 +177,66 @@ export function catalogSpelling<T extends KnownCompany>(name: string, known: T[]
   const compact = k.replace(/ /g, "");
   return known.find((c) => [c.name, ...c.aliases].some((a) => nameKey(a).replace(/ /g, "") === compact)) ?? null;
 }
+
+/** Words that are capitalised on job pages without naming the employer (menus, roles, places, sites). */
+const NOT_EMPLOYER = new Set(
+  (
+    "sign signin register login logout apply now save share back next previous skip main content menu cookie cookies policy privacy terms conditions notice statement accept reject manage preferences settings help faq support english italiano deutsch francais language accessibility search find jobs job careers career home homepage about us contact follow " +
+    "linkedin indeed glassdoor reed google facebook twitter instagram youtube tiktok whatsapp email e-mail mail microsoft apple android ios app store play download bright network brightnetwork efinancialcareers targetjobs gradcracker prospects trackr stepstone welcome jungle infojobs totaljobs monster adzuna jooble tavily " +
+    "internship internships intern interns programme programmes program programs summer spring winter autumn insight analyst analysts associate associates graduate graduates trainee stage tirocinio scheme opportunity opportunities role roles position positions vacancy vacancies team teams division department " +
+    "investment banking bank banks capital markets debt equity corporate private wealth management asset assets finance financial services m&a mergers acquisitions advisory sales trading research risk operations technology global markets securities " +
+    "full time part permanent contract temporary hybrid remote office location locations london milan milano rome roma paris frankfurt new york city united kingdom states italy italia europe emea uk usa " +
+    "january february march april may june july august september october november december monday tuesday wednesday thursday friday saturday sunday today yesterday week weeks month months year years day days " +
+    "we you our your the a an and or of in on at to for with by from is are be this that these those it its their us i my me he she they who what when where how why all any more most new"
+  ).split(" "),
+);
+
+/**
+ * The employer as the most frequent name on the page: catalog companies (counted double) and the
+ * capitalised names it repeats ("Citadel" four times). Words of the title, of `avoid` (the site's own
+ * name) and of menus, roles and places do not count. A name needs two mentions, a catalog one one.
+ */
+export function mostFrequentName<T extends KnownCompany>(text: string, known: T[], opts: { avoid?: string[]; title?: string } = {}): string | null {
+  const avoid = new Set([...(opts.avoid ?? []), opts.title ?? ""].flatMap((s) => fold(s).split(/[^a-z0-9&]+/)).filter((w) => w.length > 1));
+  const score = new Map<string, { name: string; n: number }>();
+  const add = (key: string, name: string, n: number) => {
+    const cur = score.get(key);
+    score.set(key, { name: cur?.name ?? name, n: (cur?.n ?? 0) + n });
+  };
+  // Catalog companies: every mention, counted double.
+  const flat = ` ${fold(text).replace(/\./g, "").replace(/[^a-z0-9&]+/g, " ")} `;
+  for (const c of known) {
+    let n = 0;
+    for (const k of new Set([c.name, ...c.aliases].map(nameKey).filter(usable))) {
+      if (k.split(" ").every((w) => avoid.has(w) || NOT_EMPLOYER.has(w))) continue;
+      for (let at = flat.indexOf(` ${k} `); at >= 0; at = flat.indexOf(` ${k} `, at + 1)) n++;
+    }
+    if (n) add(`catalog:${c.id}`, c.name, 2 * n);
+  }
+  // Any capitalised name: "Citadel", "Point72", "BNP Paribas", "J.P. Morgan", "Rothschild & Co".
+  const NAME = /\b([A-Z][A-Za-z0-9'’.-]*[A-Za-z0-9](?:\s+(?:&|and|de|di|del|von|van|of|du)?\s*[A-Z][A-Za-z0-9'’.-]*[A-Za-z0-9]){0,3})/g;
+  for (const m of text.matchAll(NAME)) {
+    const words = m[1].split(/\s+/);
+    // Trim menu, role and place words at both ends ("Apply to Citadel" → "Citadel").
+    const isNoise = (w: string) => {
+      const f = fold(w).replace(/[^a-z0-9&]/g, "");
+      return !f || NOT_EMPLOYER.has(f) || avoid.has(f) || COMMON.has(f) || /^\d+$/.test(f);
+    };
+    while (words.length && isNoise(words[0])) words.shift();
+    while (words.length && (isNoise(words[words.length - 1]) || /^(?:&|and|de|di|del|von|van|of|du)$/i.test(words[words.length - 1]))) words.pop();
+    if (!words.length) continue;
+    const name = words.join(" ");
+    const key = nameKey(name);
+    if (key.replace(/[^a-z0-9]/g, "").length < 3 || words.length > 4) continue;
+    add(`name:${key}`, name, 1);
+  }
+  let best: { name: string; n: number; catalog: boolean } | null = null;
+  for (const [k, v] of score) {
+    const catalog = k.startsWith("catalog:");
+    if (!catalog && v.n < 2) continue;
+    if (!best || v.n > best.n || (v.n === best.n && catalog && !best.catalog)) best = { ...v, catalog };
+  }
+  if (!best) return null;
+  // A free name that is a catalog company's: the catalog's spelling.
+  return best.catalog ? best.name : (catalogSpelling(best.name, known)?.name ?? best.name);
+}

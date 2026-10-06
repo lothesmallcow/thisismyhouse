@@ -26,7 +26,7 @@ const MESSAGES: Record<string, { tone: "success" | "info" | "warn" | "danger"; t
   "conferma-elimina": { tone: "warn", text: "Per confermare scrivi ELIMINA nel campo." },
   "password-sbagliata": { tone: "warn", text: "La password non è corretta." },
   "scegli-situazione": { tone: "warn", text: "Scegli prima cosa fai ora: serve a farti le domande giuste." },
-  "gmail-collegata": { tone: "success", text: "Gmail collegata. Sto leggendo gli avvisi dell'ultimo mese: le offerte arrivano tra poco in Offerte." },
+  "gmail-collegata": { tone: "success", text: "Gmail collegata. Sto leggendo gli avvisi degli ultimi 10 giorni (quelli più vecchi spesso sono già scaduti): le offerte arrivano tra poco in Offerte." },
   "gmail-scollegata": { tone: "success", text: "Gmail scollegata: Compass non può più leggerla e il permesso è stato tolto anche su Google." },
   "gmail-annullato": { tone: "info", text: "Collegamento annullato: quando vuoi, riprova." },
   "gmail-permesso-mancante": { tone: "warn", text: "Google non ha dato il permesso di leggere le e-mail: riprova e lascia spuntata la casella \"Visualizzare i tuoi messaggi email\"." },
