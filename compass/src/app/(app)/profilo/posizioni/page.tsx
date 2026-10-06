@@ -63,7 +63,6 @@ export default async function PosizioniPage({ searchParams }: { searchParams: Pr
           }
           more={more}
           others={others}
-          suggestions={all.map((x) => x.it)}
         />
       </Card>
       <p className="mt-4 text-[13px] text-muted">

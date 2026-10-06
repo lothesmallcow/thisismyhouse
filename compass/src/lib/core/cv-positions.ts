@@ -5,6 +5,7 @@ import { findPosition, POSITIONS, specificTitles, isGenericRole } from "../catal
 import { sheetFor } from "../catalog/role-sheets";
 import { levelBracket } from "./search-code";
 import { fold } from "./text";
+import { allOccupations } from "../catalog/occupations";
 
 export interface CvPositionInput {
   track: "lavoro" | "stage";
@@ -109,6 +110,15 @@ export function recommendPositions(i: CvPositionInput): CvPosition[] {
       if (!p.sector || (p.track !== "tutti" && p.track !== i.track)) continue;
       const hit = [p.it, p.en].find((n) => n.length >= 6 && text.includes(` ${fold(n).replace(/[^a-z0-9]+/g, " ").trim()} `));
       if (hit && !notJobs.has(fold(hit)) && !notJobs.has(fold(p.it))) add(p.it, "Compare nel tuo CV", "nel-cv");
+    }
+    // 3b. Any other occupation the CV names in full (ESCO, every name it goes by; two words or more,
+    // so "manager" alone or "analista" alone never count).
+    for (const o of allOccupations()) {
+      const hit = [o.it, o.en, ...o.alt.it, ...o.alt.en]
+        .map((n) => n.split("/")[0])
+        .find((n) => n.trim().split(/\s+/).length >= 2 && n.length >= 10 && text.includes(` ${fold(n).replace(/[^a-z0-9]+/g, " ").trim()} `));
+      if (hit && !notJobs.has(fold(hit))) add(o.it.split("/")[0], "Compare nel tuo CV", "nel-cv");
+      if (out.length >= MAX) break;
     }
   }
   return out;

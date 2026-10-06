@@ -37,3 +37,17 @@ describe("startup configuration check", () => {
     expect(() => assertEnv({})).not.toThrow();
   });
 });
+
+describe("the site's address", () => {
+  it("on Vercel production: the project's production domain, whatever APP_URL says", async () => {
+    const { env } = await import("@/lib/env");
+    const keep = { ...process.env };
+    process.env.APP_URL = "https://old-address.vercel.app";
+    process.env.VERCEL_ENV = "production";
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "compass-swart-gamma.vercel.app";
+    expect(env.appUrl).toBe("https://compass-swart-gamma.vercel.app");
+    process.env.VERCEL_ENV = "preview";
+    expect(env.appUrl).toBe("https://old-address.vercel.app");
+    process.env = keep;
+  });
+});

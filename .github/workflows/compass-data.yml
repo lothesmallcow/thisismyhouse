@@ -1,0 +1,39 @@
+# Compass reference data from open sources, refreshed by hand or when the importer changes:
+# every ESCO occupation (European Commission) in Italian, English, German and French, with the other
+# names people use and the skills each needs. Commits compass/data/world/occupations.json back to the
+# branch it ran on. Logs print counts only.
+name: Compass data
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main] # on main the data arrives through a pull request, never a direct push
+    paths:
+      - compass/scripts/import-esco-api.mjs
+permissions:
+  contents: write
+concurrency:
+  group: compass-data-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  esco:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: compass
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Import ESCO occupations
+        run: node scripts/import-esco-api.mjs
+      - name: Commit the data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/world/occupations.json
+          if git diff --cached --quiet; then echo "No change."; exit 0; fi
+          git commit -m "data: ESCO occupations (ESCO, European Commission)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

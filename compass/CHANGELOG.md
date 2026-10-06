@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.23.0 · 2026-10-06
+
+- **Every profession, by every name it goes by**: all ESCO occupations of the European Commission
+  (about 3,000, in Italian, English, German and French, with the other names people use and the
+  skills each needs: data/world/occupations.json, refreshed by the "Compass data" workflow). "Sales
+  manager", "Responsabile vendite", "Direttore commerciale" are the same job; each is searched in the
+  language of each country.
+- **The role step asks what they want**: the same job (or a similar one), a change they can name, or
+  a change they want suggested; and the job they do now. Every role field suggests real titles while
+  typing. "Suggest me" shows the jobs that need most of the skills they already have, with the share
+  and the skills in common ("94% delle competenze · in comune: negoziare contratti…").
+- **CV**: any occupation the CV names in full (two words or more) is recommended too.
+- **Offers from the employers' own boards** (the ones banks and large companies use): Workday, Oracle
+  Recruiting, Eightfold and Recruitee join Greenhouse, Lever, Ashby, SmartRecruiters, Workable and
+  Personio, read through the public endpoint each career site itself uses. Big boards are searched with
+  the roles people look for, not read whole.
+- **A registry that grows by itself**: any offer link that belongs to one of those boards (a web
+  result, an alert, a careers page) adds the employer's whole board; "Fai web scraping" and the runs
+  every three hours also search those boards directly for everyone's roles and places, and read the
+  boards found in rotation. Boards nobody chose keep only offers carrying one of the searched roles.
+- Admin → Aziende accepts a pasted link to any offer to add its board.
+- **The search code becomes a grammar of searches**, best first: the role in each place (job sites,
+  API), the role on employers' boards, the role at each chosen company ("Sales manager" Gucci, on the
+  boards and on LinkedIn, plus "Gucci lavora con noi"), the role in each chosen sector ("Sales
+  manager moda Milano", API, job sites and boards), its English title in Italy and its other names,
+  remote and part-time when wanted; students: internships and graduate programmes at their companies
+  and in their sectors. Each runs at most once a day and in turn within the daily caps, so the whole
+  list is worked through in a few days; each "Fai web scraping" takes one of each family first.
+  Profilo → Il tuo codice shows them all.
+
+## 0.22.7 · 2026-10-06
+
+- **The site's address follows Vercel**: on production deployments links, e-mails and "Collega
+  Gmail" use the project's production domain as Vercel reports it, so a stale APP_URL can no longer
+  send people to a 404.
+- **Admin password**: at least 6 characters (was 12), from the host's secrets as before.
+
 ## 0.22.6 · 2026-10-06
 
 - **Sign-in**: after a wrong password you can retry at once; only 10 wrong ones in 15 minutes pause

@@ -21,9 +21,14 @@ import { getProfile } from "../server/profile";
 import { getSettings } from "../server/settings";
 import { bump, usageToday, W1_HARD_MAX } from "./discover";
 import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
+import { queryWords } from "../core/search-code";
 import { programmeQueries, searchProgrammes } from "./programmes";
 import { stageOf } from "../core/rank";
 import { getPrefs, listSectors } from "../server/catalog";
+import { feedFromUrl } from "../sources/ats/feeds";
+import { feedName, learnFeeds, registerFeed } from "../server/feeds";
+import { roleTerms, titleMatches } from "../core/relevance";
+import { searchKeywords } from "./search-terms";
 
 /** At most one quick search per person in this many minutes ("Cerca ora" can be pressed often). */
 export const QUICK_SEARCH_EVERY_MIN = 10;
@@ -36,9 +41,10 @@ const BUDGET_MS = 45_000;
 const COMPANIES = 12; // chosen companies looked at, best fits first
 const FEEDS = 15; // job boards read
 const RECHECK_DAYS = 30; // a company without a public board is looked for again after this
-const WEB = 5; // web searches on the job sites (from the shared daily cap)
+const WEB = 6; // web searches per click, one of each family first (from the shared daily cap)
 const API = 2; // job API calls
 const PROGRAMME_QUERIES = 2; // students: web searches for programme pages
+const NEW_BOARDS = 4; // boards found that way read at once
 
 export interface QuickDeps {
   fetchImpl: FetchLike;
@@ -95,15 +101,24 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
       out.found++;
       if ((await upsertRawJob(db, j, now, { cache, contexts })).created) out.created++;
     }
+    // Every employer board behind these links is learned: next time its whole board is read.
+    out.boardsFound += await learnFeeds(db, jobs).catch(() => 0);
     await progress();
   };
+  // What they look for, in the words boards use (Workday and Oracle boards are searched, not read whole).
+  const keywords = searchKeywords(profile.roles, profile.synonyms);
+  const terms = roleTerms(keywords);
+  const prefs0 = await getPrefs(db, userId);
+  const chosen = new Set([...prefs0.companies.entries()].filter(([, v]) => v === "like").map(([id]) => id));
 
   // The companies to read: those chosen, then every company of the sectors of the positions searched.
   const targets = await searchTargets(db, userId);
   const stale = (d: Date | null | undefined) => !d || now.getTime() - d.getTime() > RECHECK_DAYS * 86_400_000;
-  const readFeed = async (c: Company) => {
+  const readFeed = async (c: Pick<Company, "id" | "name" | "ats" | "atsSlug">) => {
     try {
-      await save(await fetchAts(deps.fetchImpl, c.ats as AtsType, c.atsSlug!, c.name, countries));
+      const jobs = await fetchAts(deps.fetchImpl, c.ats as AtsType, c.atsSlug!, c.name, countries, { keywords });
+      // A company they chose: everything it offers in their countries. Any other: only their roles.
+      await save(chosen.has(c.id) || profile.track === "stage" ? jobs : jobs.filter((j) => titleMatches(j.title, terms)));
       out.feeds++;
     } catch {
       // One board down never stops the others; the daily run tries again.
@@ -153,21 +168,40 @@ export async function runQuickSearch(db: DB, userId: number, deps: QuickDeps): P
     }));
   }
 
-  // 2. Web search on the job sites (its key set): this person's searches, within the shared daily cap.
+  // The search code: every search worth making for this person, best first.
   const code = await searchCodeFor(db, userId, now);
   const settings = await getSettings(db);
+
+  // 2. Web searches from their search code, a mix of every family each click (the role on the job
+  // sites, on employers' boards, at their companies, in their sectors, its other names), within the
+  // shared daily cap. Each search runs at most once a day; the next clicks take the next ones.
   if (deps.web && settings.w1Enabled) {
     const cap = Math.min(settings.w1DailyCap, W1_HARD_MAX);
-    const planned = (await freshQueries(db, code.queries.filter((q) => q.channel === "web"), now)).slice(0, WEB);
+    const fresh = await freshQueries(db, code.queries.filter((q) => q.channel === "web"), now);
+    const byKind = new Map<string, typeof fresh>();
+    for (const q of fresh) byKind.set(q.kind ?? "ruolo", [...(byKind.get(q.kind ?? "ruolo") ?? []), q]);
+    const planned: typeof fresh = [];
+    for (let i = 0; planned.length < WEB && [...byKind.values()].some((l) => l[i]); i++) for (const l of byKind.values()) if (l[i] && planned.length < WEB) planned.push(l[i]);
     for (const q of planned) {
-      if ((await usageToday(db, "w1-queries", now)) >= cap) break;
+      if ((await usageToday(db, "w1-queries", now)) >= cap || Date.now() >= deadline) break;
       await bump(db, "w1-queries", now);
       try {
-        const what = profile.track === "lavoro" && q.sites?.length ? `"${q.what}"` : q.what;
-        const hits = await deps.web.search({ q: `${what} ${q.where}`.trim(), ...(q.sites?.length ? { includeDomains: q.sites } : {}) });
+        const quote = profile.track === "lavoro" && Boolean(q.sites?.length);
+        const where = q.kind === "azienda" && !q.where ? "" : q.where;
+        const hits = await deps.web.search({ q: `${queryWords(q, quote)} ${where}`.trim(), ...(q.sites?.length ? { includeDomains: q.sites } : {}) });
         await markSearched(db, q.key, hits.length, now);
-        await save(hits.filter((h) => isJobPage(h.url)).map(hitToRawJob));
+        const jobs = hits.filter((h) => isJobPage(h.url)).map(hitToRawJob);
+        await save(jobs);
         out.web++;
+        // Results on employers' boards: those boards are read now, for their roles.
+        const seen = new Set<string>();
+        for (const j of jobs) {
+          const f = j.url ? feedFromUrl(j.url) : null;
+          if (!f || seen.has(`${f.ats}:${f.slug}`) || seen.size >= NEW_BOARDS || Date.now() >= deadline) continue;
+          seen.add(`${f.ats}:${f.slug}`);
+          const id = await registerFeed(db, f, j.company ?? null);
+          if (id != null) await readFeed({ id, name: j.company || feedName(f), ats: f.ats, atsSlug: f.slug });
+        }
       } catch {
         // Try again in the daily run.
       }

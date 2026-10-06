@@ -125,6 +125,8 @@ export const profile = sqliteTable(
   /** Work: years of experience as they said it (the CV timeline counts first), current role, notice. */
   yearsExperience: integer("years_experience"),
   currentRole: text("current_role").notNull().default(""),
+  /** Work: "stesso" (the same job), "cambio" (a different one they name), "esplora" (change, not sure to what). */
+  careerGoal: text("career_goal").$type<"stesso" | "cambio" | "esplora">(),
   noticePeriod: text("notice_period").notNull().default(""),
   /** Students: what they do besides studying ("associazione", "sport", "volontariato"...). */
   activities: json<string[]>("activities").notNull().default([]),
@@ -305,7 +307,7 @@ export const catalogCompanies = sqliteTable("catalog_companies", {
   track: text("track").$type<CatalogTrack>().notNull().default("tutti"),
   note: text("note"),
   /** Optional public ATS feed (filled in by the admin after checking it). */
-  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio"] }),
+  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio", "workday", "oracle", "eightfold", "recruitee"] }),
   atsSlug: text("ats_slug"),
   /** When Compass last looked for its public job board on its own (sources/ats/discover.ts). */
   atsCheckedAt: ts("ats_checked_at"),
@@ -316,7 +318,7 @@ export const catalogCompanies = sqliteTable("catalog_companies", {
   shared: integer("shared", { mode: "boolean" }).notNull().default(true),
   /** curato = hand-made list; altro = added by a person; borsa = listed companies (shown when searched or chosen). */
   /** + registro = imported from an official company register (scripts/import-register.ts). */
-  source: text("source").$type<"curato" | "altro" | "borsa" | "registro">().notNull().default("curato"),
+  source: text("source").$type<"curato" | "altro" | "borsa" | "registro" | "scoperta">().notNull().default("curato"),
   country: text("country").notNull().default("IT"),
   region: text("region"),
   website: text("website"),
@@ -398,7 +400,7 @@ export const processedMessages = sqliteTable("processed_messages", {
 export const companyWatchlist = sqliteTable("company_watchlist", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
-  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio"] }).notNull(),
+  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio", "workday", "oracle", "eightfold", "recruitee"] }).notNull(),
   slug: text("slug").notNull(),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   createdAt: createdAt(),

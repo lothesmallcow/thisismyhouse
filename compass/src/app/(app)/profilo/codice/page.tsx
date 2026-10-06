@@ -1,4 +1,5 @@
 import { BackLink } from "@/components/back-link";
+import { queryWords } from "@/lib/core/search-code";
 import { IconExternal } from "@/components/icons";
 import { Card, Chip, PageHeader, SectionTitle } from "@/components/ui";
 import { countryName } from "@/lib/core/geo";
@@ -51,14 +52,14 @@ export default async function CodicePage() {
       </ul>
 
       <SectionTitle>Le ricerche del tuo codice</SectionTitle>
-      <p className="-mt-1 mb-3 text-[13.5px] text-muted">Fatte ogni mattina, al massimo una volta al giorno ciascuna (anche se condivise con altre persone), solo nei paesi e nelle zone che hai scelto.</p>
+      <p className="-mt-1 mb-3 text-[13.5px] text-muted">Il ruolo per luogo, sulle bacheche delle aziende, nelle aziende e nei settori che hai scelto, con gli altri nomi del ruolo. Ognuna al massimo una volta al giorno (anche se condivisa con altre persone), a turno entro i limiti giornalieri: in pochi giorni le fa tutte.</p>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="!p-4">
           <p className="text-[14px] font-semibold">Siti di offerte (API) · {api.length}</p>
           <ul className="mt-2 space-y-1 text-[13px] text-muted">
             {api.map((q) => (
               <li key={q.key}>
-                {q.what} · {q.where || countryName(q.country)}
+                {queryWords(q)} · {q.where || countryName(q.country)}
                 {q.distanceKm ? ` (${q.distanceKm} km)` : ""}
               </li>
             ))}
@@ -69,7 +70,7 @@ export default async function CodicePage() {
           <ul className="mt-2 space-y-1 text-[13px] text-muted">
             {web.map((q) => (
               <li key={q.key}>
-                {q.what} · {q.where || countryName(q.country)} {q.sites?.length ? <Chip>{q.sites[0]}</Chip> : null}
+                {queryWords(q)} · {q.where || (q.kind === "azienda" ? "ovunque" : countryName(q.country))} {q.sites && q.sites.length > 3 ? <Chip>bacheche delle aziende</Chip> : q.sites?.length ? <Chip>{q.sites[0]}</Chip> : null}
               </li>
             ))}
           </ul>

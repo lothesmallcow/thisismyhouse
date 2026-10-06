@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: import.meta.dirname,
   // Kept out of every server function (Vercel stores each one per deployment): the company registers
   // (22 MB, read only by scripts/migrate.ts), the local database, and libsql's musl build (Vercel runs glibc).
+  // Read from disk at run time (catalog/occupations.ts): shipped with the server functions.
+  outputFileTracingIncludes: { "*": ["data/world/occupations.json"] },
   outputFileTracingExcludes: { "*": ["data/world/registers/**", "data/local/**", "node_modules/@libsql/linux-x64-musl/**"] },
   turbopack: { root: import.meta.dirname },
   // GitHub Codespaces (demo trial, .devcontainer/): pages come through *.app.github.dev.

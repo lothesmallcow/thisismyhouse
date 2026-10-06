@@ -43,9 +43,20 @@ export async function saveStepAction(f: FormData) {
       case "ruolo": {
         if (str(f, "fase") === "sinonimi") {
           patch.synonyms = [...f.getAll("synonym").map(String), ...lines(str(f, "extra"))];
+        } else if (str(f, "fase") === "cambio") {
+          // The jobs picked among those close to theirs (plus any written): these are searched.
+          const roles = [...new Set([...f.getAll("role").map(String), ...lines(str(f, "extra"))].map((r) => r.trim().slice(0, 80)).filter(Boolean))].slice(0, 6);
+          await updateProfile(db, user.id, { roles });
+          if (roles.length > 0 && suggestSynonyms(roles).length > 0) redirect(`/benvenuto/${n}?fase=sinonimi${back ? "&ritorno=profilo" : ""}`);
         } else {
-          const roles = [1, 2, 3, 4, 5].map((k) => str(f, `role${k}`)).filter(Boolean);
-          await updateProfile(db, user.id, { roles, priority: priorityOf(f, current.priority) });
+          const goalRaw = str(f, "careerGoal");
+          const careerGoal = goalRaw === "cambio" || goalRaw === "esplora" ? goalRaw : goalRaw === "stesso" ? "stesso" : current.careerGoal;
+          const currentRole = f.has("currentRole") ? str(f, "currentRole").slice(0, 120) : current.currentRole;
+          let roles = [1, 2, 3, 4, 5].map((k) => str(f, `role${k}`)).filter(Boolean);
+          // The same job, nothing written: their current one is the one to search.
+          if (careerGoal === "stesso" && !roles.length && currentRole) roles = [currentRole];
+          await updateProfile(db, user.id, { roles: careerGoal === "esplora" ? current.roles : roles, currentRole, careerGoal: careerGoal ?? null, priority: priorityOf(f, current.priority) });
+          if (careerGoal === "esplora") redirect(`/benvenuto/${n}?fase=cambio${back ? "&ritorno=profilo" : ""}`);
           if (roles.length > 0 && suggestSynonyms(roles).length + current.synonyms.length > 0) {
             redirect(`/benvenuto/${n}?fase=sinonimi${back ? "&ritorno=profilo" : ""}`);
           }

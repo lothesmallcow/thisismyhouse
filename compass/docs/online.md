@@ -25,7 +25,7 @@ pagine dei segreti di Vercel e di GitHub, come indicato sotto.
 
 ## 3. Tre segreti casuali
 Su un terminale (anche quello del Codespace) esegui tre volte `openssl rand -hex 32` e annota:
-`SESSION_SECRET`, `CRON_SECRET` e una password admin di almeno 12 caratteri (`SEED_ADMIN_PASSWORD`).
+`SESSION_SECRET`, `CRON_SECRET` e una password admin di almeno 6 caratteri (`SEED_ADMIN_PASSWORD`).
 
 ## 4. Sito su Vercel (10 min)
 1. Registrati su vercel.com con GitHub (piano Hobby, gratuito, uso non commerciale).
@@ -52,7 +52,7 @@ Su un terminale (anche quello del Codespace) esegui tre volte `openssl rand -hex
 2. Scheda **Secrets**: aggiungi `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `SESSION_SECRET`,
    `CRON_SECRET`, `MAILBOX_USER`, `MAILBOX_APP_PASSWORD`, `CONTACT_EMAIL`,
    `SEED_ADMIN_EMAIL` (la tua e-mail personale: è l'account admin), `SEED_ADMIN_PASSWORD` (la
-   scegli tu, almeno 12 caratteri: senza, il setup si ferma), `ADMIN_ALERT_EMAIL` (di nuovo la tua e-mail).
+   scegli tu, almeno 6 caratteri: senza, il setup si ferma), `ADMIN_ALERT_EMAIL` (di nuovo la tua e-mail).
    Più avanti: `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `TAVILY_API_KEY` (passo 7).
 3. Scheda **Variables**: `DEMO_MODE` = `false`, `APP_URL` = l'indirizzo di Vercel.
    Facoltativo: `REGISTERS` = `IT` (predefinito: solo le aziende italiane dei registri; `IT,GB,DE,FR`
@@ -64,7 +64,7 @@ Su un terminale (anche quello del Codespace) esegui tre volte `openssl rand -hex
 1. Vai su `<indirizzo>/entra`, spunta "Sono l'amministratore" ed entra con `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD`.
    L'account admin si ripara da solo a ogni lavoro programmato (e a ogni deploy, se le stesse variabili
    sono anche su Vercel): creato se manca, riattivato e con la password del secret. Per cambiare la
-   password admin: aggiorna il secret `SEED_ADMIN_PASSWORD` (almeno 12 caratteri) e lancia "Compass jobs".
+   password admin: aggiorna il secret `SEED_ADMIN_PASSWORD` (almeno 6 caratteri) e lancia "Compass jobs".
 2. Predefinito: **su richiesta**. Chiunque abbia il link chiede l'accesso da "Crea un account";
    l'account resta bloccato, a te (`ADMIN_ALERT_EMAIL`) arriva un'e-mail, e in Admin → Persone →
    "Richieste di accesso" premi **Approva** (la persona riceve un'e-mail e può entrare) o **Rifiuta**

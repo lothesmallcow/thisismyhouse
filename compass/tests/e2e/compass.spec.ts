@@ -817,3 +817,24 @@ test("CV upload, then delete all data and redo the job questionnaire", async ({ 
   await expect(page.getByText(/Moncalieri/)).toBeVisible();
   await expect(page.getByText(/1\.?200 € netti al mese · nascondo quelle sotto/)).toBeVisible();
 });
+
+test("role step: real job titles while typing, and a career change suggested from the current job", async ({ page }) => {
+  await loginAsHer(page);
+  await page.goto("/benvenuto/2?ritorno=profilo");
+  await expect(page.getByRole("heading", { name: "Che lavoro cerchi?" })).toBeVisible();
+  // Typing suggests real titles (every ESCO occupation by any of its names).
+  await page.getByLabel("Il tuo lavoro attuale (o l'ultimo)").fill("sales man");
+  const option = page.getByRole("option", { name: /^Responsabile delle vendite\s*Sales manager/ });
+  await expect(option).toBeVisible();
+  await option.click();
+  await expect(page.getByLabel("Il tuo lavoro attuale (o l'ultimo)")).toHaveValue("Responsabile delle vendite");
+  // Not sure what to change to: the jobs closest by skills, with the share and the skills in common.
+  await page.getByText("Voglio cambiare ma non so verso cosa").click();
+  await page.getByRole("button", { name: "Salva" }).click();
+  await expect(page.getByRole("heading", { name: "Lavori vicini al tuo" })).toBeVisible();
+  await expect(page.getByText(/% delle competenze · in comune:/).first()).toBeVisible();
+  await assertUiBasics(page);
+  await page.getByRole("button", { name: "Salva" }).click();
+  await page.goto("/profilo");
+  await expect(page.getByText(/Responsabile del marketing/).first()).toBeVisible();
+});

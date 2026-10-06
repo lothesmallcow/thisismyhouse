@@ -3,6 +3,8 @@
 // (an Italian "Impiegata amministrativa" is an "Administrative Assistant" in London).
 // Format: it | en | de | fr | sector slug | track (l = lavoro, s = stage, t = both)
 
+import { allOccupations } from "./occupations";
+
 const RAW = `
 Impiegata amministrativa|Administrative assistant|Verwaltungsangestellte|Employée administrative|amministrazione|l
 Impiegato amministrativo|Administrative clerk|Verwaltungsangestellter|Employé administratif|amministrazione|l
@@ -205,6 +207,13 @@ const firstForm = (s: string) => s.split("/")[0].trim();
  */
 function escoPositions(): Position[] {
   if (typeof window !== "undefined") return [];
+  // The full import (data/world/occupations.json): every occupation, with its four names; plus the
+  // older CSV import (positions-esco.json) when present.
+  const full = allOccupations().map((o) => ({ it: firstForm(o.it), en: firstForm(o.en), de: firstForm(o.de), fr: firstForm(o.fr), sector: "", track: "tutti" as const }));
+  return [...legacyEsco(), ...full];
+}
+
+function legacyEsco(): Position[] {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require("node:fs") as typeof import("node:fs");
@@ -226,7 +235,9 @@ export const POSITIONS: Position[] = (() => {
 })();
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
-const BY_NAME = new Map(POSITIONS.flatMap((p) => [p.it, p.en, p.de, p.fr].map((n) => [norm(n), p] as const)));
+// The first position with a name wins (the hand-made ones, which carry a sector, come first).
+const BY_NAME = new Map<string, Position>();
+for (const p of POSITIONS) for (const n of [p.it, p.en, p.de, p.fr]) if (!BY_NAME.has(norm(n))) BY_NAME.set(norm(n), p);
 
 /** The position a typed role refers to, in any of the four languages. */
 export function findPosition(role: string): Position | undefined {

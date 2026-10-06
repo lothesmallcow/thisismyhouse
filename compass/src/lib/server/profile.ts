@@ -1,4 +1,6 @@
 // One profile per account. Also converts it (plus catalog choices) into the ranking profile.
+import { findOccupation, occupationNames } from "../catalog/occupations";
+import { fold } from "../core/text";
 import { isGenericRole, specificTitles, translations } from "../catalog/positions";
 import { levelBracket } from "../core/search-code";
 import { COUNTRIES } from "../core/geo";
@@ -88,11 +90,22 @@ export const ROLE_SYNONYMS: Record<string, string[]> = {
   "data entry": ["Addetta inserimento dati", "Back office", "Impiegata d'ordine"],
 };
 
+/** "animatore 3D/animatrice 3D" → "Animatore 3D": the first form, capitalised (as listings write it). */
+const firstForm = (s: string) => {
+  const f = s.split("/")[0].trim();
+  return f.charAt(0).toUpperCase() + f.slice(1);
+};
+
 export function suggestSynonyms(roles: string[]): string[] {
   const out = new Set<string>();
   // Generic roles first: the precise titles listings use ("venditrice moda" → "Client advisor"...).
   for (const r of roles) if (isGenericRole(r)) for (const t of specificTitles(r)) out.add(t);
   for (const r of roles) for (const s of ROLE_SYNONYMS[r.trim().toLowerCase()] ?? []) out.add(s);
-  for (const r of roles) out.delete(r);
-  return [...out];
+  // Every other name ESCO knows for it ("Responsabile vendite" = "Sales manager", "Direttore commerciale").
+  for (const r of roles) {
+    const occ = findOccupation(r);
+    if (occ) for (const s of [occ.it, occ.en, ...occupationNames(occ, 6)].map(firstForm)) out.add(s);
+  }
+  const typed = new Set(roles.map((r) => fold(r)));
+  return [...out].filter((s) => !typed.has(fold(s)));
 }
