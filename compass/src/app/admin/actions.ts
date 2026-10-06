@@ -1,6 +1,7 @@
 "use server";
 // Admin server actions. Every one starts with requireAdmin().
 
+import { feedFromUrl } from "@/lib/sources/ats/feeds";
 import { deleteMailConnection } from "@/lib/server/mail-connections";
 import fs from "node:fs";
 import path from "node:path";
@@ -122,9 +123,12 @@ export async function runJobAction(f: FormData) {
 
 export async function addWatchAction(f: FormData) {
   await requireAdmin();
-  const ats = str(f, "ats") as (typeof schema.companyWatchlist.$inferInsert)["ats"];
-  if (!str(f, "name") || !str(f, "slug")) back("/admin/aziende", "errore");
-  await getDb().insert(schema.companyWatchlist).values({ name: str(f, "name"), ats, slug: str(f, "slug") });
+  // A pasted link to any offer or board works too: the board is read from it (Workday, Oracle…).
+  const fromLink = /^https?:\/\//i.test(str(f, "slug")) ? feedFromUrl(str(f, "slug")) : null;
+  const ats = (fromLink?.ats ?? str(f, "ats")) as (typeof schema.companyWatchlist.$inferInsert)["ats"];
+  const slug = fromLink?.slug ?? str(f, "slug");
+  if (!str(f, "name") || !slug) back("/admin/aziende", "errore");
+  await getDb().insert(schema.companyWatchlist).values({ name: str(f, "name"), ats, slug });
   back("/admin/aziende");
 }
 

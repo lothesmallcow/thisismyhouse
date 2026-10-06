@@ -115,7 +115,7 @@ export interface ProgrammeDeps {
   save: (jobs: RawJob[]) => Promise<void>;
 }
 
-const isProgrammeTitle = (t: string) => PROGRAMME_WORDS.test(fold(t));
+export const isProgrammeTitle = (t: string) => PROGRAMME_WORDS.test(fold(t));
 
 /** One firm's programme offers, from its own job board, its careers site, or its official page found by search. */
 export async function officialOffers(db: DB, lead: typeof schema.programmeLeads.$inferSelect, d: ProgrammeDeps): Promise<{ jobs: RawJob[]; url: string | null }> {

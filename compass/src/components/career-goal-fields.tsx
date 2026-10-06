@@ -45,7 +45,7 @@ export function CareerGoalFields({ goal, currentRole, roles }: { goal: Goal | nu
           {[0, 1, 2].map((i) => (
             <div key={`${g}-${i}`}>
               <label htmlFor={`role${i + 1}`} className="mb-1.5 block text-[14px] font-medium">
-                {i === 0 ? (g === "cambio" ? "Il lavoro che vuoi fare" : "Il ruolo da cercare") : "Un altro ruolo (facoltativo)"}
+                {i === 0 ? (g === "cambio" ? "Il lavoro che vuoi fare" : "Ruolo") : "Un altro ruolo (facoltativo)"}
               </label>
               <RoleInput id={`role${i + 1}`} name={`role${i + 1}`} defaultValue={wanted[i] ?? ""} required={i === 0 && g === "cambio"} placeholder={i === 0 ? (g === "cambio" ? "Es. Account manager" : "Es. Responsabile vendite") : ""} />
             </div>

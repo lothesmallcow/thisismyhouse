@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.23.0 · 2026-10-06
+
+- **Every profession, by every name it goes by**: all ESCO occupations of the European Commission
+  (about 3,000, in Italian, English, German and French, with the other names people use and the
+  skills each needs: data/world/occupations.json, refreshed by the "Compass data" workflow). "Sales
+  manager", "Responsabile vendite", "Direttore commerciale" are the same job; each is searched in the
+  language of each country.
+- **The role step asks what they want**: the same job (or a similar one), a change they can name, or
+  a change they want suggested; and the job they do now. Every role field suggests real titles while
+  typing. "Suggest me" shows the jobs that need most of the skills they already have, with the share
+  and the skills in common ("94% delle competenze · in comune: negoziare contratti…").
+- **CV**: any occupation the CV names in full (two words or more) is recommended too.
+- **Offers from the employers' own boards** (the ones banks and large companies use): Workday, Oracle
+  Recruiting, Eightfold and Recruitee join Greenhouse, Lever, Ashby, SmartRecruiters, Workable and
+  Personio, read through the public endpoint each career site itself uses. Big boards are searched with
+  the roles people look for, not read whole.
+- **A registry that grows by itself**: any offer link that belongs to one of those boards (a web
+  result, an alert, a careers page) adds the employer's whole board; "Fai web scraping" and the runs
+  every three hours also search those boards directly for everyone's roles and places, and read the
+  boards found in rotation. Boards nobody chose keep only offers carrying one of the searched roles.
+- Admin → Aziende accepts a pasted link to any offer to add its board.
+
 ## 0.22.7 · 2026-10-06
 
 - **The site's address follows Vercel**: on production deployments links, e-mails and "Collega

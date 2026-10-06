@@ -7,8 +7,10 @@ import type { Contract, Hours, Remote } from "../../core/extract";
 import { findPlace, type CountryCode } from "../../core/geo";
 import type { RawJob, SourceKind } from "../../core/normalize";
 import { getJson, htmlToText, request, HttpError, type FetchLike } from "../http";
+import { enterpriseEndpoint, fetchEnterprise, type EnterpriseAts } from "./enterprise";
 
-export type AtsType = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "personio";
+export type AtsType = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "personio" | EnterpriseAts;
+export const ENTERPRISE: AtsType[] = ["workday", "oracle", "eightfold", "recruitee"];
 
 export const ATS_LABELS: Record<AtsType, string> = {
   greenhouse: "Greenhouse",
@@ -17,6 +19,10 @@ export const ATS_LABELS: Record<AtsType, string> = {
   smartrecruiters: "SmartRecruiters",
   workable: "Workable",
   personio: "Personio",
+  workday: "Workday",
+  oracle: "Oracle Recruiting",
+  eightfold: "Eightfold",
+  recruitee: "Recruitee",
 };
 
 /** Where to find the slug, shown in the admin form. */
@@ -27,6 +33,10 @@ export const ATS_SLUG_HINT: Record<AtsType, string> = {
   smartrecruiters: "jobs.smartrecruiters.com/<slug>",
   workable: "apply.workable.com/<slug>",
   personio: "<slug>.jobs.personio.de",
+  workday: "<tenant>.wd3.myworkdayjobs.com/<sito> (incolla un link di un'offerta)",
+  oracle: "<host>.oraclecloud.com/<CX_1001> (incolla un link di un'offerta)",
+  eightfold: "<host>.eightfold.ai/<dominio dell'azienda>",
+  recruitee: "<slug>.recruitee.com",
 };
 
 export function atsEndpoint(ats: AtsType, slug: string, countries: CountryCode[] = ["IT"]): string {
@@ -44,6 +54,8 @@ export function atsEndpoint(ats: AtsType, slug: string, countries: CountryCode[]
       return `https://apply.workable.com/api/v1/widget/accounts/${s}?details=true`;
     case "personio":
       return `https://${s}.jobs.personio.de/xml?language=it`;
+    default:
+      return enterpriseEndpoint(ats, slug.trim());
   }
 }
 
@@ -67,9 +79,20 @@ export const keepInCountries = (countries: CountryCode[]) => (j: RawJob) => !j.l
 
 const src = (ats: AtsType) => `ats:${ats}` as SourceKind;
 
-export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string, company: string, countries: CountryCode[] = ["IT"]): Promise<RawJob[]> {
+/**
+ * One employer's board. `keywords` (what people search) are used by the big boards (Workday, Oracle,
+ * Eightfold), which are searched rather than read whole; every board is then kept to the countries.
+ */
+export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string, company: string, countries: CountryCode[] = ["IT"], opts: { keywords?: string[] } = {}): Promise<RawJob[]> {
   const url = atsEndpoint(ats, slug, countries);
   switch (ats) {
+    case "workday":
+    case "oracle":
+    case "eightfold":
+    case "recruitee": {
+      const jobs = await fetchEnterprise(fetchImpl, ats, slug, company, { keywords: opts.keywords });
+      return jobs.filter((j) => !j.location || inCountries(j.location, j.hints?.remote === "remote", countries));
+    }
     case "greenhouse": {
       const d = await getJson<{ jobs: { id: number; title: string; absolute_url: string; location?: { name?: string }; updated_at?: string; first_published?: string; content?: string }[] }>(fetchImpl, url);
       return d.jobs

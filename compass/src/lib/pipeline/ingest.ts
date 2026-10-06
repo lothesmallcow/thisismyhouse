@@ -15,21 +15,25 @@ import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { scrapeCareers } from "../sources/web/careers";
 import { dedupeCandidates, mergeDuplicateJobs, purgeOldJobs, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
+import { discoveredFeeds, learnFeeds } from "../server/feeds";
+import { feedFromUrl, FEED_DOMAINS } from "../sources/ats/feeds";
+import { roleTerms, titleMatches } from "../core/relevance";
+import { isProgrammeTitle } from "./programmes";
 import { lookUpMissingCompanies } from "../server/company-guess";
 import { pageCompanyClues } from "../core/page-company";
 
 import { todaysPicks } from "../server/career";
 import { searchTargets } from "./targets";
 import { getSettings, setSetting } from "../server/settings";
-import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
+import { freshQueries, markSearched, searchCodeFor, searchKeywords } from "./search-terms";
 import type { CodeQuery } from "../core/search-code";
 import { homeCountries } from "../core/geo";
 import type { RawJob } from "../core/normalize";
 import { isPaused, runWithHealth } from "./health";
 import { scanMailbox, type MailboxSummary } from "./mailbox-scan";
 import { refreshTrackerLeads, verifyLeads } from "./programmes";
-import { W1_HARD_MAX } from "./discover";
-import type { SearchProvider } from "../sources/web/w1";
+import { bump, usageToday, W1_HARD_MAX } from "./discover";
+import { hitToRawJob, type SearchProvider } from "../sources/web/w1";
 
 export interface MailboxRun {
   key: string;
@@ -46,6 +50,10 @@ export const ATS_PER_RUN = 40;
 export const API_CALLS_PER_RUN = 9;
 /** Company career pages scraped per daily run. */
 export const CAREER_SITES_PER_RUN = 15;
+/** Employer boards found on their own (from links and searches), read per run in rotation. */
+export const DISCOVERED_PER_RUN = 25;
+/** Web searches on employers' boards per run (each keyword and place at most once a day). */
+const BOARD_SEARCHES_PER_RUN = 4;
 
 /** Firms whose official pages are read per daily run (each one at most weekly). */
 const PROGRAMME_LEADS_PER_RUN = 12;
@@ -75,6 +83,8 @@ async function store(db: DB, jobs: RawJob[], now: Date, contexts: RankContext[])
   const cache = await dedupeCandidates(db);
   let created = 0;
   for (const j of jobs) if ((await upsertRawJob(db, j, now, { cache, contexts })).created) created++;
+  // Every employer board behind these links joins the registry: next runs read the whole board.
+  await learnFeeds(db, jobs).catch(() => 0);
   return { created, total: jobs.length };
 }
 
@@ -168,7 +178,20 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
   const unique = <T extends { ats: string; slug: string }>(l: T[]) => l.filter((w, i, all) => all.findIndex((x) => x.ats === w.ats && x.slug === w.slug) === i);
   // Rotation by 3-hour slot: the run every 3 hours reads different boards and sites each time.
   const day = Math.floor(now.getTime() / (3 * 3_600_000));
-  const watch = unique([...listed.map((w) => ({ name: w.name, ats: w.ats, slug: w.slug })), ...todaysPicks(unique(chosenFeeds), Math.max(0, ATS_PER_RUN - listed.length), day)]);
+  // Boards found on their own (from offer links and searches), in rotation, for everyone's roles.
+  const discovered = (await discoveredFeeds(db)).map((c) => ({ name: c.name, ats: c.ats!, slug: c.atsSlug! }));
+  const keepAll = new Set([...listed.map((w) => `${w.ats}:${w.slug}`), ...chosen.map((c) => `${c.ats}:${c.slug}`)]);
+  const watch = unique([
+    ...listed.map((w) => ({ name: w.name, ats: w.ats, slug: w.slug })),
+    ...todaysPicks(unique(chosenFeeds), Math.max(0, ATS_PER_RUN - listed.length), day),
+    ...todaysPicks(discovered, DISCOVERED_PER_RUN, day),
+  ]);
+  // What everyone looks for: big boards are searched with these words, and boards nobody chose keep
+  // only offers carrying one of these roles (students: programmes too).
+  const allKeywords = [...new Set(contexts.flatMap((c) => searchKeywords(c.profile.roles, c.profile.synonyms, 3)))].slice(0, 8);
+  const allTerms = roleTerms(contexts.flatMap((c) => [...c.profile.roles, ...c.profile.synonyms]));
+  const students = contexts.some((c) => c.profile.track === "stage");
+  const relevant = (j: RawJob) => titleMatches(j.title, allTerms) || (students && isProgrammeTitle(j.title));
   for (const w of watch) {
     const key = `ats:${w.ats}:${w.slug}`;
     const host = new URL(atsEndpoint(w.ats as AtsType, w.slug)).host;
@@ -179,7 +202,8 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
     const r = await runWithHealth(db, key, async () => {
       let jobs;
       try {
-        jobs = await fetchAts(fetchImpl, w.ats as AtsType, w.slug, w.name, atsCountries);
+        jobs = await fetchAts(fetchImpl, w.ats as AtsType, w.slug, w.name, atsCountries, { keywords: allKeywords });
+        if (!keepAll.has(`${w.ats}:${w.slug}`)) jobs = jobs.filter(relevant);
       } catch (e) {
         if (e instanceof BlockedError) await runWithHealth(db, `host:${host}`, async () => { throw e; }, now);
         throw e;
@@ -189,6 +213,32 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
       return { items: s.total, failures: 0 };
     }, now);
     summary.sources[key] = r?.items ?? null;
+  }
+
+  // 4a. Employers' boards found by searching them (Workday, Oracle, Greenhouse, Lever…) for everyone's
+  // roles and places: each result reveals a board, kept in the registry and read from the next run.
+  if (settings.w1Enabled && deps.web && allKeywords.length) {
+    const r = await runWithHealth(db, "bacheche", async () => {
+      const wanted = contexts.flatMap((c) => {
+        const cc = homeCountries(c.profile.countries, c.profile.city)[0] ?? "IT";
+        const where = c.profile.city || ({ IT: "Milano", GB: "London", DE: "Frankfurt", FR: "Paris" } as Record<string, string>)[cc] || "Milano";
+        return searchKeywords(c.profile.roles, c.profile.synonyms, 2).map((kw) => ({ key: `boards|${kw.toLowerCase()}|${where.toLowerCase()}`, kw, where }));
+      });
+      const fresh = await freshQueries(db, wanted.map((w) => ({ ...w, channel: "web" }) as unknown as CodeQuery), now);
+      let found = 0;
+      for (const q of (fresh as unknown as typeof wanted).slice(0, BOARD_SEARCHES_PER_RUN)) {
+        if ((await usageToday(db, "w1-queries", now)) >= Math.min(settings.w1DailyCap, W1_HARD_MAX)) break;
+        await bump(db, "w1-queries", now);
+        const hits = await deps.web!.search({ q: `${q.kw} ${q.where}`, includeDomains: FEED_DOMAINS });
+        await markSearched(db, q.key, hits.length, now);
+        const jobs = hits.filter((h) => feedFromUrl(h.url)).map(hitToRawJob).filter(relevant);
+        const s = await store(db, jobs, now, contexts);
+        summary.newJobs += s.created;
+        found += jobs.length;
+      }
+      return { items: found, failures: 0 };
+    }, now);
+    summary.sources.bacheche = r?.items ?? null;
   }
 
   // 4b. Career pages of the chosen companies found by the web scraping ("Fai web scraping"),

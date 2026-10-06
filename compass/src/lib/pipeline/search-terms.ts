@@ -116,3 +116,26 @@ export async function freshQueries(db: DB, queries: CodeQuery[], now: Date, hour
 export async function markSearched(db: DB, key: string, items: number, now: Date): Promise<void> {
   await db.insert(schema.searchCache).values({ key, lastRunAt: now, items }).onConflictDoUpdate({ target: schema.searchCache.key, set: { lastRunAt: now, items } });
 }
+
+/**
+ * The words to search employers' boards with: their roles and the other names they accepted, plus
+ * each role in English (most big boards are written in English), each once, roles first.
+ */
+export function searchKeywords(roles: string[], synonyms: string[], max = 6): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const add = (s: string) => {
+    const t = s.split("/")[0].trim();
+    const k = t.toLowerCase();
+    if (t && !seen.has(k)) {
+      seen.add(k);
+      out.push(t);
+    }
+  };
+  for (const r of roles) {
+    add(r);
+    for (const t of translations(r, ["en"])) add(t);
+  }
+  for (const s of synonyms) add(s);
+  return out.slice(0, max);
+}

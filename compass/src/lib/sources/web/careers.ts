@@ -7,6 +7,7 @@ import type { RawJob } from "../../core/normalize";
 import { extractJobsFromHtml, jobLinks } from "./jsonld";
 import type { PoliteFetcher } from "./polite-fetch";
 import type { AtsType } from "../ats";
+import { feedsInHtml } from "../ats/feeds";
 
 /** Job boards with an official public feed, recognised from a link on the company's site. */
 const ATS_LINKS: [AtsType, RegExp][] = [
@@ -21,6 +22,9 @@ const NOT_SLUGS = new Set(["embed", "api", "v1", "j", "jobs", "careers", "www"])
 
 /** The company's job board, when its site links to one (links, iframes, scripts). */
 export function atsFromHtml(html: string): { ats: AtsType; slug: string } | null {
+  // Every board Compass reads, from any link or embed on the page (Workday, Oracle… included).
+  const any = feedsInHtml(html)[0];
+  if (any) return any;
   for (const [ats, re] of ATS_LINKS) {
     const m = html.match(re);
     if (m && !NOT_SLUGS.has(m[1].toLowerCase())) return { ats, slug: decodeURIComponent(m[1]) };
