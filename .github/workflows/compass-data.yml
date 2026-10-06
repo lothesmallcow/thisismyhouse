@@ -11,7 +11,9 @@ on:
       - compass/scripts/import-esco-api.mjs
 permissions:
   contents: write
-concurrency: { group: compass-data-${{ github.ref }}, cancel-in-progress: true }
+concurrency:
+  group: compass-data-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   esco:
     runs-on: ubuntu-latest

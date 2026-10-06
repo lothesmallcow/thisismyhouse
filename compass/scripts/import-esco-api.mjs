@@ -3,7 +3,7 @@
 // the ISCO group and the skills each one needs. Writes data/world/occupations.json, which the
 // questionnaire (precise roles), the searches (each country's language) and the career-change
 // suggestions (occupations that share skills) read. Attribution: "ESCO, European Commission".
-// Runs on GitHub Actions (.github/workflows/compass-data.yml): no key, about 20 minutes.
+// Runs on GitHub Actions (.github/workflows/compass-data.yml): no key, about 20 minutes (any change here re-runs it).
 //   node scripts/import-esco-api.mjs [--limit 50]
 import fs from "node:fs";
 import path from "node:path";
