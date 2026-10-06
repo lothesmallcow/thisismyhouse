@@ -37,7 +37,14 @@ export const env = {
   get cronSecret(): string | undefined {
     return process.env.CRON_SECRET || undefined;
   },
+  /**
+   * The site's address. On Vercel's production deployments: the project's production domain as Vercel
+   * says it (VERCEL_PROJECT_PRODUCTION_URL), so a changed or re-added domain never leaves links, e-mails
+   * and "Collega Gmail" pointing at an address that no longer answers. Elsewhere: APP_URL.
+   */
   get appUrl(): string {
+    const prod = process.env.VERCEL_ENV === "production" ? (process.env.VERCEL_PROJECT_PRODUCTION_URL || "").trim() : "";
+    if (prod) return `https://${prod.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`;
     return (process.env.APP_URL || "http://localhost:3000").trim().replace(/\/+$/, "");
   },
   get contactEmail(): string {

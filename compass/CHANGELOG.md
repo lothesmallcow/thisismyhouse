@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.22.7 · 2026-10-06
+
+- **The site's address follows Vercel**: on production deployments links, e-mails and "Collega
+  Gmail" use the project's production domain as Vercel reports it, so a stale APP_URL can no longer
+  send people to a 404.
+- **Admin password**: at least 6 characters (was 12), from the host's secrets as before.
+
 ## 0.22.6 · 2026-10-06
 
 - **Sign-in**: after a wrong password you can retry at once; only 10 wrong ones in 15 minutes pause
