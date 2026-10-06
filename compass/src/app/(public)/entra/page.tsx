@@ -8,11 +8,14 @@ export const dynamic = "force-dynamic";
 
 async function entraAction(f: FormData) {
   "use server";
-  const r = await signIn(String(f.get("email") ?? ""), String(f.get("password") ?? ""), "user");
-  redirect(r === "ok" ? "/offerte" : r === "locked" ? "/entra?errore=attesa" : r === "pending" ? "/entra?errore=richiesta" : "/entra?errore=1");
+  // "Sono l'amministratore": the same form opens the admin area (its own account and session).
+  const admin = f.get("admin") === "1";
+  const r = await signIn(String(f.get("email") ?? ""), String(f.get("password") ?? ""), admin ? "admin" : "user");
+  const err = (code: string) => `/entra?errore=${code}${admin ? "&admin=1" : ""}`;
+  redirect(r === "ok" ? (admin ? "/admin" : "/offerte") : r === "locked" ? err("attesa") : r === "pending" ? err("richiesta") : err("1"));
 }
 
-export default async function EntraPage({ searchParams }: { searchParams: Promise<{ errore?: string; msg?: string }> }) {
+export default async function EntraPage({ searchParams }: { searchParams: Promise<{ errore?: string; msg?: string; admin?: string }> }) {
   if ((await currentUser())?.role === "user") redirect("/offerte");
   const sp = await searchParams;
   return (
@@ -38,6 +41,10 @@ export default async function EntraPage({ searchParams }: { searchParams: Promis
         <Field label="Password" htmlFor="password">
           <input id="password" name="password" type="password" autoComplete="current-password" required />
         </Field>
+        <label className="flex min-h-[44px] cursor-pointer items-center gap-2.5 text-[14px]">
+          <input type="checkbox" name="admin" value="1" defaultChecked={sp.admin === "1"} className="h-4 w-4 accent-[var(--accent)]" />
+          Sono l&apos;amministratore
+        </label>
         <Button wide>Entra</Button>
       </form>
       <p className="mt-6 text-[13.5px] text-muted">
