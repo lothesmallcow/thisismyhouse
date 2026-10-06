@@ -71,11 +71,12 @@ export async function dismissAction(f: FormData) {
   done("/offerte", "scartata");
 }
 
-/** "Non mi interessa" from the list: gone in one click, back to the same list (filters kept). */
-export async function quickDismissAction(f: FormData) {
+/** "Non mi interessa" from a card: no redirect, no message (the card is already gone on screen). */
+export async function dismissQuietAction(jobId: number) {
   const u = await requireUser();
-  await dismissJob(getDb(), u.id, num(f, "jobId"), "nessuno");
-  done(safeBack(f, "/offerte"), "scartata-lista");
+  if (!Number.isInteger(jobId) || jobId <= 0) return;
+  await dismissJob(getDb(), u.id, jobId, "nessuno");
+  revalidatePath("/offerte");
 }
 
 /** Undo a "Non mi interessa" from its list. */

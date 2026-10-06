@@ -77,13 +77,15 @@ test("Offerte (job search): ranked list with reasons, focus switch, search, filt
   await page.getByRole("link", { name: "Torna ai luoghi del profilo" }).click();
   await expect(page.getByRole("link", { name: "Torna ai luoghi del profilo" })).toHaveCount(0);
 
-  // "Non mi interessa" right on the card: gone from the list in one click, filters kept.
+  // "Non mi interessa" right on the card: gone at once, no message, no jump to the top.
   await page.goto("/offerte?vista=tutte");
   const firstTitle = await cards.first().getByRole("heading").innerText();
+  const before = await cards.count();
   await cards.first().getByRole("button", { name: /^Non mi interessa/ }).click();
-  await expect(page.getByText(/Cancellata: non te la ripropongo più/)).toBeVisible();
-  await expect(page).toHaveURL(/vista=tutte/);
   await expect(cards.filter({ hasText: firstTitle })).toHaveCount(0);
+  await expect(page.getByText(/Cancellata: non te la ripropongo/)).toHaveCount(0);
+  await expect(page).toHaveURL(/vista=tutte/);
+  expect(await cards.count()).toBeLessThanOrEqual(before);
   // "Non mi interessano": the list of dismissals, each can be undone for 3 days (then the offer comes back).
   await page.getByRole("link", { name: "Non mi interessano", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Non mi interessano" })).toBeVisible();
@@ -93,6 +95,19 @@ test("Offerte (job search): ranked list with reasons, focus switch, search, filt
   await expect(page.getByText(/Annullato/)).toBeVisible();
   await page.goto("/offerte?vista=tutte");
   await expect(cards.filter({ hasText: firstTitle }).first()).toBeVisible();
+
+  // "Mi interessa": into a folder in one click, then back to the same offer in the list.
+  const second = cards.nth(1);
+  const secondTitle = await second.getByRole("heading").innerText();
+  await second.getByRole("link", { name: /^Mi interessa/ }).click();
+  await expect(page.getByRole("heading", { name: "Mi interessa" })).toBeVisible();
+  await assertUiBasics(page);
+  await page.getByLabel("Nuova cartella").fill("Prova e2e");
+  await page.getByRole("button", { name: "Salva" }).click();
+  await expect(page).toHaveURL(/vista=tutte.*#job-\d+/);
+  await page.goto("/offerte/cartelle");
+  await page.getByRole("link", { name: /Prova e2e/ }).first().click();
+  await expect(page.locator("article", { hasText: secondTitle })).toBeVisible();
 
   await page.goto("/offerte");
   await cards.first().getByRole("link").first().click();

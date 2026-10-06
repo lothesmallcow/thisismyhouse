@@ -4,7 +4,6 @@
 // Provider: Tavily (free tier, no card). See docs/adr/0004-w1-search-provider.md.
 
 import type { RawJob } from "../../core/normalize";
-import { canonicalUrl } from "../../core/dedupe";
 import { request, HttpError, type FetchLike } from "../http";
 
 export interface SearchQuery {
@@ -111,7 +110,7 @@ export function hitToRawJob(h: SearchHit): RawJob {
   const { title, company, location } = parseResultTitle(h.title);
   return {
     source: "w1",
-    url: canonicalUrl(h.url),
+    url: h.url, // as found: the company can be in the link ("…-at-intesa-sanpaolo-…"); it is cleaned when saved
     title,
     company,
     location,

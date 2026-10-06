@@ -7,6 +7,7 @@ import { and, asc, desc, eq, gte, inArray, isNull, like, lt, ne, or, sql, type S
 import { findDuplicate, dedupeKey, type DedupeCandidate } from "../core/dedupe";
 import { distanceKm, findPlace } from "../core/geo";
 import type { WherePlace } from "../core/where";
+import { guessCompany } from "./company-guess";
 import { normalizeJob, type RawJob } from "../core/normalize";
 import { rankJob, type Level, type RankAdjustment } from "../core/rank";
 import { MONTHS_PER_YEAR, netAnnualToGrossAnnual } from "../core/salary";
@@ -188,6 +189,8 @@ export interface UpsertOptions {
 /** Insert a raw job, or merge it into an existing duplicate (keeping every source link). */
 export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: UpsertOptions = {}): Promise<UpsertResult> {
   const n = normalizeJob(raw, null, now);
+  // No company in the source: from the title, the link or the catalog names in the text.
+  if (!n.company) n.company = await guessCompany(db, { title: n.title, url: raw.url ?? n.url, description: n.description }); // the original link: the clean one drops the slug
   const candidates = opts.cache ?? (await dedupeCandidates(db));
   const dupId = findDuplicate({ company: n.company, title: n.title, city: n.city, url: n.url }, candidates);
   const owners = opts.owners?.length ? opts.owners : [null];
@@ -246,6 +249,7 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
         maxAnnualGross: patch.salaryMax ?? existing.salaryMax,
       });
       if (!existing.postedAt && n.postedAt) patch.postedAt = n.postedAt;
+      if (!existing.company && n.company) patch.company = n.company;
       if (!existing.closesAt && n.closesAt) patch.closesAt = n.closesAt;
       if (!existing.opensAt && n.opensAt) patch.opensAt = n.opensAt;
       if (!existing.runsStart && n.runsStart) Object.assign(patch, { runsStart: n.runsStart, runsEnd: n.runsEnd, runsMonthOnly: n.runsMonthOnly });

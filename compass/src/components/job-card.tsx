@@ -4,6 +4,8 @@ import { daysAgoLabel } from "@/lib/core/time";
 import { deadlineText } from "@/lib/core/deadline";
 import { IconMail, IconPin, IconStar } from "./icons";
 import { LevelBadge } from "./ui";
+import { CardActions } from "./card-actions";
+import { CompanyLogo } from "./company-logo";
 
 function salaryShort(j: Job): string | null {
   if (j.salaryMin == null || j.salaryMax == null) return null;
@@ -15,18 +17,21 @@ function salaryShort(j: Job): string | null {
 const TYPE_LABEL: Record<string, string> = { stage: "Stage", programma: "Programma studenti" };
 const LEVEL_BAR = { molto: "before:bg-level-molto", adatta: "before:bg-level-adatta", poco: "before:bg-level-poco" } as const;
 
-/** `dismiss`: the one-click "Non mi interessa" (the offer leaves the list, and does not come back). */
-export function JobCard({ job, dismiss, back }: { job: Job; dismiss?: (f: FormData) => Promise<void>; back?: string }) {
+/** `dismiss`: the instant "Non mi interessa" (the card goes at once and never comes back), with "Mi interessa" next to it. */
+export function JobCard({ job, dismiss, back, logo }: { job: Job; dismiss?: (jobId: number) => Promise<void>; back?: string; logo?: string | null }) {
   const negative = (r: string) => /lontan|sotto|non è|chiede|evitare|truffa|vecchio|scartato|non cerchi|è part|è a tempo|fuori|pensato per|non retribuito|riservato|solo per|chiuse|non aperto|per studenti di magistrale|per chi si laurea nel \d{4}, tu/i.test(r);
   const salary = salaryShort(job);
   const deadline = deadlineText(job, new Date());
   const place = job.remote === "remote" ? "Da remoto" : job.city ? `${job.city}${job.distanceKm != null ? (job.distanceKm < 1 ? "" : ` · ${Math.round(job.distanceKm)} km`) : ""}` : null;
   return (
     <article
-      className={`lift group relative overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface p-4 pl-5 shadow-[var(--shadow-card)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:content-[''] hover:border-line-strong sm:p-5 sm:pl-6 ${LEVEL_BAR[job.level]}`}
+      id={`job-${job.id}`}
+      data-job-card
+      className={`lift scroll-mt-24 group relative overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface p-4 pl-5 shadow-[var(--shadow-card)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:content-[''] hover:border-line-strong sm:p-5 sm:pl-6 ${LEVEL_BAR[job.level]}`}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
+        <CompanyLogo name={job.company} domain={logo ?? null} />
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h3 className="text-[16px] font-semibold leading-snug tracking-[-0.015em]">
               <Link href={`/offerte/${job.id}`} className="text-ink no-underline after:absolute after:inset-0 after:rounded-[var(--radius-card)] after:content-['']">
@@ -78,15 +83,7 @@ export function JobCard({ job, dismiss, back }: { job: Job; dismiss?: (f: FormDa
           </span>
         )}
         <span>Trovata {daysAgoLabel(job.postedAt ?? job.firstSeenAt)}</span>
-        {dismiss && job.status !== "dismissed" && (
-          <form action={dismiss} className="relative z-10 ml-auto">
-            <input type="hidden" name="jobId" value={job.id} />
-            <input type="hidden" name="back" value={back ?? "/offerte"} />
-            <button className="inline-flex h-8 items-center rounded-full bg-fill px-3.5 text-[12.5px] font-medium text-muted hover:bg-fill-hover hover:text-ink" aria-label={`Non mi interessa: ${job.title}`}>
-              Non mi interessa
-            </button>
-          </form>
-        )}
+        {dismiss && job.status !== "dismissed" && <CardActions jobId={job.id} title={job.title} back={back ?? "/offerte"} dismiss={dismiss} />}
       </div>
     </article>
   );
