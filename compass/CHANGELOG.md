@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.2 · 2026-10-06
+
+- **Offerte header**: the buttons sit together again; under them, one short line "3/3 ricerche
+  rimaste · Aumenta ricerche".
+
 ## 0.22.1 · 2026-10-06
 
 - **Checkout**: any complete card number is accepted for the trial (not only the test card). Still

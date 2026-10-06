@@ -42,22 +42,62 @@ export function ScanButton({
   }, [target]);
   const wait = target > now ? target - now : 0;
   const ready = !wait && !running;
+  const button = (
+    <form action={action}>
+      <button
+        type="submit"
+        disabled={!ready}
+        className={buttonClass("primary", "sm", false, "disabled:opacity-60")}
+        aria-live="polite"
+      >
+        <IconSearch size={16} />
+        {running ? (
+          "In corso…"
+        ) : wait ? (
+          <span className="tabular-nums">
+            Prossima ricerca tra {left(wait)}
+          </span>
+        ) : (
+          "Fai web scraping"
+        )}
+      </button>
+    </form>
+  );
+  if (!showMeta) return button;
   return (
     <div className="flex flex-col items-start gap-1">
-      <form action={action}>
-        <button type="submit" disabled={!ready} className={buttonClass("primary", "sm", false, "disabled:opacity-60")} aria-live="polite">
-          <IconSearch size={16} />
-          {running ? "In corso…" : wait ? <span className="tabular-nums">Prossima ricerca tra {left(wait)}</span> : "Fai web scraping"}
-        </button>
-      </form>
-      {showMeta && (
-        <span className={`text-[12px] ${onHero ? "text-white/85" : "text-faint"}`}>
-          {remaining} di {perDay} ricerche oggi · piano {plan} ·{" "}
-          <Link href="/piano" className="font-semibold text-inherit underline">
-            {plan === "Premium" ? "abbonamento" : "più ricerche"}
-          </Link>
-        </span>
-      )}
+      {button}
+      <ScanMeta
+        remaining={remaining}
+        perDay={perDay}
+        plan={plan}
+        onHero={onHero}
+      />
     </div>
+  );
+}
+
+/** "3/3 ricerche rimaste · Aumenta ricerche": short, under the buttons. */
+export function ScanMeta({
+  remaining,
+  perDay,
+  plan,
+  onHero = false,
+}: {
+  remaining: number;
+  perDay: number;
+  plan: string;
+  onHero?: boolean;
+}) {
+  return (
+    <p className={`text-[12px] ${onHero ? "text-white/85" : "text-faint"}`}>
+      <span className="tabular-nums">
+        {remaining}/{perDay}
+      </span>{" "}
+      ricerche rimaste ·{" "}
+      <Link href="/piano" className="font-semibold text-inherit underline">
+        {plan === "Premium" ? "Il tuo piano" : "Aumenta ricerche"}
+      </Link>
+    </p>
   );
 }
