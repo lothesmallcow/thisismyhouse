@@ -71,6 +71,13 @@ export async function dismissAction(f: FormData) {
   done("/offerte", "scartata");
 }
 
+/** "Non mi interessa" from the list: gone in one click, back to the same list (filters kept). */
+export async function quickDismissAction(f: FormData) {
+  const u = await requireUser();
+  await dismissJob(getDb(), u.id, num(f, "jobId"), "nessuno");
+  done(safeBack(f, "/offerte"), "scartata-lista");
+}
+
 export async function restoreAction(f: FormData) {
   const u = await requireUser();
   await restoreJob(getDb(), u.id, num(f, "jobId"));

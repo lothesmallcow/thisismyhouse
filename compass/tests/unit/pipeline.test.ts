@@ -46,7 +46,7 @@ describe("ingest (demo mode: real adapters, fixture network)", () => {
     expect(s.sources["ats:greenhouse:esempiotech"]).toBe(1); // Berlin job filtered out
     expect(s.sources["ats:lever:esempiolever"]).toBe(1);
     expect(s.sources["w2:careers.esempio-demo.example"]).toBe(1);
-    expect(await count(schema.jobs)).toBe(before + s.newJobs);
+    expect(await count(schema.jobs)).toBe(before + s.newJobs - (s.sources.pulizia ?? 0)); // minus offers unseen for a week
 
     // Studio Rinaldi comes from LinkedIn + Indeed + Adzuna: one job, three source links.
     const rinaldi = await db.select().from(schema.jobs).where(eq(schema.jobs.company, "Studio Rinaldi Commercialisti"));

@@ -127,6 +127,13 @@
       "when": 1791281083716,
       "tag": "0017_situation",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1791283097337,
+      "tag": "0018_dismissed_jobs",
+      "breakpoints": true
     }
   ]
 }

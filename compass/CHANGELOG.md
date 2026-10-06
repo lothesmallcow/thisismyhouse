@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.20.0 · 2026-10-06
+
+- **Offers last a week**: an offer no source has shown for 7 days is deleted at the next run, with its
+  scores. Kept: offers saved in a folder, applied to, added by hand, or with applications still open
+  (deadline in the future). Pages stay clean and the database light.
+- **"Non mi interessa" on every card** in Offerte: one click, the offer leaves the list and the page
+  stays where it was (filters kept). It is still under "Offerte scartate".
+- **Dismissed stays dismissed**: dismissals are remembered by the ad itself (6 months), so the same
+  ad found again after the clean-up, or by a new search, comes back already dismissed.
+- Migration 0018.
+
 ## 0.19.2 · 2026-10-06
 
 - **Elimina il mio account** inside the app (Profilo, and on the first questionnaire screen for those

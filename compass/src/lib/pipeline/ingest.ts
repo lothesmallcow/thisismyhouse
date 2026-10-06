@@ -14,7 +14,7 @@ import type { Mailbox } from "../sources/mail/types";
 import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { scrapeCareers } from "../sources/web/careers";
-import { dedupeCandidates, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
+import { dedupeCandidates, purgeOldJobs, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
 import { todaysPicks } from "../server/career";
 import { searchTargets } from "./targets";
 import { getSettings, setSetting } from "../server/settings";
@@ -293,6 +293,9 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
       return { items: found, failures: 0 };
     }, now);
   }
+
+  // Offers no source has shown for a week go (except those saved, applied to or still open).
+  summary.sources.pulizia = await purgeOldJobs(db, now);
 
   await setSetting(db, "lastIngestAt", now.toISOString());
   return summary;

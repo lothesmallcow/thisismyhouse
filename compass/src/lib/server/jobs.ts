@@ -3,7 +3,7 @@
 // A job is visible to someone if at least one of its sources is shared (userId null) or theirs.
 
 import { background } from "./person";
-import { and, asc, desc, eq, gte, inArray, isNull, like, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, like, lt, ne, or, sql, type SQL } from "drizzle-orm";
 import { findDuplicate, dedupeKey, type DedupeCandidate } from "../core/dedupe";
 import { distanceKm, findPlace } from "../core/geo";
 import type { WherePlace } from "../core/where";
@@ -95,12 +95,15 @@ export async function rankJobForAll(db: DB, jobId: number, now = new Date(), con
   const job = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, jobId) });
   if (!job) return;
   const who = await audience(db, jobId);
+  // The same ad dismissed before (then deleted after a week): it comes back already dismissed.
+  const dismissed = new Map((await db.select().from(schema.dismissedJobs).where(eq(schema.dismissedJobs.dedupeKey, job.dedupeKey))).map((d) => [d.userId, d.reason]));
   for (const ctx of contexts ?? (await rankContexts(db))) {
     if (who && !who.has(ctx.userId)) continue;
     const v = computeFor(job, ctx, now);
+    const gone = dismissed.has(ctx.userId) ? { status: "dismissed" as const, dismissReason: dismissed.get(ctx.userId) ?? null } : {};
     await db
       .insert(schema.userJobs)
-      .values({ userId: ctx.userId, jobId, ...v })
+      .values({ userId: ctx.userId, jobId, ...v, ...gone })
       .onConflictDoUpdate({ target: [schema.userJobs.userId, schema.userJobs.jobId], set: v });
   }
 }
@@ -113,6 +116,7 @@ export async function rerankUser(db: DB, userId: number, now = new Date(), ctx?:
     .from(schema.jobs)
     .where(sql`exists (select 1 from ${schema.jobSources} s where s.job_id = ${schema.jobs.id} and (s.user_id is null or s.user_id = ${userId}))`);
   const existing = new Map((await db.select().from(schema.userJobs).where(eq(schema.userJobs.userId, userId))).map((r) => [r.jobId, r]));
+  const dismissed = new Map((await db.select().from(schema.dismissedJobs).where(eq(schema.dismissedJobs.userId, userId))).map((d) => [d.dedupeKey, d.reason]));
   // Only rows whose values change are written, in batches of 200 statements per round trip
   // (on Turso one batch = one HTTP request instead of one per job).
   const writes = [];
@@ -130,10 +134,11 @@ export async function rerankUser(db: DB, userId: number, now = new Date(), ctx?:
       JSON.stringify(old.factors) === JSON.stringify(v.factors)
     )
       continue;
+    const gone = !old && dismissed.has(job.dedupeKey) ? { status: "dismissed" as const, dismissReason: dismissed.get(job.dedupeKey) ?? null } : {};
     writes.push(
       db
         .insert(schema.userJobs)
-        .values({ userId, jobId: job.id, ...v })
+        .values({ userId, jobId: job.id, ...v, ...gone })
         .onConflictDoUpdate({ target: [schema.userJobs.userId, schema.userJobs.jobId], set: v }),
     );
   }
@@ -495,6 +500,10 @@ export async function dismissJob(db: DB, userId: number, id: number, reason: Dis
   if (!data) return null;
   const { job } = data;
   await setUserJobStatus(db, userId, id, { status: "dismissed", dismissReason: reason });
+  await db
+    .insert(schema.dismissedJobs)
+    .values({ userId, dedupeKey: job.dedupeKey, reason, at: now })
+    .onConflictDoUpdate({ target: [schema.dismissedJobs.userId, schema.dismissedJobs.dedupeKey], set: { reason, at: now } });
 
   let adj: { kind: "company" | "keyword" | "role" | "distance" | "salary"; value: string; label: string } | null = null;
   if (reason === "azienda" && job.company) adj = { kind: "company", value: job.company, label: `Evita l'azienda ${job.company}` };
@@ -522,6 +531,33 @@ export async function dismissJob(db: DB, userId: number, id: number, reason: Dis
 
 export async function restoreJob(db: DB, userId: number, id: number): Promise<void> {
   await setUserJobStatus(db, userId, id, { status: "seen", dismissReason: null });
+  const job = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, id), columns: { dedupeKey: true } });
+  if (job) await db.delete(schema.dismissedJobs).where(and(eq(schema.dismissedJobs.userId, userId), eq(schema.dismissedJobs.dedupeKey, job.dedupeKey)));
+}
+
+/** Offers not seen by any source for this long are deleted (pages and database stay light). */
+export const KEEP_DAYS = 7;
+
+/**
+ * Delete the offers no source has shown for a week, except those someone keeps: saved in a folder,
+ * applied to, added by hand, or with applications still open. Their scores and sources go with them;
+ * dismissals are remembered by dedupe key (dismissed_jobs, kept 6 months).
+ */
+export async function purgeOldJobs(db: DB, now = new Date()): Promise<number> {
+  const j = schema.jobs;
+  const cutoff = new Date(now.getTime() - KEEP_DAYS * 86_400_000);
+  const kept = or(
+    sql`exists (select 1 from ${schema.folderItems} f where f.job_id = ${j.id})`,
+    sql`exists (select 1 from ${schema.applications} a where a.job_id = ${j.id})`,
+    sql`exists (select 1 from ${schema.jobSources} s where s.job_id = ${j.id} and s.source = 'manual')`,
+    sql`coalesce(${j.closesAt}, 0) >= ${now.getTime()}`, // coalesce: a NULL here would make the whole test unknown
+  )!;
+  const old = await db.select({ id: j.id }).from(j).where(and(lt(j.updatedAt, cutoff), sql`not (${kept})`));
+  for (let i = 0; i < old.length; i += 500) {
+    await db.delete(j).where(inArray(j.id, old.slice(i, i + 500).map((r) => r.id)));
+  }
+  await db.delete(schema.dismissedJobs).where(lt(schema.dismissedJobs.at, new Date(now.getTime() - 180 * 86_400_000)));
+  return old.length;
 }
 
 /** Turn an adjustment on or off. `userId` limits it to that person's own adjustments (null: admin). */
