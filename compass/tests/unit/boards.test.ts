@@ -3,7 +3,7 @@
 // look for, and remembered in the registry.
 import { describe, expect, it, vi } from "vitest";
 import { feedFromUrl, feedsInHtml } from "@/lib/sources/ats/feeds";
-import { fetchEnterprise, workdayPosted } from "@/lib/sources/ats/enterprise";
+import { avaturePlace, fetchEnterprise, workdayPosted } from "@/lib/sources/ats/enterprise";
 import { fetchAts } from "@/lib/sources/ats";
 import { roleTerms, titleMatches } from "@/lib/core/relevance";
 import { discoveredFeeds, learnFeeds, registerFeed } from "@/lib/server/feeds";
@@ -128,12 +128,22 @@ describe("reading the big boards", () => {
           <item><title>Analyst</title><link>https://careers.unicredit.eu/jobsuche/JobDetail/Analyst/3152</link></item>
         </channel></rss>`);
       if (u.endsWith("/3150")) return new Response(page("Milano", "IT"));
-      if (u.endsWith("/3151")) return new Response(page("München", "DE"));
+      // UniCredit's pages: no place in the JobPosting data, labelled fields instead
+      if (u.endsWith("/3151"))
+        return new Response(`<script type="application/ld+json">{"@type":"JobPosting","title":"Risikoanalyst","description":"x"}</script>
+          <div class="article__content__view__field"><div class="article__content__view__field__label">Country</div><div class="article__content__view__field__value">Germany</div></div>
+          <div class="article__content__view__field"><div class="article__content__view__field__label">City</div><div class="article__content__view__field__value">München</div></div>`);
       return new Response("gone", { status: 404 });
     }) as typeof fetch;
     const jobs = await fetchAts(fetchImpl, "avature", "careers.unicredit.eu/jobsuche", "UniCredit", ["IT"], { keywords: ["Risk analyst"] });
     expect(seen[0]).toBe("https://careers.unicredit.eu/jobsuche/SearchJobs/feed/?search=Risk%20analyst");
     expect(jobs).toEqual([expect.objectContaining({ title: "Risk Analyst", company: "UniCredit", location: "Milano, Italia", description: "Analisi rischi", externalId: "3150", source: "ats:avature", thin: false })]);
+  });
+  it("Avature's labelled fields → the place", () => {
+    const f = (l: string, v: string) => `<div class="article__content__view__field"><div class="article__content__view__field__label">${l}</div><div class="article__content__view__field__value">${v}</div></div>`;
+    expect(avaturePlace(f("Job ID", "70767") + f("Company", "UniCredit Bulbank") + f("Country", "Bulgaria") + f("City", "София / Sofia"))).toBe("София / Sofia, Bulgaria");
+    expect(avaturePlace(f("Paese", "Italia") + f("Città", "Milano"))).toBe("Milano, Italia");
+    expect(avaturePlace("<p>nothing</p>")).toBeNull();
   });
   it("Oracle: only the chosen countries, then the full description and closing date", async () => {
     const fetchImpl = (async (url: string | URL | Request) => {

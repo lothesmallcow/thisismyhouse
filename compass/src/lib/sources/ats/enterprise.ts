@@ -225,13 +225,16 @@ export async function fetchEnterprise(
           });
         }
       }
-      // Its page says where; offers whose page was not read are left out (the feed mixes every country).
+      // Its page says where (labelled fields: "Country Italy", "City Milano"; its JobPosting data has no
+      // place); offers whose page was not read are left out, as the feed mixes every country.
       const read = new Map<string, RawJob>();
-      for (const [url, job] of [...out].slice(0, opts.details ?? 15)) {
+      for (const [url, job] of [...out].slice(0, opts.details ?? 12)) {
         try {
           const html = await (await request(fetchImpl, url, { headers: { Accept: "text/html" } }, { retries: 0 })).text();
           const p = findJobPostings(html).map((o) => jobPostingToRaw(o, url))[0];
-          if (p) read.set(url, { ...job, location: p.location ?? job.location, description: p.description || job.description, salaryText: p.salaryText, postedAt: p.postedAt ?? job.postedAt, hints: p.hints, thin: !p.description });
+          const place = p?.location ?? avaturePlace(html);
+          if (!p && !place) continue;
+          read.set(url, { ...job, location: place, description: p?.description || job.description, salaryText: p?.salaryText, postedAt: p?.postedAt ?? job.postedAt, hints: p?.hints, thin: !p?.description });
         } catch {
           /* skipped */
         }
@@ -293,6 +296,20 @@ async function workdayCountryFacet(post: <T>(body: object) => Promise<T>, countr
     if (ids.length) return { [f.param]: ids.slice(0, 50) };
   }
   return null;
+}
+
+/** "City, Country" from an Avature job page's labelled fields ("Country" "Bulgaria" "City" "Sofia"). */
+export function avaturePlace(html: string): string | null {
+  const items = [...html.matchAll(/class="[^"]*field[^"]*"[^>]*>([\s\S]{0,300}?)<\/(?:div|li|dd|span)>/gi)]
+    .map((m) => htmlToText(m[1]).replace(/\s+/g, " ").trim())
+    .filter((t) => t && t.length < 120);
+  const after = (label: RegExp) => {
+    const i = items.findIndex((t) => label.test(t));
+    return i >= 0 && items[i + 1] && !label.test(items[i + 1]) ? items[i + 1] : null;
+  };
+  const country = after(/^(?:country|paese|nazione|land|pays|país)$/i);
+  const city = after(/^(?:city|città|citta|stadt|ort|ville|ciudad|location|sede|standort)$/i);
+  return [city, country].filter(Boolean).join(", ") || null;
 }
 
 /** The countries filter of the small boards, applied after (the big ones are asked by keyword). */
