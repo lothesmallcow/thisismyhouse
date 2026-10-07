@@ -1,5 +1,5 @@
 // CLI entry for scheduled jobs (used by GitHub Actions cron and by hand).
-// Usage: tsx scripts/run-job.ts <ingest|discover|queue|replies|digest|sweep|index>
+// Usage: tsx scripts/run-job.ts <ingest|discover|queue|replies|digest|sweep|index|metrics>
 import "./load-env";
 import { getDb } from "../src/lib/db";
 import { assertEnv } from "../src/lib/env-check";

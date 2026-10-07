@@ -3,7 +3,7 @@
 import "./load-env";
 import { getDb, migrateDb } from "../src/lib/db";
 import { ensureCatalog, ensureDirectory, ensureRegisters } from "../src/lib/server/catalog";
-import { backfillJobPlaces, convertOldDismissals, mergeDuplicateJobs } from "../src/lib/server/jobs";
+import { backfillFacts, backfillJobPlaces, convertOldDismissals, mergeDuplicateJobs } from "../src/lib/server/jobs";
 import { backfillCompanies } from "../src/lib/server/company-guess";
 import { ensureAdmin } from "../src/lib/server/accounts";
 
@@ -18,6 +18,8 @@ if (adminEmail && adminPassword.length >= 6 && adminPassword !== "admin-compass"
   console.log("Admin not updated: SEED_ADMIN_PASSWORD must be at least 6 characters.");
 }
 await backfillJobPlaces(getDb());
+const facts = await backfillFacts(getDb());
+if (facts) console.log(`Read again what ${facts} offers ask and offer.`);
 await convertOldDismissals(getDb());
 await backfillCompanies(getDb());
 await mergeDuplicateJobs(getDb());

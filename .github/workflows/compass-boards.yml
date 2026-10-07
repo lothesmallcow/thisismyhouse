@@ -9,10 +9,11 @@ on:
   schedule:
     - cron: "20 * * * *" # sweep
     - cron: "40 1 * * 1" # index, Monday night
+    - cron: "50 5 * * *" # metrics: coverage and freshness, counts only
   workflow_dispatch:
     inputs:
       job:
-        description: "sweep | index"
+        description: "sweep | index | metrics"
         required: true
         default: sweep
 permissions:
@@ -57,6 +58,7 @@ jobs:
           case "${{ github.event.schedule }}" in
             "20 * * * *") echo "job=sweep" >> "$GITHUB_OUTPUT" ;;
             "40 1 * * 1") echo "job=index" >> "$GITHUB_OUTPUT" ;;
+            "50 5 * * *") echo "job=metrics" >> "$GITHUB_OUTPUT" ;;
             *) echo "job=${{ github.event.inputs.job }}" >> "$GITHUB_OUTPUT" ;;
           esac
       - name: Run job

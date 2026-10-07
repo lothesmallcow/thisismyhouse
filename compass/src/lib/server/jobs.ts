@@ -10,6 +10,7 @@ import type { WherePlace } from "../core/where";
 import { canonicalCompany, guessCompany } from "./company-guess";
 import { normalizeJob, type RawJob } from "../core/normalize";
 import { EXPIRED_AD } from "../core/extract";
+import { extractFacts, FACTS_VERSION, type Education } from "../core/job-facts";
 import { AGGREGATOR_HOST } from "../core/page-company";
 import { PLATFORM_HOST } from "../sources/web/polite-fetch";
 import { fold } from "../core/text";
@@ -274,6 +275,18 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
       if (!existing.runsStart && n.runsStart) Object.assign(patch, { runsStart: n.runsStart, runsEnd: n.runsEnd, runsMonthOnly: n.runsMonthOnly });
       if (!existing.rolling && n.rolling) patch.rolling = true;
     }
+    if (mayEnrich) {
+      // What the ad asks and offers, read again on the merged ad (a longer text, another link).
+      const urls = (await db.select({ url: schema.jobSources.url }).from(schema.jobSources).where(eq(schema.jobSources.jobId, dupId))).map((r) => r.url ?? "");
+      patch.facts = extractFacts({
+        title: existing.title,
+        description: patch.description ?? existing.description,
+        company: patch.company ?? existing.company,
+        urls: [...urls, n.url ?? "", raw.url ?? ""],
+        applicationEmail: patch.applicationEmail ?? existing.applicationEmail,
+      });
+      patch.factsVersion = FACTS_VERSION;
+    }
     await db.update(schema.jobs).set(patch).where(eq(schema.jobs.id, dupId));
     for (const o of owners) await addSource(db, dupId, raw, n.url, now, o);
     await rankJobForAll(db, dupId, now, opts.contexts);
@@ -318,6 +331,8 @@ export async function upsertRawJob(db: DB, raw: RawJob, now = new Date(), opts: 
       runsEnd: n.runsEnd,
       runsMonthOnly: n.runsMonthOnly,
       rolling: n.rolling,
+      facts: extractFacts({ title: n.title, description: n.description, company: n.company, urls: [n.url ?? "", raw.url ?? ""], applicationEmail: n.applicationEmail }),
+      factsVersion: FACTS_VERSION,
       firstSeenAt: now,
       updatedAt: now,
     })
@@ -445,7 +460,38 @@ export interface JobFilters {
   minFit?: number;
   /** Order: best fit (default), newest, best paid. */
   sort?: "fit" | "recenti" | "paga" | "scadenza";
+  /** At most this many years of experience asked (0: none). Ads that do not say stay. */
+  maxYears?: number;
+  /** Any of these levels (senior, junior…). */
+  seniority?: string[];
+  /** At most this title asked ("diploma": no degree needed). */
+  maxEducation?: Education;
+  /** All of these benefits. */
+  benefits?: string[];
+  /** At least this many days a week from home. */
+  minSmartDays?: number;
+  /** Only quick applications (a short form or an e-mail). */
+  easyApply?: boolean;
+  noAgencies?: boolean;
+  /** Hide always-open applications and ads older than OLD_DAYS. */
+  hideOld?: boolean;
+  /** Only ads for (or open to) protected categories, L. 68/99. */
+  protectedOnly?: boolean;
+  /** Only this company's offers. */
+  company?: string;
+  /** Only the offers not opened yet. */
+  unseen?: boolean;
+  /** Words that must not be in the title or company (fallback when there is no full-text index). */
+  excludes?: string[];
+  /** Inside: only these offers (the full-text search's matches). */
+  ids?: number[];
+  /** Only offers first seen after this (saved searches: what is new since). */
+  since?: Date;
 }
+
+/** Older than this, an ad is probably filled (or always open): hidden with "Nascondi le vecchie". */
+export const OLD_DAYS = 60;
+const EDUCATION_ORDER: Education[] = ["nessuno", "diploma", "laurea", "laurea-magistrale", "dottorato"];
 
 export const PAGE_SIZE = 10;
 
@@ -470,13 +516,45 @@ export function filterWhere(userId: number, f: JobFilters, now = new Date()): SQ
   if (f.types?.length) where.push(inArray(j.jobType, f.types));
   if (f.focus === "aziende") where.push(eq(uj.presetMatch, "company"));
   else if (f.focus === "preferite") where.push(inArray(uj.presetMatch, ["company", "sector"]));
-  const q = f.q?.trim().toLowerCase();
-  if (q) {
-    for (const w of q.split(/\s+/).slice(0, 5)) {
+  if (f.ids) where.push(f.ids.length ? inArray(j.id, f.ids) : sql`0`);
+  else {
+    // No full-text index: each word in the title or company.
+    const q = f.q?.trim().toLowerCase();
+    if (q) {
+      for (const w of q.split(/\s+/).filter((x) => !x.startsWith("-")).slice(0, 5)) {
+        const pat = `%${w.replace(/[%_]/g, "")}%`;
+        where.push(or(like(sql`lower(${j.title})`, pat), like(sql`lower(coalesce(${j.company}, ''))`, pat))!);
+      }
+    }
+    for (const w of f.excludes ?? []) {
       const pat = `%${w.replace(/[%_]/g, "")}%`;
-      where.push(or(like(sql`lower(${j.title})`, pat), like(sql`lower(coalesce(${j.company}, ''))`, pat))!);
+      where.push(sql`not (lower(${j.title}) like ${pat} or lower(coalesce(${j.company}, '')) like ${pat})`);
     }
   }
+  const fact = (k: string) => sql`json_extract(${j.facts}, ${`$.${k}`})`;
+  if (f.maxYears != null) {
+    where.push(sql`(${fact("minYears")} is null or ${fact("minYears")} <= ${f.maxYears})`);
+    // "No experience": not the senior and manager roles that do not say how many years.
+    if (f.maxYears <= 1) where.push(sql`coalesce(${fact("seniority")}, '') not in ('senior', 'manager')`);
+  }
+  if (f.seniority?.length) where.push(sql`${fact("seniority")} in ${f.seniority}`);
+  if (f.maxEducation) {
+    const above = EDUCATION_ORDER.slice(EDUCATION_ORDER.indexOf(f.maxEducation) + 1);
+    // Above that title only when required ("laurea preferibile" stays).
+    if (above.length) where.push(sql`not (coalesce(${fact("education")}, '') in ${above} and ${fact("educationRequired")} = 1)`);
+  }
+  for (const b of f.benefits ?? []) where.push(sql`exists (select 1 from json_each(${j.facts}, '$.benefits') where value = ${b})`);
+  if (f.minSmartDays) where.push(sql`coalesce(${fact("smartDays")}, case when ${j.remote} = 'remote' then 5 else 0 end) >= ${f.minSmartDays}`);
+  if (f.easyApply) where.push(sql`${fact("applyEffort")} = 'facile'`);
+  if (f.noAgencies) where.push(sql`coalesce(${fact("agency")}, 0) = 0 and ${j.contract} != 'somministrazione'`);
+  if (f.protectedOnly) where.push(sql`${fact("protectedCategories")} = 1`);
+  if (f.hideOld) {
+    where.push(sql`coalesce(${fact("evergreen")}, 0) = 0`);
+    where.push(gte(sql`coalesce(${j.postedAt}, ${j.firstSeenAt})`, now.getTime() - OLD_DAYS * 86_400_000));
+  }
+  if (f.company) where.push(sql`lower(coalesce(${j.company}, '')) = ${f.company.toLowerCase()}`);
+  if (f.unseen) where.push(eq(uj.status, "new"));
+  if (f.since) where.push(sql`${j.firstSeenAt} > ${f.since.getTime()}`);
   return and(...where)!;
 }
 
@@ -495,6 +573,29 @@ function placesWhere(places: WherePlace[], remote: boolean): SQL {
   }
   if (remote) any.push(and(eq(j.remote, "remote"), inArray(j.country, [...new Set(places.map((p) => p.country))]))!);
   return or(...any)!;
+}
+
+/** Read again what older ads ask and offer (rows from before the facts, or from older rules). */
+export async function backfillFacts(db: DB, batch = 300): Promise<number> {
+  let done = 0;
+  for (;;) {
+    const rows = await db
+      .select({ id: schema.jobs.id, title: schema.jobs.title, description: schema.jobs.description, company: schema.jobs.company, applicationEmail: schema.jobs.applicationEmail })
+      .from(schema.jobs)
+      .where(lt(schema.jobs.factsVersion, FACTS_VERSION))
+      .limit(batch);
+    if (!rows.length) return done;
+    const urls = new Map<number, string[]>();
+    for (const r of await db.select({ jobId: schema.jobSources.jobId, url: schema.jobSources.url }).from(schema.jobSources).where(inArray(schema.jobSources.jobId, rows.map((x) => x.id)))) {
+      urls.set(r.jobId, [...(urls.get(r.jobId) ?? []), r.url ?? ""]);
+    }
+    const writes = rows.map((r) =>
+      db.update(schema.jobs).set({ facts: extractFacts({ ...r, urls: urls.get(r.id) ?? [] }), factsVersion: FACTS_VERSION }).where(eq(schema.jobs.id, r.id)),
+    );
+    // One round trip per batch on Turso.
+    await db.batch(writes as unknown as Parameters<typeof db.batch>[0]);
+    done += rows.length;
+  }
 }
 
 /** Fill in country and region for jobs saved before they were recorded (once, at migration time). */

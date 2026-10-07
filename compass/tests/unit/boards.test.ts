@@ -29,6 +29,7 @@ describe("a link → the employer's board", () => {
     ["https://careers.unicredit.eu/it_IT/jobsuche/JobDetail/Risk-Analyst/3150", { ats: "avature", slug: "careers.unicredit.eu/jobsuche" }],
     ["https://careers.unicredit.eu/jobsuche/JobDetail/Risk-Analyst/3150", { ats: "avature", slug: "careers.unicredit.eu/jobsuche" }],
     ["https://acme.avature.net/careers/SearchJobs/?search=x", { ats: "avature", slug: "acme.avature.net/careers" }],
+    ["https://acme.teamtailor.com/jobs/5275825-analyst", { ats: "teamtailor", slug: "acme" }],
   ])("%s", (url, want) => {
     expect(feedFromUrl(url)).toEqual(want);
   });
@@ -138,6 +139,21 @@ describe("reading the big boards", () => {
     const jobs = await fetchAts(fetchImpl, "avature", "careers.unicredit.eu/jobsuche", "UniCredit", ["IT"], { keywords: ["Risk analyst"] });
     expect(seen[0]).toBe("https://careers.unicredit.eu/jobsuche/SearchJobs/feed/?search=Risk%20analyst");
     expect(jobs).toEqual([expect.objectContaining({ title: "Risk Analyst", company: "UniCredit", location: "Milano, Italia", description: "Analisi rischi", externalId: "3150", source: "ats:avature", thin: false })]);
+  });
+  it("Teamtailor: the RSS feed, the place from the offer's page when the feed does not say", async () => {
+    const fetchImpl = (async (url: string | URL | Request) => {
+      const u = String(url);
+      if (u.endsWith("/jobs.rss"))
+        return new Response(`<rss><channel>
+          <item><title>Analista contabile</title><description>&lt;p&gt;Contabilità e bilancio. Almeno 2 anni di esperienza.&lt;/p&gt;</description><link>https://acme.teamtailor.com/jobs/1-analista-contabile</link><pubDate>Mon, 05 Oct 2026 09:00:00 +0200</pubDate></item>
+          <item><title>Store assistant</title><description>Shop</description><link>https://acme.teamtailor.com/jobs/2-store-assistant</link></item>
+        </channel></rss>`);
+      if (u.endsWith("/1-analista-contabile")) return new Response(`<script type="application/ld+json">{"@type":"JobPosting","title":"Analista contabile","jobLocation":{"address":{"addressLocality":"Milano","addressCountry":"IT"}}}</script>`);
+      if (u.endsWith("/2-store-assistant")) return new Response(`<script type="application/ld+json">{"@type":"JobPosting","title":"Store assistant","jobLocation":{"address":{"addressLocality":"Stockholm","addressCountry":"SE"}}}</script>`);
+      return new Response("no", { status: 404 });
+    }) as typeof fetch;
+    const jobs = await fetchAts(fetchImpl, "teamtailor", "acme", "Acme", ["IT"]);
+    expect(jobs).toEqual([expect.objectContaining({ title: "Analista contabile", location: "Milano, Italia", description: "Contabilità e bilancio. Almeno 2 anni di esperienza.", externalId: "1", source: "ats:teamtailor" })]);
   });
   it("Avature's labelled fields → the place", () => {
     const f = (l: string, v: string) => `<div class="article__content__view__field"><div class="article__content__view__field__label">${l}</div><div class="article__content__view__field__value">${v}</div></div>`;

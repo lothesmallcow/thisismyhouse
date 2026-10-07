@@ -23,6 +23,7 @@ export const FEED_DOMAINS = [
   "jobs.personio.de",
   "recruitee.com",
   "avature.net",
+  "teamtailor.com",
 ];
 
 const NOT_SLUG = /^(?:embed|api|v\d|j|jobs?|careers?|www|search|en|it|de|fr|en-us|en-gb|it-it|de-de|fr-fr|o|apply|login|sitemap\.xml)$/i;
@@ -68,6 +69,9 @@ export function feedFromUrl(raw: string): Feed | null {
     const i = parts.indexOf("boards");
     return i >= 0 && parts[i + 1] ? { ats: "greenhouse", slug: parts[i + 1] } : null;
   }
+  // Teamtailor: <slug>.teamtailor.com/jobs/<id>-<title>
+  const tt = host.match(/^([a-z0-9-]+)\.teamtailor\.com$/);
+  if (tt && !/^(www|app|career|support|help)$/.test(tt[1])) return { ats: "teamtailor", slug: tt[1] };
   if (host === "jobs.lever.co" || host === "jobs.eu.lever.co") return ok(first) ? { ats: "lever", slug: first } : null;
   if (host === "jobs.ashbyhq.com") return ok(first) ? { ats: "ashby", slug: first } : null;
   if (host === "jobs.smartrecruiters.com" || host === "careers.smartrecruiters.com") return ok(first) ? { ats: "smartrecruiters", slug: first } : null;

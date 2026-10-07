@@ -17,6 +17,7 @@ export const CRAWL_PATTERNS = [
   "*.recruitee.com",
   "*.jobs.personio.de",
   "*.myworkdayjobs.com",
+  "*.teamtailor.com",
 ];
 
 const INDEX = "https://index.commoncrawl.org";

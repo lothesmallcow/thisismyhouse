@@ -215,10 +215,11 @@ function escoPositions(): Position[] {
 
 function legacyEsco(): Position[] {
   try {
+    // As in occupations.ts: works in ES modules (scripts) and CommonJS alike.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require("node:fs") as typeof import("node:fs");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const path = require("node:path") as typeof import("node:path");
+    const builtin = (name: string) => (process as unknown as { getBuiltinModule?: (n: string) => unknown }).getBuiltinModule?.(name) ?? require(name);
+    const fs = builtin("node:fs") as typeof import("node:fs");
+    const path = builtin("node:path") as typeof import("node:path");
     const file = path.join(process.cwd(), "data/world/positions-esco.json");
     if (!fs.existsSync(file)) return [];
     const rows = JSON.parse(fs.readFileSync(file, "utf8")) as [string, string, string, string, string, string[]][];

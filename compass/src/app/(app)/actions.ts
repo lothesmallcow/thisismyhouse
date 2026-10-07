@@ -38,6 +38,7 @@ import { verifyPassword } from "@/lib/server/passwords";
 import { fitWarnings } from "@/lib/server/career";
 import { deleteExperience, importFromCvText, importFromLinkedIn, listExperiences, pdfText, rematchExperiences, saveExperiences } from "@/lib/server/experiences";
 import { getProfile, updateProfile } from "@/lib/server/profile";
+import { deleteSearch, saveSearch, setSearchAlert } from "@/lib/server/saved-searches";
 import { after } from "next/server";
 import { checkInboxNow, quickSearchFor, readConnectedGmail } from "@/lib/pipeline/jobs";
 import { deleteMailConnection } from "@/lib/server/mail-connections";
@@ -693,4 +694,26 @@ export async function deleteFolderAction(f: FormData) {
   const u = await requireUser();
   const ok = await deleteFolder(getDb(), u.id, num(f, "folderId"));
   done("/offerte/cartelle", ok ? "cartella-eliminata" : "errore");
+}
+
+// --- Saved searches ("Offerte") ----------------------------------------------------------------
+
+/** Keep the search on screen (its address) with an e-mail when new offers match. */
+export async function saveSearchAction(f: FormData) {
+  const u = await requireUser();
+  const query = String(f.get("query") ?? "").slice(0, 2000);
+  const id = await saveSearch(getDb(), u.id, query, String(f.get("label") ?? ""));
+  done(`/offerte?${query}${id ? `&salvata=${id}` : ""}`, id ? "ricerca-salvata" : "troppe-ricerche");
+}
+
+export async function deleteSearchAction(f: FormData) {
+  const u = await requireUser();
+  await deleteSearch(getDb(), u.id, Number(f.get("id")));
+  done("/offerte/ricerche", "ricerca-tolta");
+}
+
+export async function searchAlertAction(f: FormData) {
+  const u = await requireUser();
+  await setSearchAlert(getDb(), u.id, Number(f.get("id")), f.get("alert") === "1");
+  done("/offerte/ricerche", f.get("alert") === "1" ? "avviso-acceso" : "avviso-spento");
 }

@@ -11,7 +11,7 @@ import { getJson, htmlToText, request, HttpError, type FetchLike } from "../http
 import { enterpriseEndpoint, fetchEnterprise, type EnterpriseAts } from "./enterprise";
 
 export type AtsType = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "personio" | EnterpriseAts;
-export const ENTERPRISE: AtsType[] = ["workday", "oracle", "eightfold", "recruitee", "avature"];
+export const ENTERPRISE: AtsType[] = ["workday", "oracle", "eightfold", "recruitee", "avature", "teamtailor"];
 
 export const ATS_LABELS: Record<AtsType, string> = {
   greenhouse: "Greenhouse",
@@ -25,6 +25,7 @@ export const ATS_LABELS: Record<AtsType, string> = {
   eightfold: "Eightfold",
   recruitee: "Recruitee",
   avature: "Avature",
+  teamtailor: "Teamtailor",
 };
 
 /** Where to find the slug, shown in the admin form. */
@@ -40,6 +41,7 @@ export const ATS_SLUG_HINT: Record<AtsType, string> = {
   eightfold: "<host>.eightfold.ai/<dominio dell'azienda>",
   recruitee: "<slug>.recruitee.com",
   avature: "<host>/<portale> (incolla un link di un'offerta, es. careers.unicredit.eu/jobsuche)",
+  teamtailor: "<slug>.teamtailor.com",
 };
 
 export function atsEndpoint(ats: AtsType, slug: string, countries: CountryCode[] = ["IT"]): string {
@@ -128,7 +130,8 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "oracle":
     case "eightfold":
     case "recruitee":
-    case "avature": {
+    case "avature":
+    case "teamtailor": {
       const jobs = await fetchEnterprise(fetchImpl, ats, slug, company, { keywords: opts.keywords, details: opts.details, countries, inCountry: (p) => inCountries(p, false, countries) });
       return jobs.filter((j) => !j.location || inCountries(j.location, j.hints?.remote === "remote", countries));
     }

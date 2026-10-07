@@ -1,4 +1,4 @@
-# Come Compass trova le offerte (dalla 0.23, aggiornato alla 0.25)
+# Come Compass trova le offerte (dalla 0.23, aggiornato alla 0.26)
 
 L'idea: invece di rincorrere gli annunci dove vengono **ripubblicati** (LinkedIn, Indeed, risultati web),
 Compass legge le offerte **dove le aziende le pubblicano**: le loro bacheche lavoro. Le grandi aziende e
@@ -55,8 +55,31 @@ Un'offerta uscita dopo l'ultimo giro compare al giro dopo (entro un'ora; GitHub 
 lavori programmati di qualche decina di minuti). Delle bacheche che nessuno ha scelto si tengono solo
 le offerte con uno dei ruoli cercati.
 
-Fonti guardate e scartate: EURES (portale lavoro UE) risponde "accesso negato" ai programmi; le API a
+Fonti guardate e scartate: Intervieweb (Zucchetti) mostra gli annunci solo con la chiave di
+pubblicazione dell'azienda; Factorial disegna le offerte solo nel browser; EURES (portale lavoro UE) risponde "accesso negato" ai programmi; le API a
 pagamento (Fantastic.jobs e simili) sono fuori budget; LinkedIn, Indeed e Glassdoor non si leggono.
+
+## La ricerca (0.26)
+
+Si scrive come si parla: "impiegata amministrativa Torino part-time". `core/query.ts` riconosce il
+ruolo (con i suoi altri nomi ESCO e le parole di tutti i giorni), il luogo, orario, contratto, livello,
+"senza esperienza", "senza agenzie", le parole da escludere (`-turni`, "senza turni"); il resto sono
+parole da trovare. Quello che ha capito torna come etichette che si tolgono una alla volta.
+
+- **Indice full-text** (`server/search-index.ts`, FTS5 di SQLite): titolo, azienda, testo, accenti
+  ignorati. Le parole del lavoro si cercano prima nel titolo; se non c'è nulla, nel testo; se ancora
+  nulla, le offerte con alcune parole (detto chiaramente). "impiegata" trova anche "impiegato".
+- **Ordine**: quanto l'offerta corrisponde alla ricerca, le parole scritte esattamente nel titolo, poi
+  quanto è adatta alla persona.
+- **Cosa chiede e offre ogni offerta** (`core/job-facts.ts`, regole italiano/inglese): esperienza,
+  livello, titolo di studio, benefit, smart working, turni, trasferte, patente, categorie protette,
+  agenzia, candidatura veloce o lunga, candidatura sempre aperta. Tutti filtri.
+- **Ricerche salvate** con avviso e-mail (al massimo uno all'ora, dopo il giro orario).
+- **Banco di prova** (`tests/bench/search-bench.ts`, `npx tsx scripts/bench-search.ts`): offerte
+  realistiche e le ricerche che si fanno davvero; la CI fallisce se precisione o copertura scendono.
+  Oggi: precisione dei primi 5 0,97, copertura 1,00.
+- **Misure sui dati veri**: il lavoro "metrics" (ogni mattina) conta le offerte italiane per fonte, le
+  ore dalla pubblicazione all'arrivo in Compass, quanto di ogni offerta è stato capito.
 
 ## I ruoli
 

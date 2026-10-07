@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Job } from "@/lib/server/jobs";
 import { daysAgoLabel } from "@/lib/core/time";
+import { factChips } from "@/lib/core/job-facts";
+import { grossAnnualToNetMonthly } from "@/lib/core/salary";
 import { deadlineText } from "@/lib/core/deadline";
 import { IconMail, IconPin, IconStar } from "./icons";
 import { LevelBadge } from "./ui";
@@ -10,7 +12,9 @@ function salaryShort(j: Job): string | null {
   if (j.salaryMin == null || j.salaryMax == null) return null;
   const f = (n: number) => `${Math.round(n / 1000)}k`;
   const r = j.salaryMin === j.salaryMax ? f(j.salaryMin) : `${f(j.salaryMin)}–${f(j.salaryMax)}`;
-  return `${r} €/anno${j.salaryIsEstimate ? " (stima)" : ""}`;
+  // The take-home pay, which is what people compare: ≈ net a month (13 months).
+  const net = grossAnnualToNetMonthly((j.salaryMin + j.salaryMax) / 2);
+  return `${r} €/anno${j.salaryIsEstimate ? " (stima)" : ""} · ≈ ${net.toLocaleString("it-IT")} € netti al mese`;
 }
 
 const TYPE_LABEL: Record<string, string> = { stage: "Stage", programma: "Programma studenti" };
@@ -70,6 +74,16 @@ export function JobCard({ job, dismiss, back }: { job: Job; dismiss?: (jobId: nu
           {job.reasons.map((r) => (
             <li key={r} className={`rounded-full px-2.5 py-1 text-[12.5px] font-medium ${negative(r) ? "bg-warn-soft text-warn" : "bg-subtle text-muted"}`}>
               {r}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {factChips(job.facts, { max: 5 }).length > 0 && (
+        <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Cosa chiede e cosa offre">
+          {factChips(job.facts, { max: 5 }).map((c) => (
+            <li key={c.label} className={`rounded-md px-2 py-0.5 text-[12px] ${c.tone === "good" ? "bg-good-soft text-good" : c.tone === "warn" ? "bg-warn-soft text-warn" : "bg-fill/70 text-muted"}`}>
+              {c.label}
             </li>
           ))}
         </ul>

@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.26.0 · 2026-10-07
+
+Search, rebuilt to find exactly what people ask for.
+
+- **Type what you want, as you would say it**: "impiegata amministrativa Torino part-time",
+  "contabile senza esperienza Bergamo -turni", "sales manager moda Milano". Compass understands the
+  role (with the other names it goes by: "responsabile vendite" also finds "sales manager" and
+  "direttore delle vendite"), the place, hours, contract, level, "senza agenzie", excluded words, and
+  shows back what it understood as chips you can remove one by one.
+- **A real search engine** over every offer (full-text index: title, company, text, accents ignored),
+  words about the job looked for in the title first, ordered by how well each offer matches, then by
+  how well it suits the person. "impiegata" also finds "impiegato".
+- **Every offer read for what it asks and offers**: years of experience, level, education (required or
+  just preferred), benefits (buoni pasto, welfare, company car…), smart-working days, shifts, travel,
+  driving licence, protected categories (L. 68/99), staffing agency, quick or long application,
+  always-open applications. Shown on cards and offer pages, and each one a filter.
+- **New filters**: experience, level, the title you have, benefits, smart-working days, quick
+  applications only, no agencies, hide old or always-open ads, protected categories, not opened yet,
+  one company's offers ("Tutte le offerte di …").
+- **Saved searches with alerts**: "Salva ricerca e avvisami"; an e-mail when new offers match (at most
+  one an hour, after each hourly sweep); "Le tue ricerche" with how many are new.
+- **Net pay a month** next to the yearly gross on every card.
+- **Teamtailor** boards read (their public RSS feed), also found through the board index.
+- **Measured**: a search benchmark (realistic ads, the searches people type) checked in CI:
+  precision of the first 5 0.97, recall 1.00, about 3 ms a search; a daily "metrics" job reports
+  coverage by source and hours from publication to Compass (counts only).
+- Looked at and not added: Intervieweb (Zucchetti) needs each company's publishing key; Factorial
+  draws its offers in the browser only.
+- Fix: ESCO data now also loads in scripts run as ES modules (scheduled jobs).
+
 ## 0.25.0 · 2026-10-07
 
 - **Thousands of employers' boards, found without a company list**: once a week Compass asks Common

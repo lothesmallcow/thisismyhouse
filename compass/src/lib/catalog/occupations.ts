@@ -33,10 +33,12 @@ function load(): Data {
   data = { skills: [], occupations: [] };
   if (typeof window !== "undefined") return data;
   try {
+    // Node's own modules without a static import (this file is also bundled for pages): getBuiltinModule
+    // works in ES modules too (scripts run with tsx), require in CommonJS.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require("node:fs") as typeof import("node:fs");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const path = require("node:path") as typeof import("node:path");
+    const builtin = (name: string) => (process as unknown as { getBuiltinModule?: (n: string) => unknown }).getBuiltinModule?.(name) ?? require(name);
+    const fs = builtin("node:fs") as typeof import("node:fs");
+    const path = builtin("node:path") as typeof import("node:path");
     const file = path.join(process.cwd(), "data/world/occupations.json");
     if (fs.existsSync(file)) data = JSON.parse(fs.readFileSync(file, "utf8")) as Data;
   } catch {

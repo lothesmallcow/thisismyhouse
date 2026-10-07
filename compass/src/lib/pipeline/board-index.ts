@@ -14,7 +14,7 @@ import { feedName, registerFeed } from "../server/feeds";
 
 export const INDEX_COUNTRIES: CountryCode[] = ["IT", "GB", "DE", "FR"];
 /** Read whole, or searched with their own country filter: one or two requests to check a board. */
-const INDEXABLE = new Set<AtsType>(["greenhouse", "lever", "ashby", "workable", "recruitee", "smartrecruiters", "personio", "workday"]);
+const INDEXABLE = new Set<AtsType>(["greenhouse", "lever", "ashby", "workable", "recruitee", "smartrecruiters", "personio", "workday", "teamtailor"]);
 
 export interface IndexSummary {
   crawl: string | null;
