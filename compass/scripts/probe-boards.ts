@@ -1,7 +1,8 @@
 // Live check of job sources (run on GitHub Actions, which can reach them). Prints counts and public
 // job titles only; writes nothing.
 //   npx tsx scripts/probe-boards.ts   (on GitHub: any change to this file runs .github/workflows/compass-probe.yml)
-// Round 11 (round 9 again; American places with European names no longer count as Europe): the board index as the weekly job runs it, without the database: every board in the
+// Round 12 (round 9 again; American places with European names, and Italian town names inside
+// other names, no longer count as Europe): the board index as the weekly job runs it, without the database: every board in the
 // latest Common Crawl, then a sample of each system checked for offers in Italy, UK, Germany, France.
 import { crawlFeeds } from "../src/lib/sources/ats/crawl-index";
 import { fetchAts } from "../src/lib/sources/ats";

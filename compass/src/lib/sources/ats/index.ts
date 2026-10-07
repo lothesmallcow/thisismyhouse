@@ -5,6 +5,7 @@
 import { parse } from "node-html-parser";
 import type { Contract, Hours, Remote } from "../../core/extract";
 import { findPlace, type CountryCode } from "../../core/geo";
+import { fold } from "../../core/text";
 import type { RawJob, SourceKind } from "../../core/normalize";
 import { getJson, htmlToText, request, HttpError, type FetchLike } from "../http";
 import { enterpriseEndpoint, fetchEnterprise, type EnterpriseAts } from "./enterprise";
@@ -93,7 +94,20 @@ export function inCountries(location: string | null | undefined, remote: boolean
   // American and Canadian places with European names: "Naples, FL", "Rome, GA", "London, ON", "Paris, TX".
   if (northAmerican(location)) return false;
   const p = findPlace(location);
-  return p != null && countries.includes(p.country);
+  if (!p || !countries.includes(p.country)) return false;
+  // An Italian town found without "Italy" written: it must be a whole part of the place, not a word
+  // inside another name ("Palo Alto" is not Alto in Piedmont, "Vandenberg Space Force Base" not Force).
+  return p.country !== "IT" || wholePart(location, p.name);
+}
+
+const words = (s: string) => fold(s).replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+function wholePart(location: string, town: string): boolean {
+  const n = words(town).length;
+  return location
+    .replace(/\b\d{4,6}\b/g, " ")
+    .replace(/\b[A-Z]{2}\b/g, " ")
+    .split(/[,;/|()\-–]+/)
+    .some((seg) => words(seg).length === n && findPlace(seg)?.name === town);
 }
 
 /** Career-page offers worth keeping: in the chosen countries, or not saying where (then the person's filters decide). */

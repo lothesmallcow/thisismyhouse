@@ -10,6 +10,10 @@
 - **New offers within the hour**: every hour all boards that hire where someone looks are read again
   (workflow "Compass boards"), so an offer published after the last refresh shows up at the next one.
   The companies a person chose are still read live by "Cerca ora".
+- **Places read more carefully** on employers' boards: American and Canadian towns with European
+  names ("Naples, FL", "Rome, GA", "London, ON") and Italian town names inside other names ("Palo
+  Alto", "Vandenberg Space Force Base") no longer count as Europe; Italian province codes that are
+  also US states ("Milano, MI", "Cagliari, CA", "Como, CO") stay Italian.
 - Fix: "Annulla" on "Non mi interessa" now always brings the offer back. An offer only that person
   could see (their own alerts, added by hand) was deleted at once; it is now deleted only when the 3
   days to undo are over.
