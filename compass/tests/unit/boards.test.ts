@@ -19,7 +19,7 @@ describe("a link → the employer's board", () => {
     ["https://barclays.wd3.myworkdayjobs.com/en-US/External_Career_Site_Barclays/job/London/Analyst_JR-001", { ats: "workday", slug: "barclays.wd3.myworkdayjobs.com/External_Career_Site_Barclays" }],
     ["https://citi.wd5.myworkdayjobs.com/2/job/Milan/Analyst_25", { ats: "workday", slug: "citi.wd5.myworkdayjobs.com/2" }],
     ["https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210512345", { ats: "oracle", slug: "jpmc.fa.oraclecloud.com/CX_1001" }],
-    ["https://aexp.eightfold.ai/careers/job/123?domain=aexp.com", { ats: "eightfold", slug: "aexp.eightfold.ai/aexp.com" }],
+    ["https://aexp.eightfold.ai/careers/job/123?domain=aexp.com", null],
     ["https://boards.greenhouse.io/point72/jobs/7654321", { ats: "greenhouse", slug: "point72" }],
     ["https://job-boards.greenhouse.io/embed/job_board?for=bendingspoons", { ats: "greenhouse", slug: "bendingspoons" }],
     ["https://jobs.lever.co/satispay/abc-123", { ats: "lever", slug: "satispay" }],
@@ -59,10 +59,44 @@ describe("reading the big boards", () => {
     }) as typeof fetch;
     const jobs = await fetchEnterprise(fetchImpl, "workday", "acme.wd3.myworkdayjobs.com/Careers", "Acme", { keywords: ["Sales manager"], now: NOW, details: 1 });
     expect(jobs).toHaveLength(2);
-    expect(jobs[0]).toMatchObject({ url: "https://acme.wd3.myworkdayjobs.com/Careers/job/Milan/Sales-Manager_R1", company: "Acme Italia S.p.A.", location: "Milano", description: "Guida il team vendite.", thin: false, source: "ats:workday" });
+    // The board's company, not Workday's legal entity
+    expect(jobs[0]).toMatchObject({ url: "https://acme.wd3.myworkdayjobs.com/Careers/job/Milan/Sales-Manager_R1", company: "Acme", location: "Milano", description: "Guida il team vendite.", thin: false, source: "ats:workday" });
     expect(jobs[1].location).toBeNull(); // "2 Locations" says nothing
     expect(calls[0]).toBe("POST https://acme.wd3.myworkdayjobs.com/wday/cxs/acme/Careers/jobs");
     expect(workdayPosted("Posted 30+ Days Ago", NOW)?.toISOString().slice(0, 10)).toBe("2026-09-06");
+  });
+  it("Workday: only the chosen countries, through the board's own country filter", async () => {
+    const bodies: { appliedFacets: Record<string, string[]>; searchText: string; limit: number }[] = [];
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      bodies.push(body);
+      if (body.limit === 1)
+        return Response.json({ facets: [
+          { facetParameter: "jobFamilyGroup", values: [{ id: "f1", descriptor: "Italy Operations" }] },
+          { facetParameter: "Country_and_Jurisdiction", values: [{ id: "us", descriptor: "United States" }, { id: "it", descriptor: "Italy" }] },
+        ] });
+      return Response.json({ jobPostings: [{ title: "Analyst", externalPath: "/job/Milan/Analyst_1", locationsText: "Milan, Italy" }] });
+    }) as typeof fetch;
+    const jobs = await fetchEnterprise(fetchImpl, "workday", "citi.wd5.myworkdayjobs.com/2", "Citi", { keywords: ["Analyst"], countries: ["IT"], details: 0 });
+    expect(jobs).toHaveLength(1);
+    expect(bodies[1]).toMatchObject({ searchText: "Analyst", appliedFacets: { Country_and_Jurisdiction: ["it"] } });
+  });
+  it("Oracle: only the chosen countries, then the full description and closing date", async () => {
+    const fetchImpl = (async (url: string | URL | Request) => {
+      const u = decodeURIComponent(String(url));
+      if (u.includes("recruitingCEJobRequisitionDetails")) {
+        expect(u).toContain('ById;Id="2",siteNumber=CX_1001');
+        return Response.json({ items: [{ ExternalDescriptionStr: "<p>Analisi del credito.</p>", ExternalPostedEndDate: "2026-11-01T00:00:00Z" }] });
+      }
+      return Response.json({ items: [{ requisitionList: [
+        { Id: "1", Title: "Analyst", PrimaryLocation: "National Capital Region", PrimaryLocationCountry: "PH" },
+        { Id: "2", Title: "Credit Analyst", PrimaryLocation: "Milano, Italy", PrimaryLocationCountry: "IT" },
+        { Id: "3", Title: "Risk Analyst", PrimaryLocation: "London", PrimaryLocationCountry: "GB", secondaryLocations: [{ CountryCode: "IT" }] },
+      ] }] });
+    }) as typeof fetch;
+    const jobs = await fetchEnterprise(fetchImpl, "oracle", "jpmc.fa.oraclecloud.com/CX_1001", "J.P. Morgan", { keywords: ["Analyst"], countries: ["IT"], details: 1 });
+    expect(jobs.map((j) => j.externalId)).toEqual(["2", "3"]);
+    expect(jobs[0]).toMatchObject({ description: "Analisi del credito.", thin: false, hints: { closesAt: new Date("2026-11-01T00:00:00Z") } });
   });
   it("Oracle, Eightfold, Recruitee", async () => {
     const fetchImpl = (async (url: string | URL | Request) => {

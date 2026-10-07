@@ -90,7 +90,7 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "oracle":
     case "eightfold":
     case "recruitee": {
-      const jobs = await fetchEnterprise(fetchImpl, ats, slug, company, { keywords: opts.keywords });
+      const jobs = await fetchEnterprise(fetchImpl, ats, slug, company, { keywords: opts.keywords, countries });
       return jobs.filter((j) => !j.location || inCountries(j.location, j.hints?.remote === "remote", countries));
     }
     case "greenhouse": {

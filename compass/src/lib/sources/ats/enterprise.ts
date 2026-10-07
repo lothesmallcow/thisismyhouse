@@ -50,7 +50,7 @@ export async function fetchEnterprise(
   ats: EnterpriseAts,
   slug: string,
   company: string,
-  opts: { keywords?: string[]; perKeyword?: number; now?: Date; details?: number } = {},
+  opts: { keywords?: string[]; perKeyword?: number; now?: Date; details?: number; countries?: CountryCode[] } = {},
 ): Promise<RawJob[]> {
   const now = opts.now ?? new Date();
   const perKeyword = opts.perKeyword ?? 20;
@@ -60,13 +60,14 @@ export async function fetchEnterprise(
   switch (ats) {
     case "workday": {
       const tenant = host.split(".")[0];
+      const endpoint = `https://${host}/wday/cxs/${tenant}/${rest}/jobs`;
+      const post = <T,>(body: object) =>
+        getJson<T>(fetchImpl, endpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ appliedFacets: {}, limit: 20, offset: 0, searchText: "", ...body }) }, { retries: 1 });
+      // The board's own country filter (its name changes from board to board: "locationCountry",
+      // "Country_and_Jurisdiction"…): offers in the chosen countries only, not the first 20 worldwide.
+      const applied = opts.countries?.length ? await workdayCountryFacet(post, opts.countries).catch(() => null) : null;
       for (const kw of keywords) {
-        const d = await getJson<{ jobPostings?: { title?: string; externalPath?: string; locationsText?: string; postedOn?: string; bulletFields?: string[] }[] }>(
-          fetchImpl,
-          `https://${host}/wday/cxs/${tenant}/${rest}/jobs`,
-          { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ appliedFacets: {}, limit: Math.min(20, perKeyword), offset: 0, searchText: kw }) },
-          { retries: 1 },
-        );
+        const d = await post<{ jobPostings?: { title?: string; externalPath?: string; locationsText?: string; postedOn?: string; bulletFields?: string[] }[] }>({ limit: Math.min(20, perKeyword), searchText: kw, ...(applied ? { appliedFacets: applied } : {}) });
         for (const j of d.jobPostings ?? []) {
           if (!j.title || !j.externalPath) continue;
           const url = `https://${host}/${rest}${j.externalPath}`;
@@ -83,13 +84,14 @@ export async function fetchEnterprise(
           });
         }
       }
-      // The first few in full (description, place, start date, employer as Workday names it).
+      // The first few in full (description, place, start date). The employer stays the board's company:
+      // Workday's own field is the legal entity ("1203 Barclays Global Serv. Cen").
       let n = 0;
       for (const [url, job] of out) {
         if (n++ >= (opts.details ?? 8)) break;
         try {
           const path = url.slice(`https://${host}/${rest}`.length);
-          const d = await getJson<{ jobPostingInfo?: { jobDescription?: string; location?: string; startDate?: string; timeType?: string; externalUrl?: string }; hiringOrganization?: { name?: string } }>(
+          const d = await getJson<{ jobPostingInfo?: { jobDescription?: string; location?: string; startDate?: string; timeType?: string } }>(
             fetchImpl,
             `https://${host}/wday/cxs/${tenant}/${rest}${path}`,
             { headers: { Accept: "application/json" } },
@@ -98,7 +100,6 @@ export async function fetchEnterprise(
           const info = d.jobPostingInfo ?? {};
           out.set(url, {
             ...job,
-            company: d.hiringOrganization?.name?.trim() || company,
             location: info.location ?? job.location,
             description: htmlToText(info.jobDescription ?? ""),
             postedAt: info.startDate ? new Date(info.startDate) : job.postedAt,
@@ -112,15 +113,15 @@ export async function fetchEnterprise(
       break;
     }
     case "oracle": {
+      type Req = { Id?: string; Title?: string; PostedDate?: string; PrimaryLocation?: string; PrimaryLocationCountry?: string; ShortDescriptionStr?: string; WorkplaceType?: string; secondaryLocations?: { CountryCode?: string; Name?: string }[] };
+      const base = `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations&finder=`;
+      const wanted = new Set((opts.countries ?? []).map((c) => c.toUpperCase()));
       for (const kw of keywords) {
-        const finder = [`findReqs;siteNumber=${rest}`, kw ? `keyword="${kw}"` : "", `limit=${Math.min(25, perKeyword)}`, "offset=0", "sortBy=POSTING_DATES_DESC"].filter(Boolean).join(",");
-        const d = await getJson<{ items?: { requisitionList?: { Id?: string; Title?: string; PostedDate?: string; PrimaryLocation?: string; PrimaryLocationCountry?: string; ShortDescriptionStr?: string; WorkplaceType?: string }[] }[] }>(
-          fetchImpl,
-          `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations&finder=${encodeURIComponent(finder)}`,
-          { headers: { Accept: "application/json" } },
-          { retries: 1 },
-        );
-        for (const j of d.items?.[0]?.requisitionList ?? []) {
+        // Newest first; then only those in the chosen countries (by the requisition's own country code).
+        const finder = [`findReqs;siteNumber=${rest}`, kw ? `keyword="${kw}"` : "", `limit=${wanted.size ? 100 : Math.min(25, perKeyword)}`, "offset=0", "sortBy=POSTING_DATES_DESC"].filter(Boolean).join(",");
+        const d = await getJson<{ items?: { requisitionList?: Req[] }[] }>(fetchImpl, base + encodeURIComponent(finder), { headers: { Accept: "application/json" } }, { retries: 1 });
+        const list = (d.items?.[0]?.requisitionList ?? []).filter((j) => !wanted.size || wanted.has((j.PrimaryLocationCountry ?? "").toUpperCase()) || (j.secondaryLocations ?? []).some((l) => wanted.has((l.CountryCode ?? "").toUpperCase())));
+        for (const j of list.slice(0, perKeyword)) {
           if (!j.Id || !j.Title) continue;
           const url = `https://${host}/hcmUI/CandidateExperience/en/sites/${rest}/job/${j.Id}`;
           out.set(url, {
@@ -135,6 +136,27 @@ export async function fetchEnterprise(
             hints: { remote: /remote/i.test(j.WorkplaceType ?? "") ? "remote" : /hybrid/i.test(j.WorkplaceType ?? "") ? "hybrid" : undefined },
             thin: true,
           });
+        }
+      }
+      // The first few in full: the description and when applications close.
+      let n = 0;
+      for (const [url, job] of out) {
+        if (n++ >= (opts.details ?? 8)) break;
+        try {
+          const finder = `ById;Id="${job.externalId}",siteNumber=${rest}`;
+          const d = await getJson<{ items?: { ExternalDescriptionStr?: string; ExternalResponsibilitiesStr?: string; ExternalQualificationsStr?: string; ExternalPostedEndDate?: string }[] }>(
+            fetchImpl,
+            `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=${encodeURIComponent(finder)}`,
+            { headers: { Accept: "application/json" } },
+            { retries: 0 },
+          );
+          const r = d.items?.[0];
+          if (!r) continue;
+          const description = htmlToText([r.ExternalDescriptionStr, r.ExternalResponsibilitiesStr, r.ExternalQualificationsStr].filter(Boolean).join("\n"));
+          const until = r.ExternalPostedEndDate ? new Date(r.ExternalPostedEndDate) : null;
+          out.set(url, { ...job, description: description || job.description, thin: !description, hints: { ...job.hints, ...(until && !Number.isNaN(until.getTime()) && until.getFullYear() < 4000 ? { closesAt: until } : {}) } });
+        } catch {
+          /* the list entry is enough */
         }
       }
       break;
@@ -185,6 +207,26 @@ export async function fetchEnterprise(
     }
   }
   return [...out.values()];
+}
+
+const COUNTRY_NAMES: Record<string, RegExp> = {
+  IT: /^(?:italy|italia)$/i,
+  GB: /^(?:united kingdom|uk|great britain|england)$/i,
+  DE: /^(?:germany|deutschland)$/i,
+  FR: /^(?:france)$/i,
+};
+
+/** A Workday board's country filter for these countries: { <its facet name>: [ids] }, or null when it has none. */
+async function workdayCountryFacet(post: <T>(body: object) => Promise<T>, countries: CountryCode[]): Promise<Record<string, string[]> | null> {
+  type V = { id?: string; descriptor?: string; values?: V[] };
+  const d = await post<{ facets?: { facetParameter?: string; values?: V[] }[] }>({ limit: 1 });
+  const res = countries.map((c) => COUNTRY_NAMES[c]).filter(Boolean);
+  const facets = (d.facets ?? []).sort((a, b) => Number(/country/i.test(b.facetParameter ?? "")) - Number(/country/i.test(a.facetParameter ?? "")));
+  for (const f of facets) {
+    const ids = (f.values ?? []).filter((v) => v.id && res.some((re) => re.test((v.descriptor ?? "").trim()))).map((v) => v.id!);
+    if (f.facetParameter && ids.length) return { [f.facetParameter]: ids };
+  }
+  return null;
 }
 
 /** The countries filter of the small boards, applied after (the big ones are asked by keyword). */

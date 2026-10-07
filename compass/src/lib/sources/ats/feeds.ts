@@ -14,7 +14,6 @@ export interface Feed {
 export const FEED_DOMAINS = [
   "myworkdayjobs.com",
   "oraclecloud.com",
-  "eightfold.ai",
   "boards.greenhouse.io",
   "job-boards.greenhouse.io",
   "jobs.lever.co",
@@ -51,11 +50,8 @@ export function feedFromUrl(raw: string): Feed | null {
     const site = i >= 0 ? parts[i + 1] : null;
     return site ? { ats: "oracle", slug: `${host}/${site}` } : null;
   }
-  // Eightfold: <x>.eightfold.ai/careers?domain=<company domain>
-  if (/\.eightfold\.ai$/.test(host)) {
-    const domain = u.searchParams.get("domain");
-    return domain ? { ats: "eightfold", slug: `${host}/${domain}` } : null;
-  }
+  // Eightfold (<x>.eightfold.ai) is not learned from links: its public endpoint answers 404/403 to
+  // anyone but the page itself. A board added by hand is still tried.
   if (/(^|\.)(boards|job-boards)\.greenhouse\.io$/.test(host)) {
     const s = first === "embed" ? u.searchParams.get("for") : ok(first);
     return s ? { ats: "greenhouse", slug: s } : null;

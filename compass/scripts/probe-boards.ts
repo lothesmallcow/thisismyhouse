@@ -1,125 +1,96 @@
 // Live check of the employer-board readers against real public boards (run on GitHub Actions, which
 // can reach them): for each board, how many offers came back, a sample (public job titles only), or
-// the error. Also how career sites publish their job lists (sitemaps). Prints counts and titles only.
+// the error. Also how career sites publish their job lists (sitemaps, feeds). Prints counts and titles only.
 //   npx tsx scripts/probe-boards.ts   (on GitHub: any change to this file runs .github/workflows/compass-probe.yml)
-// Round 2: location targeting on Workday and Oracle, sitemaps of Avature / SuccessFactors / Radancy
-// career sites and whether their job pages carry JobPosting data.
+// Round 3: the readers themselves with country targeting (Workday facets, Oracle country codes and
+// details); Avature career sites (robots.txt, sitemaps, RSS feed, job pages); Radancy job pages.
+import { fetchEnterprise } from "../src/lib/sources/ats/enterprise";
 
 const UA = { "User-Agent": "Mozilla/5.0 (compatible; CompassJobsBot/1.0; +https://github.com/lothesmallcow/thisismyhouse)", Accept: "application/json, text/html;q=0.9, */*;q=0.5" };
 const short = (s: unknown, n = 90) => String(s ?? "").replace(/\s+/g, " ").slice(0, n);
 const log = (...a: unknown[]) => console.log(...a);
 
-async function json(url: string, init: RequestInit = {}) {
-  const res = await fetch(url, { ...init, headers: { ...UA, ...(init.headers ?? {}) } });
-  const text = await res.text();
-  try {
-    return { status: res.status, body: JSON.parse(text) };
-  } catch {
-    return { status: res.status, body: text.slice(0, 200) };
-  }
-}
-
-async function workday() {
-  const host = "citi.wd5.myworkdayjobs.com";
-  const url = `https://${host}/wday/cxs/citi/2/jobs`;
-  const post = (body: object) => json(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appliedFacets: {}, limit: 20, offset: 0, searchText: "", ...body }) });
-  const a = await post({ searchText: "analyst" });
-  const facets = (a.body?.facets ?? []) as { facetParameter: string; values?: { id: string; descriptor: string; count?: number; values?: unknown[] }[] }[];
-  log(`WD facets: ${facets.map((f) => `${f.facetParameter}(${f.values?.length ?? 0})`).join(", ")} · total ${a.body?.total}`);
-  for (const f of facets) {
-    const hit = (f.values ?? []).filter((v) => /ital|milan|london|united kingdom/i.test(v.descriptor ?? "")).slice(0, 4);
-    if (hit.length) log(`WD facet ${f.facetParameter}: ${hit.map((v) => `${v.descriptor}=${v.id} (${v.count})`).join(" | ")}`);
-    // nested (locationMainGroup → values)
-    for (const v of f.values ?? []) {
-      const inner = ((v as { values?: { id: string; descriptor: string; count?: number }[] }).values ?? []).filter((x) => /ital|milan/i.test(x.descriptor ?? "")).slice(0, 3);
-      if (inner.length) log(`WD nested ${f.facetParameter}/${v.descriptor}: ${inner.map((x) => `${x.descriptor}=${x.id} (${x.count})`).join(" | ")}`);
+async function readers() {
+  const boards: [Parameters<typeof fetchEnterprise>[1], string, string, string[]][] = [
+    ["workday", "barclays.wd3.myworkdayjobs.com/External_Career_Site_Barclays", "Barclays", ["Analyst"]],
+    ["workday", "citi.wd5.myworkdayjobs.com/2", "Citi", ["Analyst"]],
+    ["workday", "nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite", "NVIDIA", ["Engineer"]],
+    ["oracle", "jpmc.fa.oraclecloud.com/CX_1001", "J.P. Morgan", ["Analyst"]],
+  ];
+  for (const [ats, slug, company, keywords] of boards) {
+    for (const countries of [["IT"], ["GB"]] as ("IT" | "GB")[][]) {
+      try {
+        const t = Date.now();
+        const jobs = await fetchEnterprise(fetch, ats, slug, company, { keywords, countries, details: 2 });
+        const full = jobs.filter((j) => !j.thin);
+        log(`R ${ats} ${company} ${countries[0]}: ${jobs.length} offers in ${Date.now() - t} ms · full ${full.length} (desc ${full.map((j) => (j.description ?? "").length).join("/")}, closes ${full.map((j) => j.hints?.closesAt?.toISOString().slice(0, 10) ?? "-").join("/")}) · ${jobs.slice(0, 4).map((j) => `${short(j.title, 40)} @ ${short(j.location, 40)}`).join(" | ")}`);
+      } catch (e) {
+        log(`R ${ats} ${company} ${countries[0]}: error ${short((e as Error).message, 120)}`);
+      }
     }
   }
-  const it = facets.flatMap((f) => (f.values ?? []).filter((v) => /^italy$|^italia$/i.test(v.descriptor ?? "")).map((v) => ({ p: f.facetParameter, id: v.id })))[0];
-  if (it) {
-    const b = await post({ searchText: "analyst", appliedFacets: { [it.p]: [it.id] } });
-    log(`WD with ${it.p}=Italy: total ${b.body?.total} · ${((b.body?.jobPostings ?? []) as { title: string; locationsText: string }[]).slice(0, 3).map((j) => `${short(j.title, 50)} @ ${j.locationsText}`).join(" | ")}`);
-  }
-  const c = await post({ searchText: "analyst Milan" });
-  log(`WD searchText "analyst Milan": total ${c.body?.total} · ${((c.body?.jobPostings ?? []) as { title: string; locationsText: string }[]).slice(0, 3).map((j) => `${short(j.title, 50)} @ ${j.locationsText}`).join(" | ")}`);
 }
 
-async function oracle() {
-  const host = "jpmc.fa.oraclecloud.com";
-  const base = `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=`;
-  const f1 = `findReqs;siteNumber=CX_1001,facetsList=LOCATIONS;WORK_LOCATIONS;TITLES;CATEGORIES,limit=5,keyword="analyst",sortBy=POSTING_DATES_DESC`;
-  const a = await json(base + encodeURIComponent(f1));
-  const item = a.body?.items?.[0] ?? {};
-  log(`OR status ${a.status} · keys ${Object.keys(item).join(",").slice(0, 300)}`);
-  const locs = (item.locationsFacet ?? []) as { Id: number | string; Name: string; TotalCount?: number }[];
-  log(`OR locationsFacet ${locs.length}: ${locs.filter((l) => /ital|milan|london/i.test(l.Name)).slice(0, 5).map((l) => `${l.Name}=${l.Id} (${l.TotalCount})`).join(" | ")}`);
-  const it = locs.find((l) => /ital/i.test(l.Name));
-  if (it) {
-    const f2 = `findReqs;siteNumber=CX_1001,selectedLocationsFacet=${it.Id},limit=10,keyword="analyst",sortBy=POSTING_DATES_DESC`;
-    const b = await json(base + encodeURIComponent(f2));
-    const list = (b.body?.items?.[0]?.requisitionList ?? []) as { Title: string; PrimaryLocation: string }[];
-    log(`OR Italy: ${b.body?.items?.[0]?.TotalJobsCount} · ${list.slice(0, 3).map((j) => `${short(j.Title, 50)} @ ${j.PrimaryLocation}`).join(" | ")}`);
-  }
-  // One requisition in full (description, dates)
-  const id = item.requisitionList?.[0]?.Id;
-  if (id) {
-    const d = await json(`https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=${encodeURIComponent(`ById;Id="${id}",siteNumber=CX_1001`)}`);
-    const r = d.body?.items?.[0] ?? {};
-    log(`OR detail ${d.status} · keys ${Object.keys(r).slice(0, 40).join(",")} · desc ${String(r.ExternalDescriptionStr ?? "").length} chars`);
-  }
+async function text(url: string) {
+  const res = await fetch(url, { headers: UA, redirect: "follow" });
+  return { status: res.status, url: res.url, body: await res.text() };
 }
 
-async function eightfold() {
-  for (const [host, domain] of [["aexp.eightfold.ai", "americanexpress.com"], ["aexp.eightfold.ai", "aexp.com"]]) {
-    const r = await fetch(`https://${host}/api/apply/v2/jobs?domain=${domain}&start=0&num=5&query=analyst`, { headers: { ...UA, "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36" } });
-    log(`EF ${host} ${domain}: ${r.status} ${short(await r.text(), 120)}`);
-  }
+function pageFields(html: string) {
+  const meta = (p: string) => html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${p}["'][^>]+content=["']([^"']*)`, "i"))?.[1];
+  const ld = [...html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  return `title="${short(html.match(/<title[^>]*>([^<]*)/i)?.[1], 70)}" og:title="${short(meta("og:title"), 60)}" og:desc ${String(meta("og:description") ?? meta("description") ?? "").length} chars · JSON-LD ${ld.length} JobPosting ${ld.some((s) => /JobPosting/.test(s)) ? "yes" : "no"} · ${html.length} bytes`;
 }
 
-async function sitemaps() {
-  const starts = [
-    "https://careers.unicredit.eu/jobsuche/sitemap_index.xml",
-    "https://jobs.enel.com/careers/sitemap_index.xml",
-    "https://jobs.sap.com/en/sitemap.xml",
-    "https://careers.pwc.com/sitemap.xml",
-  ];
-  for (const start of starts) {
+async function avature() {
+  for (const site of ["https://careers.unicredit.eu", "https://jobs.enel.com"]) {
     try {
-      let url = start;
-      let locs: string[] = [];
-      for (let hop = 0; hop < 3; hop++) {
-        const res = await fetch(url, { headers: UA });
-        const body = await res.text();
-        locs = [...body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((m) => m[1].replace(/&amp;/g, "&"));
-        const isIndex = /<sitemapindex/i.test(body);
-        log(`SM ${url}: ${res.status} · ${isIndex ? "index" : "urlset"} · ${locs.length} locs · e.g. ${short(locs[0], 140)}`);
-        if (!isIndex) break;
-        url = locs.find((l) => /job|position|offer|vacanc|career/i.test(l)) ?? locs[0];
-      }
-      const job = locs.find((l) => /job|position|offer|vacanc|stelle|lavor/i.test(l) && !/\.xml/.test(l)) ?? locs[0];
-      if (!job) continue;
-      const res = await fetch(job, { headers: UA });
-      const html = await res.text();
-      const ld = [...html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
-      const posting = ld.find((s) => /JobPosting/.test(s));
-      let fields = "";
-      if (posting) {
-        try {
-          const o = JSON.parse(posting.trim());
-          const p = Array.isArray(o) ? o.find((x) => /JobPosting/.test(x["@type"])) : o["@graph"] ? o["@graph"].find((x: { "@type": string }) => /JobPosting/.test(x["@type"])) : o;
-          fields = `title="${short(p?.title, 50)}" org="${short(p?.hiringOrganization?.name, 30)}" place="${short(JSON.stringify(p?.jobLocation?.address ?? p?.jobLocation?.[0]?.address ?? ""), 80)}" posted=${p?.datePosted ?? "-"} until=${p?.validThrough ?? "-"}`;
-        } catch {
-          fields = "unparsable";
+      const robots = await text(`${site}/robots.txt`);
+      const lines = robots.body.split("\n").filter((l) => /^(sitemap|disallow|crawl-delay)/i.test(l.trim()));
+      log(`AV ${site} robots ${robots.status}: ${short(lines.join(" ; "), 400)}`);
+      const sitemaps = lines.filter((l) => /^sitemap/i.test(l)).map((l) => l.split(/:\s*/).slice(1).join(":").trim());
+      const jobUrls: string[] = [];
+      for (const sm of sitemaps.slice(0, 2)) {
+        const idx = await text(sm);
+        const locs = [...idx.body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((m) => m[1].replace(/&amp;/g, "&"));
+        log(`AV sitemap ${sm}: ${idx.status} · ${locs.length} locs · ${locs.slice(0, 3).map((l) => short(l, 110)).join(" | ")}`);
+        for (const sub of /<sitemapindex/i.test(idx.body) ? locs.slice(0, 13) : []) {
+          const s = await text(sub);
+          const inner = [...s.body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((m) => m[1].replace(/&amp;/g, "&"));
+          const kinds = [...new Set(inner.map((l) => l.replace(site, "").split("/").slice(0, 4).join("/")))].slice(0, 4);
+          log(`AV  sub ${short(sub, 100)}: ${inner.length} locs · paths ${kinds.join(" , ")}`);
+          jobUrls.push(...inner.filter((l) => /JobDetail/i.test(l)));
         }
       }
-      log(`SM job page ${short(job, 120)}: ${res.status} · ${html.length} bytes · JSON-LD ${ld.length} · JobPosting ${posting ? "yes" : "no"} ${fields} · <title> ${short(html.match(/<title>([^<]*)/)?.[1], 80)}`);
+      log(`AV ${site} JobDetail urls ${jobUrls.length} · e.g. ${jobUrls.slice(0, 3).map((l) => short(l, 130)).join(" | ")}`);
+      for (const path of ["/it_IT/jobsuche/SearchJobs/feed/", "/it_IT/careers/SearchJobs/feed/", "/en_US/careers/SearchJobs/feed/", "/careers/SearchJobs/feed/"]) {
+        const f = await text(site + path);
+        const items = [...f.body.matchAll(/<item>[\s\S]*?<title>([\s\S]*?)<\/title>[\s\S]*?<link>([\s\S]*?)<\/link>/g)];
+        log(`AV feed ${path}: ${f.status} · ${/<rss|<feed/i.test(f.body) ? "rss" : "not rss"} · ${items.length} items · ${items.slice(0, 2).map((m) => `${short(m[1].replace(/<!\[CDATA\[|\]\]>/g, ""), 50)} → ${short(m[2], 90)}`).join(" | ")}`);
+      }
+      if (jobUrls[0]) {
+        const p = await text(jobUrls[0]);
+        log(`AV job page ${p.status}: ${pageFields(p.body)}`);
+      }
     } catch (e) {
-      log(`SM ${start}: error ${short((e as Error).message, 100)}`);
+      log(`AV ${site}: error ${short((e as Error).message, 120)}`);
     }
   }
 }
 
-await workday().catch((e) => log(`WD error ${e.message}`));
-await oracle().catch((e) => log(`OR error ${e.message}`));
-await eightfold().catch((e) => log(`EF error ${e.message}`));
-await sitemaps().catch((e) => log(`SM error ${e.message}`));
+async function radancy() {
+  try {
+    const sm = await text("https://careers.pwc.com/sitemap.xml");
+    const locs = [...sm.body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((m) => m[1]).filter((l) => /\/job\//.test(l));
+    for (const u of locs.slice(0, 2)) {
+      const p = await text(u);
+      log(`RD ${short(u, 110)} ${p.status}: ${pageFields(p.body)} · data-* ${short([...p.body.matchAll(/data-(?:job-?id|org-?id|location|city|country)[^=]*="[^"]*"/gi)].slice(0, 5).map((m) => m[0]).join(" "), 200)}`);
+    }
+  } catch (e) {
+    log(`RD error ${short((e as Error).message, 120)}`);
+  }
+}
+
+await readers().catch((e) => log(`R error ${e.message}`));
+await avature().catch((e) => log(`AV error ${e.message}`));
+await radancy().catch((e) => log(`RD error ${e.message}`));
