@@ -1,7 +1,7 @@
 // Live check of job sources (run on GitHub Actions, which can reach them). Prints counts and public
 // job titles only; writes nothing.
 //   npx tsx scripts/probe-boards.ts   (on GitHub: any change to this file runs .github/workflows/compass-probe.yml)
-// Round 10 (round 9 again, the index asked more gently): the board index as the weekly job runs it, without the database: every board in the
+// Round 11 (round 9 again; American places with European names no longer count as Europe): the board index as the weekly job runs it, without the database: every board in the
 // latest Common Crawl, then a sample of each system checked for offers in Italy, UK, Germany, France.
 import { crawlFeeds } from "../src/lib/sources/ats/crawl-index";
 import { fetchAts } from "../src/lib/sources/ats";
@@ -33,7 +33,7 @@ for (const [ats, list] of by) {
           checked++;
           const c = topCountry(jobs.map((j) => j.location));
           if (c) counts[c] = (counts[c] ?? 0) + 1;
-          if (c === "IT" && italian.length < 6) italian.push(`${feedName(f)} (${jobs.length})`);
+          if (c === "IT" && italian.length < 8) italian.push(`${feedName(f)} (${jobs.length}: ${jobs.find((j) => j.location)?.location?.slice(0, 40)})`);
         } catch {
           errors++;
         }

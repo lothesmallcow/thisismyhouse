@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.25.0 · 2026-10-07
+
+- **Thousands of employers' boards, found without a company list**: once a week Compass asks Common
+  Crawl (the non-profit public web archive) for every Greenhouse, Lever, Ashby, Workable,
+  SmartRecruiters, Recruitee, Personio and Workday board it has seen, checks each new one once, and
+  adds those with offers in Italy, the UK, Germany or France to the catalog. The same method job
+  indexes like Hiring Cafe use.
+- **New offers within the hour**: every hour all boards that hire where someone looks are read again
+  (workflow "Compass boards"), so an offer published after the last refresh shows up at the next one.
+  The companies a person chose are still read live by "Cerca ora".
+- Fix: "Annulla" on "Non mi interessa" now always brings the offer back. An offer only that person
+  could see (their own alerts, added by hand) was deleted at once; it is now deleted only when the 3
+  days to undo are over.
+
 ## 0.24.0 · 2026-10-07
 
 Checked live against real boards (GitHub Actions probe, `scripts/probe-boards.ts`).

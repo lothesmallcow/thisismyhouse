@@ -180,6 +180,14 @@ describe("reading the big boards", () => {
     const r = await fetchAts(fetchImpl, "recruitee", "acme", "Acme", ["IT"]);
     expect(r[0]).toMatchObject({ title: "Analyst", location: "Milano, Italy", description: "Ruolo" });
   });
+  it("European names in North America are not Europe; Italian province codes stay Italian", async () => {
+    const { inCountries } = await import("@/lib/sources/ats");
+    const all = ["IT", "GB", "DE", "FR"] as const;
+    for (const no of ["Naples, FL", "Rome, GA", "Florence, SC", "San Marino, CA", "Venice, Florida", "London, ON", "Paris, TX", "Cambridge, MA", "Remote - United States"])
+      expect(inCountries(no, false, [...all]), no).toBe(false);
+    for (const yes of ["Milano, MI", "Cagliari, CA", "Como, CO", "Arezzo, AR", "Viterbo, VT", "Monza, MB", "Milan, Italy", "Berlin, DE", "London", "Paris, France", "Cambridge"])
+      expect(inCountries(yes, false, [...all]), yes).toBe(true);
+  });
   it("kept to the chosen countries", async () => {
     const fetchImpl = (async () => Response.json({ offers: [{ id: 1, title: "Analyst", city: "New York", country: "United States" }, { id: 2, title: "Analyst", city: "Milano", country: "Italy" }] })) as unknown as typeof fetch;
     expect((await fetchAts(fetchImpl, "recruitee", "acme", "Acme", ["IT"])).map((j) => j.location)).toEqual(["Milano, Italy"]);

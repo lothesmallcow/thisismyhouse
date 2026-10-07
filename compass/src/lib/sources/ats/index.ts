@@ -67,11 +67,31 @@ const COUNTRY_WORDS: Record<CountryCode, RegExp> = {
   DE: /\b(germany|deutschland)\b/i,
   FR: /\b(france)\b/i,
 };
+const US_STATES = "AL|AK|AZ|AR|CA|CO|CT|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC";
+const CA_PROVINCES = "ON|QC|BC|AB|MB|SK|NS|NB|NL|PE";
+const NA_CODE = new RegExp(`([^,]+?)\\s*,\\s*(${US_STATES}|${CA_PROVINCES})\\b`);
+const NA_NAME =
+  /\b(?:united states|u\.s\.a?\.?|canada|alabama|alaska|arizona|arkansas|california|colorado|connecticut|florida|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new jersey|new mexico|new york|north carolina|north dakota|ohio|oklahoma|oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|wisconsin|wyoming|ontario|quebec|british columbia)\b/i;
+/**
+ * American and Canadian places with European names: "Naples, FL", "Rome, GA", "London, ON". An Italian
+ * province code that is also a state's ("Milano, MI", "Cagliari, CA", "Como, CO") stays Italian when the
+ * city is in that province.
+ */
+function northAmerican(location: string): boolean {
+  if (/\b(?:italy|italia|united kingdom|uk|england|germany|deutschland|france)\b/i.test(location)) return false;
+  if (NA_NAME.test(location)) return true;
+  const m = location.match(NA_CODE);
+  if (!m) return false;
+  const p = findPlace(m[1].trim());
+  return !(p && p.country === "IT" && p.province === m[2]);
+}
 /** Offers located in the countries the people chose (Italy when nobody chose). */
 export function inCountries(location: string | null | undefined, remote: boolean, countries: CountryCode[]): boolean {
   if (!location) return remote;
   if (countries.some((c) => COUNTRY_WORDS[c].test(location))) return true;
   if (/,\s*(usa|us|spain|españa|netherlands|ireland|switzerland)\b/i.test(location)) return false;
+  // American and Canadian places with European names: "Naples, FL", "Rome, GA", "London, ON", "Paris, TX".
+  if (northAmerican(location)) return false;
   const p = findPlace(location);
   return p != null && countries.includes(p.country);
 }
