@@ -1,5 +1,7 @@
 // Scheduled jobs, shared by the CLI runner (GitHub Actions cron) and the protected
 // /api/cron/<job> routes (host cron). Demo mode wires fixtures; real mode wires the network.
+import { searchMetrics } from "./metrics";
+import { runSearchAlerts } from "../server/saved-searches";
 import { runBoardIndex } from "./board-index";
 import { runBoardSweep } from "./board-sweep";
 import type { DB } from "../db";
@@ -53,7 +55,7 @@ export async function checkInboxNow(db: DB, now = new Date()): Promise<"done" | 
   return "done";
 }
 
-export const JOB_NAMES = ["ingest", "discover", "queue", "replies", "digest", "sweep", "index"] as const;
+export const JOB_NAMES = ["ingest", "discover", "queue", "replies", "digest", "sweep", "index", "metrics"] as const;
 export type JobName = (typeof JOB_NAMES)[number];
 
 /** One run per mailbox key in use by an active person (demo: the demo inbox rows with that key). */
@@ -125,7 +127,7 @@ async function dispatch(db: DB, name: JobName, now: Date): Promise<unknown> {
       const key = demo ? "demo" : env.tavilyKey;
       const summary = await runIngest({ db, fetchImpl, mailboxes: await mailboxRuns(db), demo, now, web: key ? new TavilyProvider(fetchImpl, key) : null });
       const auto = await runAutopilot(db, now);
-      return { ...summary, autopilot: auto };
+      return { ...summary, autopilot: auto, alerts: await runSearchAlerts(db, (u) => serviceTransport(db, u), now) };
     }
     case "discover": {
       const key = demo ? "demo" : env.tavilyKey;
@@ -154,9 +156,15 @@ async function dispatch(db: DB, name: JobName, now: Date): Promise<unknown> {
       }
       return out;
     }
-    case "sweep":
-      // Every board that hires where someone looks, read again (hourly): new offers within the hour.
-      return runBoardSweep(db, fetchImpl, now);
+    case "sweep": {
+      // Every board that hires where someone looks, read again (hourly): new offers within the hour,
+      // then the e-mails of saved searches that have new offers.
+      const sweep = await runBoardSweep(db, fetchImpl, now);
+      return { ...sweep, alerts: await runSearchAlerts(db, (u) => serviceTransport(db, u), now) };
+    }
+    case "metrics":
+      // Coverage, freshness and how much of each offer was understood (counts only).
+      return searchMetrics(db, now);
     case "index":
       // New boards from the public web archive (weekly): Common Crawl is refreshed about monthly.
       return demo ? { skipped: "demo mode" } : runBoardIndex(db, fetchImpl);

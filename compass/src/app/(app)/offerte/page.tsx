@@ -21,18 +21,30 @@ import type { Level } from "@/lib/core/rank";
 import { and, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { requireUser } from "@/lib/server/auth";
+import { filterWhere, listJobs, PAGE_SIZE } from "@/lib/server/jobs";
 import {
-  defaultFilters,
-  filterWhere,
-  listJobs,
-  PAGE_SIZE,
-  type JobFilters,
-} from "@/lib/server/jobs";
+  activeFilters,
+  all,
+  filtersFromParams,
+  one,
+  searchAddress,
+  TYPE_OPTIONS,
+  type SP,
+} from "@/lib/server/offer-filters";
+import { jobsByIds, runSearch } from "@/lib/server/search";
+import { listSaved } from "@/lib/server/saved-searches";
+import { SearchUnderstood } from "@/components/search-understood";
+import {
+  BENEFIT_LABELS,
+  EDUCATION_LABELS,
+  SENIORITY_LABELS,
+} from "@/lib/core/job-facts";
 import { getProfile } from "@/lib/server/profile";
 import { getSettings } from "@/lib/server/settings";
 import {
   dismissQuietAction,
   saveDefaultFiltersAction,
+  saveSearchAction,
   searchNowAction,
 } from "../actions";
 import { ScanButton, ScanMeta } from "@/components/scan-button";
@@ -40,11 +52,6 @@ import { getScanStatus } from "@/lib/server/plans";
 import { SourcesCard } from "@/components/sources-card";
 import { CareersLine } from "@/components/careers-line";
 import { PlacesPicker } from "@/components/places-picker";
-import {
-  parsePlaceValue,
-  placesFromProfile,
-  type WherePlace,
-} from "@/lib/core/where";
 
 export const metadata = { title: "Offerte" };
 // "Cerca ora" runs a search after the reply: give it time.
@@ -55,32 +62,6 @@ const PLURAL: Record<Level, string> = {
   adatta: "Adatte",
   poco: "Poco adatte",
 };
-const FILTER_KEYS = [
-  "netto",
-  "orario",
-  "contratto",
-  "settore",
-  "casa",
-  "giorni",
-  "q",
-  "tipo",
-  "vista",
-  "punteggio",
-  "ordina",
-] as const;
-
-type SP = Record<string, string | string[] | undefined>;
-const one = (v: string | string[] | undefined) =>
-  (Array.isArray(v) ? v[0] : v) ?? "";
-const all = (v: string | string[] | undefined) =>
-  Array.isArray(v) ? v : v ? [v] : [];
-/** Several choices allowed: undefined when none (no filter). */
-const list = <T,>(v: T[]) => (v.length ? [...new Set(v)] : undefined);
-const TYPE_OPTIONS = [
-  ["lavoro", "Lavoro"],
-  ["stage", "Stage"],
-  ["programma", "Programmi per studenti"],
-] as const;
 /** Every query value, repeated keys included ("luogo" can appear many times). */
 const pairs = (sp: SP, skip: string[]) =>
   Object.entries(sp).flatMap(([k, v]) =>
@@ -106,76 +87,30 @@ export default async function OffertePage({
   const scan = await getScanStatus(db, user.id);
 
   // The questionnaire's defaults apply until the person touches a filter (or asks for everything).
-  const touched = FILTER_KEYS.some((k) => one(sp[k])) || one(sp.tutte) === "1";
-  const defaults = touched ? {} : defaultFilters(profile);
-  const vista = one(sp.vista) || (defaults.focus ?? "tutte");
-  // Places: the profile's until the person picks others here ("luogo" present, "-" = every place).
-  const mine = placesFromProfile(profile);
-  const picked = sp.luogo !== undefined;
-  const places = picked
-    ? all(sp.luogo)
-        .map(parsePlaceValue)
-        .filter((x): x is WherePlace => x != null)
-    : mine;
-  const placesRemote = picked
-    ? all(sp.luogo).includes("remoto")
-    : profile.remoteOk;
-  const placesKey = (list: WherePlace[], remote: boolean) =>
-    [
-      ...list.map((p) => `${p.kind}|${p.country}|${p.name}`).sort(),
-      remote ? "remoto" : "",
-    ].join(",");
-  // Applying the filters with the profile's places unchanged is not a change.
-  const placesChanged =
-    picked &&
-    placesKey(places, placesRemote) !== placesKey(mine, profile.remoteOk);
-  const filters: JobFilters = {
-    ...defaults,
+  const {
+    filters,
+    touched,
+    defaults,
+    vista,
     places,
     placesRemote,
-    minNetMonthly: Number(one(sp.netto)) || defaults.minNetMonthly,
-    hours: (one(sp.orario) as "full" | "part") || undefined,
-    contracts: list(
-      all(sp.contratto).filter((c) => c in CONTRACT_LABELS && c !== "unknown"),
-    ),
-    sectors: list(
-      all(sp.settore).filter((x) => SECTORS.some(([n]) => n === x)),
-    ),
-    remote: one(sp.casa) === "1" || undefined,
-    days: Number(one(sp.giorni)) || undefined,
-    q: one(sp.q) || undefined,
-    types: list(
-      all(sp.tipo).filter((t): t is "lavoro" | "stage" | "programma" =>
-        TYPE_OPTIONS.some(([k]) => k === t),
-      ),
-    ),
-    focus: vista === "aziende" || vista === "preferite" ? vista : undefined,
-    show: one(sp.mostra) === "scartate" ? "scartate" : undefined,
-    minFit: Number(one(sp.punteggio)) || undefined,
-    sort: ["recenti", "paga", "scadenza"].includes(one(sp.ordina))
-      ? (one(sp.ordina) as "recenti" | "paga" | "scadenza")
-      : undefined,
-  };
+    placesChanged,
+  } = filtersFromParams(sp, profile);
   const limit = Math.min(
     200,
     Math.max(PAGE_SIZE, Number(one(sp.n)) || PAGE_SIZE),
   );
-  const { jobs, total } = await listJobs(db, user.id, filters, limit);
-  const active =
-    (placesChanged ? 1 : 0) +
-    (
-      [
-        "minNetMonthly",
-        "hours",
-        "contracts",
-        "sectors",
-        "remote",
-        "days",
-        "types",
-        "minFit",
-        "sort",
-      ] as const
-    ).filter((k) => filters[k] !== undefined).length;
+  // A typed search: understood, matched with the full-text index, best matches first.
+  const search = filters.q
+    ? await runSearch(db, user.id, filters.q, filters, limit)
+    : null;
+  const { jobs, total } = search
+    ? { jobs: await jobsByIds(db, user.id, search.ids), total: search.total }
+    : await listJobs(db, user.id, filters, limit);
+  const active = activeFilters(filters, placesChanged);
+  const saved = await listSaved(db, user.id);
+  const savedHere = Number(one(sp.salvata)) || null;
+  const address = searchAddress(sp);
   const [{ n: newCount }] = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.userJobs)
@@ -198,7 +133,10 @@ export default async function OffertePage({
   };
   // Level headings only when the list is in order of fit.
   const headings = jobs.map((j, i) =>
-    !filters.show && !filters.sort && (i === 0 || jobs[i - 1].level !== j.level)
+    !filters.show &&
+    !filters.sort &&
+    !search &&
+    (i === 0 || jobs[i - 1].level !== j.level)
       ? PLURAL[j.level]
       : null,
   );
@@ -279,6 +217,97 @@ export default async function OffertePage({
           </Notice>
         </div>
       )}
+      <form
+        method="get"
+        role="search"
+        className="mb-3 flex gap-2"
+        aria-label="Cerca offerte"
+      >
+        <div className="relative min-w-0 flex-1">
+          <IconSearch
+            size={18}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-faint"
+          />
+          <label htmlFor="q" className="sr-only">
+            Cosa cerchi
+          </label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            defaultValue={filters.q}
+            placeholder={
+              isStage
+                ? "Es. stage marketing Milano"
+                : "Es. impiegata amministrativa Torino part-time"
+            }
+            className="!h-12 !rounded-full !pl-11 !text-[16px] shadow-[var(--shadow-card)]"
+          />
+        </div>
+        {pairs(sp, ["q", "msg", "n", "salvata"]).map(([k, v]) => (
+          <input key={`${k}=${v}`} type="hidden" name={k} value={v} />
+        ))}
+        <button className="inline-flex h-12 shrink-0 items-center rounded-full bg-primary px-6 text-[15px] font-semibold text-on-primary shadow-[0_1px_2px_rgb(15_40_80/0.14)] hover:bg-primary-hover">
+          Cerca
+        </button>
+      </form>
+      {search && filters.q ? (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <SearchUnderstood
+            q={filters.q}
+            parsed={search.parsed}
+            mode={search.mode}
+            total={total}
+            hrefFor={(q) => keep({ q, salvata: "" })}
+          />
+          {saved.some((x) => x.query === address) ? (
+            <Link
+              href="/offerte/ricerche"
+              className="inline-flex h-9 items-center rounded-full bg-accent-soft px-3.5 text-[13px] font-semibold text-accent no-underline"
+            >
+              Ricerca salvata ✓
+            </Link>
+          ) : (
+            <form action={saveSearchAction}>
+              <input type="hidden" name="query" value={address} />
+              <button className="inline-flex h-9 items-center rounded-full bg-fill px-3.5 text-[13px] font-semibold text-ink hover:bg-fill-hover">
+                Salva ricerca e avvisami
+              </button>
+            </form>
+          )}
+        </div>
+      ) : (
+        <div className="mb-4 flex flex-wrap items-center gap-1.5 text-[13px]">
+          {profile.roles.slice(0, 4).map((r) => (
+            <Link
+              key={r}
+              href={`/offerte?q=${encodeURIComponent(r)}`}
+              className="inline-flex h-8 items-center rounded-full border border-line bg-surface px-3 no-underline hover:border-line-strong"
+            >
+              {r}
+            </Link>
+          ))}
+          {saved.slice(0, 4).map((x) => (
+            <Link
+              key={x.id}
+              href={`/offerte/ricerche/${x.id}`}
+              className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 no-underline ${savedHere === x.id ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface hover:border-line-strong"}`}
+            >
+              {x.label}
+              {x.fresh > 0 && (
+                <span className="rounded-full bg-accent px-1.5 text-[11px] font-bold text-on-primary">
+                  {x.fresh}
+                </span>
+              )}
+            </Link>
+          ))}
+          {saved.length > 0 && (
+            <Link href="/offerte/ricerche" className="ml-1 text-[13px]">
+              Le tue ricerche ({saved.length})
+            </Link>
+          )}
+        </div>
+      )}
       <CareersLine userId={user.id} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-2 shadow-[var(--shadow-card)]">
         <div
@@ -298,26 +327,6 @@ export default async function OffertePage({
             </Link>
           ))}
         </div>
-        <form method="get" className="relative w-full sm:w-72">
-          <IconSearch
-            size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
-          />
-          <label htmlFor="q" className="sr-only">
-            Cerca per ruolo o azienda
-          </label>
-          <input
-            id="q"
-            name="q"
-            type="search"
-            defaultValue={filters.q}
-            placeholder="Ruolo o azienda"
-            className="!rounded-full !border-transparent !bg-fill/70 !pl-9 focus:!border-accent focus:!bg-surface"
-          />
-          {pairs(sp, ["q", "msg", "n"]).map(([k, v]) => (
-            <input key={`${k}=${v}`} type="hidden" name={k} value={v} />
-          ))}
-        </form>
       </div>
 
       {(active > 0 || filters.focus) && (
@@ -472,6 +481,48 @@ export default async function OffertePage({
                 ))}
               </div>
             </fieldset>
+            <fieldset>
+              <legend className="mb-1.5 text-[13px] font-medium">
+                Livello{" "}
+                <span className="font-normal text-faint">
+                  (anche più di uno)
+                </span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(SENIORITY_LABELS)
+                  .filter(([k]) => k !== "stage") // "Tipo" already has it
+                  .map(([k, v]) => (
+                    <PillCheck
+                      key={k}
+                      name="livello"
+                      value={k}
+                      defaultChecked={filters.seniority?.includes(k)}
+                    >
+                      {v}
+                    </PillCheck>
+                  ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend className="mb-1.5 text-[13px] font-medium">
+                Deve offrire{" "}
+                <span className="font-normal text-faint">
+                  (tutti quelli scelti)
+                </span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(BENEFIT_LABELS).map(([k, v]) => (
+                  <PillCheck
+                    key={k}
+                    name="benefit"
+                    value={k}
+                    defaultChecked={filters.benefits?.includes(k)}
+                  >
+                    {v}
+                  </PillCheck>
+                ))}
+              </div>
+            </fieldset>
             <p className="text-[12.5px] text-faint">
               Nessuna scelta in un gruppo = tutti.
             </p>
@@ -517,15 +568,80 @@ export default async function OffertePage({
               <option value="scadenza">Scadenza più vicina</option>
             </select>
           </label>
-          <label className="flex min-h-11 items-center gap-2.5 self-end text-[14px]">
-            <input
-              type="checkbox"
-              name="casa"
-              value="1"
-              defaultChecked={one(sp.casa) === "1"}
-            />
-            Solo da remoto o ibride
+          <label className="space-y-1.5">
+            <span className="block text-[13px] font-medium">
+              Esperienza richiesta
+            </span>
+            <select name="esperienza" defaultValue={one(sp.esperienza)}>
+              <option value="">Qualsiasi</option>
+              <option value="0">Nessuna (anche prima esperienza)</option>
+              <option value="2">Fino a 2 anni</option>
+              <option value="5">Fino a 5 anni</option>
+            </select>
           </label>
+          <label className="space-y-1.5">
+            <span className="block text-[13px] font-medium">
+              Titolo di studio che ho
+            </span>
+            <select name="titolo" defaultValue={one(sp.titolo)}>
+              <option value="">Qualsiasi</option>
+              {Object.entries(EDUCATION_LABELS)
+                .filter(([k]) => k !== "nessuno")
+                .map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              <option value="nessuno">Nessuno</option>
+            </select>
+          </label>
+          <label className="space-y-1.5">
+            <span className="block text-[13px] font-medium">Smart working</span>
+            <select name="smart" defaultValue={one(sp.smart)}>
+              <option value="">Qualsiasi</option>
+              <option value="1">Almeno 1 giorno a settimana</option>
+              <option value="2">Almeno 2 giorni</option>
+              <option value="3">Almeno 3 giorni</option>
+              <option value="5">Sempre da casa</option>
+            </select>
+          </label>
+          <div className="space-y-1 sm:col-span-2 lg:col-span-4">
+            {(
+              [
+                ["casa", "1", "Solo da remoto o ibride"],
+                [
+                  "facile",
+                  "1",
+                  "Solo candidature veloci (modulo breve o e-mail, niente Workday)",
+                ],
+                ["agenzie", "no", "Escludi le agenzie per il lavoro"],
+                [
+                  "vecchie",
+                  "no",
+                  "Nascondi le offerte vecchie (oltre 60 giorni) o sempre aperte",
+                ],
+                [
+                  "protette",
+                  "1",
+                  "Solo offerte per categorie protette (L. 68/99)",
+                ],
+                ["nuove", "1", "Solo quelle che non ho ancora aperto"],
+              ] as const
+            ).map(([name, value, label]) => (
+              <label
+                key={name}
+                className="flex min-h-10 items-center gap-2.5 text-[14px]"
+              >
+                <input
+                  type="checkbox"
+                  name={name}
+                  value={value}
+                  defaultChecked={one(sp[name]) === value}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
           <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-4">
             <button className="inline-flex h-10 items-center rounded-full bg-primary px-6 text-[14px] font-semibold text-on-primary shadow-[0_1px_2px_rgb(15_40_80/0.14)] hover:bg-primary-hover">
               Applica

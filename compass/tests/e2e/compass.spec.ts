@@ -50,10 +50,20 @@ test("Offerte (job search): ranked list with reasons, focus switch, search, filt
   await expect(cards).toHaveCount(20);
 
   // search
-  await page.getByLabel("Cerca per ruolo o azienda").fill("segret");
-  await page.getByLabel("Cerca per ruolo o azienda").press("Enter");
+  await page.getByLabel("Cosa cerchi").fill("segret");
+  await page.getByLabel("Cosa cerchi").press("Enter");
   await expect(cards.first()).toContainText(/Segret/i);
   expect((await cards.allInnerTexts()).every((t) => /segret/i.test(t))).toBe(true);
+  // A search as people type it: understood, each piece removable, saved with an alert
+  await page.getByLabel("Cosa cerchi").fill("segretaria part-time -medico");
+  await page.getByRole("button", { name: "Cerca", exact: true }).click();
+  await expect(page.getByText("Ho capito:")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Togli orario Part-time" })).toBeVisible();
+  expect((await cards.allInnerTexts()).some((t) => /medico/i.test(t))).toBe(false);
+  await page.getByRole("button", { name: "Salva ricerca e avvisami" }).click();
+  await expect(page.getByText(/Ricerca salvata: ti scrivo/)).toBeVisible();
+  await page.goto("/offerte/ricerche");
+  await expect(page.getByRole("link", { name: "segretaria part-time -medico" })).toBeVisible();
 
   // filters: minimum monthly pay
   await page.goto("/offerte");

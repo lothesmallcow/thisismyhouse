@@ -1,6 +1,7 @@
 // Database schema (SQLite / libSQL via Drizzle). One file so the whole data model is
 // readable at a glance. Dates are stored as integer timestamps (ms).
 
+import type { JobFacts } from "../core/job-facts";
 import { sql } from "drizzle-orm";
 import { blob, index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
@@ -189,6 +190,10 @@ export const jobs = sqliteTable(
     runsEnd: ts("runs_end"),
     runsMonthOnly: integer("runs_month_only", { mode: "boolean" }).notNull().default(false),
     rolling: integer("rolling", { mode: "boolean" }).notNull().default(false),
+    /** What the ad asks and offers, read by rules (core/job-facts.ts): experience, level, education, benefits… */
+    facts: json<JobFacts | null>("facts"),
+    /** Version of the rules that read `facts` (older rows are read again). */
+    factsVersion: integer("facts_version").notNull().default(0),
     firstSeenAt: ts("first_seen_at").notNull(),
     updatedAt: ts("updated_at").notNull(),
   },
@@ -603,6 +608,25 @@ export const demoInbox = sqliteTable("demo_inbox", {
   raw: text("raw").notNull(), // full RFC 822 source
   receivedAt: ts("received_at").notNull(),
 });
+
+/** Searches a person saved on "Offerte" (the page address), with an alert when new offers match. */
+export const savedSearches = sqliteTable(
+  "saved_searches",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    /** The "Offerte" address it stands for (q=…&luogo=…). */
+    query: text("query").notNull(),
+    alert: integer("alert", { mode: "boolean" }).notNull().default(true),
+    /** When they last opened it: offers first seen after this are "new" for it. */
+    seenAt: ts("seen_at").notNull(),
+    /** When its last alert went out (offers first seen after this go in the next one). */
+    alertedAt: ts("alerted_at").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("saved_searches_user_idx").on(t.userId)],
+);
 
 export const notifications = sqliteTable("notifications", {
   id: integer("id").primaryKey({ autoIncrement: true }),

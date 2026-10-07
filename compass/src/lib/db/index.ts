@@ -34,6 +34,9 @@ export function setDb(handle: { db: DB; client: Client }): void {
 
 export async function migrateDb(db: DB): Promise<void> {
   await migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+  // Full-text search over the offers (server/search-index.ts); optional: search works without it.
+  const { ensureSearchIndex } = await import("../server/search-index");
+  await ensureSearchIndex(db);
 }
 
 export { schema };

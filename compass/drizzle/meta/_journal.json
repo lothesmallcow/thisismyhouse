@@ -148,6 +148,20 @@
       "when": 1791315887026,
       "tag": "0020_career_goal",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1791368776513,
+      "tag": "0021_job_facts",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1791369195789,
+      "tag": "0022_saved_searches",
+      "breakpoints": true
     }
   ]
 }
