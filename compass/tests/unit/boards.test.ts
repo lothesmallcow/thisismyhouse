@@ -118,3 +118,21 @@ describe("the registry of boards", () => {
     expect(row).toMatchObject({ name: "Banca Esempio", ats: "greenhouse", atsSlug: "bancaesempio", source: "curato" });
   });
 });
+
+describe("offers taken down", () => {
+  it("an offer no longer on a whole board is marked expired; one still listed, or on a searched board, is not", async () => {
+    const { closeMissing } = await import("@/lib/server/feeds");
+    const { upsertRawJob } = await import("@/lib/server/jobs");
+    const db = await freshDb();
+    const a = await upsertRawJob(db, { source: "ats:greenhouse", url: "https://boards.greenhouse.io/acme/jobs/1", title: "Sales Manager Italia", company: "Acme", location: "Milano", description: "Ruolo commerciale." }, NOW);
+    const b = await upsertRawJob(db, { source: "ats:greenhouse", url: "https://boards.greenhouse.io/acme/jobs/2", title: "Key Account Manager", company: "Acme", location: "Milano", description: "Clienti chiave." }, NOW);
+    const other = await upsertRawJob(db, { source: "ats:greenhouse", url: "https://boards.greenhouse.io/beta/jobs/9", title: "Analyst", company: "Beta", location: "Milano", description: "Analisi." }, NOW);
+    const closed = await closeMissing(db, { ats: "greenhouse", slug: "acme" }, ["https://boards.greenhouse.io/acme/jobs/2"], NOW);
+    expect(closed).toEqual([a.jobId]);
+    const el = async (id: number) => (await db.query.jobs.findFirst({ where: (j, { eq }) => eq(j.id, id) }))!.eligibility as string[];
+    expect(await el(a.jobId)).toContain("scaduto");
+    expect(await el(b.jobId)).not.toContain("scaduto");
+    expect(await el(other.jobId)).not.toContain("scaduto"); // another board
+    expect(await closeMissing(db, { ats: "workday", slug: "acme.wd3.myworkdayjobs.com/x" }, [], NOW)).toEqual([]); // searched, not read whole
+  });
+});
