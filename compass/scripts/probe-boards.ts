@@ -1,6 +1,7 @@
 // Live check of job sources (run on GitHub Actions, which can reach them). Prints counts, public job
 // titles, robots.txt rules and page structure only; writes nothing.
 //   npx tsx scripts/probe-boards.ts   (on GitHub: any change to this file runs .github/workflows/compass-probe.yml)
+// Round 14 (13 again, the index asked with retries; what the Intervieweb page loads):
 // Round 13: Italian companies' systems: Teamtailor, Intervieweb, inRecruiting (Zucchetti), Factorial,
 // SuccessFactors. For each: robots.txt, where the job list is, a public feed or JSON, JobPosting data.
 const UA = { "User-Agent": "Mozilla/5.0 (compatible; CompassJobsBot/1.0; +https://github.com/lothesmallcow/thisismyhouse)", Accept: "text/html,application/json;q=0.9,*/*;q=0.5" };
@@ -16,7 +17,15 @@ async function get(url: string) {
 }
 const ld = (html: string) => [...html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]).filter((s) => /JobPosting/.test(s));
 
-async function ccHosts(pattern: string, n: number): Promise<string[]> {
+async function ccHosts(pattern: string, n: number, fallback: string[] = []): Promise<string[]> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const got = await ccHostsOnce(pattern, n);
+    if (got.length) return got;
+    await new Promise((r) => setTimeout(r, 8000));
+  }
+  return fallback;
+}
+async function ccHostsOnce(pattern: string, n: number): Promise<string[]> {
   try {
     const info = (await (await fetch("https://index.commoncrawl.org/collinfo.json", { headers: UA })).json()) as { id: string }[];
     const t = await (await fetch(`https://index.commoncrawl.org/${info[0].id}-index?url=${encodeURIComponent(pattern)}&output=json&fl=url&limit=3000`, { headers: UA })).text();
@@ -63,13 +72,26 @@ async function system(name: string, hosts: string[], candidates: (host: string) 
   }
 }
 
-const tt = await ccHosts("*.teamtailor.com", 40);
+// What the Intervieweb page loads: its scripts and any address that looks like data.
+{
+  const r = await get("https://enav.intervieweb.it/");
+  const scripts = [...r.body.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]);
+  const urls = [...new Set([...r.body.matchAll(/["'](\/?[\w./?=&-]*(?:api|ajax|json|xml|annunci|jobs|module=)[\w./?=&%-]*)["']/gi)].map((m) => m[1]))].slice(0, 25);
+  log(`IW page scripts: ${short(scripts.join(" | "), 500)}`);
+  log(`IW data-looking addresses: ${short(urls.join(" | "), 900)}`);
+  log(`IW visible text: ${short(r.body.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " "), 400)}`);
+  for (const u of ["https://enav.intervieweb.it/annunci.php", "https://enav.intervieweb.it/app.php?module=iframeAnnunci", "https://enav.intervieweb.it/jobs.xml", "https://enav.intervieweb.it/feed", "https://enav.intervieweb.it/sitemap.xml", "https://enav.intervieweb.it/it/annunci"]) {
+    const x = await get(u);
+    log(`IW ${u} → ${x.status} ${short(x.type, 30)} ${x.body.length} bytes · ${short(x.body.replace(/<[^>]+>/g, " "), 160)}`);
+  }
+}
+const tt = await ccHosts("*.teamtailor.com", 40, ["above.teamtailor.com", "aabenbryg.teamtailor.com"]);
 await system("Teamtailor", tt.filter((h) => /\.(teamtailor)\.com$/.test(h)), (h) => [`https://${h}/jobs`, `https://${h}/jobs.rss`, `https://${h}/jobs.json`], /\/jobs\/\d+/);
-const iw = await ccHosts("*.intervieweb.it", 40);
+const iw: string[] = []; // looked at above
 await system("Intervieweb", iw, (h) => [`https://${h}/`, `https://${h}/annunci/`, `https://${h}/jobs/`], /annunci|job|offert|lavora/i);
 const ir = await ccHosts("*.inrecruiting.com", 40);
 await system("inRecruiting", ir, (h) => [`https://${h}/`, `https://${h}/jobs`, `https://${h}/it/jobs`], /job|annunc|position|offert/i);
-const fa = await ccHosts("*.factorialhr.com", 40);
+const fa = await ccHosts("*.factorialhr.com", 40, ["absoluteinternship.factorialhr.com", "campmanyabogados.factorialhr.com"]);
 await system("Factorial", fa, (h) => [`https://${h}/`, `https://${h}/jobs`], /job_posting|jobs\/|job-posting/i);
 const sf = await ccHosts("career*.successfactors.eu", 40);
 await system("SuccessFactors", sf, (h) => [`https://${h}/`], /career\?|jobReqId|job_req/i);
