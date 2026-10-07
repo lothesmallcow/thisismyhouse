@@ -93,6 +93,8 @@ export function inCountries(location: string | null | undefined, remote: boolean
   if (/,\s*(usa|us|spain|españa|netherlands|ireland|switzerland)\b/i.test(location)) return false;
   // American and Canadian places with European names: "Naples, FL", "Rome, GA", "London, ON", "Paris, TX".
   if (northAmerican(location)) return false;
+  // Capitals abroad that share an Italian town's name: abroad unless Italy is written.
+  if (/\b(?:nicosia|san marino)\b/i.test(location)) return false;
   const p = findPlace(location);
   if (!p || !countries.includes(p.country)) return false;
   // An Italian town found without "Italy" written: it must be a whole part of the place, not a word
