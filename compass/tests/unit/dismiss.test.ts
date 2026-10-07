@@ -3,7 +3,7 @@
 import { and, eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { schema } from "@/lib/db";
-import { dismissJob, dismissedList, undoDismissal, upsertRawJob } from "@/lib/server/jobs";
+import { dismissJob, dismissedList, purgeOldJobs, undoDismissal, upsertRawJob } from "@/lib/server/jobs";
 import { freshDb, seedPeople } from "./helpers/db";
 
 vi.mock("server-only", () => ({}));
@@ -47,11 +47,19 @@ describe("dismiss", () => {
     expect(await dismissedList(db, L, NOW)).toHaveLength(0);
   });
 
-  it("an offer only they could see (added by hand) is deleted altogether", async () => {
+  it("an offer only they could see (added by hand): back with Annulla, deleted once that is no longer possible", async () => {
     const db = await freshDb();
     const { L } = await seedPeople(db, NOW);
+    const find = (id: number) => db.query.jobs.findFirst({ where: eq(schema.jobs.id, id) });
     const mine = await upsertRawJob(db, { ...ad("Tornitore CNC", "https://annunci.example/tornitore"), source: "manual" }, NOW, { owners: [L] });
     await dismissJob(db, L, mine.jobId, "nessuno", NOW);
-    expect(await db.query.jobs.findFirst({ where: eq(schema.jobs.id, mine.jobId) })).toBeUndefined();
+    await undoDismissal(db, L, (await dismissedList(db, L, NOW))[0].dedupeKey, NOW);
+    expect(await db.query.userJobs.findFirst({ where: and(eq(schema.userJobs.userId, L), eq(schema.userJobs.jobId, mine.jobId)) })).toBeTruthy();
+    // Dismissed again and left: the clean-up within the undo days keeps it, after them deletes it.
+    await dismissJob(db, L, mine.jobId, "nessuno", NOW);
+    await purgeOldJobs(db, new Date(NOW.getTime() + 2 * 86_400_000));
+    expect(await find(mine.jobId)).toBeTruthy();
+    await purgeOldJobs(db, new Date(NOW.getTime() + 4 * 86_400_000));
+    expect(await find(mine.jobId)).toBeUndefined();
   });
 });

@@ -1,4 +1,4 @@
-# Come Compass trova le offerte (dalla 0.23, aggiornato alla 0.24)
+# Come Compass trova le offerte (dalla 0.23, aggiornato alla 0.25)
 
 L'idea: invece di rincorrere gli annunci dove vengono **ripubblicati** (LinkedIn, Indeed, risultati web),
 Compass legge le offerte **dove le aziende le pubblicano**: le loro bacheche lavoro. Le grandi aziende e
@@ -39,6 +39,24 @@ niente login, niente pagine copiate, niente piattaforme.
 - Le bacheche scoperte si leggono a rotazione (25 per giro). Di quelle che nessuno ha scelto si tengono
   solo le offerte che nel titolo hanno uno dei ruoli cercati (`core/relevance.ts`); per gli studenti
   anche i programmi (spring week, stage, graduate).
+
+## L'indice delle bacheche e il giro ogni ora (0.25)
+
+Come fanno gli indici di offerte più grandi (Hiring Cafe e simili), Compass non aspetta di incontrare
+un'azienda per conoscerne la bacheca:
+
+| Cosa | Quando | Come |
+|---|---|---|
+| Scoprire le bacheche | ogni lunedì notte | Common Crawl (archivio pubblico del web, aggiornato circa una volta al mese) elenca ogni indirizzo `boards.greenhouse.io/*`, `*.myworkdayjobs.com`… che ha visto; ogni bacheca nuova si legge una volta e si tiene se ha offerte in Italia, UK, Germania o Francia (`pipeline/board-index.ts`) |
+| Rileggere le bacheche | ogni ora | tutte quelle nei paesi scelti da qualcuno, una alla volta per sistema con una pausa, i sistemi in parallelo (`pipeline/board-sweep.ts`, workflow "Compass boards") |
+| Le aziende scelte | al clic su "Cerca ora" | lette dal vivo |
+
+Un'offerta uscita dopo l'ultimo giro compare al giro dopo (entro un'ora; GitHub a volte ritarda i
+lavori programmati di qualche decina di minuti). Delle bacheche che nessuno ha scelto si tengono solo
+le offerte con uno dei ruoli cercati.
+
+Fonti guardate e scartate: EURES (portale lavoro UE) risponde "accesso negato" ai programmi; le API a
+pagamento (Fantastic.jobs e simili) sono fuori budget; LinkedIn, Indeed e Glassdoor non si leggono.
 
 ## I ruoli
 

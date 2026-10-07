@@ -5,6 +5,7 @@
 import { parse } from "node-html-parser";
 import type { Contract, Hours, Remote } from "../../core/extract";
 import { findPlace, type CountryCode } from "../../core/geo";
+import { fold } from "../../core/text";
 import type { RawJob, SourceKind } from "../../core/normalize";
 import { getJson, htmlToText, request, HttpError, type FetchLike } from "../http";
 import { enterpriseEndpoint, fetchEnterprise, type EnterpriseAts } from "./enterprise";
@@ -67,13 +68,48 @@ const COUNTRY_WORDS: Record<CountryCode, RegExp> = {
   DE: /\b(germany|deutschland)\b/i,
   FR: /\b(france)\b/i,
 };
+const US_STATES = "AL|AK|AZ|AR|CA|CO|CT|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC";
+const CA_PROVINCES = "ON|QC|BC|AB|MB|SK|NS|NB|NL|PE";
+const NA_CODE = new RegExp(`([^,]+?)\\s*,\\s*(${US_STATES}|${CA_PROVINCES})\\b`);
+const NA_NAME =
+  /\b(?:united states|u\.s\.a?\.?|canada|alabama|alaska|arizona|arkansas|california|colorado|connecticut|florida|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new jersey|new mexico|new york|north carolina|north dakota|ohio|oklahoma|oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|wisconsin|wyoming|ontario|quebec|british columbia)\b/i;
+/**
+ * American and Canadian places with European names: "Naples, FL", "Rome, GA", "London, ON". An Italian
+ * province code that is also a state's ("Milano, MI", "Cagliari, CA", "Como, CO") stays Italian when the
+ * city is in that province.
+ */
+function northAmerican(location: string): boolean {
+  if (/\b(?:italy|italia|united kingdom|uk|england|germany|deutschland|france)\b/i.test(location)) return false;
+  if (NA_NAME.test(location)) return true;
+  const m = location.match(NA_CODE);
+  if (!m) return false;
+  const p = findPlace(m[1].trim());
+  return !(p && p.country === "IT" && p.province === m[2]);
+}
 /** Offers located in the countries the people chose (Italy when nobody chose). */
 export function inCountries(location: string | null | undefined, remote: boolean, countries: CountryCode[]): boolean {
   if (!location) return remote;
   if (countries.some((c) => COUNTRY_WORDS[c].test(location))) return true;
   if (/,\s*(usa|us|spain|españa|netherlands|ireland|switzerland)\b/i.test(location)) return false;
+  // American and Canadian places with European names: "Naples, FL", "Rome, GA", "London, ON", "Paris, TX".
+  if (northAmerican(location)) return false;
+  // Capitals abroad that share an Italian town's name: abroad unless Italy is written.
+  if (/\b(?:nicosia|san marino)\b/i.test(location)) return false;
   const p = findPlace(location);
-  return p != null && countries.includes(p.country);
+  if (!p || !countries.includes(p.country)) return false;
+  // An Italian town found without "Italy" written: it must be a whole part of the place, not a word
+  // inside another name ("Palo Alto" is not Alto in Piedmont, "Vandenberg Space Force Base" not Force).
+  return p.country !== "IT" || wholePart(location, p.name);
+}
+
+const words = (s: string) => fold(s).replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+function wholePart(location: string, town: string): boolean {
+  const n = words(town).length;
+  return location
+    .replace(/\b\d{4,6}\b/g, " ")
+    .replace(/\b[A-Z]{2}\b/g, " ")
+    .split(/[,;/|()\-–]+/)
+    .some((seg) => words(seg).length === n && findPlace(seg)?.name === town);
 }
 
 /** Career-page offers worth keeping: in the chosen countries, or not saying where (then the person's filters decide). */
@@ -85,7 +121,7 @@ const src = (ats: AtsType) => `ats:${ats}` as SourceKind;
  * One employer's board. `keywords` (what people search) are used by the big boards (Workday, Oracle,
  * Eightfold), which are searched rather than read whole; every board is then kept to the countries.
  */
-export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string, company: string, countries: CountryCode[] = ["IT"], opts: { keywords?: string[] } = {}): Promise<RawJob[]> {
+export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string, company: string, countries: CountryCode[] = ["IT"], opts: { keywords?: string[]; details?: number } = {}): Promise<RawJob[]> {
   const url = atsEndpoint(ats, slug, countries);
   switch (ats) {
     case "workday":
@@ -93,7 +129,7 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "eightfold":
     case "recruitee":
     case "avature": {
-      const jobs = await fetchEnterprise(fetchImpl, ats, slug, company, { keywords: opts.keywords, countries, inCountry: (p) => inCountries(p, false, countries) });
+      const jobs = await fetchEnterprise(fetchImpl, ats, slug, company, { keywords: opts.keywords, details: opts.details, countries, inCountry: (p) => inCountries(p, false, countries) });
       return jobs.filter((j) => !j.location || inCountries(j.location, j.hints?.remote === "remote", countries));
     }
     case "greenhouse": {
