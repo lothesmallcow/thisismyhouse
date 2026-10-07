@@ -1,7 +1,7 @@
 // Live check of the employer-board readers against real public boards (run on GitHub Actions, which
 // can reach them): for each board, how many offers came back, a sample (public job titles only), or
 // the error. Also how career sites publish their job lists (sitemaps). Prints counts and titles only.
-//   npx tsx scripts/probe-boards.ts
+//   npx tsx scripts/probe-boards.ts   (on GitHub: any change to this file runs .github/workflows/compass-probe.yml)
 import { fetchEnterprise, type EnterpriseAts } from "../src/lib/sources/ats/enterprise";
 import { fetchAts, type AtsType } from "../src/lib/sources/ats";
 
