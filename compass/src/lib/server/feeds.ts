@@ -69,3 +69,37 @@ export async function discoveredFeeds(db: DB, limit = 200) {
     .orderBy(desc(c.id))
     .limit(limit);
 }
+
+/** Boards read whole (not searched by keyword): an offer missing from them is gone. */
+export const FULL_BOARDS = new Set(["greenhouse", "lever", "ashby", "workable", "personio", "recruitee"]);
+
+/**
+ * After reading a whole board: its offers we hold that are no longer on it are marked "scaduto"
+ * (the employer took them down), the same day rather than when the 7-day clean-up runs.
+ * `present`: every link the board listed this time. Returns how many were closed.
+ */
+export async function closeMissing(db: DB, feed: Feed, present: string[], now = new Date()): Promise<number[]> {
+  if (!FULL_BOARDS.has(feed.ats)) return [];
+  const here = new Set(present.map((u) => u.replace(/\/+$/, "")));
+  const s = schema.jobSources;
+  const rows = await db.select({ jobId: s.jobId, url: s.url }).from(s).where(eq(s.source, `ats:${feed.ats}`));
+  const slug = feed.slug.toLowerCase();
+  const gone = new Set<number>();
+  const still = new Set<number>();
+  for (const r of rows) {
+    if (!r.url) continue;
+    const f = feedFromUrl(r.url);
+    if (!f || f.ats !== feed.ats || f.slug.toLowerCase() !== slug) continue;
+    if (here.has(r.url.replace(/\/+$/, ""))) still.add(r.jobId);
+    else gone.add(r.jobId);
+  }
+  const closed: number[] = [];
+  for (const id of gone) {
+    if (still.has(id)) continue; // another link of the same offer is still listed
+    const job = await db.query.jobs.findFirst({ where: eq(schema.jobs.id, id) });
+    if (!job || (job.eligibility as string[]).includes("scaduto")) continue;
+    await db.update(schema.jobs).set({ eligibility: [...(job.eligibility as string[]), "scaduto"] as typeof job.eligibility, updatedAt: now }).where(eq(schema.jobs.id, id));
+    closed.push(id);
+  }
+  return closed;
+}

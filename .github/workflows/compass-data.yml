@@ -5,11 +5,15 @@
 name: Compass data
 on:
   workflow_dispatch:
+    inputs:
+      job:
+        description: "esco (re-import the occupations) | probe (live check of the board readers)"
+        required: true
+        default: probe
   push:
     branches-ignore: [main] # on main the data arrives through a pull request, never a direct push
     paths:
       - compass/scripts/import-esco-api.mjs
-      - compass/scripts/probe-boards.ts
 permissions:
   contents: write
 concurrency:
@@ -17,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   esco:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.modified, 'compass/scripts/import-esco-api.mjs') || contains(github.event.head_commit.added, 'compass/scripts/import-esco-api.mjs')
+    if: github.event_name == 'push' || inputs.job == 'esco'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     defaults:
@@ -43,7 +47,7 @@ jobs:
   # Live check of the employer-board readers (Workday, Oracle, Eightfold, Greenhouse…) against real
   # public boards: counts and public job titles only. Read-only, writes nothing.
   probe:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.modified, 'compass/scripts/probe-boards.ts') || contains(github.event.head_commit.added, 'compass/scripts/probe-boards.ts')
+    if: inputs.job == 'probe'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
