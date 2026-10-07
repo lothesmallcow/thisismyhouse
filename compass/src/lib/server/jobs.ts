@@ -631,7 +631,8 @@ export async function dismissJob(db: DB, userId: number, id: number, reason: Dis
  * "Non mi interessa" = gone for good, for this person only: the offer leaves their account and is
  * never proposed again, matched by the exact links it was found at and by its exact title, company
  * and city (the same ad on another site). Other offers of the same company stay. An offer only they
- * could see (added by hand, their own alerts) is deleted altogether.
+ * could see (added by hand, their own alerts) is deleted once it can no longer be undone (purgeOldJobs):
+ * until then "Annulla" brings it back.
  */
 export async function banJob(db: DB, userId: number, job: { id: number; dedupeKey: string; title: string; company: string | null; city: string | null }, reason: string | null, now: Date): Promise<void> {
   const ban = { reason, title: job.title, company: job.company, city: job.city, at: now };
@@ -644,7 +645,6 @@ export async function banJob(db: DB, userId: number, job: { id: number; dedupeKe
     await db.insert(schema.dismissedUrls).values({ userId, url, dedupeKey: job.dedupeKey, at: now }).onConflictDoNothing();
   }
   await db.delete(schema.userJobs).where(and(eq(schema.userJobs.userId, userId), eq(schema.userJobs.jobId, job.id)));
-  if (sources.length > 0 && sources.every((x) => x.userId === userId)) await db.delete(schema.jobs).where(eq(schema.jobs.id, job.id));
 }
 
 /** The people who dismissed this offer (by one of its links, or by the same title, company and city). */
@@ -713,6 +713,18 @@ export async function purgeOldJobs(db: DB, now = new Date()): Promise<number> {
     sql`coalesce(${j.closesAt}, 0) >= ${now.getTime()}`, // coalesce: a NULL here would make the whole test unknown
   )!;
   const old = await db.select({ id: j.id }).from(j).where(and(lt(j.updatedAt, cutoff), sql`not (${kept})`));
+  // Offers only their owners could see, dismissed by all of them and no longer undoable: deleted now.
+  const undoEnd = new Date(now.getTime() - UNDO_DAYS * 86_400_000);
+  const s = schema.jobSources;
+  const d = schema.dismissedJobs;
+  old.push(
+    ...(await db
+      .select({ id: j.id })
+      .from(j)
+      .where(
+        sql`exists (select 1 from ${s} where ${s.jobId} = ${j.id}) and not exists (select 1 from ${s} where ${s.jobId} = ${j.id} and (${s.userId} is null or ${s.userId} not in (select ${d.userId} from ${d} where ${d.dedupeKey} = ${j.dedupeKey} and ${d.at} < ${undoEnd.getTime()})))`,
+      )),
+  );
   for (let i = 0; i < old.length; i += 500) {
     await db.delete(j).where(inArray(j.id, old.slice(i, i + 500).map((r) => r.id)));
   }

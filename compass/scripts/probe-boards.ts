@@ -1,7 +1,7 @@
 // Live check of job sources (run on GitHub Actions, which can reach them). Prints counts and public
 // job titles only; writes nothing.
 //   npx tsx scripts/probe-boards.ts   (on GitHub: any change to this file runs .github/workflows/compass-probe.yml)
-// Round 9: the board index as the weekly job runs it, without the database: every board in the
+// Round 10 (round 9 again, the index asked more gently): the board index as the weekly job runs it, without the database: every board in the
 // latest Common Crawl, then a sample of each system checked for offers in Italy, UK, Germany, France.
 import { crawlFeeds } from "../src/lib/sources/ats/crawl-index";
 import { fetchAts } from "../src/lib/sources/ats";
@@ -11,7 +11,7 @@ import type { Feed } from "../src/lib/sources/ats/feeds";
 
 const log = (...a: unknown[]) => console.log(...a);
 const t0 = Date.now();
-const { crawl, feeds, pages, failed } = await crawlFeeds(fetch);
+const { crawl, feeds, pages, failed } = await crawlFeeds(fetch, { onError: (what, e) => log(`  failed ${what}: ${String((e as Error).message ?? e).slice(0, 120)}`) });
 const by = new Map<string, Feed[]>();
 for (const f of feeds) by.set(f.ats, [...(by.get(f.ats) ?? []), f]);
 log(`crawl ${crawl}: ${feeds.length} boards from ${pages} pages (${failed} failed) in ${Math.round((Date.now() - t0) / 1000)} s · ${[...by].map(([a, l]) => `${a} ${l.length}`).join(", ")}`);

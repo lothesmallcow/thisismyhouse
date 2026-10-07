@@ -49,8 +49,18 @@ export interface CrawlResult {
  * Every board in the latest monthly crawl. One request at a time (the index is a shared public
  * service); a page that fails is skipped, a refusal (403/429) stops the run.
  */
-export async function crawlFeeds(fetchImpl: FetchLike, opts: { maxPagesPerPattern?: number; patterns?: string[] } = {}): Promise<CrawlResult> {
-  const get = async (url: string) => (await request(fetchImpl, url, {}, { timeoutMs: 90_000, retries: 2 })).text();
+export async function crawlFeeds(
+  fetchImpl: FetchLike,
+  opts: { maxPagesPerPattern?: number; patterns?: string[]; pauseMs?: number; sleep?: (ms: number) => Promise<void>; onError?: (what: string, e: unknown) => void } = {},
+): Promise<CrawlResult> {
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  // A pause before each request, longer after a busy answer (the index asks callers to slow down).
+  const get = async (url: string) => {
+    await sleep(opts.pauseMs ?? 1500);
+    const res = await request(fetchImpl, url, {}, { timeoutMs: 120_000, retries: 3, backoffMs: 10_000, sleep });
+    if (!res.ok) throw new Error(`index answered ${res.status}`);
+    return res.text();
+  };
   const info = JSON.parse(await get(`${INDEX}/collinfo.json`)) as { id: string }[];
   const crawl = info[0]?.id;
   if (!crawl) throw new Error("Common Crawl: no crawl listed");
@@ -58,12 +68,13 @@ export async function crawlFeeds(fetchImpl: FetchLike, opts: { maxPagesPerPatter
   let pages = 0;
   let failed = 0;
   for (const pattern of opts.patterns ?? CRAWL_PATTERNS) {
-    const base = `${INDEX}/${crawl}-index?url=${encodeURIComponent(pattern)}&output=json&fl=url&filter=status:200`;
+    const base = `${INDEX}/${crawl}-index?url=${encodeURIComponent(pattern)}&output=json&fl=url`;
     let n = 1;
     try {
       n = (JSON.parse(await get(`${base}&showNumPages=true`)) as { pages?: number }).pages ?? 1;
     } catch (e) {
       if (e instanceof BlockedError) throw e;
+      opts.onError?.(`${pattern} pages`, e);
       failed++;
     }
     for (let p = 0; p < Math.min(n, opts.maxPagesPerPattern ?? 20); p++) {
@@ -73,6 +84,7 @@ export async function crawlFeeds(fetchImpl: FetchLike, opts: { maxPagesPerPatter
         for (const f of feedsFromCdx(text)) feeds.set(`${f.ats}:${f.slug.toLowerCase()}`, f);
       } catch (e) {
         if (e instanceof BlockedError) throw e;
+        opts.onError?.(`${pattern} page ${p}`, e);
         failed++;
       }
     }

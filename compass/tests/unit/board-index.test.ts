@@ -36,7 +36,7 @@ describe("boards from the public web archive", () => {
       const page = url.match(/page=(\d)/)?.[1];
       return new Response(line(`https://jobs.lever.co/team${page}/abc`));
     }) as unknown as typeof fetch;
-    const r = await crawlFeeds(fetchImpl, { patterns: ["jobs.lever.co/*"] });
+    const r = await crawlFeeds(fetchImpl, { patterns: ["jobs.lever.co/*"], sleep: async () => {} });
     expect(r).toMatchObject({ crawl: "CC-MAIN-2026-39", pages: 2, failed: 0 });
     expect(r.feeds.map((f) => f.slug)).toEqual(["team0", "team1"]);
     expect(asked[1]).toContain("CC-MAIN-2026-39-index?url=jobs.lever.co%2F*&output=json");
