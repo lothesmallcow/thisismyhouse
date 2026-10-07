@@ -234,7 +234,8 @@ export async function fetchEnterprise(
           const p = findJobPostings(html).map((o) => jobPostingToRaw(o, url))[0];
           const place = p?.location ?? avaturePlace(html);
           if (!p && !place) continue;
-          read.set(url, { ...job, location: place, description: p?.description || job.description, salaryText: p?.salaryText, postedAt: p?.postedAt ?? job.postedAt, hints: p?.hints, thin: !p?.description });
+          const og = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']*)/i)?.[1];
+          read.set(url, { ...job, location: place, description: p?.description || htmlToText(og ?? "") || job.description, salaryText: p?.salaryText, postedAt: p?.postedAt ?? job.postedAt, hints: p?.hints, thin: !p?.description });
         } catch {
           /* skipped */
         }
