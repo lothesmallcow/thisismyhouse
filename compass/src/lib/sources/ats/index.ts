@@ -85,7 +85,7 @@ const src = (ats: AtsType) => `ats:${ats}` as SourceKind;
  * One employer's board. `keywords` (what people search) are used by the big boards (Workday, Oracle,
  * Eightfold), which are searched rather than read whole; every board is then kept to the countries.
  */
-export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string, company: string, countries: CountryCode[] = ["IT"], opts: { keywords?: string[] } = {}): Promise<RawJob[]> {
+export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string, company: string, countries: CountryCode[] = ["IT"], opts: { keywords?: string[]; details?: number } = {}): Promise<RawJob[]> {
   const url = atsEndpoint(ats, slug, countries);
   switch (ats) {
     case "workday":
@@ -93,7 +93,7 @@ export async function fetchAts(fetchImpl: FetchLike, ats: AtsType, slug: string,
     case "eightfold":
     case "recruitee":
     case "avature": {
-      const jobs = await fetchEnterprise(fetchImpl, ats, slug, company, { keywords: opts.keywords, countries, inCountry: (p) => inCountries(p, false, countries) });
+      const jobs = await fetchEnterprise(fetchImpl, ats, slug, company, { keywords: opts.keywords, details: opts.details, countries, inCountry: (p) => inCountries(p, false, countries) });
       return jobs.filter((j) => !j.location || inCountries(j.location, j.hints?.remote === "remote", countries));
     }
     case "greenhouse": {

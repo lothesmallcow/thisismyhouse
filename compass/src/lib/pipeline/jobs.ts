@@ -1,5 +1,7 @@
 // Scheduled jobs, shared by the CLI runner (GitHub Actions cron) and the protected
 // /api/cron/<job> routes (host cron). Demo mode wires fixtures; real mode wires the network.
+import { runBoardIndex } from "./board-index";
+import { runBoardSweep } from "./board-sweep";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { env, mailboxConfig } from "../env";
@@ -51,7 +53,7 @@ export async function checkInboxNow(db: DB, now = new Date()): Promise<"done" | 
   return "done";
 }
 
-export const JOB_NAMES = ["ingest", "discover", "queue", "replies", "digest"] as const;
+export const JOB_NAMES = ["ingest", "discover", "queue", "replies", "digest", "sweep", "index"] as const;
 export type JobName = (typeof JOB_NAMES)[number];
 
 /** One run per mailbox key in use by an active person (demo: the demo inbox rows with that key). */
@@ -152,6 +154,12 @@ async function dispatch(db: DB, name: JobName, now: Date): Promise<unknown> {
       }
       return out;
     }
+    case "sweep":
+      // Every board that hires where someone looks, read again (hourly): new offers within the hour.
+      return runBoardSweep(db, fetchImpl, now);
+    case "index":
+      // New boards from the public web archive (weekly): Common Crawl is refreshed about monthly.
+      return demo ? { skipped: "demo mode" } : runBoardIndex(db, fetchImpl);
     case "digest": {
       // The morning e-mail is part of the interface: in real mode it goes out as soon as a mailbox
       // is configured, independently of the switch for job applications.

@@ -16,19 +16,17 @@ import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { scrapeCareers } from "../sources/web/careers";
 import { dedupeCandidates, mergeDuplicateJobs, purgeOldJobs, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
 import { closeMissing, discoveredFeeds, learnFeeds } from "../server/feeds";
-import { roleTerms, titleMatches } from "../core/relevance";
-import { isProgrammeTitle } from "./programmes";
 import { lookUpMissingCompanies } from "../server/company-guess";
 import { pageCompanyClues } from "../core/page-company";
 
 import { todaysPicks } from "../server/career";
 import { searchTargets } from "./targets";
 import { getSettings, setSetting } from "../server/settings";
-import { freshQueries, markSearched, searchCodeFor, searchKeywords } from "./search-terms";
+import { freshQueries, markSearched, searchCodeFor } from "./search-terms";
 import { queryWords, type CodeQuery } from "../core/search-code";
-import { homeCountries } from "../core/geo";
 import type { RawJob } from "../core/normalize";
 import { isPaused, runWithHealth } from "./health";
+import { whatPeopleWant } from "./wanted";
 import { scanMailbox, type MailboxSummary } from "./mailbox-scan";
 import { refreshTrackerLeads, verifyLeads } from "./programmes";
 import { W1_HARD_MAX } from "./discover";
@@ -77,7 +75,7 @@ export interface IngestSummary {
   newJobs: number;
 }
 
-async function store(db: DB, jobs: RawJob[], now: Date, contexts: RankContext[]): Promise<{ created: number; total: number }> {
+export async function store(db: DB, jobs: RawJob[], now: Date, contexts: RankContext[]): Promise<{ created: number; total: number }> {
   const cache = await dedupeCandidates(db);
   let created = 0;
   for (const j of jobs) if ((await upsertRawJob(db, j, now, { cache, contexts })).created) created++;
@@ -123,7 +121,8 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
   // The API gets the role plus its extra words ("Sales manager moda", "Analyst da remoto").
   const apiCalls = (await freshQueries(db, [...calls.values()], now)).slice(0, API_CALLS_PER_RUN).map((q) => ({ ...q, what: queryWords(q) }));
   // Company career feeds: keep the offers located in any country someone chose.
-  const atsCountries = [...new Set(contexts.flatMap((c) => homeCountries(c.profile.countries, c.profile.city)))];
+  const wanted = whatPeopleWant(contexts);
+  const atsCountries = wanted.countries;
 
   // 2. Adzuna
   const adzuna = demo ? { appId: "demo", appKey: "demo" } : env.adzuna;
@@ -188,10 +187,8 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
   ]);
   // What everyone looks for: big boards are searched with these words, and boards nobody chose keep
   // only offers carrying one of these roles (students: programmes too).
-  const allKeywords = [...new Set(contexts.flatMap((c) => searchKeywords(c.profile.roles, c.profile.synonyms, 3)))].slice(0, 8);
-  const allTerms = roleTerms(contexts.flatMap((c) => [...c.profile.roles, ...c.profile.synonyms]));
-  const students = contexts.some((c) => c.profile.track === "stage");
-  const relevant = (j: RawJob) => titleMatches(j.title, allTerms) || (students && isProgrammeTitle(j.title));
+  const allKeywords = wanted.keywords;
+  const relevant = wanted.relevant;
   for (const w of watch) {
     const key = `ats:${w.ats}:${w.slug}`;
     const host = new URL(atsEndpoint(w.ats as AtsType, w.slug)).host;

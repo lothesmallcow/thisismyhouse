@@ -1,0 +1,64 @@
+# Compass: employers' boards, apart from the other jobs so the hourly sweep is never held back by them.
+# - sweep (every hour): every board in the catalog that hires where someone looks, read again, so an
+#   offer published after the last refresh shows up within the hour.
+# - index (weekly): new boards from Common Crawl's public URL index (the archive is refreshed about
+#   monthly), each checked once; those with offers in Italy, UK, Germany or France join the catalog.
+# Runs only when the secret DATABASE_URL exists (see compass-jobs.yml for the secrets). Logs: counts only.
+name: Compass boards
+on:
+  schedule:
+    - cron: "20 * * * *" # sweep
+    - cron: "40 1 * * 1" # index, Monday night
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "sweep | index"
+        required: true
+        default: sweep
+permissions:
+  contents: read
+concurrency: { group: compass-boards, cancel-in-progress: false }
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: compass
+    env:
+      DEMO_MODE: ${{ vars.DEMO_MODE || 'true' }}
+      REGISTERS: ${{ vars.REGISTERS || 'IT' }}
+      APP_URL: ${{ vars.APP_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
+      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+      SEED_ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
+      SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+    steps:
+      - name: Skip when not configured
+        id: cfg
+        working-directory: .
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "No DATABASE_URL secret: nothing to do."; echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.skip != '1'
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.skip != '1'
+        with: { node-version: 22, cache: npm, cache-dependency-path: compass/package-lock.json }
+      - run: npm ci
+        if: steps.cfg.outputs.skip != '1'
+      - name: Pick job
+        if: steps.cfg.outputs.skip != '1'
+        id: pick
+        working-directory: .
+        run: |
+          case "${{ github.event.schedule }}" in
+            "20 * * * *") echo "job=sweep" >> "$GITHUB_OUTPUT" ;;
+            "40 1 * * 1") echo "job=index" >> "$GITHUB_OUTPUT" ;;
+            *) echo "job=${{ github.event.inputs.job }}" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - name: Run job
+        if: steps.cfg.outputs.skip != '1'
+        run: npx tsx scripts/migrate.ts && npx tsx scripts/run-job.ts ${{ steps.pick.outputs.job }}
