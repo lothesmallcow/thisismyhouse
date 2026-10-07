@@ -1,8 +1,8 @@
-# Come Compass trova le offerte (dalla 0.23)
+# Come Compass trova le offerte (dalla 0.23, aggiornato alla 0.24)
 
 L'idea: invece di rincorrere gli annunci dove vengono **ripubblicati** (LinkedIn, Indeed, risultati web),
 Compass legge le offerte **dove le aziende le pubblicano**: le loro bacheche lavoro. Le grandi aziende e
-le banche usano quasi tutte uno di pochi sistemi (Workday, Oracle Recruiting, Eightfold, Greenhouse,
+le banche usano quasi tutte uno di pochi sistemi (Workday, Oracle Recruiting, Avature, Greenhouse,
 Lever, SmartRecruiters…), e ognuno serve la pagina "Lavora con noi" da un indirizzo pubblico che
 restituisce dati ordinati: titolo, azienda, luogo, data. Lo stesso indirizzo che usa la pagina stessa:
 niente login, niente pagine copiate, niente piattaforme.
@@ -12,9 +12,18 @@ niente login, niente pagine copiate, niente piattaforme.
 1. **Avvisi e-mail** (Gmail collegata o inoltro): LinkedIn, Indeed e gli altri siti mandano già le
    offerte filtrate per la persona. Restano la fonte più ricca.
 2. **Bacheche delle aziende** (`sources/ats`): Greenhouse, Lever, Ashby, SmartRecruiters, Workable,
-   Personio, Recruitee (lette intere) e Workday, Oracle Recruiting, Eightfold (cercate con i ruoli,
+   Personio, Recruitee (lette intere) e Workday, Oracle Recruiting, Avature (cercate con i ruoli,
    perché ne hanno migliaia). Azienda e luogo sono sempre giusti, e un'offerta tolta dall'azienda
    smette di comparire e viene cancellata dopo 7 giorni.
+   - **Workday**: la ricerca usa il filtro paese della bacheca stessa (il paese, oppure le sue sedi in
+     quel paese, es. "The Medelan Building, Milan" per Barclays), quindi arrivano solo le offerte nei
+     paesi scelti. Le prime 8 si leggono intere.
+   - **Oracle Recruiting**: tenute per codice paese dell'offerta; le prime 8 intere, con la data di
+     chiusura delle candidature.
+   - **Avature** (UniCredit…): il feed RSS di ricerca del sito, poi la pagina di ogni offerta per il
+     luogo (campi "Country"/"City") e il testo. Più lento (una pagina per offerta, ~2,5 s), quindi
+     al massimo 12 per giro.
+   - Eightfold resta solo per bacheche aggiunte a mano: il suo indirizzo pubblico risponde 404/403.
 3. **Pagine "Lavora con noi"** delle aziende scelte (`sources/web/careers.ts`): dati strutturati
    (JobPosting) quando ci sono; se la pagina rimanda a una bacheca, si legge quella.
 4. **API** (Adzuna, Jooble) e **ricerca web** (Tavily): coprono il resto.
@@ -36,6 +45,12 @@ niente login, niente pagine copiate, niente piattaforme.
 Le parole con cui si cerca vengono dal questionario: i ruoli e i loro altri nomi (catalogo ESCO della
 Commissione Europea, `data/world/occupations.json`, ~3.000 professioni in 4 lingue), più ogni ruolo in
 inglese, perché le grandi bacheche sono scritte in inglese.
+
+## Verifica dal vivo
+
+Il container di sviluppo non raggiunge i siti delle bacheche; GitHub Actions sì. Ogni modifica a
+`scripts/probe-boards.ts` lancia il workflow "Compass probe", che prova i lettori su bacheche vere
+(Barclays, Citi, NVIDIA, J.P. Morgan, UniCredit) e stampa solo conteggi e titoli pubblici.
 
 ## Cosa non fa, apposta
 

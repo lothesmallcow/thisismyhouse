@@ -3,7 +3,7 @@
 // look for, and remembered in the registry.
 import { describe, expect, it, vi } from "vitest";
 import { feedFromUrl, feedsInHtml } from "@/lib/sources/ats/feeds";
-import { fetchEnterprise, workdayPosted } from "@/lib/sources/ats/enterprise";
+import { avaturePlace, fetchEnterprise, workdayPosted } from "@/lib/sources/ats/enterprise";
 import { fetchAts } from "@/lib/sources/ats";
 import { roleTerms, titleMatches } from "@/lib/core/relevance";
 import { discoveredFeeds, learnFeeds, registerFeed } from "@/lib/server/feeds";
@@ -19,13 +19,16 @@ describe("a link → the employer's board", () => {
     ["https://barclays.wd3.myworkdayjobs.com/en-US/External_Career_Site_Barclays/job/London/Analyst_JR-001", { ats: "workday", slug: "barclays.wd3.myworkdayjobs.com/External_Career_Site_Barclays" }],
     ["https://citi.wd5.myworkdayjobs.com/2/job/Milan/Analyst_25", { ats: "workday", slug: "citi.wd5.myworkdayjobs.com/2" }],
     ["https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210512345", { ats: "oracle", slug: "jpmc.fa.oraclecloud.com/CX_1001" }],
-    ["https://aexp.eightfold.ai/careers/job/123?domain=aexp.com", { ats: "eightfold", slug: "aexp.eightfold.ai/aexp.com" }],
+    ["https://aexp.eightfold.ai/careers/job/123?domain=aexp.com", null],
     ["https://boards.greenhouse.io/point72/jobs/7654321", { ats: "greenhouse", slug: "point72" }],
     ["https://job-boards.greenhouse.io/embed/job_board?for=bendingspoons", { ats: "greenhouse", slug: "bendingspoons" }],
     ["https://jobs.lever.co/satispay/abc-123", { ats: "lever", slug: "satispay" }],
     ["https://jobs.smartrecruiters.com/Bosch/744000012345", { ats: "smartrecruiters", slug: "Bosch" }],
     ["https://acme.jobs.personio.de/job/42", { ats: "personio", slug: "acme" }],
     ["https://acme.recruitee.com/o/analyst", { ats: "recruitee", slug: "acme" }],
+    ["https://careers.unicredit.eu/it_IT/jobsuche/JobDetail/Risk-Analyst/3150", { ats: "avature", slug: "careers.unicredit.eu/jobsuche" }],
+    ["https://careers.unicredit.eu/jobsuche/JobDetail/Risk-Analyst/3150", { ats: "avature", slug: "careers.unicredit.eu/jobsuche" }],
+    ["https://acme.avature.net/careers/SearchJobs/?search=x", { ats: "avature", slug: "acme.avature.net/careers" }],
   ])("%s", (url, want) => {
     expect(feedFromUrl(url)).toEqual(want);
   });
@@ -59,10 +62,105 @@ describe("reading the big boards", () => {
     }) as typeof fetch;
     const jobs = await fetchEnterprise(fetchImpl, "workday", "acme.wd3.myworkdayjobs.com/Careers", "Acme", { keywords: ["Sales manager"], now: NOW, details: 1 });
     expect(jobs).toHaveLength(2);
-    expect(jobs[0]).toMatchObject({ url: "https://acme.wd3.myworkdayjobs.com/Careers/job/Milan/Sales-Manager_R1", company: "Acme Italia S.p.A.", location: "Milano", description: "Guida il team vendite.", thin: false, source: "ats:workday" });
+    // The board's company, not Workday's legal entity
+    expect(jobs[0]).toMatchObject({ url: "https://acme.wd3.myworkdayjobs.com/Careers/job/Milan/Sales-Manager_R1", company: "Acme", location: "Milano", description: "Guida il team vendite.", thin: false, source: "ats:workday" });
     expect(jobs[1].location).toBeNull(); // "2 Locations" says nothing
     expect(calls[0]).toBe("POST https://acme.wd3.myworkdayjobs.com/wday/cxs/acme/Careers/jobs");
     expect(workdayPosted("Posted 30+ Days Ago", NOW)?.toISOString().slice(0, 10)).toBe("2026-09-06");
+  });
+  it("Workday: only the chosen countries, through the board's own country filter", async () => {
+    const bodies: { appliedFacets: Record<string, string[]>; searchText: string; limit: number }[] = [];
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      bodies.push(body);
+      if (body.limit === 1)
+        return Response.json({ facets: [
+          { facetParameter: "jobFamilyGroup", values: [{ id: "f1", descriptor: "Italy Operations" }] },
+          { facetParameter: "Country_and_Jurisdiction", values: [{ id: "us", descriptor: "United States" }, { id: "it", descriptor: "Italy" }] },
+        ] });
+      return Response.json({ jobPostings: [{ title: "Analyst", externalPath: "/job/Milan/Analyst_1", locationsText: "Milan, Italy" }] });
+    }) as typeof fetch;
+    const jobs = await fetchEnterprise(fetchImpl, "workday", "citi.wd5.myworkdayjobs.com/2", "Citi", { keywords: ["Analyst"], countries: ["IT"], details: 0 });
+    expect(jobs).toHaveLength(1);
+    expect(bodies[1]).toMatchObject({ searchText: "Analyst", appliedFacets: { Country_and_Jurisdiction: ["it"] } });
+  });
+  it("Workday without a country filter: its sites in the chosen countries", async () => {
+    const bodies: { appliedFacets: Record<string, string[]>; limit: number }[] = [];
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      bodies.push(body);
+      if (body.limit === 1)
+        return Response.json({ facets: [
+          { facetParameter: "timeType", values: [{ id: "t1", descriptor: "Full time" }] },
+          { facetParameter: "locationMainGroup", values: [{ facetParameter: "locations", descriptor: "Locations", values: [{ id: "s1", descriptor: "Chennai, DLF IT Park" }, { id: "s2", descriptor: "The Medelan Building, Milan" }] }] },
+        ] });
+      return Response.json({ jobPostings: [] });
+    }) as typeof fetch;
+    await fetchAts(fetchImpl, "workday", "barclays.wd3.myworkdayjobs.com/External", "Barclays", ["IT"], { keywords: ["Analyst"] });
+    expect(bodies[1].appliedFacets).toEqual({ locations: ["s2"] });
+  });
+  it("Workday: a country inside the Locations group wins over the sites", async () => {
+    const bodies: { appliedFacets: Record<string, string[]>; limit: number }[] = [];
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      bodies.push(body);
+      if (body.limit === 1)
+        return Response.json({ facets: [{ facetParameter: "locationMainGroup", values: [
+          { facetParameter: "locationHierarchy1", descriptor: "Locations", values: [{ id: "c-it", descriptor: "Italy" }, { id: "c-gb", descriptor: "United Kingdom" }] },
+          { facetParameter: "locations", descriptor: "Sites", values: [{ id: "s-it", descriptor: "Italy, Remote" }] },
+        ] }] });
+      return Response.json({ jobPostings: [] });
+    }) as typeof fetch;
+    await fetchAts(fetchImpl, "workday", "nvidia.wd5.myworkdayjobs.com/Site", "NVIDIA", ["IT"], { keywords: ["Engineer"] });
+    expect(bodies[1].appliedFacets).toEqual({ locationHierarchy1: ["c-it"] });
+  });
+  it("Avature: the search feed, then each offer's page for where it is", async () => {
+    const seen: string[] = [];
+    const page = (city: string, country: string) =>
+      `<html><script type="application/ld+json">{"@type":"JobPosting","title":"Risk Analyst","description":"<p>Analisi rischi</p>","datePosted":"2026-10-01","jobLocation":{"address":{"addressLocality":"${city}","addressCountry":"${country}"}}}</script></html>`;
+    const fetchImpl = (async (url: string | URL | Request) => {
+      const u = String(url);
+      seen.push(u);
+      if (u.includes("/SearchJobs/feed/"))
+        return new Response(`<rss><channel>
+          <item><title><![CDATA[Risk Analyst]]></title><link>https://careers.unicredit.eu/jobsuche/JobDetail/Risk-Analyst/3150</link><pubDate>Fri, 27 Aug 2021 10:00:00 GMT</pubDate></item>
+          <item><title><![CDATA[Risikoanalyst (m/w/d)]]></title><link>https://careers.unicredit.eu/jobsuche/JobDetail/Risikoanalyst-m-w-d/3151</link></item>
+          <item><title>Analyst</title><link>https://careers.unicredit.eu/jobsuche/JobDetail/Analyst/3152</link></item>
+        </channel></rss>`);
+      if (u.endsWith("/3150")) return new Response(page("Milano", "IT"));
+      // UniCredit's pages: no place in the JobPosting data, labelled fields instead
+      if (u.endsWith("/3151"))
+        return new Response(`<script type="application/ld+json">{"@type":"JobPosting","title":"Risikoanalyst","description":"x"}</script>
+          <div class="article__content__view__field"><div class="article__content__view__field__label">Country</div><div class="article__content__view__field__value">Germany</div></div>
+          <div class="article__content__view__field"><div class="article__content__view__field__label">City</div><div class="article__content__view__field__value">München</div></div>`);
+      return new Response("gone", { status: 404 });
+    }) as typeof fetch;
+    const jobs = await fetchAts(fetchImpl, "avature", "careers.unicredit.eu/jobsuche", "UniCredit", ["IT"], { keywords: ["Risk analyst"] });
+    expect(seen[0]).toBe("https://careers.unicredit.eu/jobsuche/SearchJobs/feed/?search=Risk%20analyst");
+    expect(jobs).toEqual([expect.objectContaining({ title: "Risk Analyst", company: "UniCredit", location: "Milano, Italia", description: "Analisi rischi", externalId: "3150", source: "ats:avature", thin: false })]);
+  });
+  it("Avature's labelled fields → the place", () => {
+    const f = (l: string, v: string) => `<div class="article__content__view__field"><div class="article__content__view__field__label">${l}</div><div class="article__content__view__field__value">${v}</div></div>`;
+    expect(avaturePlace(f("Job ID", "70767") + f("Company", "UniCredit Bulbank") + f("Country", "Bulgaria") + f("City", "София / Sofia"))).toBe("София / Sofia, Bulgaria");
+    expect(avaturePlace(f("Paese", "Italia") + f("Città", "Milano"))).toBe("Milano, Italia");
+    expect(avaturePlace("<p>nothing</p>")).toBeNull();
+  });
+  it("Oracle: only the chosen countries, then the full description and closing date", async () => {
+    const fetchImpl = (async (url: string | URL | Request) => {
+      const u = decodeURIComponent(String(url));
+      if (u.includes("recruitingCEJobRequisitionDetails")) {
+        expect(u).toContain('ById;Id="2",siteNumber=CX_1001');
+        return Response.json({ items: [{ ExternalDescriptionStr: "<p>Analisi del credito.</p>", ExternalPostedEndDate: "2026-11-01T00:00:00Z" }] });
+      }
+      return Response.json({ items: [{ requisitionList: [
+        { Id: "1", Title: "Analyst", PrimaryLocation: "National Capital Region", PrimaryLocationCountry: "PH" },
+        { Id: "2", Title: "Credit Analyst", PrimaryLocation: "Milano, Italy", PrimaryLocationCountry: "IT" },
+        { Id: "3", Title: "Risk Analyst", PrimaryLocation: "London", PrimaryLocationCountry: "GB", secondaryLocations: [{ CountryCode: "IT" }] },
+      ] }] });
+    }) as typeof fetch;
+    const jobs = await fetchEnterprise(fetchImpl, "oracle", "jpmc.fa.oraclecloud.com/CX_1001", "J.P. Morgan", { keywords: ["Analyst"], countries: ["IT"], details: 1 });
+    expect(jobs.map((j) => j.externalId)).toEqual(["2", "3"]);
+    expect(jobs[0]).toMatchObject({ description: "Analisi del credito.", thin: false, hints: { closesAt: new Date("2026-11-01T00:00:00Z") } });
   });
   it("Oracle, Eightfold, Recruitee", async () => {
     const fetchImpl = (async (url: string | URL | Request) => {
@@ -116,5 +214,23 @@ describe("the registry of boards", () => {
     const id = await registerFeed(db, { ats: "greenhouse", slug: "bancaesempio" }, "Banca Esempio");
     const row = await db.query.catalogCompanies.findFirst({ where: (c, { eq }) => eq(c.id, id!) });
     expect(row).toMatchObject({ name: "Banca Esempio", ats: "greenhouse", atsSlug: "bancaesempio", source: "curato" });
+  });
+});
+
+describe("offers taken down", () => {
+  it("an offer no longer on a whole board is marked expired; one still listed, or on a searched board, is not", async () => {
+    const { closeMissing } = await import("@/lib/server/feeds");
+    const { upsertRawJob } = await import("@/lib/server/jobs");
+    const db = await freshDb();
+    const a = await upsertRawJob(db, { source: "ats:greenhouse", url: "https://boards.greenhouse.io/acme/jobs/1", title: "Sales Manager Italia", company: "Acme", location: "Milano", description: "Ruolo commerciale." }, NOW);
+    const b = await upsertRawJob(db, { source: "ats:greenhouse", url: "https://boards.greenhouse.io/acme/jobs/2", title: "Key Account Manager", company: "Acme", location: "Milano", description: "Clienti chiave." }, NOW);
+    const other = await upsertRawJob(db, { source: "ats:greenhouse", url: "https://boards.greenhouse.io/beta/jobs/9", title: "Analyst", company: "Beta", location: "Milano", description: "Analisi." }, NOW);
+    const closed = await closeMissing(db, { ats: "greenhouse", slug: "acme" }, ["https://boards.greenhouse.io/acme/jobs/2"], NOW);
+    expect(closed).toEqual([a.jobId]);
+    const el = async (id: number) => (await db.query.jobs.findFirst({ where: (j, { eq }) => eq(j.id, id) }))!.eligibility as string[];
+    expect(await el(a.jobId)).toContain("scaduto");
+    expect(await el(b.jobId)).not.toContain("scaduto");
+    expect(await el(other.jobId)).not.toContain("scaduto"); // another board
+    expect(await closeMissing(db, { ats: "workday", slug: "acme.wd3.myworkdayjobs.com/x" }, [], NOW)).toEqual([]); // searched, not read whole
   });
 });

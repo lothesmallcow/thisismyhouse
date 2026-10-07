@@ -14,7 +14,6 @@ export interface Feed {
 export const FEED_DOMAINS = [
   "myworkdayjobs.com",
   "oraclecloud.com",
-  "eightfold.ai",
   "boards.greenhouse.io",
   "job-boards.greenhouse.io",
   "jobs.lever.co",
@@ -23,6 +22,7 @@ export const FEED_DOMAINS = [
   "apply.workable.com",
   "jobs.personio.de",
   "recruitee.com",
+  "avature.net",
 ];
 
 const NOT_SLUG = /^(?:embed|api|v\d|j|jobs?|careers?|www|search|en|it|de|fr|en-us|en-gb|it-it|de-de|fr-fr|o|apply|login|sitemap\.xml)$/i;
@@ -51,10 +51,14 @@ export function feedFromUrl(raw: string): Feed | null {
     const site = i >= 0 ? parts[i + 1] : null;
     return site ? { ats: "oracle", slug: `${host}/${site}` } : null;
   }
-  // Eightfold: <x>.eightfold.ai/careers?domain=<company domain>
-  if (/\.eightfold\.ai$/.test(host)) {
-    const domain = u.searchParams.get("domain");
-    return domain ? { ats: "eightfold", slug: `${host}/${domain}` } : null;
+  // Eightfold (<x>.eightfold.ai) is not learned from links: its public endpoint answers 404/403 to
+  // anyone but the page itself. A board added by hand is still tried.
+  // Avature: [<locale>/]<portal>/JobDetail/<title>/<id> or …/SearchJobs, on *.avature.net or the
+  // employer's own domain (careers.unicredit.eu/jobsuche/JobDetail/…).
+  {
+    const i = parts.findIndex((p) => /^(?:JobDetail|SearchJobs)$/.test(p));
+    const portal = i > 0 ? parts[i - 1] : null;
+    if (portal && !/^[a-z]{2}_[A-Z]{2}$/.test(portal) && (i === 1 || (i === 2 && /^[a-z]{2}_[A-Z]{2}$/.test(parts[0])))) return { ats: "avature", slug: `${host}/${portal}` };
   }
   if (/(^|\.)(boards|job-boards)\.greenhouse\.io$/.test(host)) {
     const s = first === "embed" ? u.searchParams.get("for") : ok(first);

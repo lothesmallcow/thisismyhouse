@@ -15,7 +15,7 @@ import { extractJobsFromHtml, jobLinks } from "../sources/web/jsonld";
 import { PoliteFetcher } from "../sources/web/polite-fetch";
 import { scrapeCareers } from "../sources/web/careers";
 import { dedupeCandidates, mergeDuplicateJobs, purgeOldJobs, rankContexts, rankJobForAll, upsertRawJob, type RankContext } from "../server/jobs";
-import { discoveredFeeds, learnFeeds } from "../server/feeds";
+import { closeMissing, discoveredFeeds, learnFeeds } from "../server/feeds";
 import { roleTerms, titleMatches } from "../core/relevance";
 import { isProgrammeTitle } from "./programmes";
 import { lookUpMissingCompanies } from "../server/company-guess";
@@ -203,6 +203,8 @@ export async function runIngest(deps: IngestDeps): Promise<IngestSummary> {
       let jobs;
       try {
         jobs = await fetchAts(fetchImpl, w.ats as AtsType, w.slug, w.name, atsCountries, { keywords: allKeywords });
+        // A whole board just read: our offers no longer on it were taken down by the employer.
+        for (const id of await closeMissing(db, { ats: w.ats as AtsType, slug: w.slug }, jobs.map((j) => j.url ?? ""), now)) await rankJobForAll(db, id, now, contexts);
         if (!keepAll.has(`${w.ats}:${w.slug}`)) jobs = jobs.filter(relevant);
       } catch (e) {
         if (e instanceof BlockedError) await runWithHealth(db, `host:${host}`, async () => { throw e; }, now);

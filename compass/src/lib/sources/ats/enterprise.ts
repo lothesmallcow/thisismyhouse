@@ -5,9 +5,10 @@
 // not read whole.
 import type { CountryCode } from "../../core/geo";
 import type { RawJob, SourceKind } from "../../core/normalize";
-import { getJson, htmlToText, type FetchLike } from "../http";
+import { getJson, htmlToText, request, type FetchLike } from "../http";
+import { jobPostingToRaw, findJobPostings } from "../web/jsonld";
 
-export type EnterpriseAts = "workday" | "oracle" | "eightfold" | "recruitee";
+export type EnterpriseAts = "workday" | "oracle" | "eightfold" | "recruitee" | "avature";
 
 /** "Posted Today", "Posted 3 Days Ago", "Posted 30+ Days Ago" → a date. */
 export function workdayPosted(s: string | undefined, now: Date): Date | null {
@@ -35,6 +36,8 @@ export function enterpriseEndpoint(ats: EnterpriseAts, slug: string): string {
       return `https://${host}/api/apply/v2/jobs`;
     case "recruitee":
       return `https://${slug}.recruitee.com/api/offers/`;
+    case "avature":
+      return `https://${host}/${rest}/SearchJobs/feed/`;
   }
 }
 
@@ -50,7 +53,15 @@ export async function fetchEnterprise(
   ats: EnterpriseAts,
   slug: string,
   company: string,
-  opts: { keywords?: string[]; perKeyword?: number; now?: Date; details?: number } = {},
+  opts: {
+    keywords?: string[];
+    perKeyword?: number;
+    now?: Date;
+    details?: number;
+    countries?: CountryCode[];
+    /** Whether a place name is in the chosen countries ("The Medelan Building, Milan" → Italy). */
+    inCountry?: (place: string) => boolean;
+  } = {},
 ): Promise<RawJob[]> {
   const now = opts.now ?? new Date();
   const perKeyword = opts.perKeyword ?? 20;
@@ -60,13 +71,14 @@ export async function fetchEnterprise(
   switch (ats) {
     case "workday": {
       const tenant = host.split(".")[0];
+      const endpoint = `https://${host}/wday/cxs/${tenant}/${rest}/jobs`;
+      const post = <T,>(body: object) =>
+        getJson<T>(fetchImpl, endpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ appliedFacets: {}, limit: 20, offset: 0, searchText: "", ...body }) }, { retries: 1 });
+      // The board's own country filter (its name changes from board to board: "locationCountry",
+      // "Country_and_Jurisdiction"…): offers in the chosen countries only, not the first 20 worldwide.
+      const applied = opts.countries?.length ? await workdayCountryFacet(post, opts.countries, opts.inCountry).catch(() => null) : null;
       for (const kw of keywords) {
-        const d = await getJson<{ jobPostings?: { title?: string; externalPath?: string; locationsText?: string; postedOn?: string; bulletFields?: string[] }[] }>(
-          fetchImpl,
-          `https://${host}/wday/cxs/${tenant}/${rest}/jobs`,
-          { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ appliedFacets: {}, limit: Math.min(20, perKeyword), offset: 0, searchText: kw }) },
-          { retries: 1 },
-        );
+        const d = await post<{ jobPostings?: { title?: string; externalPath?: string; locationsText?: string; postedOn?: string; bulletFields?: string[] }[] }>({ limit: Math.min(20, perKeyword), searchText: kw, ...(applied ? { appliedFacets: applied } : {}) });
         for (const j of d.jobPostings ?? []) {
           if (!j.title || !j.externalPath) continue;
           const url = `https://${host}/${rest}${j.externalPath}`;
@@ -83,13 +95,14 @@ export async function fetchEnterprise(
           });
         }
       }
-      // The first few in full (description, place, start date, employer as Workday names it).
+      // The first few in full (description, place, start date). The employer stays the board's company:
+      // Workday's own field is the legal entity ("1203 Barclays Global Serv. Cen").
       let n = 0;
       for (const [url, job] of out) {
         if (n++ >= (opts.details ?? 8)) break;
         try {
           const path = url.slice(`https://${host}/${rest}`.length);
-          const d = await getJson<{ jobPostingInfo?: { jobDescription?: string; location?: string; startDate?: string; timeType?: string; externalUrl?: string }; hiringOrganization?: { name?: string } }>(
+          const d = await getJson<{ jobPostingInfo?: { jobDescription?: string; location?: string; startDate?: string; timeType?: string } }>(
             fetchImpl,
             `https://${host}/wday/cxs/${tenant}/${rest}${path}`,
             { headers: { Accept: "application/json" } },
@@ -98,7 +111,6 @@ export async function fetchEnterprise(
           const info = d.jobPostingInfo ?? {};
           out.set(url, {
             ...job,
-            company: d.hiringOrganization?.name?.trim() || company,
             location: info.location ?? job.location,
             description: htmlToText(info.jobDescription ?? ""),
             postedAt: info.startDate ? new Date(info.startDate) : job.postedAt,
@@ -112,15 +124,15 @@ export async function fetchEnterprise(
       break;
     }
     case "oracle": {
+      type Req = { Id?: string; Title?: string; PostedDate?: string; PrimaryLocation?: string; PrimaryLocationCountry?: string; ShortDescriptionStr?: string; WorkplaceType?: string; secondaryLocations?: { CountryCode?: string; Name?: string }[] };
+      const base = `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations&finder=`;
+      const wanted = new Set((opts.countries ?? []).map((c) => c.toUpperCase()));
       for (const kw of keywords) {
-        const finder = [`findReqs;siteNumber=${rest}`, kw ? `keyword="${kw}"` : "", `limit=${Math.min(25, perKeyword)}`, "offset=0", "sortBy=POSTING_DATES_DESC"].filter(Boolean).join(",");
-        const d = await getJson<{ items?: { requisitionList?: { Id?: string; Title?: string; PostedDate?: string; PrimaryLocation?: string; PrimaryLocationCountry?: string; ShortDescriptionStr?: string; WorkplaceType?: string }[] }[] }>(
-          fetchImpl,
-          `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations&finder=${encodeURIComponent(finder)}`,
-          { headers: { Accept: "application/json" } },
-          { retries: 1 },
-        );
-        for (const j of d.items?.[0]?.requisitionList ?? []) {
+        // Newest first; then only those in the chosen countries (by the requisition's own country code).
+        const finder = [`findReqs;siteNumber=${rest}`, kw ? `keyword="${kw}"` : "", `limit=${wanted.size ? 100 : Math.min(25, perKeyword)}`, "offset=0", "sortBy=POSTING_DATES_DESC"].filter(Boolean).join(",");
+        const d = await getJson<{ items?: { requisitionList?: Req[] }[] }>(fetchImpl, base + encodeURIComponent(finder), { headers: { Accept: "application/json" } }, { retries: 1 });
+        const list = (d.items?.[0]?.requisitionList ?? []).filter((j) => !wanted.size || wanted.has((j.PrimaryLocationCountry ?? "").toUpperCase()) || (j.secondaryLocations ?? []).some((l) => wanted.has((l.CountryCode ?? "").toUpperCase())));
+        for (const j of list.slice(0, perKeyword)) {
           if (!j.Id || !j.Title) continue;
           const url = `https://${host}/hcmUI/CandidateExperience/en/sites/${rest}/job/${j.Id}`;
           out.set(url, {
@@ -135,6 +147,27 @@ export async function fetchEnterprise(
             hints: { remote: /remote/i.test(j.WorkplaceType ?? "") ? "remote" : /hybrid/i.test(j.WorkplaceType ?? "") ? "hybrid" : undefined },
             thin: true,
           });
+        }
+      }
+      // The first few in full: the description and when applications close.
+      let n = 0;
+      for (const [url, job] of out) {
+        if (n++ >= (opts.details ?? 8)) break;
+        try {
+          const finder = `ById;Id="${job.externalId}",siteNumber=${rest}`;
+          const d = await getJson<{ items?: { ExternalDescriptionStr?: string; ExternalResponsibilitiesStr?: string; ExternalQualificationsStr?: string; ExternalPostedEndDate?: string }[] }>(
+            fetchImpl,
+            `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=${encodeURIComponent(finder)}`,
+            { headers: { Accept: "application/json" } },
+            { retries: 0 },
+          );
+          const r = d.items?.[0];
+          if (!r) continue;
+          const description = htmlToText([r.ExternalDescriptionStr, r.ExternalResponsibilitiesStr, r.ExternalQualificationsStr].filter(Boolean).join("\n"));
+          const until = r.ExternalPostedEndDate ? new Date(r.ExternalPostedEndDate) : null;
+          out.set(url, { ...job, description: description || job.description, thin: !description, hints: { ...job.hints, ...(until && !Number.isNaN(until.getTime()) && until.getFullYear() < 4000 ? { closesAt: until } : {}) } });
+        } catch {
+          /* the list entry is enough */
         }
       }
       break;
@@ -165,6 +198,50 @@ export async function fetchEnterprise(
       }
       break;
     }
+    case "avature": {
+      // Avature career sites (UniCredit…) publish their search as an RSS feed: title and link per offer,
+      // "search" narrows it. Each offer's page carries JobPosting data (place, description, dates).
+      const feed = enterpriseEndpoint(ats, slug);
+      for (const kw of keywords) {
+        const res = await request(fetchImpl, kw ? `${feed}?search=${encodeURIComponent(kw)}` : feed, { headers: { Accept: "application/rss+xml, application/xml, text/xml" } }, { retries: 1 });
+        const xml = await res.text();
+        for (const m of [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, perKeyword)) {
+          const tag = (t: string) => m[1].match(new RegExp(`<${t}>([\\s\\S]*?)</${t}>`))?.[1]?.replace(/<!\[CDATA\[|\]\]>/g, "").trim();
+          const title = htmlToText(tag("title") ?? "");
+          const url = tag("link") ?? tag("guid");
+          if (!title || !url?.startsWith("https://")) continue;
+          const pub = tag("pubDate") ? new Date(tag("pubDate")!) : null;
+          out.set(url, {
+            source: src(ats),
+            externalId: url.match(/\/(\d+)\/?$/)?.[1] ?? url,
+            url,
+            title,
+            company,
+            location: null,
+            description: htmlToText(tag("description") ?? ""),
+            // Offers stay in the feed while open; an old first date says nothing then.
+            postedAt: pub && !Number.isNaN(pub.getTime()) && now.getTime() - pub.getTime() < 180 * 86_400_000 ? pub : null,
+            thin: true,
+          });
+        }
+      }
+      // Its page says where (labelled fields: "Country Italy", "City Milano"; its JobPosting data has no
+      // place); offers whose page was not read are left out, as the feed mixes every country.
+      const read = new Map<string, RawJob>();
+      for (const [url, job] of [...out].slice(0, opts.details ?? 12)) {
+        try {
+          const html = await (await request(fetchImpl, url, { headers: { Accept: "text/html" } }, { retries: 0 })).text();
+          const p = findJobPostings(html).map((o) => jobPostingToRaw(o, url))[0];
+          const place = p?.location ?? avaturePlace(html);
+          if (!p && !place) continue;
+          const og = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']*)/i)?.[1];
+          read.set(url, { ...job, location: place, description: p?.description || htmlToText(og ?? "") || job.description, salaryText: p?.salaryText, postedAt: p?.postedAt ?? job.postedAt, hints: p?.hints, thin: !p?.description });
+        } catch {
+          /* skipped */
+        }
+      }
+      return [...read.values()];
+    }
     case "recruitee": {
       const d = await getJson<{ offers?: { id: number; title: string; city?: string; country?: string; location?: string; remote?: boolean; careers_url?: string; description?: string; requirements?: string; published_at?: string; employment_type_code?: string }[] }>(fetchImpl, `https://${slug}.recruitee.com/api/offers/`);
       for (const j of d.offers ?? []) {
@@ -185,6 +262,55 @@ export async function fetchEnterprise(
     }
   }
   return [...out.values()];
+}
+
+const COUNTRY_NAMES: Record<string, RegExp> = {
+  IT: /^(?:italy|italia)$/i,
+  GB: /^(?:united kingdom|uk|great britain|england)$/i,
+  DE: /^(?:germany|deutschland)$/i,
+  FR: /^(?:france)$/i,
+};
+
+/**
+ * A Workday board's filter for these countries: { <its facet name>: [ids] }, or null when it has none.
+ * The country itself when the board lists countries (also inside the "Locations" group: NVIDIA's
+ * locationHierarchy1); otherwise its sites in those countries (Barclays: "The Medelan Building, Milan").
+ */
+async function workdayCountryFacet(post: <T>(body: object) => Promise<T>, countries: CountryCode[], inCountry?: (place: string) => boolean): Promise<Record<string, string[]> | null> {
+  type V = { id?: string; descriptor?: string; facetParameter?: string; values?: V[] };
+  const d = await post<{ facets?: V[] }>({ limit: 1 });
+  // Every filter, with the groups opened ("locationMainGroup" → "locations", "locationHierarchy1"…)
+  const facets: { param: string; values: V[] }[] = [];
+  for (const f of d.facets ?? []) {
+    if (f.facetParameter && (f.values ?? []).some((v) => v.id)) facets.push({ param: f.facetParameter, values: f.values ?? [] });
+    for (const g of f.values ?? []) if (g.facetParameter && g.values?.length) facets.push({ param: g.facetParameter, values: g.values });
+  }
+  const res = countries.map((c) => COUNTRY_NAMES[c]).filter(Boolean);
+  const byCountry = facets.sort((a, b) => Number(/country/i.test(b.param)) - Number(/country/i.test(a.param)));
+  for (const f of byCountry) {
+    const ids = f.values.filter((v) => v.id && res.some((re) => re.test((v.descriptor ?? "").trim()))).map((v) => v.id!);
+    if (ids.length) return { [f.param]: ids };
+  }
+  if (!inCountry) return null;
+  for (const f of facets.filter((x) => /location|site|city/i.test(x.param))) {
+    const ids = f.values.filter((v) => v.id && v.descriptor && inCountry(v.descriptor)).map((v) => v.id!);
+    if (ids.length) return { [f.param]: ids.slice(0, 50) };
+  }
+  return null;
+}
+
+/** "City, Country" from an Avature job page's labelled fields ("Country" "Bulgaria" "City" "Sofia"). */
+export function avaturePlace(html: string): string | null {
+  const items = [...html.matchAll(/class="[^"]*field[^"]*"[^>]*>([\s\S]{0,300}?)<\/(?:div|li|dd|span)>/gi)]
+    .map((m) => htmlToText(m[1]).replace(/\s+/g, " ").trim())
+    .filter((t) => t && t.length < 120);
+  const after = (label: RegExp) => {
+    const i = items.findIndex((t) => label.test(t));
+    return i >= 0 && items[i + 1] && !label.test(items[i + 1]) ? items[i + 1] : null;
+  };
+  const country = after(/^(?:country|paese|nazione|land|pays|país)$/i);
+  const city = after(/^(?:city|città|citta|stadt|ort|ville|ciudad|location|sede|standort)$/i);
+  return [city, country].filter(Boolean).join(", ") || null;
 }
 
 /** The countries filter of the small boards, applied after (the big ones are asked by keyword). */

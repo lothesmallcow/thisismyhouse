@@ -1,0 +1,26 @@
+# Live check of the employer-board readers (Workday, Oracle, Eightfold, Greenhouse…) against real
+# public boards, and of how career sites publish their job lists: runs whenever the probe script
+# changes (or by hand). Read-only; prints counts and public job titles only.
+name: Compass probe
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths:
+      - compass/scripts/probe-boards.ts
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: compass
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: compass/package-lock.json }
+      - run: npm ci
+      - name: Probe the boards
+        run: npx tsx scripts/probe-boards.ts

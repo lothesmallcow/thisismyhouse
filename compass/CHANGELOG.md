@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.24.0 · 2026-10-07
+
+Checked live against real boards (GitHub Actions probe, `scripts/probe-boards.ts`).
+
+- **Workday asked for the chosen countries only**, through each board's own filter: the country when
+  the board lists countries (also inside its "Locations" group), otherwise its sites in those
+  countries. Before, the first 20 offers worldwide came back and the Italian ones were often not among
+  them: now Citi Italia gives its 4 Milan offers, Barclays Italia its 3 Milan internships (none before),
+  NVIDIA its 2 Italian ones.
+- **Workday keeps the employer's name** ("Barclays"), not the legal entity in its data ("1203 Barclays
+  Global Serv. Cen").
+- **Oracle Recruiting**: kept to the chosen countries by each offer's own country code (a place like
+  "National Capital Region" is no longer taken for Italy); the first offers are read in full
+  (description of thousands of characters instead of 100) with the date applications close.
+- **Avature career sites** (UniCredit and others): read through the site's own search feed (RSS),
+  then each offer's page for where it is and what it says; offers in other countries are left out.
+  Learned from any offer link like the other boards (`…/JobDetail/…`, `*.avature.net`).
+- **Offers taken down from whole boards** (Greenhouse, Lever, Ashby, Workable, Personio, Recruitee)
+  are marked expired at the next read.
+- Eightfold is no longer learned from links or searched: its public endpoint answers 404/403.
+
 ## 0.23.1 · 2026-10-06
 
 - CI: the personal-data scan skips the ESCO occupations dataset (public EU data: its long lists of
