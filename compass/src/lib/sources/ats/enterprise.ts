@@ -5,9 +5,10 @@
 // not read whole.
 import type { CountryCode } from "../../core/geo";
 import type { RawJob, SourceKind } from "../../core/normalize";
-import { getJson, htmlToText, type FetchLike } from "../http";
+import { getJson, htmlToText, request, type FetchLike } from "../http";
+import { jobPostingToRaw, findJobPostings } from "../web/jsonld";
 
-export type EnterpriseAts = "workday" | "oracle" | "eightfold" | "recruitee";
+export type EnterpriseAts = "workday" | "oracle" | "eightfold" | "recruitee" | "avature";
 
 /** "Posted Today", "Posted 3 Days Ago", "Posted 30+ Days Ago" → a date. */
 export function workdayPosted(s: string | undefined, now: Date): Date | null {
@@ -35,6 +36,8 @@ export function enterpriseEndpoint(ats: EnterpriseAts, slug: string): string {
       return `https://${host}/api/apply/v2/jobs`;
     case "recruitee":
       return `https://${slug}.recruitee.com/api/offers/`;
+    case "avature":
+      return `https://${host}/${rest}/SearchJobs/feed/`;
   }
 }
 
@@ -50,7 +53,15 @@ export async function fetchEnterprise(
   ats: EnterpriseAts,
   slug: string,
   company: string,
-  opts: { keywords?: string[]; perKeyword?: number; now?: Date; details?: number; countries?: CountryCode[] } = {},
+  opts: {
+    keywords?: string[];
+    perKeyword?: number;
+    now?: Date;
+    details?: number;
+    countries?: CountryCode[];
+    /** Whether a place name is in the chosen countries ("The Medelan Building, Milan" → Italy). */
+    inCountry?: (place: string) => boolean;
+  } = {},
 ): Promise<RawJob[]> {
   const now = opts.now ?? new Date();
   const perKeyword = opts.perKeyword ?? 20;
@@ -65,7 +76,7 @@ export async function fetchEnterprise(
         getJson<T>(fetchImpl, endpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ appliedFacets: {}, limit: 20, offset: 0, searchText: "", ...body }) }, { retries: 1 });
       // The board's own country filter (its name changes from board to board: "locationCountry",
       // "Country_and_Jurisdiction"…): offers in the chosen countries only, not the first 20 worldwide.
-      const applied = opts.countries?.length ? await workdayCountryFacet(post, opts.countries).catch(() => null) : null;
+      const applied = opts.countries?.length ? await workdayCountryFacet(post, opts.countries, opts.inCountry).catch(() => null) : null;
       for (const kw of keywords) {
         const d = await post<{ jobPostings?: { title?: string; externalPath?: string; locationsText?: string; postedOn?: string; bulletFields?: string[] }[] }>({ limit: Math.min(20, perKeyword), searchText: kw, ...(applied ? { appliedFacets: applied } : {}) });
         for (const j of d.jobPostings ?? []) {
@@ -187,6 +198,46 @@ export async function fetchEnterprise(
       }
       break;
     }
+    case "avature": {
+      // Avature career sites (UniCredit…) publish their search as an RSS feed: title and link per offer,
+      // "search" narrows it. Each offer's page carries JobPosting data (place, description, dates).
+      const feed = enterpriseEndpoint(ats, slug);
+      for (const kw of keywords) {
+        const res = await request(fetchImpl, kw ? `${feed}?search=${encodeURIComponent(kw)}` : feed, { headers: { Accept: "application/rss+xml, application/xml, text/xml" } }, { retries: 1 });
+        const xml = await res.text();
+        for (const m of [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, perKeyword)) {
+          const tag = (t: string) => m[1].match(new RegExp(`<${t}>([\\s\\S]*?)</${t}>`))?.[1]?.replace(/<!\[CDATA\[|\]\]>/g, "").trim();
+          const title = htmlToText(tag("title") ?? "");
+          const url = tag("link") ?? tag("guid");
+          if (!title || !url?.startsWith("https://")) continue;
+          const pub = tag("pubDate") ? new Date(tag("pubDate")!) : null;
+          out.set(url, {
+            source: src(ats),
+            externalId: url.match(/\/(\d+)\/?$/)?.[1] ?? url,
+            url,
+            title,
+            company,
+            location: null,
+            description: htmlToText(tag("description") ?? ""),
+            // Offers stay in the feed while open; an old first date says nothing then.
+            postedAt: pub && !Number.isNaN(pub.getTime()) && now.getTime() - pub.getTime() < 180 * 86_400_000 ? pub : null,
+            thin: true,
+          });
+        }
+      }
+      // Its page says where; offers whose page was not read are left out (the feed mixes every country).
+      const read = new Map<string, RawJob>();
+      for (const [url, job] of [...out].slice(0, opts.details ?? 15)) {
+        try {
+          const html = await (await request(fetchImpl, url, { headers: { Accept: "text/html" } }, { retries: 0 })).text();
+          const p = findJobPostings(html).map((o) => jobPostingToRaw(o, url))[0];
+          if (p) read.set(url, { ...job, location: p.location ?? job.location, description: p.description || job.description, salaryText: p.salaryText, postedAt: p.postedAt ?? job.postedAt, hints: p.hints, thin: !p.description });
+        } catch {
+          /* skipped */
+        }
+      }
+      return [...read.values()];
+    }
     case "recruitee": {
       const d = await getJson<{ offers?: { id: number; title: string; city?: string; country?: string; location?: string; remote?: boolean; careers_url?: string; description?: string; requirements?: string; published_at?: string; employment_type_code?: string }[] }>(fetchImpl, `https://${slug}.recruitee.com/api/offers/`);
       for (const j of d.offers ?? []) {
@@ -216,15 +267,30 @@ const COUNTRY_NAMES: Record<string, RegExp> = {
   FR: /^(?:france)$/i,
 };
 
-/** A Workday board's country filter for these countries: { <its facet name>: [ids] }, or null when it has none. */
-async function workdayCountryFacet(post: <T>(body: object) => Promise<T>, countries: CountryCode[]): Promise<Record<string, string[]> | null> {
-  type V = { id?: string; descriptor?: string; values?: V[] };
-  const d = await post<{ facets?: { facetParameter?: string; values?: V[] }[] }>({ limit: 1 });
+/**
+ * A Workday board's filter for these countries: { <its facet name>: [ids] }, or null when it has none.
+ * The country itself when the board lists countries (also inside the "Locations" group: NVIDIA's
+ * locationHierarchy1); otherwise its sites in those countries (Barclays: "The Medelan Building, Milan").
+ */
+async function workdayCountryFacet(post: <T>(body: object) => Promise<T>, countries: CountryCode[], inCountry?: (place: string) => boolean): Promise<Record<string, string[]> | null> {
+  type V = { id?: string; descriptor?: string; facetParameter?: string; values?: V[] };
+  const d = await post<{ facets?: V[] }>({ limit: 1 });
+  // Every filter, with the groups opened ("locationMainGroup" → "locations", "locationHierarchy1"…)
+  const facets: { param: string; values: V[] }[] = [];
+  for (const f of d.facets ?? []) {
+    if (f.facetParameter && (f.values ?? []).some((v) => v.id)) facets.push({ param: f.facetParameter, values: f.values ?? [] });
+    for (const g of f.values ?? []) if (g.facetParameter && g.values?.length) facets.push({ param: g.facetParameter, values: g.values });
+  }
   const res = countries.map((c) => COUNTRY_NAMES[c]).filter(Boolean);
-  const facets = (d.facets ?? []).sort((a, b) => Number(/country/i.test(b.facetParameter ?? "")) - Number(/country/i.test(a.facetParameter ?? "")));
-  for (const f of facets) {
-    const ids = (f.values ?? []).filter((v) => v.id && res.some((re) => re.test((v.descriptor ?? "").trim()))).map((v) => v.id!);
-    if (f.facetParameter && ids.length) return { [f.facetParameter]: ids };
+  const byCountry = facets.sort((a, b) => Number(/country/i.test(b.param)) - Number(/country/i.test(a.param)));
+  for (const f of byCountry) {
+    const ids = f.values.filter((v) => v.id && res.some((re) => re.test((v.descriptor ?? "").trim()))).map((v) => v.id!);
+    if (ids.length) return { [f.param]: ids };
+  }
+  if (!inCountry) return null;
+  for (const f of facets.filter((x) => /location|site|city/i.test(x.param))) {
+    const ids = f.values.filter((v) => v.id && v.descriptor && inCountry(v.descriptor)).map((v) => v.id!);
+    if (ids.length) return { [f.param]: ids.slice(0, 50) };
   }
   return null;
 }

@@ -26,6 +26,9 @@ describe("a link → the employer's board", () => {
     ["https://jobs.smartrecruiters.com/Bosch/744000012345", { ats: "smartrecruiters", slug: "Bosch" }],
     ["https://acme.jobs.personio.de/job/42", { ats: "personio", slug: "acme" }],
     ["https://acme.recruitee.com/o/analyst", { ats: "recruitee", slug: "acme" }],
+    ["https://careers.unicredit.eu/it_IT/jobsuche/JobDetail/Risk-Analyst/3150", { ats: "avature", slug: "careers.unicredit.eu/jobsuche" }],
+    ["https://careers.unicredit.eu/jobsuche/JobDetail/Risk-Analyst/3150", { ats: "avature", slug: "careers.unicredit.eu/jobsuche" }],
+    ["https://acme.avature.net/careers/SearchJobs/?search=x", { ats: "avature", slug: "acme.avature.net/careers" }],
   ])("%s", (url, want) => {
     expect(feedFromUrl(url)).toEqual(want);
   });
@@ -80,6 +83,57 @@ describe("reading the big boards", () => {
     const jobs = await fetchEnterprise(fetchImpl, "workday", "citi.wd5.myworkdayjobs.com/2", "Citi", { keywords: ["Analyst"], countries: ["IT"], details: 0 });
     expect(jobs).toHaveLength(1);
     expect(bodies[1]).toMatchObject({ searchText: "Analyst", appliedFacets: { Country_and_Jurisdiction: ["it"] } });
+  });
+  it("Workday without a country filter: its sites in the chosen countries", async () => {
+    const bodies: { appliedFacets: Record<string, string[]>; limit: number }[] = [];
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      bodies.push(body);
+      if (body.limit === 1)
+        return Response.json({ facets: [
+          { facetParameter: "timeType", values: [{ id: "t1", descriptor: "Full time" }] },
+          { facetParameter: "locationMainGroup", values: [{ facetParameter: "locations", descriptor: "Locations", values: [{ id: "s1", descriptor: "Chennai, DLF IT Park" }, { id: "s2", descriptor: "The Medelan Building, Milan" }] }] },
+        ] });
+      return Response.json({ jobPostings: [] });
+    }) as typeof fetch;
+    await fetchAts(fetchImpl, "workday", "barclays.wd3.myworkdayjobs.com/External", "Barclays", ["IT"], { keywords: ["Analyst"] });
+    expect(bodies[1].appliedFacets).toEqual({ locations: ["s2"] });
+  });
+  it("Workday: a country inside the Locations group wins over the sites", async () => {
+    const bodies: { appliedFacets: Record<string, string[]>; limit: number }[] = [];
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      bodies.push(body);
+      if (body.limit === 1)
+        return Response.json({ facets: [{ facetParameter: "locationMainGroup", values: [
+          { facetParameter: "locationHierarchy1", descriptor: "Locations", values: [{ id: "c-it", descriptor: "Italy" }, { id: "c-gb", descriptor: "United Kingdom" }] },
+          { facetParameter: "locations", descriptor: "Sites", values: [{ id: "s-it", descriptor: "Italy, Remote" }] },
+        ] }] });
+      return Response.json({ jobPostings: [] });
+    }) as typeof fetch;
+    await fetchAts(fetchImpl, "workday", "nvidia.wd5.myworkdayjobs.com/Site", "NVIDIA", ["IT"], { keywords: ["Engineer"] });
+    expect(bodies[1].appliedFacets).toEqual({ locationHierarchy1: ["c-it"] });
+  });
+  it("Avature: the search feed, then each offer's page for where it is", async () => {
+    const seen: string[] = [];
+    const page = (city: string, country: string) =>
+      `<html><script type="application/ld+json">{"@type":"JobPosting","title":"Risk Analyst","description":"<p>Analisi rischi</p>","datePosted":"2026-10-01","jobLocation":{"address":{"addressLocality":"${city}","addressCountry":"${country}"}}}</script></html>`;
+    const fetchImpl = (async (url: string | URL | Request) => {
+      const u = String(url);
+      seen.push(u);
+      if (u.includes("/SearchJobs/feed/"))
+        return new Response(`<rss><channel>
+          <item><title><![CDATA[Risk Analyst]]></title><link>https://careers.unicredit.eu/jobsuche/JobDetail/Risk-Analyst/3150</link><pubDate>Fri, 27 Aug 2021 10:00:00 GMT</pubDate></item>
+          <item><title><![CDATA[Risikoanalyst (m/w/d)]]></title><link>https://careers.unicredit.eu/jobsuche/JobDetail/Risikoanalyst-m-w-d/3151</link></item>
+          <item><title>Analyst</title><link>https://careers.unicredit.eu/jobsuche/JobDetail/Analyst/3152</link></item>
+        </channel></rss>`);
+      if (u.endsWith("/3150")) return new Response(page("Milano", "IT"));
+      if (u.endsWith("/3151")) return new Response(page("München", "DE"));
+      return new Response("gone", { status: 404 });
+    }) as typeof fetch;
+    const jobs = await fetchAts(fetchImpl, "avature", "careers.unicredit.eu/jobsuche", "UniCredit", ["IT"], { keywords: ["Risk analyst"] });
+    expect(seen[0]).toBe("https://careers.unicredit.eu/jobsuche/SearchJobs/feed/?search=Risk%20analyst");
+    expect(jobs).toEqual([expect.objectContaining({ title: "Risk Analyst", company: "UniCredit", location: "Milano, Italia", description: "Analisi rischi", externalId: "3150", source: "ats:avature", thin: false })]);
   });
   it("Oracle: only the chosen countries, then the full description and closing date", async () => {
     const fetchImpl = (async (url: string | URL | Request) => {

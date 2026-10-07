@@ -11,7 +11,12 @@ import { canonicalCompany } from "./company-guess";
 
 /** "barclays.wd3.myworkdayjobs.com/External" → "Barclays", "point72" → "Point72". */
 export function feedName(f: Feed): string {
-  const base = f.ats === "workday" || f.ats === "oracle" || f.ats === "eightfold" ? (f.ats === "eightfold" ? f.slug.split("/")[1]?.split(".")[0] : f.slug.split(".")[0]) || f.slug : f.slug;
+  const base =
+    f.ats === "avature"
+      ? f.slug.split("/")[0].split(".").find((p) => !/^(?:careers?|jobs?|www|karriere|apply|recruiting)$/i.test(p)) ?? f.slug
+      : f.ats === "workday" || f.ats === "oracle" || f.ats === "eightfold"
+        ? (f.ats === "eightfold" ? f.slug.split("/")[1]?.split(".")[0] : f.slug.split(".")[0]) || f.slug
+        : f.slug;
   return base
     .replace(/[-_]+/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase())
