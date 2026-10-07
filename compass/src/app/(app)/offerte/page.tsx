@@ -308,6 +308,13 @@ export default async function OffertePage({
           )}
         </div>
       )}
+      {filters.company && (
+        <p className="mb-3 flex flex-wrap items-center gap-2 text-[13.5px]">
+          <span className="text-muted">Solo le offerte di</span>
+          <span className="font-semibold">{filters.company}</span>
+          <Link href={keep({ azienda: "" })}>Togli</Link>
+        </p>
+      )}
       <CareersLine userId={user.id} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-2 shadow-[var(--shadow-card)]">
         <div

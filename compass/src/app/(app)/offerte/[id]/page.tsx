@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { Flash } from "@/components/flash";
 import { IconArrowLeft, IconExternal, IconMail, IconSparkle, IconStar } from "@/components/icons";
 import { Button, Card, Chip, ExternalButton, Fact, LevelBadge, LinkButton, Notice } from "@/components/ui";
+import { factChips } from "@/lib/core/job-facts";
 import { CONTRACT_LABELS, eligibilityLabel, HOURS_LABELS } from "@/lib/core/extract";
 import { deadlineText, ROLLING_TEXT, runsText } from "@/lib/core/deadline";
 import { SOURCE_LABELS } from "@/lib/core/normalize";
@@ -134,7 +135,26 @@ export default async function OffertaPage({ params, searchParams }: { params: Pr
               </Fact>
             )}
             <Fact label="Trovata">{job.postedAt ? formatDate(job.postedAt) : daysAgoLabel(job.firstSeenAt)}</Fact>
+            {factChips(job.facts).length > 0 && (
+              <div className="sm:col-span-3">
+                <Fact label="Cosa chiede e cosa offre">
+                  <span className="mt-1 flex flex-wrap gap-1.5">
+                    {factChips(job.facts).map((c) => (
+                      <Chip key={c.label} tone={c.tone === "good" ? "good" : c.tone === "warn" ? "warn" : "neutral"}>
+                        {c.label}
+                      </Chip>
+                    ))}
+                  </span>
+                  <span className="mt-1 block text-[12.5px] text-faint">Letto dall&apos;annuncio con regole automatiche: controlla sempre il testo.</span>
+                </Fact>
+              </div>
+            )}
           </div>
+          {job.company && (
+            <p className="mt-3 text-[13.5px]">
+              <Link href={`/offerte?azienda=${encodeURIComponent(job.company)}&tutte=1&luogo=-`}>Tutte le offerte di {job.company}</Link>
+            </p>
+          )}
 
           <h2 className="mb-3 mt-8 text-[16px] font-semibold">Annuncio</h2>
           {job.description ? (

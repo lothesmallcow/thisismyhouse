@@ -215,3 +215,30 @@ export function extractFacts(input: { title: string; description: string; compan
     evergreen: EVERGREEN.test(t),
   };
 }
+
+export interface FactChip {
+  label: string;
+  tone: "neutral" | "good" | "warn";
+}
+
+/** What the ad asks and offers, as short labels for cards and the offer page (most useful first). */
+export function factChips(f: JobFacts | null | undefined, opts: { max?: number } = {}): FactChip[] {
+  if (!f) return [];
+  const out: FactChip[] = [];
+  if (f.evergreen) out.push({ label: "Candidatura sempre aperta, non un posto preciso", tone: "warn" });
+  if (f.minYears === 0) out.push({ label: "Anche senza esperienza", tone: "good" });
+  else if (f.minYears != null) out.push({ label: `Esperienza: ${f.minYears}+ ${f.minYears === 1 ? "anno" : "anni"}`, tone: "neutral" });
+  if (f.education && f.education !== "nessuno") out.push({ label: `${EDUCATION_LABELS[f.education]} ${f.educationRequired ? "richiesta" : "gradita"}`.replace("Diploma richiesta", "Diploma richiesto").replace("Diploma gradita", "Diploma gradito").replace("Dottorato richiesta", "Dottorato richiesto").replace("Dottorato gradita", "Dottorato gradito"), tone: "neutral" });
+  if (f.smartDays === 5) out.push({ label: "Sempre da casa", tone: "good" });
+  else if (f.smartDays) out.push({ label: `Smart working ${f.smartDays} ${f.smartDays === 1 ? "giorno" : "giorni"} a settimana`, tone: "good" });
+  if (f.applyEffort === "facile") out.push({ label: "Candidatura veloce", tone: "good" });
+  else if (f.applyEffort === "lunga") out.push({ label: "Candidatura lunga (account e moduli)", tone: "neutral" });
+  for (const b of f.benefits.slice(0, 3)) out.push({ label: BENEFIT_LABELS[b], tone: "good" });
+  if (f.agency) out.push({ label: "Tramite agenzia", tone: "neutral" });
+  if (f.protectedCategories) out.push({ label: "Categorie protette (L. 68/99)", tone: "neutral" });
+  if (f.nights) out.push({ label: "Turni anche di notte", tone: "neutral" });
+  else if (f.shifts) out.push({ label: "Su turni", tone: "neutral" });
+  if (f.travel) out.push({ label: "Trasferte", tone: "neutral" });
+  if (f.license) out.push({ label: "Patente richiesta", tone: "neutral" });
+  return out.slice(0, opts.max ?? out.length);
+}

@@ -1,47 +1,76 @@
-// Live check of job sources (run on GitHub Actions, which can reach them). Prints counts and public
-// job titles only; writes nothing.
+// Live check of job sources (run on GitHub Actions, which can reach them). Prints counts, public job
+// titles, robots.txt rules and page structure only; writes nothing.
 //   npx tsx scripts/probe-boards.ts   (on GitHub: any change to this file runs .github/workflows/compass-probe.yml)
-// Round 12 (round 9 again; American places with European names, and Italian town names inside
-// other names, no longer count as Europe): the board index as the weekly job runs it, without the database: every board in the
-// latest Common Crawl, then a sample of each system checked for offers in Italy, UK, Germany, France.
-import { crawlFeeds } from "../src/lib/sources/ats/crawl-index";
-import { fetchAts } from "../src/lib/sources/ats";
-import { topCountry, INDEX_COUNTRIES } from "../src/lib/pipeline/board-index";
-import { feedName } from "../src/lib/server/feeds";
-import type { Feed } from "../src/lib/sources/ats/feeds";
-
+// Round 13: Italian companies' systems: Teamtailor, Intervieweb, inRecruiting (Zucchetti), Factorial,
+// SuccessFactors. For each: robots.txt, where the job list is, a public feed or JSON, JobPosting data.
+const UA = { "User-Agent": "Mozilla/5.0 (compatible; CompassJobsBot/1.0; +https://github.com/lothesmallcow/thisismyhouse)", Accept: "text/html,application/json;q=0.9,*/*;q=0.5" };
+const short = (s: unknown, n = 100) => String(s ?? "").replace(/\s+/g, " ").slice(0, n);
 const log = (...a: unknown[]) => console.log(...a);
-const t0 = Date.now();
-const { crawl, feeds, pages, failed } = await crawlFeeds(fetch, { onError: (what, e) => log(`  failed ${what}: ${String((e as Error).message ?? e).slice(0, 120)}`) });
-const by = new Map<string, Feed[]>();
-for (const f of feeds) by.set(f.ats, [...(by.get(f.ats) ?? []), f]);
-log(`crawl ${crawl}: ${feeds.length} boards from ${pages} pages (${failed} failed) in ${Math.round((Date.now() - t0) / 1000)} s · ${[...by].map(([a, l]) => `${a} ${l.length}`).join(", ")}`);
-
-const SAMPLE = 60;
-for (const [ats, list] of by) {
-  const t = Date.now();
-  const counts: Record<string, number> = {};
-  let checked = 0;
-  let errors = 0;
-  const italian: string[] = [];
-  const sample = list.filter((_, i) => i % Math.max(1, Math.floor(list.length / SAMPLE)) === 0).slice(0, SAMPLE);
-  const queue = [...sample];
-  await Promise.all(
-    [0, 1].map(async () => {
-      for (let f = queue.shift(); f; f = queue.shift()) {
-        try {
-          const jobs = await fetchAts(fetch, f.ats, f.slug, feedName(f), INDEX_COUNTRIES, { keywords: [""], details: 0 });
-          checked++;
-          const c = topCountry(jobs.map((j) => j.location));
-          if (c) counts[c] = (counts[c] ?? 0) + 1;
-          if (c === "IT" && italian.length < 8) italian.push(`${feedName(f)} (${jobs.length}: ${jobs.find((j) => j.location)?.location?.slice(0, 40)})`);
-        } catch {
-          errors++;
-        }
-      }
-    }),
-  );
-  const hit = Object.values(counts).reduce((a, b) => a + b, 0);
-  log(`${ats}: sample ${checked}/${sample.length} (${errors} errors) in ${Math.round((Date.now() - t) / 1000)} s · with offers in covered countries ${hit} (${Math.round((hit / Math.max(1, checked)) * 100)}%) ${JSON.stringify(counts)} → about ${Math.round((hit / Math.max(1, checked)) * list.length)} of ${list.length} · Italy e.g. ${italian.join(", ")}`);
+async function get(url: string) {
+  try {
+    const r = await fetch(url, { headers: UA, redirect: "follow" });
+    return { status: r.status, url: r.url, type: r.headers.get("content-type") ?? "", body: await r.text() };
+  } catch (e) {
+    return { status: 0, url, type: "", body: String((e as Error).message) };
+  }
 }
+const ld = (html: string) => [...html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]).filter((s) => /JobPosting/.test(s));
+
+async function ccHosts(pattern: string, n: number): Promise<string[]> {
+  try {
+    const info = (await (await fetch("https://index.commoncrawl.org/collinfo.json", { headers: UA })).json()) as { id: string }[];
+    const t = await (await fetch(`https://index.commoncrawl.org/${info[0].id}-index?url=${encodeURIComponent(pattern)}&output=json&fl=url&limit=3000`, { headers: UA })).text();
+    const hosts = [...new Set(t.split("\n").map((l) => { try { return new URL((JSON.parse(l) as { url: string }).url).hostname; } catch { return ""; } }).filter((h) => h && !/^(www\.)?(teamtailor|factorialhr|intervieweb|inrecruiting)\./.test(h)))];
+    return hosts.slice(0, n);
+  } catch {
+    return [];
+  }
+}
+
+async function system(name: string, hosts: string[], candidates: (host: string) => string[], jobLink: RegExp) {
+  log(`\n== ${name}: ${hosts.length} hosts (${hosts.slice(0, 6).join(", ")})`);
+  let robotsShown = false;
+  for (const host of hosts.slice(0, 4)) {
+    if (!robotsShown) {
+      const rb = await get(`https://${host}/robots.txt`);
+      log(`${name} robots ${host} ${rb.status}: ${short(rb.body.split("\n").filter((l) => /^(user-agent|disallow|allow|sitemap|crawl-delay)/i.test(l.trim())).join(" ; "), 400)}`);
+      robotsShown = true;
+    }
+    for (const u of candidates(host)) {
+      const r = await get(u);
+      const links = [...new Set([...r.body.matchAll(/href="([^"]+)"/g)].map((m) => m[1]).filter((h) => jobLink.test(h)))];
+      const isJson = /json/.test(r.type) || /^\s*[[{]/.test(r.body);
+      const isFeed = /<rss|<feed|<urlset|<sitemapindex/i.test(r.body);
+      log(`${name} ${short(u, 90)} → ${r.status} ${short(r.type, 30)} · ${r.body.length} bytes${isJson ? " · JSON " + short(r.body, 160) : ""}${isFeed ? ` · feed (${(r.body.match(/<item>|<entry>|<url>/g) ?? []).length} items)` : ""} · job links ${links.length} e.g. ${short(links[0], 90)}`);
+      if (links[0] && !isJson) {
+        const jobUrl = links[0].startsWith("http") ? links[0] : new URL(links[0], r.url || u).toString();
+        const p = await get(jobUrl);
+        const j = ld(p.body)[0];
+        let fields = "";
+        if (j) {
+          try {
+            const o = JSON.parse(j.trim());
+            const x = Array.isArray(o) ? o[0] : o["@graph"] ? o["@graph"].find((g: { "@type": string }) => /JobPosting/.test(g["@type"])) : o;
+            fields = `title="${short(x?.title, 50)}" org="${short(x?.hiringOrganization?.name, 30)}" place="${short(JSON.stringify(x?.jobLocation?.address ?? x?.jobLocation?.[0]?.address ?? ""), 80)}" posted=${x?.datePosted ?? "-"} until=${x?.validThrough ?? "-"} desc=${String(x?.description ?? "").length}`;
+          } catch {
+            fields = "unparsable";
+          }
+        }
+        log(`${name}   job page ${short(jobUrl, 100)} → ${p.status} · JobPosting ${j ? "yes " + fields : "no"} · <title> ${short(p.body.match(/<title[^>]*>([^<]*)/i)?.[1], 70)}`);
+        break;
+      }
+    }
+  }
+}
+
+const tt = await ccHosts("*.teamtailor.com", 40);
+await system("Teamtailor", tt.filter((h) => /\.(teamtailor)\.com$/.test(h)), (h) => [`https://${h}/jobs`, `https://${h}/jobs.rss`, `https://${h}/jobs.json`], /\/jobs\/\d+/);
+const iw = await ccHosts("*.intervieweb.it", 40);
+await system("Intervieweb", iw, (h) => [`https://${h}/`, `https://${h}/annunci/`, `https://${h}/jobs/`], /annunci|job|offert|lavora/i);
+const ir = await ccHosts("*.inrecruiting.com", 40);
+await system("inRecruiting", ir, (h) => [`https://${h}/`, `https://${h}/jobs`, `https://${h}/it/jobs`], /job|annunc|position|offert/i);
+const fa = await ccHosts("*.factorialhr.com", 40);
+await system("Factorial", fa, (h) => [`https://${h}/`, `https://${h}/jobs`], /job_posting|jobs\/|job-posting/i);
+const sf = await ccHosts("career*.successfactors.eu", 40);
+await system("SuccessFactors", sf, (h) => [`https://${h}/`], /career\?|jobReqId|job_req/i);
 export {};
