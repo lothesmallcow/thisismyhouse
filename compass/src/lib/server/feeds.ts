@@ -76,7 +76,7 @@ export async function discoveredFeeds(db: DB, limit = 200) {
 }
 
 /** Boards read whole (not searched by keyword): an offer missing from them is gone. */
-export const FULL_BOARDS = new Set(["greenhouse", "lever", "ashby", "workable", "personio", "recruitee"]);
+export const FULL_BOARDS = new Set(["greenhouse", "lever", "ashby", "workable", "personio", "recruitee", "teamtailor"]);
 
 /**
  * After reading a whole board: its offers we hold that are no longer on it are marked "scaduto"

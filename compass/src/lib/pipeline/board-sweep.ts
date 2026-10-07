@@ -16,7 +16,7 @@ import { store } from "./ingest";
 import { whatPeopleWant } from "./wanted";
 
 /** Systems read in the sweep: quick to read (Avature needs a page per offer, Eightfold answers no one). */
-export const SWEEP_ATS: AtsType[] = ["greenhouse", "lever", "ashby", "workable", "recruitee", "smartrecruiters", "personio", "workday", "oracle"];
+export const SWEEP_ATS: AtsType[] = ["greenhouse", "lever", "ashby", "workable", "recruitee", "smartrecruiters", "personio", "workday", "oracle", "teamtailor"];
 
 export interface SweepSummary {
   boards: number;

@@ -64,7 +64,7 @@ const SITES: Record<CountryCode, string[]> = {
 };
 const slug = (s: string) => fold(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 /** Employers' own boards (searched with the role: each result also reveals a whole board). */
-const BOARDS = ["myworkdayjobs.com", "oraclecloud.com", "boards.greenhouse.io", "jobs.lever.co", "jobs.ashbyhq.com", "jobs.smartrecruiters.com", "apply.workable.com", "jobs.personio.de", "recruitee.com", "avature.net"];
+const BOARDS = ["myworkdayjobs.com", "oraclecloud.com", "boards.greenhouse.io", "jobs.lever.co", "jobs.ashbyhq.com", "jobs.smartrecruiters.com", "apply.workable.com", "jobs.personio.de", "recruitee.com", "avature.net", "teamtailor.com"];
 
 /** Level bracket from years of work: what a listing title should look like. */
 /** The words to send: the role, then the company, sector or "remote" (never quoted together). */

@@ -8,7 +8,7 @@ import type { RawJob, SourceKind } from "../../core/normalize";
 import { getJson, htmlToText, request, type FetchLike } from "../http";
 import { jobPostingToRaw, findJobPostings } from "../web/jsonld";
 
-export type EnterpriseAts = "workday" | "oracle" | "eightfold" | "recruitee" | "avature";
+export type EnterpriseAts = "workday" | "oracle" | "eightfold" | "recruitee" | "avature" | "teamtailor";
 
 /** "Posted Today", "Posted 3 Days Ago", "Posted 30+ Days Ago" → a date. */
 export function workdayPosted(s: string | undefined, now: Date): Date | null {
@@ -38,6 +38,8 @@ export function enterpriseEndpoint(ats: EnterpriseAts, slug: string): string {
       return `https://${slug}.recruitee.com/api/offers/`;
     case "avature":
       return `https://${host}/${rest}/SearchJobs/feed/`;
+    case "teamtailor":
+      return `https://${slug}.teamtailor.com/jobs.rss`;
   }
 }
 
@@ -241,6 +243,44 @@ export async function fetchEnterprise(
         }
       }
       return [...read.values()];
+    }
+    case "teamtailor": {
+      // Teamtailor career sites publish every offer as RSS, with its full text; the place comes from the
+      // feed when it says, else from the offer's page (JobPosting data), for the first few.
+      const base = `https://${slug}.teamtailor.com`;
+      const xml = await (await request(fetchImpl, `${base}/jobs.rss`, { headers: { Accept: "application/rss+xml, application/xml, text/xml" } }, { retries: 1 })).text();
+      const decode = (x: string) => x.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+      for (const m of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+        const tag = (t: string) => m[1].match(new RegExp(`<${t}(?:\\s[^>]*)?>([\\s\\S]*?)</${t}>`))?.[1]?.trim();
+        const title = htmlToText(decode(tag("title") ?? ""));
+        const url = decode(tag("link") ?? tag("guid") ?? "").trim();
+        if (!title || !url.startsWith("https://")) continue;
+        const where = [...m[1].matchAll(/<(?:[\w-]+:)?(?:city|location|locality|country)[^>]*>([^<]{2,80})</gi)].map((x) => decode(x[1]).trim()).filter(Boolean);
+        const pub = tag("pubDate") ? new Date(tag("pubDate")!) : null;
+        out.set(url, {
+          source: src(ats),
+          externalId: url.match(/\/jobs\/(\d+)/)?.[1] ?? url,
+          url,
+          title,
+          company,
+          location: where.length ? [...new Set(where)].join(", ") : null,
+          description: htmlToText(decode(tag("description") ?? "")),
+          postedAt: pub && !Number.isNaN(pub.getTime()) ? pub : null,
+          hints: /remote|da remoto|fully remote/i.test(m[1]) ? { remote: "remote" } : undefined,
+        });
+      }
+      let n = 0;
+      for (const [url, job] of out) {
+        if (job.location || n++ >= (opts.details ?? 10)) continue;
+        try {
+          const html = await (await request(fetchImpl, url, { headers: { Accept: "text/html" } }, { retries: 0 })).text();
+          const p = findJobPostings(html).map((o) => jobPostingToRaw(o, url))[0];
+          if (p?.location) out.set(url, { ...job, location: p.location, hints: { ...job.hints, ...p.hints } });
+        } catch {
+          /* the feed entry is enough */
+        }
+      }
+      break;
     }
     case "recruitee": {
       const d = await getJson<{ offers?: { id: number; title: string; city?: string; country?: string; location?: string; remote?: boolean; careers_url?: string; description?: string; requirements?: string; published_at?: string; employment_type_code?: string }[] }>(fetchImpl, `https://${slug}.recruitee.com/api/offers/`);

@@ -312,7 +312,7 @@ export const catalogCompanies = sqliteTable("catalog_companies", {
   track: text("track").$type<CatalogTrack>().notNull().default("tutti"),
   note: text("note"),
   /** Optional public ATS feed (filled in by the admin after checking it). */
-  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio", "workday", "oracle", "eightfold", "recruitee", "avature"] }),
+  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio", "workday", "oracle", "eightfold", "recruitee", "avature", "teamtailor"] }),
   atsSlug: text("ats_slug"),
   /** When Compass last looked for its public job board on its own (sources/ats/discover.ts). */
   atsCheckedAt: ts("ats_checked_at"),
@@ -405,7 +405,7 @@ export const processedMessages = sqliteTable("processed_messages", {
 export const companyWatchlist = sqliteTable("company_watchlist", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
-  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio", "workday", "oracle", "eightfold", "recruitee", "avature"] }).notNull(),
+  ats: text("ats", { enum: ["greenhouse", "lever", "ashby", "smartrecruiters", "workable", "personio", "workday", "oracle", "eightfold", "recruitee", "avature", "teamtailor"] }).notNull(),
   slug: text("slug").notNull(),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   createdAt: createdAt(),
