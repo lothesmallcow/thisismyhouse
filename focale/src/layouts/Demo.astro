@@ -28,7 +28,9 @@ const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bod
     <div class="demo-banner on-dark">
       <p>Progetto dimostrativo di Focale per un'attività inventata. <a href="/lavori/">Torna a Focale</a></p>
     </div>
-    <slot />
+    <main>
+      <slot />
+    </main>
   </body>
 </html>
 <style is:global>

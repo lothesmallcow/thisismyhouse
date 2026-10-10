@@ -57,6 +57,7 @@ const QuoteEl = quoteHref ? "a" : "span";
   }
   .ah {
     --o: #c4510e;
+    --o-text: #a8430b;
     --ink: #1d1f21;
     --bg: #f2f2f0;
     height: 100%;
@@ -78,37 +79,37 @@ const QuoteEl = quoteHref ? "a" : "span";
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 18px;
+    padding: min(12px, 3.08cqi) min(18px, 4.62cqi);
   }
   .ah__logo {
     font-weight: 900;
     font-stretch: 68%;
-    font-size: 26px;
+    font-size: min(26px, 6.67cqi);
     letter-spacing: 0.02em;
     line-height: 1;
     display: flex;
     flex-direction: column;
   }
   .ah__logo small {
-    font-size: 11px;
+    font-size: min(11px, 2.82cqi);
     font-weight: 700;
     font-stretch: 100%;
     letter-spacing: 0.08em;
-    color: var(--o);
+    color: var(--o-text);
   }
   .ah__phone {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: min(8px, 2.05cqi);
     font-weight: 700;
-    font-size: 15px;
+    font-size: min(15px, 3.85cqi);
   }
   .ah__phone-label {
     display: none;
   }
   .ah__call {
-    width: 44px;
-    height: 44px;
+    width: min(44px, 11.28cqi);
+    height: min(44px, 11.28cqi);
     border-radius: 50%;
     display: grid;
     place-items: center;
@@ -128,19 +129,19 @@ const QuoteEl = quoteHref ? "a" : "span";
   }
   .ah__title {
     grid-area: title;
-    padding: 20px 18px 0;
+    padding: min(20px, 5.13cqi) min(18px, 4.62cqi) 0;
   }
   .ah__kicker {
-    font-size: 13px;
+    font-size: min(13px, 3.33cqi);
     font-weight: 700;
-    color: var(--o);
-    margin-bottom: 8px;
+    color: var(--o-text);
+    margin-bottom: min(8px, 2.05cqi);
   }
   .ah__h1 {
     font-family: var(--font-head);
     font-weight: 820;
-    font-stretch: 100%;
-    font-size: 36px;
+    font-stretch: 108%;
+    font-size: min(36px, 9.23cqi);
     line-height: 1;
     letter-spacing: -0.01em;
     color: var(--ink);
@@ -149,9 +150,9 @@ const QuoteEl = quoteHref ? "a" : "span";
   }
   .ah__text {
     grid-area: text;
-    font-size: 16px;
+    font-size: min(16px, 4.10cqi);
     line-height: 1.45;
-    padding: 12px 18px 0;
+    padding: min(12px, 3.08cqi) min(18px, 4.62cqi) 0;
     color: #3f4347;
     font-weight: 450;
     margin: 0;
@@ -159,17 +160,17 @@ const QuoteEl = quoteHref ? "a" : "span";
   .ah__cta {
     grid-area: cta;
     display: grid;
-    gap: 10px;
-    padding: 18px 18px 0;
+    gap: min(10px, 2.56cqi);
+    padding: min(18px, 4.62cqi) min(18px, 4.62cqi) 0;
   }
   .ah__btn {
     display: grid;
     place-items: center;
-    min-height: 52px;
-    padding: 0 16px;
-    border-radius: 4px;
+    min-height: min(52px, 13.33cqi);
+    padding: 0 min(16px, 4.10cqi);
+    border-radius: min(4px, 1.03cqi);
     font-weight: 750;
-    font-size: 17px;
+    font-size: min(17px, 4.36cqi);
     text-decoration: none;
     color: inherit;
   }
@@ -183,24 +184,24 @@ const QuoteEl = quoteHref ? "a" : "span";
   .ah__extra {
     grid-area: extra;
     list-style: none;
-    padding: 18px 18px 0;
+    padding: min(18px, 4.62cqi) min(18px, 4.62cqi) 0;
     margin: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    font-size: 13px;
+    gap: min(6px, 1.54cqi);
+    font-size: min(13px, 3.33cqi);
     font-weight: 600;
   }
   .ah__extra li {
-    padding: 6px 10px;
+    padding: min(6px, 1.54cqi) min(10px, 2.56cqi);
     background: #e2e2de;
     border-radius: 3px;
   }
   .ah__foot {
     grid-area: foot;
-    font-size: 12px;
+    font-size: min(12px, 3.08cqi);
     color: #55595d;
-    padding: 18px 18px 22px;
+    padding: min(18px, 4.62cqi) min(18px, 4.62cqi) min(22px, 5.64cqi);
     margin: 0;
   }
 

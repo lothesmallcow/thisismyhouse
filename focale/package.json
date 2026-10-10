@@ -19,7 +19,9 @@
     "a11y": "node scripts/a11y.mjs",
     "nuova-anteprima": "node scripts/nuova-anteprima.mjs",
     "logo": "node scripts/logo.mjs",
-    "illustrazioni": "node scripts/illustrations/render.mjs"
+    "illustrazioni": "node scripts/illustrations/render.mjs",
+    "test:forms": "node scripts/test-forms.mjs",
+    "check:copy": "node scripts/copy-check.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
@@ -38,6 +40,7 @@
     "@axe-core/playwright": "^4.13.0",
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.3.3",
+    "lighthouse": "^13.5.0",
     "opentype.js": "^2.0.0",
     "playwright": "^1.64.0",
     "satori": "^0.47.1",

@@ -209,8 +209,15 @@ const activities = [
   .tiles--one {
     grid-template-columns: 1fr !important;
   }
-  :global(.pf-form.is-steps) .pf-step:not(.is-current) {
+  :global(.pf-form.is-steps) .pf-step:not(.is-current),
+  :global(html.js .pf-form:not(.is-steps) .pf-step:not([data-step="1"])),
+  :global(html.js .pf-form:not(.is-steps) .pf-other),
+  :global(html.js .pf-form:not(.is-steps) .pf-url) {
     display: none;
+  }
+  :global(html.js .pf-form) .pf-progress {
+    display: grid;
+    gap: 0.6rem;
   }
   :global(.pf-form.is-steps) .pf-other:not(.is-on),
   :global(.pf-form.is-steps) .pf-url:not(.is-on) {
@@ -222,8 +229,8 @@ const activities = [
     gap: 0.75rem;
     margin-top: 0.5rem;
   }
-  :global(.pf-form:not(.is-steps) .pf-nav:not(.pf-nav--submit)),
-  :global(.pf-form:not(.is-steps) [data-back]) {
+  :global(html:not(.js) .pf-form .pf-nav:not(.pf-nav--submit)),
+  :global(html:not(.js) .pf-form [data-back]) {
     display: none;
   }
   .pf-fields {

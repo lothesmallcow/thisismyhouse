@@ -345,6 +345,6 @@ const scaffold = `
 </style>
 
 <script>
-  import { initRenovation } from "../scripts/renovation";
-  initRenovation();
+  import { later } from "../scripts/later";
+  later(() => import("../scripts/renovation").then((m) => m.initRenovation()));
 </script>

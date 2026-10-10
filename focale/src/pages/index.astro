@@ -292,6 +292,6 @@ const inside = [
 </style>
 
 <script>
-  import { initSmoothScroll } from "../scripts/smooth";
-  initSmoothScroll();
+  import { later } from "../scripts/later";
+  later(() => import("../scripts/smooth").then((m) => m.initSmoothScroll()));
 </script>

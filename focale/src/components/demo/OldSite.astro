@@ -10,7 +10,7 @@ interface Props {
   annotations?: boolean;
 }
 const { annotations = true } = Astro.props;
-const tiny = await getImage({ src: photo, width: 36, format: "png" });
+const tiny = await getImage({ src: photo, width: 48, format: "png" });
 const notes = [
   { n: 1, text: "Dal telefono non si legge", area: "text" },
   { n: 2, text: "Nessun numero in vista", area: "header" },
@@ -30,7 +30,7 @@ const note = (area: string) => notes.find((n) => n.area === area);
       <p class="os__h">Benvenuti nel nostro sito!!!</p>
     </div>
     <div class="os__photo os__piece" data-old="photo">
-      <img src={tiny.src} width="36" height="23" alt="" decoding="async" />
+      <img src={tiny.src} width="48" height="30" alt="" decoding="async" loading="lazy" />
       {annotations && <Note {...note("photo")!} />}
     </div>
     <div class="os__text os__piece" data-old="text">

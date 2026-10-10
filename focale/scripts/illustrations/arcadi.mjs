@@ -1,6 +1,6 @@
 // Arcadi Ristrutturazioni: the same rooms before and after the works.
 import * as k from "./kit.mjs";
-const { W, H, rect, path, line, circle, ellipse, linear, group } = k;
+const { W, H, rect, path, line, circle, ellipse, linear } = k;
 const FLOOR = 780;
 const ORANGE = "#e8611a";
 

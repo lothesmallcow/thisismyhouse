@@ -29,7 +29,8 @@ export function initHero() {
         const tl = gsap.timeline();
         tl.from(lines, { yPercent: 105, duration: 0.8 * k, ease: "power3.out", stagger: 0.08 * k }, 0.1 * k);
         const afterLines = 0.1 * k + (lines.length - 1) * 0.08 * k + 0.35 * k;
-        tl.from(fades, { autoAlpha: 0, y: 12, duration: 0.5 * k, ease: "power2.out", stagger: 0.08 * k }, afterLines);
+        // Start at 0.01, not 0: visually the same, but the paragraph still counts as painted for LCP.
+        tl.from(fades, { opacity: 0.01, y: 12, duration: 0.5 * k, ease: "power2.out", stagger: 0.08 * k }, afterLines);
         tl.from(phone, { autoAlpha: 0, y: 24, duration: 0.9 * k, ease: "power3.out" }, 0.25 * k);
 
         // Notification: in at 1.6s, stays 3s, out; three times, 5s apart; then stays.

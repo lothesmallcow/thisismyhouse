@@ -1,6 +1,6 @@
 // Villa Ortensia: lakeside wedding venue on Lake Como.
 import * as k from "./kit.mjs";
-const { W, H, rect, path, line, circle, ellipse, linear, radial, group } = k;
+const { W, H, rect, path, line, circle, ellipse, linear, group } = k;
 
 function skyLake(defs, top = "#c7d8e2", mid = "#eef0ea") {
   const g = linear([[0, top], [1, mid]]);

@@ -1,0 +1,2 @@
+/styleguide/ @390
+  horizontal overflow: 78px

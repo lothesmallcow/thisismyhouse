@@ -51,13 +51,13 @@ const { items, dark = false } = Astro.props;
   summary::-webkit-details-marker {
     display: none;
   }
-  .faq__icon {
+  summary :global(.faq__icon) {
     flex: none;
     width: 1.5rem;
     height: 1.5rem;
     transition: transform 0.25s ease-out;
   }
-  details[open] .faq__icon {
+  details[open] :global(.faq__icon) {
     transform: rotate(45deg);
   }
   .faq__body > div {

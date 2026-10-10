@@ -343,28 +343,20 @@ const near = ["sentieri", "lago", "borgo"];
     padding-block: 2.5rem 0;
   }
   @media (min-width: 900px) {
-    .cr-hero__text {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -1px;
-      padding-block: 3rem;
+    .cr-hero {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+      align-items: center;
     }
-    .cr-hero__text > * {
-      max-width: 34rem;
-    }
-    .cr-hero__text::before {
-      content: "";
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: min(100%, 44rem);
-      background: var(--cream);
-      border-radius: 0 28px 0 0;
-      z-index: -1;
+    .cr-hero :global(.cr-hero__img) {
+      order: 2;
+      height: min(78vh, 760px);
+      border-radius: 0 0 0 36px;
     }
     .cr-hero__text {
-      z-index: 0;
+      order: 1;
       max-width: none;
+      margin: 0;
+      padding: 3rem 3rem 3rem max(clamp(18px, 4vw, 40px), calc((100vw - 1180px) / 2 + 40px));
     }
   }
   .cr-kicker {

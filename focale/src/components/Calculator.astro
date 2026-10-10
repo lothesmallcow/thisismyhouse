@@ -187,6 +187,6 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
 </style>
 
 <script>
-  import { initCalculator } from "../scripts/calculator";
-  initCalculator();
+  import { later } from "../scripts/later";
+  later(() => import("../scripts/calculator").then((m) => m.initCalculator()));
 </script>

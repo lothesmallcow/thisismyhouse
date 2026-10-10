@@ -135,7 +135,7 @@ const icons = ["phone", "whatsapp", "mail", "check", "pin", "clock", "shield", "
   }
   .sg-colors li {
     display: grid;
-    grid-template-columns: 56px 7rem 6rem 1fr;
+    grid-template-columns: 56px repeat(auto-fit, minmax(6rem, 1fr));
     gap: 1rem;
     align-items: center;
   }
@@ -192,6 +192,7 @@ const icons = ["phone", "whatsapp", "mail", "check", "pin", "clock", "shield", "
   }
   .sg-new {
     width: 390px;
+    max-width: 100%;
     height: 844px;
     border: 1px solid #999;
   }

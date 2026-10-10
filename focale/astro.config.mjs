@@ -10,7 +10,7 @@ export default defineConfig({
   site: siteUrl(),
   output: "static",
   trailingSlash: "ignore",
-  build: { format: "directory", inlineStylesheets: "auto" },
+  build: { format: "directory", inlineStylesheets: "always" },
   integrations: [
     sitemap({
       filter: (page) => !NOINDEX.some((re) => re.test(new URL(page).pathname)),
