@@ -95,8 +95,8 @@
   --gutter: clamp(1.25rem, 0.6rem + 2.8vw, 3.5rem);
   --max: 90rem;
   --measure: 62ch;
-  --space-section: clamp(6rem, 3.5rem + 9vw, 13rem);
-  --space-block: clamp(3rem, 2rem + 3vw, 5.5rem);
+  --space-section: clamp(4.5rem, 2.5rem + 5.5vw, 8.5rem);
+  --space-block: clamp(2.25rem, 1.5rem + 2vw, 4rem);
   --radius-ui: 999px;
   --radius-field: 10px;
   --radius-phone: 22px;

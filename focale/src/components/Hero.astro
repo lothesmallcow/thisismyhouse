@@ -11,9 +11,9 @@ import Icon from "./Icon.astro";
 import { site } from "../config/site";
 
 const story = [
-  { n: "1", t: "Ti chiamano con un tocco.", d: "Il numero è sempre in alto, a portata di pollice." },
-  { n: "2", t: "Ti scrivono con la richiesta già pronta.", d: "Cosa serve, dove, quando: arriva su WhatsApp in ordine." },
-  { n: "3", t: "E la trovi anche nella tua email.", d: "Una copia di ogni richiesta, così non se ne perde nessuna." },
+  { n: "1", t: "Ti chiamano con un tocco.", d: "Il numero è sempre in alto." },
+  { n: "2", t: "Ti scrivono con la richiesta già pronta.", d: "Cosa, dove, quando: su WhatsApp." },
+  { n: "3", t: "E la trovi anche nella tua email.", d: "Non se ne perde nessuna." },
 ];
 ---
 <section class="hero" data-hero data-hero-anim>
@@ -29,8 +29,7 @@ const story = [
       </p>
       <div class="hero__main" data-hero-fade>
         <p class="lead">
-          Chi apre il tuo sito decide in un attimo se chiamarti. Rifacciamo i siti delle piccole imprese perché quell'attimo vada bene: si
-          leggono dal telefono, si aprono in fretta e portano richieste vere.
+          Rifacciamo i siti delle piccole imprese perché portino richieste vere. Prima di spendere un euro, vedi l'anteprima del tuo.
         </p>
         <div class="btn-row hero__btns">
           <a href="/anteprima-gratuita" class="btn btn--primary" data-magnetic>Voglio l'anteprima gratuita</a>
@@ -44,7 +43,7 @@ const story = [
   <div class="lens" data-lens>
     <figure class="lens__frame" data-lens-frame>
       <div class="lens__glow" data-lens-glow aria-hidden="true"></div>
-      <p class="lens__head">Così lavora un sito fatto bene, mentre tu lavori.</p>
+      <p class="lens__head">Un sito fatto bene lavora mentre lavori tu.</p>
       <div class="lens__phone" data-lens-phone>
         <PhoneFrame label="Esempio: il sito di un'impresa di ristrutturazioni visto dal telefono, mentre arrivano le richieste">
           <div class="lens__canvas"><ArcadiHero /></div>

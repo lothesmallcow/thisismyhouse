@@ -17,22 +17,22 @@ import { site } from "../config/site";
 import { fill } from "../lib/util";
 import { faqPage, professionalService } from "../lib/schema";
 
-const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order);
+const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order).slice(0, 4);
 const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
 
 const steps = [
-  { title: "Ci racconti la tua attività.", text: "Dieci minuti al telefono o su WhatsApp: cosa fai, per chi, dove." },
+  { title: "Ci racconti la tua attività.", text: "Dieci minuti, al telefono o su WhatsApp." },
   {
     title: "Ricevi l'anteprima gratuita.",
-    text: `Entro ${site.previewHours} ore ti mandiamo la homepage del tuo nuovo sito, con il tuo nome e i tuoi servizi. La guardi dal telefono, con calma.`,
+    text: `Entro ${site.previewHours} ore vedi la homepage del tuo nuovo sito.`,
   },
   {
     title: "Se ti convince, partiamo.",
-    text: `Ci versi un acconto del ${site.depositPercent}%. In ${site.deliveryDays.professionale} giorni lavorativi dall'arrivo di foto e informazioni, il sito è pronto.`,
+    text: `Acconto del ${site.depositPercent}%. Il sito è pronto in ${site.deliveryDays.professionale} giorni lavorativi.`,
   },
   {
     title: "Paghi il saldo solo a sito approvato.",
-    text: "Lo provi, chiedi le modifiche, lo approvi. Solo allora paghi il resto e lo mettiamo online.",
+    text: "Lo provi, chiedi le modifiche, lo approvi. Poi va online.",
   },
 ];
 
@@ -42,12 +42,12 @@ const inside = [
   {
     icon: "list",
     t: "Le richieste arrivano già ordinate.",
-    d: "Chi compila il modulo ti scrive su WhatsApp con un messaggio pronto: cosa serve, dove, quando. E tu ricevi anche una copia via email.",
+    d: "Su WhatsApp, già complete: cosa serve, dove, quando. Più una copia via email.",
   },
   { icon: "search", t: "Ti trovano su Google.", d: "Pagine scritte per le ricerche della tua zona, scheda Google collegata." },
-  { icon: "bolt", t: "Si apre in fretta.", d: "Punteggio di velocità sopra 90 su PageSpeed di Google, da telefono. Te lo mostriamo prima di consegnare." },
+  { icon: "bolt", t: "Si apre in fretta.", d: "Sopra 90 su PageSpeed di Google, da telefono." },
   { icon: "shield", t: "In regola.", d: "Privacy, cookie e dati aziendali a posto, senza banner inutili." },
-  { icon: "key", t: "È tuo.", d: "Dominio, codice e accessi intestati a te. Se un giorno vuoi cambiare, porti via tutto." },
+  { icon: "key", t: "È tuo.", d: "Dominio, codice e accessi intestati a te." },
 ] as const;
 
 ---
@@ -82,8 +82,7 @@ const inside = [
         <h2 id="garanzia" class="guarantee__title" data-focus>Il rischio ce lo prendiamo noi.</h2>
         <div class="guarantee__cols">
           <p class="lead">
-            L'anteprima è gratuita. Se non ti piace, finisce lì: non ci devi niente e non ti richiamiamo dieci volte. Se ti piace e partiamo, il
-            saldo lo paghi solo dopo aver approvato il sito finito.
+            L'anteprima è gratuita. Se non ti piace, finisce lì. Se partiamo, il saldo lo paghi solo a sito approvato.
           </p>
           <div>
             <p class="muted">{site.revisionRounds} giri di modifiche inclusi. Le condizioni sono scritte, chiare e senza asterischi.</p>
@@ -116,40 +115,6 @@ const inside = [
   <Founders />
 
   <PriceSummary />
-
-  <section class="section student" aria-labelledby="studio">
-    <div class="wrap sec">
-      <p class="sec__label">Perché noi</p>
-      <div class="sec__body student__grid">
-        <div>
-          <h2 id="studio" data-focus>Uno studio piccolo, apposta.</h2>
-          <p class="lead student__p">
-            Non siamo un'agenzia con quaranta persone e non vogliamo diventarlo. Facciamo una cosa sola, per un tipo di cliente solo. Per te
-            significa tre cose.
-          </p>
-          <ul class="student__list">
-            <li>
-              <h3>Parli con chi costruisce il sito.</h3>
-              <p>Niente commerciali, niente centralino: chi ti risponde è chi ci lavora.</p>
-            </li>
-            <li>
-              <h3>Costiamo meno, senza fare peggio.</h3>
-              <p>Usiamo l'intelligenza artificiale per le parti ripetitive. Il progetto, i testi e il controllo finale li facciamo a mano, uno per uno.</p>
-            </li>
-            <li>
-              <h3>Ogni sito è il nostro biglietto da visita.</h3>
-              <p>Siamo all'inizio: non possiamo permetterci di farne uno mediocre, e non vogliamo.</p>
-            </li>
-          </ul>
-          <a href="/chi-sono" class="btn btn--secondary">Lo studio</a>
-        </div>
-        <figure class="student__card">
-          <blockquote>Un sito fatto bene non deve costare una follia. Deve costare attenzione.</blockquote>
-          <figcaption>Il principio con cui lavoriamo</figcaption>
-        </figure>
-      </div>
-    </div>
-  </section>
 
   <Reviews />
 
@@ -278,46 +243,5 @@ const inside = [
   }
   .bento__tile--5 p {
     color: var(--inchiostro);
-  }
-  .student__card {
-    margin: 0;
-    background: var(--mandarino);
-    border-radius: clamp(22px, 1vw + 14px, 34px);
-    padding: clamp(1.75rem, 1rem + 2.5vw, 3.25rem);
-    display: grid;
-    gap: 3rem;
-    align-content: space-between;
-    min-height: 22rem;
-  }
-  .student__card blockquote {
-    margin: 0;
-    font-weight: 300;
-    font-stretch: 125%;
-    font-size: clamp(1.7rem, 1.1rem + 1.6vw, 2.6rem);
-    letter-spacing: -0.04em;
-    line-height: 1.08;
-  }
-  .student__card figcaption {
-    font-size: var(--fs-small);
-    font-weight: 500;
-  }
-  .student h2 {
-    max-width: 14ch;
-  }
-  .student__p {
-    margin: 2rem 0 2.5rem;
-    max-width: 36ch;
-  }
-  .student__list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 3rem;
-    display: grid;
-    gap: 1.75rem;
-  }
-  .student__list p {
-    color: var(--grafite);
-    margin-top: 0.35rem;
-    max-width: 44ch;
   }
 </style>

@@ -1,9 +1,9 @@
 ---
 /**
- * Signature section: an old website being renovated as the visitor scrolls (A2).
+ * Signature section: an old website being renovated as the visitor scrolls.
  * Without JS or with reduced motion: "Prima" and "Dopo" side by side, notes and checklist visible.
- * Desktop with motion: one pinned frame where the old site is marked, scaffolded, rebuilt and
- * turned into a phone. Mobile with motion: three stacked scenes that each play once.
+ * With motion (any screen): one pinned frame, scrubbed by the scroll like a video, where the old
+ * site is marked, scaffolded, revealed as the new one and turned into a phone.
  */
 import OldSite from "./demo/OldSite.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
@@ -27,7 +27,7 @@ const scaffold = `
       <div class="reno__head">
         <p class="sec__label reno__label">Prima e dopo</p>
         <h2 id="reno-title">Guarda un sito vecchio diventare uno che lavora.</h2>
-        <p class="reno__intro">Scorri piano. L'attività è inventata, ma i difetti sono quelli che troviamo ogni giorno.</p>
+        <p class="reno__intro">Scorri piano. L'attività è inventata, i difetti no.</p>
         <p class="sr-only">
           Esempio dimostrativo: un sito vecchio, difficile da leggere dal telefono e senza contatti in vista, viene rifatto in un sito
           moderno con pulsanti per chiamare e scrivere su WhatsApp, foto dei lavori e informazioni aggiornate.
@@ -44,24 +44,10 @@ const scaffold = `
             </div>
             <div class="frame__screen" data-screen>
               <div class="layer layer--old" data-layer-old><OldSite /></div>
+              <div class="scan" data-scan aria-hidden="true"></div>
             </div>
             <svg class="scaffold" data-scaffold viewBox="0 0 100 100" preserveAspectRatio="none" set:html={scaffold} />
             <div class="sign" data-sign><CantiereSign /></div>
-          </div>
-        </div>
-
-        <div class="scene scene--cantiere" data-scene="cantiere">
-          <p class="scene__label">Cantiere</p>
-          <div class="frame frame--cantiere">
-            <div class="frame__chrome">
-              <span class="frame__dots"><i></i><i></i><i></i></span>
-              <span class="frame__url">www.impresaedilearcadi.it</span>
-            </div>
-            <div class="frame__screen">
-              <div class="layer layer--old layer--grey" data-cantiere-old><OldSite annotations={false} /></div>
-            </div>
-            <svg class="scaffold scaffold--on" data-scaffold-m viewBox="0 0 100 100" preserveAspectRatio="none" set:html={scaffold} />
-            <div class="sign sign--on" data-sign-m><CantiereSign small /></div>
           </div>
         </div>
 
@@ -142,9 +128,6 @@ const scaffold = `
     font-size: var(--fs-small);
     color: var(--grafite);
     margin-bottom: 0.9rem;
-  }
-  .scene--cantiere {
-    display: none;
   }
 
   /* Desktop browser frame */
@@ -265,65 +248,142 @@ const scaffold = `
     color: var(--portone);
   }
 
-  /* ---------- Mobile animated: three scenes ---------- */
-  :global(.reno.is-mobile-anim) .scene--cantiere {
-    display: block;
+  /* ---------- Animated: one pinned frame, every screen size ---------- */
+  .scan {
+    display: none;
   }
-  :global(.reno.is-mobile-anim) .scene--cantiere .scaffold,
-  :global(.reno.is-mobile-anim) .scene--cantiere .sign {
-    display: block;
-  }
-  :global(.reno.is-mobile-anim) .sign {
-    top: 8%;
-    right: -2%;
-  }
-
-  /* ---------- Desktop animated: one pinned frame ---------- */
   :global(.reno.is-anim) {
     padding-block: 0;
+    /* Frame height: what is left of the screen once the texts have their room. */
+    --fh: clamp(200px, calc(100svh - var(--header-h) - 27rem), 30rem);
   }
   :global(.reno.is-anim) .reno__pin {
     height: 100vh;
     height: 100svh;
+    box-sizing: border-box;
+    /* Room at the bottom for the mobile sticky bar. */
+    padding-block: calc(var(--header-h) + 0.5rem) 5rem;
     display: flex;
     align-items: center;
-    box-sizing: border-box;
-    padding-block: calc(var(--header-h) + 1rem) 2rem;
   }
   :global(.reno.is-anim) .reno__grid {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    grid-template-areas: "head stage" "after stage";
-    grid-template-rows: auto 1fr;
-    column-gap: clamp(2rem, 4vw, 5rem);
-    row-gap: 2rem;
-    align-items: start;
-    height: 100%;
+    gap: 1rem;
+    width: 100%;
   }
-  :global(.reno.is-anim) .reno__stage {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
+  :global(.reno.is-anim) .reno__label,
+  :global(.reno.is-anim) .reno__intro {
+    display: none;
+  }
+  :global(.reno.is-anim) .reno__head h2 {
+    font-size: clamp(1.7rem, 1rem + 3vw, 2.4rem);
   }
   :global(.reno.is-anim) .scene--dopo,
   :global(.reno.is-anim) .scene__label {
     display: none;
   }
-  :global(.reno.is-anim) .scene--prima {
-    width: 100%;
+  :global(.reno.is-anim) .reno__stage {
     display: flex;
     justify-content: center;
   }
+  :global(.reno.is-anim) .scene--prima {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
   :global(.reno.is-anim) .frame {
-    width: min(100%, calc((100svh - var(--header-h) - 6rem) * 4 / 3));
+    height: var(--fh);
+    width: min(100%, calc(var(--fh) * 3 / 4));
+    aspect-ratio: auto;
     max-width: none;
   }
   :global(.reno.is-anim) .frame.is-phone {
-    width: 300px;
-    aspect-ratio: 390 / 760;
-    border-width: 10px;
+    width: calc(var(--fh) * 390 / 760);
+    border-width: 8px;
     border-color: #1b1f1d;
     border-radius: var(--radius-phone);
+  }
+  :global(.reno.is-anim) .checklist {
+    gap: 0.35rem;
+  }
+  :global(.reno.is-anim) .checklist li {
+    font-size: 0.95rem;
+    grid-template-columns: 20px 1fr;
+    gap: 0.5rem;
+  }
+  :global(.reno.is-anim) .checklist svg {
+    width: 20px;
+    height: 20px;
+  }
+  :global(.reno.is-anim) .reno__after {
+    gap: 0.9rem;
+  }
+  @media (max-height: 700px) and (max-width: 899px) {
+    :global(.reno.is-anim) .checklist li:nth-child(n + 4) {
+      display: none;
+    }
+  }
+  @media (min-width: 900px) {
+    :global(.reno.is-anim) {
+      --fh: min(calc(100svh - var(--header-h) - 4rem), 44rem);
+    }
+    :global(.reno.is-anim) .reno__pin {
+      padding-bottom: 1.5rem;
+    }
+    :global(.reno.is-anim) .reno__label,
+    :global(.reno.is-anim) .reno__intro {
+      display: block;
+    }
+    :global(.reno.is-anim) .reno__head h2 {
+      font-size: var(--fs-h2);
+    }
+    :global(.reno.is-anim) .reno__grid {
+      grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+      grid-template-areas: "head stage" "after stage";
+      grid-template-rows: auto auto;
+      align-content: center;
+      column-gap: clamp(2rem, 4vw, 5rem);
+      row-gap: 2rem;
+      height: 100%;
+    }
+    :global(.reno.is-anim) .reno__head {
+      align-self: end;
+    }
+    :global(.reno.is-anim) .reno__after {
+      align-self: start;
+      padding-top: 1rem;
+    }
+    :global(.reno.is-anim) .reno__stage {
+      align-items: center;
+    }
+    :global(.reno.is-anim) .frame {
+      width: min(100%, calc(var(--fh) * 4 / 3));
+    }
+    :global(.reno.is-anim) .checklist li {
+      font-size: var(--fs-lead);
+      grid-template-columns: 24px 1fr;
+      gap: 0.7rem;
+    }
+    :global(.reno.is-anim) .checklist svg {
+      width: 24px;
+      height: 24px;
+    }
+    :global(.reno.is-anim) .checklist {
+      gap: 0.6rem;
+    }
+  }
+  @media (min-width: 900px) and (max-height: 820px) {
+    :global(.reno.is-anim) .reno__intro {
+      display: none;
+    }
+    :global(.reno.is-anim) .reno__head h2 {
+      font-size: clamp(1.8rem, 1rem + 2vw, 2.6rem);
+    }
+    :global(.reno.is-anim) .checklist li {
+      font-size: 1rem;
+    }
+    :global(.reno.is-anim) .checklist {
+      gap: 0.35rem;
+    }
   }
   :global(.reno.is-anim) .frame.is-phone .frame__screen {
     border-radius: 12px;
@@ -335,12 +395,25 @@ const scaffold = `
     position: absolute;
     inset: 0;
   }
+  :global(.reno.is-anim) .layer--new {
+    background: #f2f2f0;
+    overflow: hidden;
+  }
+  :global(.reno.is-anim) .scan {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    margin-left: -1.5px;
+    background: var(--mandarino);
+    box-shadow: 0 0 24px 6px rgba(255, 91, 34, 0.55);
+    z-index: 2;
+    pointer-events: none;
+  }
   :global(.reno.is-anim) .scaffold,
   :global(.reno.is-anim) .sign {
     display: block;
-  }
-  :global(.reno.is-anim) .reno__after {
-    align-self: end;
   }
 
   @media (prefers-reduced-motion: reduce) {

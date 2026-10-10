@@ -39,18 +39,6 @@ export function initReel() {
         },
       ),
     );
-    // A slight turn in depth: cards face the viewer only as they cross the centre.
-    section.querySelectorAll<HTMLElement>(".reel__card").forEach((card) =>
-      gsap.fromTo(
-        card,
-        { rotationY: -9, transformPerspective: 1600, transformOrigin: "50% 50%" },
-        {
-          rotationY: 9,
-          ease: "none",
-          scrollTrigger: { trigger: card, containerAnimation: tween, start: "left right", end: "right left", scrub: true },
-        },
-      ),
-    );
     return () => {
       section.classList.remove("is-pinned");
       viewport.setAttribute("tabindex", "0");

@@ -4,9 +4,9 @@
  * Faded words keep 3:1 contrast (large text), so it reads fine at any scroll position.
  */
 const problems = [
-  "Lo apre dal telefono. Deve allargare il testo con due dita per leggerlo. Torna indietro e chiama il secondo risultato.",
-  "Cerca un numero da chiamare. In alto non c'è. Lascia perdere.",
-  "In fondo alla pagina legge © 2014. Pensa che abbiate chiuso.",
+  "Dal telefono non si legge. Torna indietro e chiama il prossimo.",
+  "Il numero non si trova. Lascia perdere.",
+  "In fondo c'è scritto © 2014. Pensa che abbiate chiuso.",
 ];
 ---
 <section class="section mf" aria-labelledby="problema">
@@ -14,8 +14,7 @@ const problems = [
     <p class="mf__label">Il problema</p>
     <div>
       <h2 id="problema" class="mf__text" data-manifesto>
-        Ogni giorno qualcuno cerca quello che fai. Apre il tuo sito dal telefono e in pochi secondi decide se chiamarti o tornare indietro. Noi
-        lavoriamo su quei pochi secondi.
+        Ogni giorno qualcuno cerca quello che fai e apre il tuo sito. In pochi secondi decide se chiamarti.
       </h2>
       <ul class="mf__list">
         {
@@ -27,7 +26,7 @@ const problems = [
           ))
         }
       </ul>
-      <p class="mf__close" data-focus>Tu non te ne accorgi, perché chi se ne va non ti avvisa.</p>
+      <p class="mf__close" data-focus>E chi se ne va non ti avvisa.</p>
     </div>
   </div>
 </section>
