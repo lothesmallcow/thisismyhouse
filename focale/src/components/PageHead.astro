@@ -8,7 +8,8 @@ interface Props {
 const { title, lead, label, class: cls } = Astro.props;
 ---
 <section class:list={["ph", cls]} data-hero>
-  <div class="wrap">
+  <div class="ph__glow" aria-hidden="true"></div>
+  <div class="wrap ph__in">
     {label && <p class="ph__label">{label}</p>}
     <h1 class="ph__title">{title}</h1>
     {
@@ -25,7 +26,29 @@ const { title, lead, label, class: cls } = Astro.props;
 </section>
 <style>
   .ph {
-    padding-block: clamp(2.5rem, 1rem + 6vw, 7rem) clamp(4rem, 2.5rem + 5vw, 8rem);
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(2.5rem, 1rem + 6vw, 7rem) clamp(3.5rem, 2rem + 4vw, 6.5rem);
+  }
+  /* The warm light of the home stage, rising from the top right corner. */
+  .ph__glow {
+    position: absolute;
+    right: -18vw;
+    top: -30vw;
+    width: max(620px, 62vw);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(
+      closest-side,
+      rgba(255, 91, 34, 0.55) 0%,
+      rgba(255, 140, 50, 0.38) 30%,
+      rgba(255, 178, 63, 0.2) 55%,
+      rgba(255, 248, 242, 0) 100%
+    );
+    pointer-events: none;
+  }
+  .ph__in {
+    position: relative;
   }
   .ph__label {
     font-size: var(--fs-small);

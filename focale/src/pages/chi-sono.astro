@@ -1,125 +1,120 @@
 ---
 import Base from "../layouts/Base.astro";
-import OwnerPhoto from "../components/OwnerPhoto.astro";
+import PageHead from "../components/PageHead.astro";
 import Closing from "../components/Closing.astro";
 import P from "../components/P.astro";
 import { site } from "../config/site";
 import { breadcrumbs } from "../lib/schema";
+
+const cols = [
+  { t: "Come lavoriamo", d: "Prezzi scritti, tempi scritti, niente gergo. Rispondiamo entro la giornata lavorativa." },
+  { t: "Cosa non facciamo", d: "Pubblicità, social, negozi online. Se ti servono, ti diciamo a chi rivolgerti." },
+  { t: "Dove siamo", d: "A Milano. Di persona in tutta la Lombardia, online ovunque." },
+];
 ---
 <Base
-  title={`Chi sono | ${site.brand}`}
-  description={`Chi c'è dietro ${site.brand}, perché lavoro da solo e come lavoro.`}
-  jsonLd={[breadcrumbs([{ name: "Chi sono", path: "/chi-sono/" }])]}
+  title={`Lo studio | ${site.brand}`}
+  description={`${site.brand} è uno studio di web design a Milano che costruisce siti per piccole imprese: una cosa sola, fatta bene.`}
+  jsonLd={[breadcrumbs([{ name: "Lo studio", path: "/chi-sono/" }])]}
 >
-  <section class="ab" data-hero>
-    <div class="wrap">
-      <p class="ab__label">Studio</p>
-      <h1>Ciao, sono <P value={site.ownerFirstName} />.</h1>
-      <div class="ab__grid">
-        <OwnerPhoto />
-        <div class="ab__text">
-          {/* DA CONFERMARE: Lorenzo può modificarli o toglierli (i due paragrafi qui sotto) */}
-          <p class="lead">
-            Ho <P value={site.ownerAge} /> anni e studio International Economics and Finance all'Università Bocconi. Prima di {site.brand} ho
-            costruito da solo un videogioco su Roblox con il mio studio, Damalis: dal codice all'economia del gioco, tutto da zero. Lì ho imparato
-            una cosa che vale anche per i siti: le persone decidono in pochi secondi se restare.
-          </p>
-          <p>Alleno una squadra di ragazzi a calcio da tre stagioni, e questa è la quarta. Mi ha insegnato a spiegare le cose in modo semplice, che è metà del mio lavoro.</p>
-        </div>
+  <PageHead
+    label="Lo studio"
+    title="Uno studio piccolo, che fa una cosa sola."
+    lead="Costruiamo siti per piccole imprese che lavorano bene: imprese di ristrutturazione, serramentisti, B&B, agriturismi e location per eventi."
+  />
+
+  <section class="section section--pietra st-name" aria-labelledby="nome">
+    <div class="wrap sec">
+      <p class="sec__label">Il nome</p>
+      <div class="sec__body">
+        <h2 id="nome" class="st-name__t" data-focus>Focus vuol dire mettere a fuoco.</h2>
+        <p class="lead st-name__p">
+          Chi apre il tuo sito guarda poche cose: chi sei, cosa fai, come contattarti. Noi mettiamo a fuoco quelle e togliamo tutto il resto.
+        </p>
       </div>
     </div>
   </section>
 
-  <section class="section section--pietra" aria-label="Come lavoro">
+  <section class="section" aria-label="Come lavoriamo">
     <div class="wrap">
-      <ul class="ab__cols">
-        <li>
-          <h2>Perché {site.brand}</h2>
-          <p>
-            Chi apre il tuo sito decide in un attimo se restare, e guarda poche cose: chi sei, cosa fai, come contattarti. Il mio lavoro è metterle
-            a fuoco, e togliere tutto il resto.
-          </p>
-        </li>
-        <li>
-          <h2>Come lavoro</h2>
-          <p>Prezzi scritti. Tempi scritti. Niente gergo tecnico. Rispondo entro la giornata lavorativa, dal lunedì al venerdì.</p>
-        </li>
-        <li>
-          <h2>Cosa non faccio</h2>
-          <p>
-            Non faccio pubblicità a pagamento, social o negozi online. Faccio una cosa sola: siti che portano richieste. Se ti serve altro, ti dico
-            a chi rivolgerti.
-          </p>
-        </li>
+      <ul class="st-cols">
+        {
+          cols.map((c) => (
+            <li>
+              <h2>{c.t}</h2>
+              <p>{c.d}</p>
+            </li>
+          ))
+        }
       </ul>
+    </div>
+  </section>
+
+  <section class="section st-founder" aria-labelledby="fondatore">
+    <div class="wrap sec">
+      <p class="sec__label">Chi l'ha fondato</p>
+      <div class="sec__body st-founder__body">
+        {/* DA CONFERMARE: Lorenzo può modificare o togliere questo paragrafo */}
+        <h2 id="fondatore" class="st-founder__t"><P value={site.ownerFirstName} />, fondatore.</h2>
+        <p>
+          Studia International Economics and Finance all'Università Bocconi. Prima di {site.brand} ha costruito da zero un videogioco su
+          Roblox con il suo studio, Damalis. Allena una squadra di ragazzi a calcio da quattro stagioni.
+        </p>
+      </div>
     </div>
   </section>
 
   <Closing />
 </Base>
 <style>
-  .ab {
-    padding-block: clamp(2.5rem, 1rem + 6vw, 7rem) var(--space-section);
+  .st-name__t {
+    max-width: 16ch;
   }
-  .ab__label {
-    font-size: var(--fs-small);
-    font-weight: 500;
-    color: var(--grafite);
-    margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.75rem);
-  }
-  .ab h1 {
-    max-width: 14ch;
-  }
-  .ab__grid {
-    display: grid;
-    gap: 3rem;
-    margin-top: var(--space-block);
-  }
-  @media (min-width: 900px) {
-    .ab__grid {
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      column-gap: clamp(1rem, 0.5rem + 1.5vw, 2rem);
-      align-items: end;
-    }
-    .ab__grid > :global(.op) {
-      grid-column: 1 / span 4;
-    }
-    .ab__text {
-      grid-column: 6 / span 7;
-    }
-  }
-  .ab__text {
-    max-width: 44rem;
-  }
-  .ab__text p:not(.lead) {
+  .st-name__p {
+    margin-top: 1.5rem;
+    max-width: 40ch;
     color: var(--grafite);
   }
-  .ab__cols {
+  .st-cols {
     list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
-    gap: 3.5rem;
+    gap: 2.5rem;
   }
   @media (min-width: 1000px) {
-    .ab__cols {
+    .st-cols {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 2rem;
     }
   }
-  .ab__cols li {
+  .st-cols li {
     border-top: 1px solid var(--inchiostro);
     padding-top: 1.5rem;
   }
-  .ab__cols h2 {
+  .st-cols h2 {
     font-size: var(--fs-h3);
     font-weight: 500;
     font-stretch: 112%;
     letter-spacing: -0.015em;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
   }
-  .ab__cols p {
+  .st-cols p {
     color: var(--grafite);
-    max-width: 38ch;
+    max-width: 34ch;
+  }
+  .st-founder {
+    padding-top: 0;
+  }
+  .st-founder__body {
+    display: grid;
+    gap: 1rem;
+    max-width: 44rem;
+  }
+  .st-founder__t {
+    font-size: var(--fs-h3);
+  }
+  .st-founder__body p {
+    color: var(--grafite);
   }
 </style>
