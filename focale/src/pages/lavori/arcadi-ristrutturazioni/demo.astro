@@ -183,6 +183,37 @@ const tel = telHref();
   .ar :global(.ar-hero) {
     min-height: auto;
   }
+  /* Demo page only (the hero is shared with the phone mockups): a bigger, bolder first screen. */
+  @container (min-width: 960px) {
+    .ar :global(.ar-hero .ah__photo) {
+      height: min(80vh, 780px);
+    }
+    .ar :global(.ar-hero .ah__photo img) {
+      aspect-ratio: auto;
+    }
+    .ar :global(.ar-hero .ah__h1) {
+      font-size: clamp(3rem, 1.6rem + 3vw, 5.2rem);
+      font-weight: 850;
+      font-stretch: 100%;
+    }
+    .ar :global(.ar-hero .ah__title) {
+      padding-top: clamp(2.5rem, 6vh, 5rem);
+    }
+    .ar :global(.ar-hero .ah__text) {
+      font-size: 1.2rem;
+      max-width: 34ch;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ar :global(.ar-hero .ah__photo img) {
+      animation: ar-zoom 2.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes ar-zoom {
+      from {
+        transform: scale(1.1);
+      }
+    }
+  }
   .ar h2 {
     font-family: var(--font-head);
     font-weight: 850;

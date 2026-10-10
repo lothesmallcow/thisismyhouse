@@ -265,6 +265,45 @@ const story = [
     margin: 2.25rem 0 1rem;
   }
 
+  /* The sector list is repeated by the chooser right below: on phones, skip it. */
+  @media (max-width: 899px) {
+    .hero__aside {
+      display: none;
+    }
+  }
+  /* Short screens: tighter hero so the chooser cards sit above the fold. */
+  @media (max-height: 760px) {
+    .hero {
+      padding-top: 1rem;
+    }
+    .hero__kicker {
+      margin-bottom: 0.75rem;
+    }
+    .hero__title {
+      font-size: min(var(--fs-mega), 6.4vw);
+    }
+    .hero__cols {
+      margin-top: 1rem;
+    }
+    .hero .pick {
+      margin-top: 1.1rem;
+    }
+    .hero .pick__q {
+      margin-bottom: 0.6rem;
+    }
+    .hero .pick__opt {
+      height: clamp(96px, 4rem + 4vw, 128px);
+    }
+  }
+  @media (max-height: 760px) and (max-width: 699px) {
+    .hero__title {
+      font-size: clamp(2.2rem, 0.4rem + 9vw, 3rem);
+    }
+    .hero .pick__opt {
+      height: 86px;
+    }
+  }
+
   /* ---------- Sector chooser ---------- */
   .pick {
     border: 0;
