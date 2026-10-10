@@ -2,10 +2,14 @@
 import { fill } from "../lib/util";
 interface Props {
   items: { q: string; a: string }[];
+  /** Rounded cards instead of a ruled list, for short lists on light sections. */
+  compact?: boolean;
+  /** Two columns on wide screens, for long lists. */
+  cols?: boolean;
 }
-const { items } = Astro.props;
+const { items, compact = false, cols = false } = Astro.props;
 ---
-<div class="faq">
+<div class:list={["faq", { "faq--compact": compact || cols, "faq--cols": cols }]}>
   {
     items.map((it) => (
       <details class="faq__item">
@@ -23,6 +27,40 @@ const { items } = Astro.props;
   }
 </div>
 <style>
+  /* Compact: each question is a card, smaller type, no rules. */
+  .faq.faq--compact {
+    border-top: 0;
+    max-width: none;
+    display: grid;
+    gap: 0.6rem;
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .faq--cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .faq--compact .faq__item {
+    border-bottom: 0;
+    background: var(--carta);
+    border-radius: 18px;
+    padding-inline: 1.25rem;
+    transition: box-shadow 0.3s var(--ease-out);
+  }
+  .faq--compact .faq__item:hover,
+  .faq--compact .faq__item[open] {
+    box-shadow: 0 14px 30px -22px rgba(120, 40, 5, 0.45);
+  }
+  .faq--compact summary {
+    padding: 1.05rem 0;
+    font-size: 1.08rem;
+    font-weight: 500;
+    font-stretch: 105%;
+    letter-spacing: -0.01em;
+  }
+  .faq--compact .faq__body > div {
+    padding-bottom: 1.15rem;
+  }
   .faq {
     border-top: 1px solid var(--inchiostro);
     max-width: 58rem;

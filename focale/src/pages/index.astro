@@ -3,7 +3,6 @@ import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
 import Manifesto from "../components/Manifesto.astro";
 import Icon from "../components/Icon.astro";
-import Renovation from "../components/Renovation.astro";
 import Calculator from "../components/Calculator.astro";
 import Steps from "../components/Steps.astro";
 import Founders from "../components/Founders.astro";
@@ -59,8 +58,6 @@ const inside = [
   <Hero />
 
   <Manifesto />
-
-  <Renovation />
 
   <Calculator />
 
@@ -118,14 +115,14 @@ const inside = [
 
   <Reviews />
 
-  <section class="section" aria-labelledby="domande">
-    <div class="wrap sec">
-      <p class="sec__label">Domande</p>
-      <div class="sec__body">
-        <h2 id="domande" class="h2-gap" data-focus>Le domande che ci fanno tutti</h2>
-        <Faq items={faqItems} />
-        <a class="textlink after-link" href="/come-funziona#domande">Tutte le domande</a>
+  <section class="section section--pietra faq-sec" aria-labelledby="domande">
+    <div class="wrap faq-grid">
+      <div class="faq-side">
+        <h2 id="domande" data-focus>Domande frequenti</h2>
+        <p class="muted">Le quattro che ci fanno tutti. Le altre sono nella pagina del metodo.</p>
+        <a class="textlink" href="/come-funziona#domande">Tutte le domande</a>
       </div>
+      <Faq items={faqItems} compact />
     </div>
   </section>
 
@@ -135,6 +132,28 @@ const inside = [
 <style>
   .h2-gap {
     margin-bottom: var(--space-block);
+  }
+  .faq-grid {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .faq-grid {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: clamp(2rem, 5vw, 6rem);
+      align-items: start;
+    }
+  }
+  .faq-side {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+  .faq-side h2 {
+    max-width: 10ch;
+  }
+  .faq-side p {
+    max-width: 30ch;
   }
   .after-link {
     margin-top: 3rem;

@@ -8,7 +8,43 @@
 import PhoneFrame from "./PhoneFrame.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
 import Icon from "./Icon.astro";
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
 import { site } from "../config/site";
+import imgArcadi from "../assets/demo/arcadi-ristrutturazioni/cucina-dopo.jpg";
+import imgCascina from "../assets/demo/cascina-rovere/hero.jpg";
+import imgVilla from "../assets/demo/villa-ortensia/terrazza.jpg";
+
+// The paths a visitor can take from the hero: one per sector, plus "something else".
+const settori = (await getCollection("settori")).sort((a, b) => a.data.order - b.data.order);
+const lavori = await getCollection("lavori");
+const look: Record<string, { img: ImageMetadata; chip: string; title: string; cta: string }> = {
+  "ristrutturazioni-e-serramenti": {
+    img: imgArcadi,
+    chip: "Ristrutturazioni e serramenti",
+    title: "Per un'impresa edile il sito deve portare preventivi seri.",
+    cta: "Voglio l'anteprima per la mia impresa",
+  },
+  "b-and-b-e-agriturismi": {
+    img: imgCascina,
+    chip: "B&B e agriturismi",
+    title: "Per un agriturismo il sito deve far prenotare da te, non dai portali.",
+    cta: "Voglio l'anteprima per la mia struttura",
+  },
+  "location-per-matrimoni": {
+    img: imgVilla,
+    chip: "Location per eventi",
+    title: "Per una location il sito deve far venire voglia di visitarla.",
+    cta: "Voglio l'anteprima per la mia location",
+  },
+};
+const pathRules = [...settori.map((s) => s.id), "altro"]
+  .map((id) => `.hero:has(input[value="${id}"]:checked) .path[data-path="${id}"]{display:grid}`)
+  .join("");
+const paths = settori.map((s) => {
+  const demo = lavori.find((l) => l.id === s.data.demo)!;
+  return { slug: s.id, data: s.data, demo, ...look[s.id] };
+});
 
 const story = [
   { n: "1", t: "Ti chiamano con un tocco.", d: "Il numero è sempre in alto." },
@@ -31,12 +67,81 @@ const story = [
         <p class="lead">
           Rifacciamo i siti delle piccole imprese perché portino richieste vere. Prima di spendere un euro, vedi l'anteprima del tuo.
         </p>
-        <div class="btn-row hero__btns">
-          <a href="/anteprima-gratuita" class="btn btn--primary" data-magnetic>Voglio l'anteprima gratuita</a>
-          <a href="#ristrutturazione" class="btn btn--secondary">Guarda come funziona</a>
-        </div>
-        <p class="small muted">Pronta in {site.previewHours} ore. Nessun impegno, nessun pagamento anticipato.</p>
       </div>
+    </div>
+
+    <fieldset class="pick" data-pick data-hero-fade>
+      <legend class="pick__q">Che attività hai?</legend>
+      <div class="pick__opts">
+        {
+          paths.map((p) => (
+            <label class="pick__opt">
+              <input type="radio" name="percorso" value={p.slug} class="sr-only" data-path-input />
+              <Image src={p.img} alt="" widths={[240, 480]} sizes="(min-width: 900px) 15vw, 40vw" class="pick__img" loading="eager" />
+              <span class="pick__name">{p.chip}</span>
+            </label>
+          ))
+        }
+        <label class="pick__opt pick__opt--altro">
+          <input type="radio" name="percorso" value="altro" class="sr-only" data-path-input />
+          <span class="pick__plus" aria-hidden="true"></span>
+          <span class="pick__name">Un'altra attività</span>
+        </label>
+      </div>
+      <p class="small muted pick__note">
+        Oppure <a class="link" href="/anteprima-gratuita">chiedi subito l'anteprima gratuita</a>: pronta in {site.previewHours} ore, senza impegno.
+      </p>
+    </fieldset>
+
+    <style is:inline set:html={pathRules}></style>
+    <div class="paths" data-paths aria-live="polite">
+      {
+        paths.map((p) => (
+          <article class="path" data-path={p.slug} aria-label={p.chip}>
+            <div class="path__media">
+              <Image src={p.img} alt="" widths={[640, 960, 1400]} sizes="(min-width: 900px) 55vw, 92vw" class="path__img" data-path-img />
+              <div class="path__phone" data-path-phone>
+                <Image src={p.demo.data.shotPhone} alt={`Il sito dimostrativo di ${p.demo.data.name} visto dal telefono`} widths={[240, 480]} sizes="200px" />
+              </div>
+            </div>
+            <div class="path__body">
+              <p class="path__kicker" data-path-item>{p.chip}</p>
+              <h2 class="path__title" data-path-item>{p.title}</h2>
+              <ul class="path__list" data-path-item>
+                {p.data.build.slice(0, 3).map((b) => <li>{b}</li>)}
+              </ul>
+              <div class="path__mock" data-path-item>
+                <p class="path__mock-h">{p.data.mock.heading}</p>
+                <dl>
+                  {p.data.mock.lines.slice(0, 3).map(([k, v]) => (
+                    <div>
+                      <dt>{k}</dt>
+                      <dd>{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div class="btn-row" data-path-item>
+                <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${p.slug}`} data-magnetic>{p.cta}</a>
+                <a class="btn btn--secondary" href={`/lavori/${p.demo.id}/demo/`}>Guarda il sito demo</a>
+              </div>
+              <a class="textlink path__more" href={`/per/${p.slug}/`} data-path-item>Tutto per {p.chip.toLowerCase()}</a>
+            </div>
+          </article>
+        ))
+      }
+      <article class="path path--altro" data-path="altro" aria-label="Un'altra attività">
+        <div class="path__body">
+          <h2 class="path__title" data-path-item>Fai un altro lavoro? Raccontacelo.</h2>
+          <p class="lead" data-path-item>
+            Partiamo da imprese edili, strutture ricettive e location, ma il metodo è lo stesso per ogni piccola impresa che vive di richieste.
+          </p>
+          <div class="btn-row" data-path-item>
+            <a class="btn btn--primary" href="/anteprima-gratuita" data-magnetic>Voglio l'anteprima gratuita</a>
+            <a class="btn btn--secondary" href="/lavori/">Guarda i lavori</a>
+          </div>
+        </div>
+      </article>
     </div>
   </div>
 
@@ -99,17 +204,17 @@ const story = [
 
 <style>
   .hero {
-    padding-top: clamp(2rem, 0.5rem + 4.5vw, 5rem);
+    padding-top: clamp(1.5rem, 0.5rem + 3vw, 3.5rem);
     overflow-x: clip;
   }
   .hero__kicker {
     font-size: var(--fs-small);
     font-weight: 500;
     color: var(--grafite);
-    margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+    margin-bottom: clamp(1rem, 0.75rem + 1vw, 1.75rem);
   }
   .hero__title {
-    font-size: min(var(--fs-mega), 8.6vw);
+    font-size: min(var(--fs-mega), 7.6vw);
     line-height: 0.95;
   }
   .hero__l {
@@ -132,8 +237,8 @@ const story = [
   }
   .hero__cols {
     display: grid;
-    gap: 1.75rem;
-    margin-top: clamp(2rem, 1rem + 3vw, 4rem);
+    gap: 1.25rem;
+    margin-top: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
   }
   @media (min-width: 900px) {
     .hero__cols {
@@ -158,6 +263,221 @@ const story = [
   }
   .hero__btns {
     margin: 2.25rem 0 1rem;
+  }
+
+  /* ---------- Sector chooser ---------- */
+  .pick {
+    border: 0;
+    margin: clamp(1.5rem, 1rem + 1.5vw, 2.5rem) 0 0;
+    padding: 0;
+    min-width: 0;
+  }
+  .pick__q {
+    padding: 0;
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: var(--fs-h3);
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+  .pick__opts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  @media (min-width: 900px) {
+    .pick__opts {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+  }
+  .pick__opt {
+    position: relative;
+    display: grid;
+    align-items: end;
+    height: clamp(112px, 6rem + 4vw, 160px);
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--nebbia);
+    cursor: pointer;
+    isolation: isolate;
+    transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+  }
+  .pick__opt :global(.pick__img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+    transition: transform 0.8s var(--ease-out);
+  }
+  .pick__opt:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 40px -22px rgba(120, 40, 5, 0.5);
+  }
+  .pick__opt:hover :global(.pick__img) {
+    transform: scale(1.06);
+  }
+  .pick__name {
+    justify-self: start;
+    margin: 0.6rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: var(--radius-ui);
+    background: rgba(255, 248, 242, 0.95);
+    font-weight: 500;
+    font-size: 0.92rem;
+    line-height: 1.2;
+    transition: background-color 0.25s ease;
+  }
+  .pick__opt:has(input:checked) {
+    box-shadow:
+      0 0 0 3px var(--carta),
+      0 0 0 6px var(--mandarino);
+  }
+  .pick__opt:has(input:checked) .pick__name {
+    background: var(--mandarino);
+  }
+  .pick__opt:has(input:focus-visible) {
+    outline: 2px solid var(--inchiostro);
+    outline-offset: 8px;
+  }
+  .pick__opt--altro {
+    background:
+      radial-gradient(120% 120% at 100% 100%, rgba(255, 91, 34, 0.75), rgba(255, 178, 63, 0.4) 40%, rgba(252, 235, 220, 0) 75%),
+      var(--nebbia);
+  }
+  .pick__plus {
+    position: absolute;
+    top: 0.9rem;
+    left: 0.9rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1.5px solid var(--inchiostro);
+    border-radius: 50%;
+    background:
+      linear-gradient(var(--inchiostro), var(--inchiostro)) center / 12px 1.5px no-repeat,
+      linear-gradient(var(--inchiostro), var(--inchiostro)) center / 1.5px 12px no-repeat;
+  }
+  .pick__note {
+    margin-top: 1rem;
+  }
+
+  /* ---------- The chosen path ---------- */
+  .paths {
+    margin-top: 1rem;
+    scroll-margin-top: calc(var(--header-h) + 1rem);
+  }
+  .path {
+    display: none;
+    background: var(--nebbia);
+    border-radius: clamp(22px, 1vw + 14px, 32px);
+    overflow: hidden;
+  }
+  @media (min-width: 900px) {
+    .path {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+  }
+  .path__media {
+    position: relative;
+    min-height: clamp(260px, 30vw, 520px);
+    overflow: hidden;
+  }
+  .path__media :global(.path__img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .path__phone {
+    position: absolute;
+    right: 7%;
+    bottom: -14%;
+    width: clamp(120px, 12vw, 200px);
+    border: 7px solid #1b1f1d;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -25px rgba(60, 25, 8, 0.6);
+  }
+  .path__phone :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .path__body {
+    padding: clamp(1.5rem, 1rem + 2vw, 3rem);
+    display: grid;
+    gap: 1rem;
+    align-content: center;
+    justify-items: start;
+  }
+  .path__kicker {
+    font-size: var(--fs-small);
+    font-weight: 500;
+    color: var(--grafite);
+  }
+  .path__title {
+    font-size: clamp(1.6rem, 1rem + 1.8vw, 2.6rem);
+    letter-spacing: -0.04em;
+    line-height: 1.04;
+    max-width: 18ch;
+  }
+  .path__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    border-top: 1px solid var(--filo);
+  }
+  .path__list li {
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--filo);
+    font-size: 0.98rem;
+  }
+  .path__mock {
+    width: min(100%, 22rem);
+    background: var(--carta);
+    border-radius: 14px;
+    padding: 0.8rem 1rem;
+    box-shadow: 0 14px 30px -20px rgba(60, 25, 8, 0.45);
+    font-size: 0.85rem;
+  }
+  .path__mock-h {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+  .path__mock dl {
+    margin: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+  .path__mock dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .path__mock dt {
+    color: var(--grafite);
+  }
+  .path__mock dd {
+    margin: 0;
+    font-weight: 500;
+  }
+  .path__more {
+    margin-top: 0.25rem;
+  }
+  .path--altro {
+    background:
+      radial-gradient(90% 140% at 100% 100%, rgba(255, 91, 34, 0.7), rgba(255, 178, 63, 0.35) 40%, rgba(252, 235, 220, 0) 72%),
+      var(--nebbia);
+  }
+  .path--altro .path__body {
+    padding-block: clamp(2rem, 1.5rem + 3vw, 4rem);
+  }
+  .path--altro .lead {
+    max-width: 44ch;
   }
 
   /* ---------- The stage: warm white with an orange light ---------- */
@@ -438,5 +758,7 @@ const story = [
 </style>
 <script>
   import { initHero } from "../scripts/hero";
+  import { initPaths } from "../scripts/paths";
   initHero();
+  initPaths();
 </script>

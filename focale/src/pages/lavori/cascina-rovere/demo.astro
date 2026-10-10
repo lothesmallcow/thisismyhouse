@@ -1,6 +1,5 @@
 ---
 import Demo from "../../../layouts/Demo.astro";
-import ReviewsEmpty from "../../../components/demo/ReviewsEmpty.astro";
 import { Image } from "astro:assets";
 import { site } from "../../../config/site";
 
@@ -225,13 +224,6 @@ const near = ["sentieri", "lago", "borgo"];
             }
           </ul>
         </div>
-      </div>
-    </section>
-
-    <section class="cr-sec cr-sec--paper">
-      <div class="cr-wrap">
-        <h2 data-i18n="reviews_h2">{t("reviews_h2")}</h2>
-        <ReviewsEmpty />
       </div>
     </section>
 
@@ -527,6 +519,54 @@ const near = ["sentieri", "lago", "borgo"];
     color: #fff;
     display: block;
     margin-bottom: 0.75rem;
+  }
+  /* Full-bleed hero on wide screens: the farmhouse fills the screen, text over a warm shade. */
+  @media (min-width: 900px) {
+    .cr-hero {
+      grid-template-columns: 1fr;
+      position: relative;
+      overflow: hidden;
+    }
+    .cr-hero :global(.cr-hero__img) {
+      order: 0;
+      grid-area: 1 / 1;
+      height: min(88vh, 900px);
+      border-radius: 0;
+      object-position: 75% 50%;
+    }
+    .cr-hero::after {
+      content: "";
+      grid-area: 1 / 1;
+      position: relative;
+      z-index: 1;
+      align-self: stretch;
+      background: linear-gradient(90deg, rgba(40, 24, 8, 0.86) 0%, rgba(40, 24, 8, 0.62) 34%, rgba(40, 24, 8, 0) 62%);
+      pointer-events: none;
+    }
+    .cr-hero__text {
+      grid-area: 1 / 1;
+      position: relative;
+      z-index: 2;
+      align-self: center;
+      max-width: 36rem;
+      color: #fffaf0;
+    }
+    .cr-hero__text .cr-kicker {
+      color: #f6dcae;
+    }
+    .cr-hero__text h1 {
+      color: #fffaf0;
+    }
+  }
+  @media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+    .cr-hero :global(.cr-hero__img) {
+      animation: cr-zoom 2.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes cr-zoom {
+      from {
+        transform: scale(1.12);
+      }
+    }
   }
 </style>
 <script>

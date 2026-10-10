@@ -30,6 +30,11 @@ Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm 
 - Hero: headline letters rise on load; on scroll the stage (white panel with a phone) pins, opens to full screen,
   an orange light rises and three notifications arrive, one per caption. Phone width is set by viewport height
   so the stage always fits; check with a fit test at 360-1920 px widths before changing it.
+- Hero sector chooser ("Che attività hai?"): radios + CSS `:has()` show the chosen path with no JS;
+  scripts/paths.ts adds the entrance, scrolls to it, remembers the choice (localStorage) and refreshes ScrollTrigger.
+  Each path links to the preview form with `?settore=` so the form arrives pre-filled.
+- The renovation scene (Renovation.astro) is no longer on the home: Lorenzo found it weak. Kept for reference.
+- Demo sites: full-bleed heroes with a shade for legible text; Demo layout reveals content softly on scroll.
 - Manifesto words light up on scroll (faded colour #A3897B keeps 3:1 for large text). Bento tiles rise in.
 - Reel pins and slides sideways with a slight 3D turn (desktop, fine pointer). Pointer label "Guarda" on reel cards.
 - Primary buttons are magnetic (fine pointer). Everything is skipped under reduced motion.

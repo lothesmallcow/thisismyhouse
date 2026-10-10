@@ -1,6 +1,5 @@
 ---
 import Demo from "../../../layouts/Demo.astro";
-import ReviewsEmpty from "../../../components/demo/ReviewsEmpty.astro";
 import { Image } from "astro:assets";
 import { site } from "../../../config/site";
 
@@ -171,13 +170,6 @@ const years = [2027, 2028];
           <button type="submit" class="vo-btn">Invia su WhatsApp</button>
           <p class="vo-note">Si apre WhatsApp con il messaggio già scritto. Questo è un sito dimostrativo: il messaggio arriva a Focus Design.</p>
         </form>
-      </div>
-    </section>
-
-    <section class="vo-sec">
-      <div class="vo-wrap">
-        <h2>Le coppie che si sono sposate qui</h2>
-        <ReviewsEmpty />
       </div>
     </section>
 
@@ -498,6 +490,53 @@ const years = [2027, 2028];
   .vo-foot .vo-logo {
     color: #fff;
     margin-bottom: 0.5rem;
+  }
+  /* Full-bleed hero on wide screens: the villa fills the screen, title over a lake-blue shade. */
+  @media (min-width: 900px) {
+    .vo-hero {
+      grid-template-columns: 1fr;
+      position: relative;
+      padding-bottom: 0;
+      margin-bottom: clamp(60px, 8vw, 110px);
+    }
+    .vo-hero__media,
+    .vo-hero__text {
+      grid-area: 1 / 1;
+    }
+    .vo-hero__media :global(img) {
+      height: min(90vh, 920px);
+    }
+    .vo-hero::after {
+      content: "";
+      grid-area: 1 / 1;
+      position: relative;
+      z-index: 1;
+      align-self: stretch;
+      background: linear-gradient(20deg, rgba(20, 30, 42, 0.88) 0%, rgba(20, 30, 42, 0.6) 32%, rgba(20, 30, 42, 0) 60%);
+      pointer-events: none;
+    }
+    .vo-hero__text {
+      position: relative;
+      z-index: 2;
+      margin: 0;
+      align-self: end;
+      justify-self: start;
+      max-width: 36rem;
+      padding: 0 1.5rem clamp(3rem, 6vh, 5rem) max(clamp(18px, 4vw, 40px), calc((100vw - 1180px) / 2 + 40px));
+      color: #fff;
+    }
+    .vo-hero__text h1,
+    .vo-hero__text .vo-kicker {
+      color: #fff;
+    }
+    .vo-hero__text h1 {
+      font-size: clamp(2.6rem, 1.8rem + 2.6vw, 4.4rem);
+    }
+    .vo-hero__text .vo-btn {
+      background: #fff;
+      color: #1c2834;
+      border-color: #fff;
+    }
   }
 </style>
 <script>

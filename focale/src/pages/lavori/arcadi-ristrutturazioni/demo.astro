@@ -2,7 +2,6 @@
 import Demo from "../../../layouts/Demo.astro";
 import ArcadiHero from "../../../components/demo/ArcadiHero.astro";
 import BeforeAfter from "../../../components/demo/BeforeAfter.astro";
-import ReviewsEmpty from "../../../components/demo/ReviewsEmpty.astro";
 import { Image } from "astro:assets";
 import { site } from "../../../config/site";
 import { telHref } from "../../../lib/util";
@@ -147,13 +146,6 @@ const tel = telHref();
             <p class="ar-small">Si apre WhatsApp con il messaggio già scritto. Questo è un sito dimostrativo: il messaggio arriva a Focus Design, non a un'impresa.</p>
           </fieldset>
         </form>
-      </div>
-    </section>
-
-    <section class="ar-sec ar-sec--grey">
-      <div class="ar-wrap">
-        <h2>Cosa dicono i clienti</h2>
-        <ReviewsEmpty />
       </div>
     </section>
 

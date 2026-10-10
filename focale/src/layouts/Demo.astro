@@ -31,6 +31,29 @@ const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bod
     <main>
       <slot />
     </main>
+    <script>
+      // Soft reveal of section content as it scrolls in. Content is visible without JS and with reduced motion.
+      if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches && "IntersectionObserver" in window) {
+        const els = Array.from(document.querySelectorAll<HTMLElement>("main section:not(:first-of-type) :is(h2, li, figure, form, dl, p)"));
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              e.target.classList.add("is-in");
+              io.unobserve(e.target);
+            }
+          },
+          { rootMargin: "0px 0px -8% 0px" },
+        );
+        const vh = window.innerHeight;
+        els.forEach((el, i) => {
+          if (el.getBoundingClientRect().top < vh) return;
+          el.classList.add("d-rev");
+          el.style.transitionDelay = `${(i % 4) * 60}ms`;
+          io.observe(el);
+        });
+      }
+    </script>
   </body>
 </html>
 <style is:global>
@@ -59,6 +82,17 @@ const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bod
     text-underline-offset: 2px;
     display: inline-block;
     padding: 0.4rem 0;
+  }
+  .d-rev {
+    transform: translateY(26px);
+    filter: blur(6px);
+    transition:
+      transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .d-rev.is-in {
+    transform: none;
+    filter: none;
   }
   .demo-banner p {
     margin: 0;

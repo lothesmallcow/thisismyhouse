@@ -64,7 +64,7 @@ export function initHero() {
             scrollTrigger: {
               trigger: lens,
               start: "top top",
-              end: () => `+=${window.innerHeight * (c.mobile ? 2.2 : 2.6)}`,
+              end: () => `+=${window.innerHeight * (c.mobile ? 1.5 : 1.7)}`,
               scrub: 0.9,
               pin: true,
               anticipatePin: 1,

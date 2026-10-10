@@ -140,9 +140,13 @@ await test("home without JavaScript: content readable", async () => {
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const page = await ctx.newPage();
   await page.goto(`${base}/`);
-  for (const sel of ["h1", ".hero__main .lead", "#reno-title", '[data-scene="prima"]', '[data-scene="dopo"]', "[data-check]", ".calc__result"]) {
+  for (const sel of ["h1", ".hero__main .lead", ".pick__q", ".lens__head", "[data-lens-step]", ".calc__result"]) {
     assert.equal(await page.isVisible(sel), true, `${sel} visible`);
   }
+  // The sector chooser works with CSS alone.
+  assert.equal(await page.isVisible('[data-path="b-and-b-e-agriturismi"]'), false, "no path before choosing");
+  await page.click('label:has(input[value="b-and-b-e-agriturismi"])');
+  assert.equal(await page.isVisible('[data-path="b-and-b-e-agriturismi"]'), true, "chosen path shown");
   await ctx.close();
 });
 

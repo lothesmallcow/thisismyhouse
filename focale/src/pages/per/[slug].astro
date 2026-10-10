@@ -85,12 +85,12 @@ const demo = await getEntry("lavori", d.demo);
     )
   }
 
-  <section class="section" aria-labelledby="dom-settore">
+  <section class="section section--pietra" aria-labelledby="dom-settore">
     <div class="wrap sec">
       <p class="sec__label">Domande</p>
       <div class="sec__body">
         <h2 id="dom-settore" class="st-h2" data-focus>Domande</h2>
-        <Faq items={d.faq} />
+        <Faq items={d.faq} cols />
       </div>
     </div>
   </section>
