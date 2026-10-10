@@ -1,0 +1,277 @@
+---
+import Logo from "./Logo.astro";
+import Icon from "./Icon.astro";
+interface Props {
+  minimal?: boolean;
+}
+const { minimal = false } = Astro.props;
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const nav = [
+  { href: "/come-funziona", label: "Come funziona" },
+  { href: "/prezzi", label: "Prezzi" },
+  { href: "/lavori", label: "Lavori" },
+  { href: "/chi-sono", label: "Chi sono" },
+];
+const isCurrent = (href: string) => path === href || path.startsWith(href + "/");
+---
+<header class="hdr" data-header>
+  <div class="wrap hdr__inner">
+    <a href="/" class="hdr__logo" aria-label="Focale, torna alla home">
+      <Logo />
+    </a>
+    {
+      !minimal && (
+        <>
+          <nav class="hdr__nav" aria-label="Principale">
+            <ul>
+              {nav.map((n) => (
+                <li>
+                  <a href={n.href} aria-current={isCurrent(n.href) ? "page" : undefined}>
+                    {n.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a href="/anteprima-gratuita" class="btn btn--primary hdr__cta">
+              Anteprima gratuita
+            </a>
+          </nav>
+          <button class="hdr__menu" type="button" aria-expanded="false" aria-controls="menu-mobile" data-menu-open>
+            <Icon name="menu" />
+            <span>Menu</span>
+          </button>
+        </>
+      )
+    }
+  </div>
+</header>
+<div class="hdr-spacer" aria-hidden="true"></div>
+{
+  !minimal && (
+    <div class="mm on-dark" id="menu-mobile" role="dialog" aria-modal="true" aria-label="Menu" hidden data-menu>
+      <div class="wrap mm__top">
+        <a href="/" class="hdr__logo" aria-label="Focale, torna alla home">
+          <Logo variant="dark" />
+        </a>
+        <button class="hdr__menu hdr__menu--dark" type="button" data-menu-close>
+          <Icon name="close" />
+          <span>Chiudi</span>
+        </button>
+      </div>
+      <nav class="wrap mm__nav" aria-label="Principale, mobile">
+        <ul>
+          <li><a href="/">Home</a></li>
+          {nav.map((n) => (
+            <li>
+              <a href={n.href} aria-current={isCurrent(n.href) ? "page" : undefined}>
+                {n.label}
+              </a>
+            </li>
+          ))}
+          <li><a href="/contatti">Contatti</a></li>
+        </ul>
+        <a href="/anteprima-gratuita" class="btn btn--primary mm__cta">
+          Voglio l'anteprima gratuita
+        </a>
+      </nav>
+    </div>
+  )
+}
+
+<style>
+  .hdr {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    background: rgba(243, 244, 240, 0.97);
+    border-bottom: 1px solid transparent;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .hdr__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: var(--header-h);
+    transition: height 0.2s ease;
+  }
+  :global(.is-compact) .hdr {
+    border-bottom-color: var(--pietra-scura);
+  }
+  :global(.is-compact) .hdr__inner {
+    height: 3.75rem;
+  }
+  .hdr-spacer {
+    height: var(--header-h);
+  }
+  .hdr__logo {
+    display: inline-flex;
+    padding: 0.5rem 0;
+    min-height: 44px;
+    align-items: center;
+  }
+  .hdr__logo :global(.logo) {
+    height: 1.6rem;
+  }
+  .hdr__nav {
+    display: none;
+    align-items: center;
+    gap: 2rem;
+  }
+  .hdr__nav ul {
+    display: flex;
+    gap: 1.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .hdr__nav a:not(.btn) {
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-stretch: 104%;
+    color: var(--portone);
+    text-decoration: none;
+    font-size: 1.0625rem;
+    padding: 0.6rem 0;
+    background: linear-gradient(currentColor, currentColor) 0 calc(100% - 0.35rem) / 0 2px no-repeat;
+    transition: background-size 0.15s ease;
+  }
+  .hdr__nav a:not(.btn):hover,
+  .hdr__nav a[aria-current="page"] {
+    background-size: 100% 2px;
+  }
+  .hdr__cta {
+    --h: 46px;
+    min-height: 46px;
+  }
+  .hdr__menu {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 0.85rem;
+    border: 2px solid var(--portone);
+    border-radius: var(--radius-ui);
+    background: transparent;
+    color: var(--portone);
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .hdr__menu--dark {
+    color: var(--calce);
+    border-color: var(--calce);
+  }
+  @media (min-width: 960px) {
+    .hdr__nav {
+      display: flex;
+    }
+    .hdr__menu {
+      display: none;
+    }
+  }
+  .mm {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--portone);
+    color: var(--calce);
+    overflow-y: auto;
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+  .mm[hidden] {
+    display: none;
+  }
+  .mm__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-h);
+  }
+  .mm__nav ul {
+    list-style: none;
+    margin: 2rem 0 2.5rem;
+    padding: 0;
+    border-top: var(--bar) solid var(--ottone);
+  }
+  .mm__nav li {
+    border-bottom: 1px solid rgba(243, 244, 240, 0.18);
+  }
+  .mm__nav a:not(.btn) {
+    display: block;
+    padding: 1rem 0;
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-stretch: 112%;
+    font-size: clamp(1.75rem, 1.2rem + 3vw, 2.5rem);
+    line-height: 1.1;
+    color: var(--calce);
+    text-decoration: none;
+  }
+  .mm__nav a[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 6px;
+  }
+  .mm__cta {
+    width: 100%;
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>("[data-header]");
+  const root = document.documentElement;
+  const onScroll = () => root.classList.toggle("is-compact", window.scrollY > 80);
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  const menu = document.querySelector<HTMLElement>("[data-menu]");
+  const openBtn = document.querySelector<HTMLButtonElement>("[data-menu-open]");
+  const closeBtn = document.querySelector<HTMLButtonElement>("[data-menu-close]");
+  if (menu && openBtn && closeBtn && header) {
+    const focusables = () =>
+      Array.from(menu.querySelectorAll<HTMLElement>("a[href], button:not([disabled])")).filter((el) => el.offsetParent !== null);
+    const open = () => {
+      menu.hidden = false;
+      openBtn.setAttribute("aria-expanded", "true");
+      document.body.classList.add("menu-open");
+      closeBtn.focus();
+    };
+    const close = (restore = true) => {
+      menu.hidden = true;
+      openBtn.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("menu-open");
+      if (restore) openBtn.focus();
+    };
+    openBtn.addEventListener("click", open);
+    closeBtn.addEventListener("click", () => close());
+    menu.addEventListener("click", (e) => {
+      if ((e.target as HTMLElement).closest("a")) close(false);
+    });
+    menu.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        close();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = focusables();
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+    window.matchMedia("(min-width: 960px)").addEventListener("change", (m) => {
+      if (m.matches && !menu.hidden) close(false);
+    });
+  }
+</script>

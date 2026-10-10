@@ -1,0 +1,131 @@
+---
+/** Draggable before/after comparison. A native range input drives it: arrows work, touch works. */
+import { Image } from "astro:assets";
+interface Props {
+  before: ImageMetadata;
+  after: ImageMetadata;
+  caption: string;
+  alt: string;
+}
+const { before, after, caption, alt } = Astro.props;
+const id = `ba-${Math.random().toString(36).slice(2, 8)}`;
+---
+<figure class="ba" data-ba style="--pos: 50%">
+  <div class="ba__media">
+    <Image src={before} alt={`Prima: ${alt}`} widths={[400, 800]} sizes="(min-width: 900px) 560px, 92vw" class="ba__img" />
+    <div class="ba__after">
+      <Image src={after} alt={`Dopo: ${alt}`} widths={[400, 800]} sizes="(min-width: 900px) 560px, 92vw" class="ba__img" />
+    </div>
+    <span class="ba__tag ba__tag--l" aria-hidden="true">Prima</span>
+    <span class="ba__tag ba__tag--r" aria-hidden="true">Dopo</span>
+    <span class="ba__line" aria-hidden="true"><span class="ba__knob"></span></span>
+    <input class="ba__range" id={id} type="range" min="0" max="100" value="50" aria-label={`Confronta prima e dopo: ${caption}`} />
+  </div>
+  <figcaption>{caption}</figcaption>
+</figure>
+<style>
+  .ba {
+    margin: 0;
+  }
+  .ba__media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #ddd;
+    touch-action: pan-y;
+  }
+  .ba__media :global(.ba__img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .ba__after {
+    position: absolute;
+    inset: 0;
+    clip-path: inset(0 0 0 var(--pos));
+  }
+  .ba__line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--pos);
+    width: 3px;
+    margin-left: -1.5px;
+    background: #fff;
+    pointer-events: none;
+  }
+  .ba__knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+  .ba__knob::before,
+  .ba__knob::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    transform: translateY(-50%);
+  }
+  .ba__knob::before {
+    left: 8px;
+    border-right-color: #1d1f21;
+  }
+  .ba__knob::after {
+    right: 8px;
+    border-left-color: #1d1f21;
+  }
+  .ba__range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: ew-resize;
+  }
+  .ba__media:has(.ba__range:focus-visible) {
+    outline: 3px solid #1d1f21;
+    outline-offset: 3px;
+  }
+  .ba__tag {
+    position: absolute;
+    top: 10px;
+    padding: 3px 8px;
+    background: rgba(0, 0, 0, 0.72);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 3px;
+    pointer-events: none;
+  }
+  .ba__tag--l {
+    left: 10px;
+  }
+  .ba__tag--r {
+    right: 10px;
+  }
+  figcaption {
+    margin-top: 0.6rem;
+    font-size: 15px;
+    font-weight: 600;
+  }
+</style>
+<script>
+  document.querySelectorAll<HTMLElement>("[data-ba]").forEach((fig) => {
+    const r = fig.querySelector<HTMLInputElement>(".ba__range")!;
+    const set = () => fig.style.setProperty("--pos", `${r.value}%`);
+    r.addEventListener("input", set);
+    set();
+  });
+</script>

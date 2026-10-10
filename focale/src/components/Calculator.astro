@@ -1,0 +1,192 @@
+---
+import Fuoco from "./Fuoco.astro";
+import { site } from "../config/site";
+import { num } from "../lib/util";
+
+const price = site.prices.professionale.standard;
+const defaults = { valore: 3000, tasso: 3, richieste: 2 };
+const annuo = Math.round((defaults.richieste * 12 * (defaults.tasso / 10) * defaults.valore) / 100) * 100;
+const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(price / defaults.valore)} lavori`;
+---
+<section class="section section--pietra calc" id="calcolatore">
+  <div class="wrap">
+    <Fuoco />
+    <div class="calc__grid">
+      <div>
+        <h2>Quanto vale una richiesta in più al mese?</h2>
+        <p class="lead calc__intro">Metti i tuoi numeri. Il calcolo lo fai tu.</p>
+        <form class="calc__form" data-calc data-price={price} onsubmit="return false" aria-label="Calcolatore">
+          <div class="field">
+            <label for="calc-valore">Quanto vale in media un tuo lavoro?</label>
+            <div class="calc__money">
+              <span aria-hidden="true">€</span>
+              <input id="calc-valore" name="valore" type="number" inputmode="numeric" min="100" max="200000" step="100" value={defaults.valore} aria-describedby="calc-valore-hint" />
+            </div>
+            <p class="hint" id="calc-valore-hint">Il valore medio di un lavoro che ti affidano, in euro.</p>
+          </div>
+          <div class="field">
+            <label for="calc-tasso">Su 10 preventivi, quanti diventano lavori?</label>
+            <div class="calc__range">
+              <input id="calc-tasso" name="tasso" type="range" min="1" max="10" step="1" value={defaults.tasso} />
+              <output for="calc-tasso" data-out="tasso">{defaults.tasso}</output>
+            </div>
+          </div>
+          <div class="field">
+            <label for="calc-richieste">Quante richieste in più al mese ti aspetti da un sito migliore?</label>
+            <div class="calc__range">
+              <input id="calc-richieste" name="richieste" type="range" min="1" max="10" step="1" value={defaults.richieste} />
+              <output for="calc-richieste" data-out="richieste">{defaults.richieste}</output>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="calc__result" aria-live="polite" aria-atomic="true">
+        <p class="calc__big">
+          In un anno sono circa <strong><span data-annuo>{num(annuo)}</span> €</strong> di lavori in più.
+        </p>
+        <p class="calc__payback">
+          Il sito Professionale costa {num(price)} €: si ripaga con <span data-payback>{payback}</span>.
+        </p>
+        <p class="small calc__note">
+          È una stima fatta con i tuoi numeri, non una promessa. Nessuno può garantirti quante richieste arriveranno. Io posso garantirti un
+          sito fatto per non perderle.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .calc__intro {
+    margin: 1rem 0 2rem;
+  }
+  .calc__grid {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 960px) {
+    .calc__grid {
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 5rem;
+      align-items: end;
+    }
+  }
+  .calc__form {
+    display: grid;
+    gap: 1.75rem;
+    max-width: 34rem;
+  }
+  .calc__money {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 2px solid #8e958f;
+    border-radius: var(--radius-ui);
+    max-width: 16rem;
+  }
+  .calc__money:focus-within {
+    outline: 3px solid var(--portone);
+    outline-offset: 1px;
+    border-color: var(--portone);
+  }
+  .calc__money span {
+    padding-left: 0.9rem;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--portone);
+  }
+  .field .calc__money input {
+    border: 0;
+    outline: none;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1.375rem;
+    color: var(--portone);
+    background: transparent;
+  }
+  .calc__range {
+    display: grid;
+    grid-template-columns: 1fr 3rem;
+    gap: 1rem;
+    align-items: center;
+  }
+  .calc__range output {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1.75rem;
+    color: var(--portone);
+    text-align: right;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 44px;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    background: var(--portone);
+    border-radius: 0;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 8px;
+    background: var(--portone);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 30px;
+    height: 30px;
+    margin-top: -11px;
+    background: var(--calce);
+    border: 4px solid var(--portone);
+    border-radius: 50%;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    background: var(--calce);
+    border: 4px solid var(--portone);
+    border-radius: 50%;
+  }
+  input[type="range"]:focus-visible {
+    outline: 3px solid var(--portone);
+    outline-offset: 4px;
+  }
+  .calc__result {
+    border-left: var(--bar) solid var(--portone);
+    padding-left: clamp(1.25rem, 1rem + 1vw, 2rem);
+  }
+  .calc__big {
+    font-family: var(--font-head);
+    font-weight: 650;
+    font-size: var(--step-2);
+    line-height: 1.2;
+    color: var(--portone);
+  }
+  .calc__big strong {
+    display: block;
+    font-weight: 850;
+    font-stretch: 116%;
+    font-size: clamp(2.75rem, 2rem + 3vw, 4.5rem);
+    line-height: 1;
+    margin: 0.35rem 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .calc__payback {
+    margin-top: 1.25rem !important;
+    font-size: var(--step-1);
+  }
+  .calc__note {
+    margin-top: 1.25rem !important;
+    color: var(--tenue);
+    max-width: 46ch;
+  }
+</style>
+
+<script>
+  import { initCalculator } from "../scripts/calculator";
+  initCalculator();
+</script>

@@ -1,0 +1,138 @@
+---
+import Logo from "./Logo.astro";
+import P from "./P.astro";
+import { site } from "../config/site";
+import { whatsappHref, telHref, mailHref } from "../lib/util";
+const year = new Date().getFullYear();
+---
+<footer class="ftr on-dark">
+  <div class="wrap">
+    <div class="ftr__top">
+      <div class="ftr__brand">
+        <a href="/" aria-label="Focale, torna alla home"><Logo variant="dark" /></a>
+        <p>Siti web per piccole imprese che vogliono più richieste.</p>
+        <p class="muted">Lavoro da Milano, per tutta la Lombardia e online.</p>
+      </div>
+      <nav class="ftr__cols" aria-label="Piè di pagina">
+        <div>
+          <h2>Studio</h2>
+          <ul>
+            <li><a href="/come-funziona">Come funziona</a></li>
+            <li><a href="/prezzi">Prezzi</a></li>
+            <li><a href="/lavori">Lavori</a></li>
+            <li><a href="/chi-sono">Chi sono</a></li>
+            <li><a href="/anteprima-gratuita">Anteprima gratuita</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Settori</h2>
+          <ul>
+            <li><a href="/per/ristrutturazioni-e-serramenti">Imprese di ristrutturazione e serramenti</a></li>
+            <li><a href="/per/b-and-b-e-agriturismi">B&amp;B e agriturismi</a></li>
+            <li><a href="/per/location-per-matrimoni">Location per matrimoni</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Contatti</h2>
+          <ul>
+            <li><a href={whatsappHref("Ciao, ti scrivo dal sito di Focale.")} target="_blank" rel="noopener">WhatsApp</a></li>
+            <li><a href={telHref()}><P value={site.phoneDisplay} /></a></li>
+            <li><a href={mailHref()}><P value={site.email} /></a></li>
+            <li><a href="/contatti">Tutti i contatti</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Legale</h2>
+          <ul>
+            <li><a href="/condizioni">Condizioni del servizio</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/cookie">Cookie</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <div class="ftr__legal">
+      <p>
+        © {year} <P value={site.legalName} />. P.IVA <P value={site.vatNumber} />. <P value={site.registeredAddress} />.
+      </p>
+      <p class="ftr__sign">Sito costruito da Focale, ovviamente.</p>
+    </div>
+  </div>
+</footer>
+<style>
+  .ftr {
+    background: var(--portone);
+    color: var(--calce);
+    padding: clamp(3.5rem, 2.5rem + 4vw, 6rem) 0 2rem;
+    border-top: var(--bar) solid var(--ottone);
+  }
+  .ftr a {
+    color: var(--calce);
+  }
+  .ftr__top {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 960px) {
+    .ftr__top {
+      grid-template-columns: 1.1fr 2fr;
+    }
+  }
+  .ftr__brand :global(.logo) {
+    height: 2rem;
+    margin-bottom: 1.25rem;
+  }
+  .ftr__brand p {
+    max-width: 26rem;
+  }
+  .ftr__brand .muted {
+    margin-top: 0.5rem;
+    color: #c8d0c9;
+  }
+  .ftr__cols {
+    display: grid;
+    gap: 2rem 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  }
+  .ftr h2 {
+    font-size: 1rem;
+    font-stretch: 104%;
+    font-weight: 700;
+    color: #e2c27e;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0;
+  }
+  .ftr ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+  .ftr ul a {
+    display: inline-block;
+    padding: 0.45rem 0;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    text-decoration: none;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .ftr ul a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .ftr__legal {
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(243, 244, 240, 0.2);
+    font-size: 0.9375rem;
+    color: #c8d0c9;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .ftr__sign {
+    font-size: 0.875rem;
+    margin: 0;
+  }
+</style>

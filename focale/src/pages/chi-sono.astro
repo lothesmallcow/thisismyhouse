@@ -1,0 +1,97 @@
+---
+import Base from "../layouts/Base.astro";
+import Fuoco from "../components/Fuoco.astro";
+import OwnerPhoto from "../components/OwnerPhoto.astro";
+import Closing from "../components/Closing.astro";
+import P from "../components/P.astro";
+import { site } from "../config/site";
+import { breadcrumbs } from "../lib/schema";
+---
+<Base
+  title="Chi sono | Focale"
+  description="Chi c'è dietro Focale, perché lavoro da solo e come lavoro."
+  jsonLd={[breadcrumbs([{ name: "Chi sono", path: "/chi-sono/" }])]}
+>
+  <section class="cs-hero" data-hero>
+    <div class="wrap cs-grid">
+      <div>
+        <Fuoco />
+        <h1>Ciao, sono <P value={site.ownerFirstName} />.</h1>
+        <div class="cs-text">
+          {/* DA CONFERMARE: Lorenzo può modificarli o toglierli (i due paragrafi qui sotto) */}
+          <p class="lead">
+            Ho <P value={site.ownerAge} /> anni e studio International Economics and Finance all'Università Bocconi. Prima di Focale ho costruito
+            da solo un videogioco su Roblox con il mio studio, Damalis: dal codice all'economia del gioco, tutto da zero. Lì ho imparato una cosa
+            che vale anche per i siti: le persone decidono in pochi secondi se restare.
+          </p>
+          <p>Alleno una squadra di ragazzi a calcio da tre stagioni, e questa è la quarta. Mi ha insegnato a spiegare le cose in modo semplice, che è metà del mio lavoro.</p>
+        </div>
+      </div>
+      <OwnerPhoto />
+    </div>
+  </section>
+
+  <section class="section section--pietra">
+    <div class="wrap cs-cols">
+      <div>
+        <Fuoco />
+        <h2>Perché "Focale"</h2>
+        <p class="cs-p">
+          Il punto focale è dove cade lo sguardo. Chi apre il tuo sito decide in un attimo se restare, e guarda poche cose: chi sei, cosa fai,
+          come contattarti. Il mio lavoro è metterle a fuoco.
+        </p>
+      </div>
+      <div>
+        <Fuoco />
+        <h2>Come lavoro</h2>
+        <p class="cs-p">Prezzi scritti. Tempi scritti. Niente gergo tecnico. Rispondo entro la giornata lavorativa, dal lunedì al venerdì.</p>
+      </div>
+      <div>
+        <Fuoco />
+        <h2>Cosa non faccio</h2>
+        <p class="cs-p">
+          Non faccio pubblicità a pagamento, social o negozi online. Faccio una cosa sola: siti che portano richieste. Se ti serve altro, ti dico
+          a chi rivolgerti.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <Closing />
+</Base>
+<style>
+  .cs-hero {
+    padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem) var(--space-section);
+  }
+  .cs-grid {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 960px) {
+    .cs-grid {
+      grid-template-columns: 1.5fr 0.6fr;
+      gap: 5rem;
+      align-items: end;
+    }
+  }
+  .cs-text {
+    margin-top: 2rem;
+    max-width: 62ch;
+  }
+  .cs-cols {
+    display: grid;
+    gap: 3.5rem;
+  }
+  @media (min-width: 1000px) {
+    .cs-cols {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3rem;
+    }
+  }
+  .cs-cols h2 {
+    font-size: var(--step-2);
+  }
+  .cs-p {
+    margin-top: 1rem;
+  }
+</style>

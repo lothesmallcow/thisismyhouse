@@ -1,0 +1,144 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import Fuoco from "../components/Fuoco.astro";
+import Steps from "../components/Steps.astro";
+import Faq from "../components/Faq.astro";
+import Closing from "../components/Closing.astro";
+import Icon from "../components/Icon.astro";
+import { getCollection } from "astro:content";
+import { site } from "../config/site";
+import { fill } from "../lib/util";
+import { breadcrumbs, faqPage } from "../lib/schema";
+
+const faqs = (await getCollection("faq")).sort((a, b) => a.data.order - b.data.order);
+const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
+const steps = [
+  {
+    title: "Mi racconti la tua attività.",
+    text: "Dieci minuti al telefono o su WhatsApp. Mi dici cosa fai, per chi lavori, in che zona e cosa vorresti che il sito facesse per te. Se hai già un sito, gli do un'occhiata prima di sentirci.",
+  },
+  {
+    title: "Ricevi l'anteprima gratuita.",
+    text: `Entro ${site.previewHours} ore ti mando la homepage del tuo nuovo sito, con il tuo nome, i tuoi servizi e le foto che trovo sulla tua scheda Google o che mi mandi tu. È privata: la vedi solo tu, da un link.`,
+  },
+  {
+    title: "Se ti convince, partiamo.",
+    text: `Ti mando un preventivo scritto con il pacchetto scelto. Mi versi un acconto del ${site.depositPercent}% e mi mandi foto e informazioni. Da quel giorno il sito è pronto in ${site.deliveryDays.essenziale} o ${site.deliveryDays.professionale} giorni lavorativi, secondo il pacchetto.`,
+  },
+  {
+    title: "Approvi, paghi il saldo, va online.",
+    text: `Lo provi dal tuo telefono e chiedi le modifiche: ${site.revisionRounds} giri sono inclusi. Quando lo approvi, paghi il saldo e lo metto online sul tuo dominio.`,
+  },
+];
+const need = [
+  "Il nome dell'attività e cosa fai, in parole tue",
+  "La zona in cui lavori",
+  "Telefono, WhatsApp ed email da mostrare sul sito",
+  "Il logo, se ce l'hai. Se non ce l'hai, scrivo il nome in modo pulito",
+  "Da 10 a 30 foto dei tuoi lavori, anche fatte col telefono",
+  "Gli accessi al dominio, se ne hai già uno. Ti spiego io dove trovarli",
+];
+const get = [
+  "Il sito online sul tuo dominio",
+  "Un messaggio di prova, per vedere come ti arrivano le richieste",
+  "La scheda Google collegata al sito",
+  "Un documento di una pagina con tutti gli accessi, intestati a te",
+  "Il punteggio di velocità di Google, misurato davanti a te",
+];
+---
+<Base
+  title="Come funziona | Focale"
+  description={`Quattro passi dal primo messaggio al sito online. Anteprima gratuita, acconto del ${site.depositPercent}%, saldo solo dopo la tua approvazione.`}
+  jsonLd={[breadcrumbs([{ name: "Come funziona", path: "/come-funziona/" }]), faqPage(faqItems)]}
+>
+  <PageHead
+    title="Come funziona"
+    lead="Dal primo messaggio al sito online in quattro passi. Il primo è gratis, e il saldo lo paghi solo quando il sito ti convince."
+  />
+
+  <section class="section cf-steps">
+    <div class="wrap">
+      <Steps steps={steps} />
+    </div>
+  </section>
+
+  <section class="section section--pietra">
+    <div class="wrap cf-two">
+      <div>
+        <Fuoco />
+        <h2>Cosa mi serve da te</h2>
+        <ul class="cf-list">
+          {need.map((n) => <li><Icon name="check" />{n}</li>)}
+        </ul>
+      </div>
+      <div>
+        <Fuoco />
+        <h2>Cosa ricevi</h2>
+        <ul class="cf-list">
+          {get.map((n) => <li><Icon name="check" />{n}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark on-dark">
+    <div class="wrap">
+      <Fuoco dark />
+      <h2>La garanzia</h2>
+      <p class="lead measure cf-g">
+        L'anteprima è gratuita. Se non ti piace, finisce lì: non mi devi niente e non ti richiamo dieci volte. Se ti piace e partiamo, il
+        saldo lo paghi solo dopo aver approvato il sito finito.
+      </p>
+      <a class="btn btn--secondary" href="/condizioni">Leggi le condizioni complete</a>
+    </div>
+  </section>
+
+  <section class="section" id="domande">
+    <div class="wrap">
+      <Fuoco />
+      <h2 class="cf-h2">Tutte le domande</h2>
+      <Faq items={faqItems} />
+    </div>
+  </section>
+
+  <Closing />
+</Base>
+<style>
+  .cf-steps {
+    padding-top: 1rem;
+  }
+  .cf-two {
+    display: grid;
+    gap: 4rem;
+  }
+  @media (min-width: 900px) {
+    .cf-two {
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+    }
+  }
+  .cf-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.75rem 0 0;
+    display: grid;
+    gap: 0.9rem;
+  }
+  .cf-list li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0.75rem;
+    align-items: start;
+  }
+  .cf-list :global(.icon) {
+    color: var(--portone);
+    margin-top: 0.2rem;
+  }
+  .cf-g {
+    margin: 1.5rem 0 2rem;
+  }
+  .cf-h2 {
+    margin-bottom: 2rem;
+  }
+</style>

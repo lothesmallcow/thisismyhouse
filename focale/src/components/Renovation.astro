@@ -1,0 +1,350 @@
+---
+/**
+ * Signature section: an old website being renovated as the visitor scrolls (A2).
+ * Without JS or with reduced motion: "Prima" and "Dopo" side by side, notes and checklist visible.
+ * Desktop with motion: one pinned frame where the old site is marked, scaffolded, rebuilt and
+ * turned into a phone. Mobile with motion: three stacked scenes that each play once.
+ */
+import Fuoco from "./Fuoco.astro";
+import OldSite from "./demo/OldSite.astro";
+import ArcadiHero from "./demo/ArcadiHero.astro";
+import CantiereSign from "./CantiereSign.astro";
+
+const checklist = [
+  "Si legge da qualsiasi telefono",
+  "Chiamata o WhatsApp con un tocco",
+  "Foto dei lavori veri, prima e dopo",
+  "Le richieste arrivano già ordinate",
+  "Si vede che l'attività è viva",
+];
+const scaffold = `
+  <path d="M6 2 V98" /><path d="M36 2 V98" /><path d="M66 2 V98" /><path d="M94 2 V98" />
+  <path d="M2 24 H98" /><path d="M2 52 H98" /><path d="M2 80 H98" />
+  <path d="M6 24 L36 52" /><path d="M66 24 L94 52" /><path d="M36 52 L66 80" />`;
+---
+<section class="reno" id="ristrutturazione" data-reno aria-labelledby="reno-title">
+  <div class="reno__pin" data-reno-pin>
+    <div class="wrap reno__grid">
+      <div class="reno__head">
+        <Fuoco />
+        <h2 id="reno-title">Guarda un sito vecchio diventare uno che lavora.</h2>
+        <p class="reno__intro">Scorri piano. L'attività è inventata, ma i difetti sono quelli che trovo ogni giorno.</p>
+        <p class="sr-only">
+          Esempio dimostrativo: un sito vecchio, difficile da leggere dal telefono e senza contatti in vista, viene rifatto in un sito
+          moderno con pulsanti per chiamare e scrivere su WhatsApp, foto dei lavori e informazioni aggiornate.
+        </p>
+      </div>
+
+      <div class="reno__stage" data-stage aria-hidden="true">
+        <div class="scene scene--prima" data-scene="prima">
+          <p class="scene__label">Prima</p>
+          <div class="frame" data-frame>
+            <div class="frame__chrome" data-chrome>
+              <span class="frame__dots"><i></i><i></i><i></i></span>
+              <span class="frame__url">www.impresaedilearcadi.it</span>
+            </div>
+            <div class="frame__screen" data-screen>
+              <div class="layer layer--old" data-layer-old><OldSite /></div>
+            </div>
+            <svg class="scaffold" data-scaffold viewBox="0 0 100 100" preserveAspectRatio="none" set:html={scaffold} />
+            <div class="sign" data-sign><CantiereSign /></div>
+          </div>
+        </div>
+
+        <div class="scene scene--cantiere" data-scene="cantiere">
+          <p class="scene__label">Cantiere</p>
+          <div class="frame frame--cantiere">
+            <div class="frame__chrome">
+              <span class="frame__dots"><i></i><i></i><i></i></span>
+              <span class="frame__url">www.impresaedilearcadi.it</span>
+            </div>
+            <div class="frame__screen">
+              <div class="layer layer--old layer--grey" data-cantiere-old><OldSite annotations={false} /></div>
+            </div>
+            <svg class="scaffold scaffold--on" data-scaffold-m viewBox="0 0 100 100" preserveAspectRatio="none" set:html={scaffold} />
+            <div class="sign sign--on" data-sign-m><CantiereSign small /></div>
+          </div>
+        </div>
+
+        <div class="scene scene--dopo" data-scene="dopo">
+          <p class="scene__label">Dopo</p>
+          <div class="phone" data-phone>
+            <div class="layer layer--new" data-layer-new><ArcadiHero /></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reno__after">
+        <ul class="checklist" data-check>
+          {
+            checklist.map((c) => (
+              <li data-check-item>
+                <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+                  <path d="m4.5 12.5 4.5 4.5 10.5-10.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>{c}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <a href="/anteprima-gratuita" class="btn btn--primary" data-reno-cta>Voglio vedere il mio sito così</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .reno {
+    padding-block: var(--space-section);
+    background: var(--calce);
+    position: relative;
+  }
+  .reno__grid {
+    display: grid;
+    gap: 2.5rem;
+    grid-template-areas: "head" "stage" "after";
+  }
+  .reno__head {
+    grid-area: head;
+  }
+  .reno__intro {
+    margin-top: 1rem;
+    font-size: var(--step-1);
+    max-width: 40ch;
+  }
+  .reno__stage {
+    grid-area: stage;
+    display: grid;
+    gap: 2.5rem;
+    align-items: end;
+  }
+  .reno__after {
+    grid-area: after;
+    display: grid;
+    gap: 2rem;
+    justify-items: start;
+  }
+  @media (min-width: 768px) {
+    .reno__stage {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 3rem;
+    }
+  }
+
+  .scene__label {
+    font-family: var(--font-head);
+    font-weight: 750;
+    font-stretch: 108%;
+    font-size: 1.125rem;
+    color: var(--portone);
+    margin-bottom: 0.75rem;
+  }
+  .scene--cantiere {
+    display: none;
+  }
+
+  /* Desktop browser frame */
+  .frame {
+    position: relative;
+    width: 100%;
+    max-width: 44rem;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    flex-direction: column;
+    background: #c9c9c9;
+    border: 2px solid #1b1f1d;
+    border-radius: 8px;
+    box-shadow: 0 24px 50px -24px rgba(64, 48, 20, 0.35);
+  }
+  .frame__chrome {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 30px;
+    padding: 0 10px;
+    background: #e6e6e3;
+    border-bottom: 1px solid #b5b5b0;
+    border-radius: 6px 6px 0 0;
+  }
+  .frame__dots {
+    display: flex;
+    gap: 6px;
+  }
+  .frame__dots i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #b9b9b4;
+  }
+  .frame__url {
+    flex: 1;
+    max-width: 22rem;
+    font-family: var(--font-head);
+    font-size: 12px;
+    color: #4a4a46;
+    background: #fff;
+    border-radius: 4px;
+    padding: 3px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .frame__screen {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: 0 0 6px 6px;
+  }
+  .layer {
+    height: 100%;
+  }
+  .layer--grey {
+    filter: grayscale(1);
+    opacity: 0.6;
+  }
+
+  /* Phone frame for the "Dopo" scene */
+  .phone {
+    width: min(78vw, 300px);
+    aspect-ratio: 390 / 760;
+    border: 10px solid #1b1f1d;
+    border-radius: var(--radius-phone);
+    overflow: hidden;
+    background: #f2f2f0;
+    box-shadow: 0 30px 60px -20px rgba(64, 48, 20, 0.35);
+  }
+
+  .scaffold {
+    display: none;
+    position: absolute;
+    inset: -3% -2%;
+    width: 104%;
+    height: 106%;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .scaffold :global(path) {
+    fill: none;
+    stroke: #6b6f6c;
+    stroke-width: 6px;
+    stroke-linecap: square;
+    vector-effect: non-scaling-stroke;
+  }
+  .sign {
+    display: none;
+    position: absolute;
+    top: 14%;
+    right: -4%;
+    z-index: 3;
+  }
+
+  .checklist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.85rem;
+  }
+  .checklist li {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    font-family: var(--font-head);
+    font-weight: 650;
+    font-size: var(--step-1);
+    color: var(--portone);
+    line-height: 1.25;
+  }
+  .checklist svg {
+    color: var(--portone);
+  }
+
+  /* ---------- Mobile animated: three scenes ---------- */
+  :global(.reno.is-mobile-anim) .scene--cantiere {
+    display: block;
+  }
+  :global(.reno.is-mobile-anim) .scene--cantiere .scaffold,
+  :global(.reno.is-mobile-anim) .scene--cantiere .sign {
+    display: block;
+  }
+  :global(.reno.is-mobile-anim) .sign {
+    top: 8%;
+    right: -2%;
+  }
+
+  /* ---------- Desktop animated: one pinned frame ---------- */
+  :global(.reno.is-anim) {
+    padding-block: 0;
+  }
+  :global(.reno.is-anim) .reno__pin {
+    height: 100vh;
+    height: 100svh;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    padding-block: calc(var(--header-h) + 1rem) 2rem;
+  }
+  :global(.reno.is-anim) .reno__grid {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    grid-template-areas: "head stage" "after stage";
+    grid-template-rows: auto 1fr;
+    column-gap: clamp(2rem, 4vw, 5rem);
+    row-gap: 2rem;
+    align-items: start;
+    height: 100%;
+  }
+  :global(.reno.is-anim) .reno__stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+  :global(.reno.is-anim) .scene--dopo,
+  :global(.reno.is-anim) .scene__label {
+    display: none;
+  }
+  :global(.reno.is-anim) .scene--prima {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  :global(.reno.is-anim) .frame {
+    width: min(100%, calc((100svh - var(--header-h) - 6rem) * 4 / 3));
+    max-width: none;
+  }
+  :global(.reno.is-anim) .frame.is-phone {
+    width: 300px;
+    aspect-ratio: 390 / 760;
+    border-width: 10px;
+    border-color: #1b1f1d;
+    border-radius: var(--radius-phone);
+  }
+  :global(.reno.is-anim) .frame.is-phone .frame__chrome {
+    display: none;
+  }
+  :global(.reno.is-anim) .frame__screen .layer {
+    position: absolute;
+    inset: 0;
+  }
+  :global(.reno.is-anim) .scaffold,
+  :global(.reno.is-anim) .sign {
+    display: block;
+  }
+  :global(.reno.is-anim) .reno__after {
+    align-self: end;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scaffold,
+    .sign {
+      display: none !important;
+    }
+  }
+</style>
+
+<script>
+  import { initRenovation } from "../scripts/renovation";
+  initRenovation();
+</script>

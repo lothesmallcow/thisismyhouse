@@ -1,0 +1,10 @@
+---
+/** Renders a config value; placeholders get data-placeholder so they are easy to spot in dev. */
+import { isPlaceholder } from "../lib/util";
+interface Props {
+  value: string | number;
+}
+const { value } = Astro.props;
+const ph = isPlaceholder(value);
+---
+{ph ? <span data-placeholder>{value}</span> : <Fragment>{value}</Fragment>}

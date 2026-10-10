@@ -1,0 +1,551 @@
+@import "tailwindcss";
+
+/* ---------- Fonts (self-hosted, Latin + Latin Extended) ---------- */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url("/fonts/archivo-latin.woff2") format("woff2-variations"), url("/fonts/archivo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url("/fonts/archivo-latin-ext.woff2") format("woff2-variations"), url("/fonts/archivo-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Literata";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url("/fonts/literata-latin.woff2") format("woff2-variations"), url("/fonts/literata-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Literata";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url("/fonts/literata-latin-ext.woff2") format("woff2-variations"), url("/fonts/literata-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Literata";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url("/fonts/literata-latin-italic.woff2") format("woff2-variations"), url("/fonts/literata-latin-italic.woff2") format("woff2");
+}
+/* Metric-matched fallbacks: keep line boxes close to the real fonts while they load. */
+@font-face {
+  font-family: "Archivo Fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("Liberation Sans");
+  size-adjust: 112%;
+  ascent-override: 78%;
+  descent-override: 19%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Literata Fallback";
+  src: local("Georgia"), local("Times New Roman"), local("Liberation Serif");
+  size-adjust: 106%;
+  ascent-override: 92%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+/* ---------- Tokens ---------- */
+@theme {
+  --color-calce: #f3f4f0;
+  --color-pietra: #dad8d0;
+  --color-portone: #1e3a2c;
+  --color-testo: #23302a;
+  --color-giallo: #f5b700;
+  --color-ottone: #a67c2e;
+  --color-marker: #d7392b;
+  --color-tenue: #4d5a53;
+  --font-sans: "Archivo", "Archivo Fallback", sans-serif;
+  --font-serif: "Literata", "Literata Fallback", serif;
+}
+
+:root {
+  --calce: #f3f4f0;
+  --pietra: #dad8d0;
+  --pietra-scura: #c9c6bb;
+  --portone: #1e3a2c;
+  --portone-chiaro: #2b4d3b;
+  --testo: #23302a;
+  --tenue: #4d5a53; /* secondary text, 7.0:1 on calce */
+  --giallo: #f5b700;
+  --ottone: #a67c2e;
+  --marker: #d7392b;
+
+  --font-head: "Archivo", "Archivo Fallback", sans-serif;
+  --font-body: "Literata", "Literata Fallback", serif;
+
+  --step--1: clamp(1rem, 0.97rem + 0.1vw, 1.0625rem);
+  --step-0: clamp(1.125rem, 1.08rem + 0.19vw, 1.25rem);
+  --step-1: clamp(1.25rem, 1.157rem + 0.381vw, 1.5rem);
+  --step-2: clamp(1.375rem, 1.236rem + 0.571vw, 1.75rem);
+  --step-3: clamp(1.875rem, 1.41rem + 1.905vw, 3.125rem);
+  --step-4: clamp(2.5rem, 1.66rem + 3.43vw, 4.75rem);
+
+  --gutter: clamp(1rem, 0.6rem + 2vw, 2.5rem);
+  --max: 75rem;
+  --measure: 68ch;
+  --space-section: clamp(4.5rem, 3rem + 6vw, 8.5rem);
+  --radius-ui: 6px;
+  --radius-phone: 14px;
+  --bar: 8px;
+  --header-h: 4.5rem;
+  --sticky-h: 0px;
+}
+@media (min-width: 768px) {
+  :root {
+    --bar: 12px;
+  }
+}
+
+/* ---------- Base ---------- */
+html {
+  background: var(--calce);
+  color: var(--testo);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+}
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: var(--sticky-h);
+  overflow-x: clip;
+}
+body.menu-open {
+  overflow: hidden;
+}
+::selection {
+  background: var(--portone);
+  color: var(--calce);
+}
+h1,
+h2,
+h3,
+h4,
+.head {
+  font-family: var(--font-head);
+  color: var(--portone);
+  font-weight: 800;
+  font-stretch: 112%;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+h1 {
+  font-size: var(--step-4);
+  font-weight: 830;
+  font-stretch: 116%;
+  line-height: 1.03;
+}
+h2 {
+  font-size: var(--step-3);
+}
+h3 {
+  font-size: var(--step-2);
+  font-stretch: 106%;
+  line-height: 1.15;
+}
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+p + p {
+  margin-top: 1em;
+}
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+img {
+  height: auto;
+}
+a {
+  color: inherit;
+}
+.prose a,
+a.link {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+  transition: text-decoration-thickness 0.15s ease;
+}
+.prose a:hover,
+a.link:hover {
+  text-decoration-thickness: 3px;
+}
+:focus-visible {
+  outline: 3px solid var(--portone);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.on-dark :focus-visible,
+.on-dark:focus-visible {
+  outline-color: var(--giallo);
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip {
+  position: absolute;
+  left: var(--gutter);
+  top: -100px;
+  z-index: 100;
+  background: var(--giallo);
+  color: var(--portone);
+  font-family: var(--font-head);
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-ui);
+}
+.skip:focus {
+  top: 0.75rem;
+}
+
+/* ---------- Layout ---------- */
+.wrap {
+  width: 100%;
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  box-sizing: border-box;
+}
+.section {
+  padding-block: var(--space-section);
+}
+.section--pietra {
+  background: var(--pietra);
+}
+.section--dark {
+  background: var(--portone);
+  color: var(--calce);
+}
+.section--dark h1,
+.section--dark h2,
+.section--dark h3 {
+  color: var(--calce);
+}
+.measure {
+  max-width: var(--measure);
+}
+.lead {
+  font-size: var(--step-1);
+  line-height: 1.5;
+}
+.small {
+  font-size: var(--step--1);
+  line-height: 1.5;
+}
+.muted {
+  color: var(--tenue);
+}
+.section--dark .muted {
+  color: #c8d0c9;
+}
+.stack > * + * {
+  margin-top: var(--stack, 1.25rem);
+}
+.ui {
+  font-family: var(--font-head);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  --h: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: var(--h);
+  padding: 0 1.4rem;
+  border-radius: var(--radius-ui);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-stretch: 104%;
+  font-size: 1.0625rem;
+  line-height: 1.1;
+  text-decoration: none;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+.btn--primary {
+  background: var(--giallo);
+  color: var(--portone);
+  border-color: var(--giallo);
+}
+.btn--primary:hover {
+  background: #ffc21a;
+  border-color: #ffc21a;
+}
+.btn--secondary {
+  background: transparent;
+  color: var(--portone);
+  border-color: var(--portone);
+}
+.btn--secondary:hover {
+  background: rgba(30, 58, 44, 0.06);
+}
+.on-dark .btn--secondary,
+.section--dark .btn--secondary {
+  color: var(--calce);
+  border-color: var(--calce);
+}
+.on-dark .btn--secondary:hover,
+.section--dark .btn--secondary:hover {
+  background: rgba(243, 244, 240, 0.08);
+}
+.btn[disabled],
+.btn[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: progress;
+}
+@media (min-width: 768px) {
+  .btn {
+    --h: 54px;
+  }
+}
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* ---------- Form fields ---------- */
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+.field label,
+.label {
+  font-family: var(--font-head);
+  font-weight: 650;
+  font-stretch: 102%;
+  color: var(--portone);
+  font-size: 1.0625rem;
+  line-height: 1.3;
+}
+.field .hint {
+  font-size: var(--step--1);
+  color: var(--tenue);
+}
+.input,
+.field input:not([type="radio"], [type="checkbox"], [type="range"]),
+.field textarea,
+.field select {
+  font: inherit;
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  color: var(--testo);
+  background: #fff;
+  border: 2px solid #8e958f;
+  border-radius: var(--radius-ui);
+  min-height: 52px;
+  padding: 0.6rem 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+.field textarea {
+  min-height: 9rem;
+  resize: vertical;
+}
+.field input:hover,
+.field textarea:hover {
+  border-color: var(--portone);
+}
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline: 3px solid var(--portone);
+  outline-offset: 1px;
+  border-color: var(--portone);
+}
+.field [aria-invalid="true"] {
+  border-color: var(--marker);
+  background: #fff7f6;
+}
+.error {
+  color: #b02a1f;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1rem;
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+.error:empty {
+  display: none;
+}
+.check {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+.check input {
+  width: 26px;
+  height: 26px;
+  margin: 0.1rem 0 0;
+  accent-color: var(--portone);
+}
+
+/* Tiles: radios styled as large tappable options */
+.tiles {
+  display: grid;
+  gap: 0.6rem;
+}
+@media (min-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 60px;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 2px solid #8e958f;
+  border-radius: var(--radius-ui);
+  font-family: var(--font-head);
+  font-weight: 650;
+  font-size: 1.125rem;
+  color: var(--portone);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+.tile:hover {
+  border-color: var(--portone);
+}
+.tile input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  flex: none;
+  border: 2px solid var(--portone);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff;
+}
+.tile input::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--portone);
+  transform: scale(0);
+  transition: transform 0.12s ease;
+}
+.tile input:checked::after {
+  transform: scale(1);
+}
+.tile:has(input:checked) {
+  border-color: var(--portone);
+  background: #e9ece4;
+  box-shadow: inset 0 0 0 1px var(--portone);
+}
+.tile:has(input:focus-visible) {
+  outline: 3px solid var(--portone);
+  outline-offset: 2px;
+}
+.tile input:focus-visible {
+  outline: none;
+}
+
+/* ---------- Placeholders (dev only outline) ---------- */
+html.is-dev [data-placeholder] {
+  outline: 2px dashed #e0a800;
+  outline-offset: 2px;
+  background: rgba(245, 183, 0, 0.12);
+}
+
+/* ---------- Page transitions (A7) ---------- */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}

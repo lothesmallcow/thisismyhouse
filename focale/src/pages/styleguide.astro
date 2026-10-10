@@ -1,0 +1,198 @@
+---
+/** Internal styleguide: noindex, not linked, excluded from the sitemap. */
+import Base from "../layouts/Base.astro";
+import Fuoco from "../components/Fuoco.astro";
+import Logo from "../components/Logo.astro";
+import Icon from "../components/Icon.astro";
+import CantiereSign from "../components/CantiereSign.astro";
+import OldSite from "../components/demo/OldSite.astro";
+import ArcadiHero from "../components/demo/ArcadiHero.astro";
+const colors = [
+  ["calce", "#F3F4F0", "Sfondo principale"],
+  ["pietra", "#DAD8D0", "Sezioni alterne, linee"],
+  ["portone", "#1E3A2C", "Titoli, sezioni scure"],
+  ["testo", "#23302A", "Testo"],
+  ["giallo", "#F5B700", "Solo pulsanti principali"],
+  ["ottone", "#A67C2E", "Linee sottili, icone"],
+  ["marker", "#D7392B", "Solo nella demo di ristrutturazione"],
+];
+const icons = ["phone", "whatsapp", "mail", "check", "pin", "clock", "shield", "key", "euro", "arrow-down", "focus"] as const;
+---
+<Base title="Styleguide | Focale" noindex sticky={false} og="home">
+  <div class="wrap sg">
+    <h1>Styleguide</h1>
+
+    <section>
+      <Fuoco />
+      <h2>Colori</h2>
+      <ul class="sg-colors">
+        {colors.map(([n, hex, use]) => (
+          <li>
+            <span class="sg-sw" style={`background:${hex}`}></span>
+            <strong>{n}</strong> <code>{hex}</code>
+            <span class="muted">{use}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section>
+      <Fuoco />
+      <h2>Tipografia</h2>
+      <p class="h1 head" style="font-size:var(--step-4)">Titolo H1, Archivo largo</p>
+      <p class="head" style="font-size:var(--step-3)">Titolo H2 della sezione</p>
+      <p class="head" style="font-size:var(--step-2)">Titolo H3</p>
+      <p class="lead">Testo introduttivo in Literata, leggibile dal telefono.</p>
+      <p>Testo normale in Literata a 18 o 20 pixel, interlinea 1,6, al massimo circa 68 caratteri per riga perché si legga senza fatica.</p>
+      <p class="small muted">Testo piccolo e secondario.</p>
+    </section>
+
+    <section>
+      <Fuoco />
+      <h2>Pulsanti</h2>
+      <div class="btn-row">
+        <a class="btn btn--primary" href="#">Voglio l'anteprima gratuita</a>
+        <a class="btn btn--secondary" href="#">Guarda come funziona</a>
+        <button class="btn btn--primary" disabled>Invio in corso...</button>
+        <a class="link ui" href="#">Collegamento di testo</a>
+      </div>
+      <div class="section--dark on-dark sg-dark">
+        <div class="btn-row">
+          <a class="btn btn--primary" href="#">Su sfondo scuro</a>
+          <a class="btn btn--secondary" href="#">Secondario</a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <Fuoco />
+      <h2>Linea di sezione</h2>
+      <p>Una per sezione: una barra spessa che scende a sinistra come l'angolo di una cornice di messa a fuoco.</p>
+      <div class="section--dark sg-dark"><Fuoco dark /></div>
+    </section>
+
+    <section>
+      <Fuoco />
+      <h2>Campi</h2>
+      <div class="sg-fields">
+        <div class="field"><label for="sg1">Nome</label><input id="sg1" type="text" placeholder="es. Giulia" /></div>
+        <div class="field"><label for="sg2">Telefono</label><input id="sg2" type="tel" value="12" aria-invalid="true" aria-describedby="sg2e" /><p class="error" id="sg2e">Scrivi un numero di telefono valido, ad esempio 333 123 4567.</p></div>
+        <div class="field"><label for="sg3">Disattivato</label><input id="sg3" type="text" disabled value="Non modificabile" /></div>
+        <label class="check"><input type="checkbox" /><span>Casella di consenso, mai preselezionata.</span></label>
+        <div class="tiles">
+          <label class="tile"><input type="radio" name="sg" checked /><span>Opzione scelta</span></label>
+          <label class="tile"><input type="radio" name="sg" /><span>Opzione</span></label>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <Fuoco />
+      <h2>Icone</h2>
+      <ul class="sg-icons">{icons.map((i) => <li><Icon name={i} size={28} /><code>{i}</code></li>)}</ul>
+    </section>
+
+    <section>
+      <Fuoco />
+      <h2>Logo</h2>
+      <div class="sg-logos">
+        <div class="sg-logo"><Logo /></div>
+        <div class="sg-logo sg-logo--dark"><Logo variant="dark" /></div>
+        <img src="/favicon.svg" width="64" height="64" alt="Icona del sito" />
+      </div>
+    </section>
+
+    <section>
+      <Fuoco />
+      <h2>Cartello cantiere</h2>
+      <CantiereSign />
+    </section>
+
+    <section>
+      <Fuoco />
+      <h2>Demo: sito vecchio e sito nuovo</h2>
+      <div class="sg-old" id="old-site"><OldSite annotations={false} /></div>
+      <div class="sg-old sg-old--notes" id="old-site-notes"><OldSite /></div>
+      <div class="sg-new" id="arcadi-phone"><ArcadiHero /></div>
+    </section>
+  </div>
+</Base>
+<style>
+  .sg {
+    padding-block: 3rem 6rem;
+  }
+  .sg > section {
+    margin-top: 4.5rem;
+  }
+  .sg h2 {
+    margin-bottom: 1.5rem;
+  }
+  .sg-colors {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .sg-colors li {
+    display: grid;
+    grid-template-columns: 56px 7rem 6rem 1fr;
+    gap: 1rem;
+    align-items: center;
+  }
+  .sg-sw {
+    width: 56px;
+    height: 40px;
+    border: 1px solid #0002;
+  }
+  .sg-dark {
+    margin-top: 1.5rem;
+    padding: 2rem;
+  }
+  .sg-fields {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 32rem;
+  }
+  .sg-icons {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  .sg-icons li {
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    color: var(--portone);
+  }
+  .sg-logos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
+  }
+  .sg-logo {
+    padding: 2rem;
+    background: var(--calce);
+    border: 1px solid var(--pietra);
+  }
+  .sg-logo :global(.logo) {
+    height: 3rem;
+  }
+  .sg-logo--dark {
+    background: var(--portone);
+  }
+  .sg-old {
+    width: 800px;
+    max-width: 100%;
+    height: 600px;
+    margin-bottom: 2rem;
+    border: 1px solid #999;
+  }
+  .sg-new {
+    width: 390px;
+    height: 844px;
+    border: 1px solid #999;
+  }
+</style>

@@ -1,0 +1,27 @@
+---
+/** Empty state for Google reviews in the demos. Never invented reviews. */
+interface Props {
+  text?: string;
+  title?: string;
+}
+const { text = "Qui compaiono le recensioni Google dell'attività.", title = "Recensioni Google" } = Astro.props;
+---
+<div class="re">
+  <p class="re__title" data-i18n="reviews_title">{title}</p>
+  <p class="re__text" data-i18n="reviews_text">{text}</p>
+</div>
+<style>
+  .re {
+    border: 2px dashed currentColor;
+    padding: 1.5rem;
+    opacity: 0.85;
+    max-width: 36rem;
+  }
+  .re__title {
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+  .re__text {
+    margin-top: 0.4rem !important;
+  }
+</style>

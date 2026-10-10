@@ -1,0 +1,147 @@
+---
+import Fuoco from "./Fuoco.astro";
+import { plans, cura } from "../lib/plans";
+import { euro, foundersOpen } from "../lib/util";
+const open = foundersOpen();
+---
+<section class="section ps">
+  <div class="wrap">
+    <Fuoco />
+    <h2>Prezzi chiari, scritti qui.</h2>
+    <p class="lead measure ps__intro">Molte agenzie scrivono "preventivo su richiesta". Io preferisco che tu sappia subito quanto spendi.</p>
+    <div class="ps__list">
+      {
+        plans.map((p) => (
+          <div class:list={["ps__plan", { "ps__plan--rec on-dark": p.recommended }]}>
+            <div class="ps__name">
+              <h3>{p.name}</h3>
+              {p.recommended && <span class="ps__tag">Consigliato</span>}
+            </div>
+            <p class="ps__for">{p.forWhom}</p>
+            <dl class="ps__prices">
+              {open && (
+                <div>
+                  <dt>Prezzo fondatori</dt>
+                  <dd class="ps__main">
+                    {p.from && "da "}
+                    {euro(p.founders)}
+                  </dd>
+                </div>
+              )}
+              <div>
+                <dt>{open ? "Dal sesto cliente" : "Prezzo"}</dt>
+                <dd class:list={{ ps__main: !open }}>
+                  {p.from && "da "}
+                  {euro(p.standard)}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        ))
+      }
+    </div>
+    <p class="ps__cura">
+      <strong>{cura.name}, {euro(cura.price)} al mese.</strong>{" "}
+      {cura.forWhom} Dominio, hosting, modifiche e controlli, disdici quando vuoi.
+    </p>
+    <a href="/prezzi" class="btn btn--secondary">Confronta tutto nella pagina prezzi</a>
+  </div>
+</section>
+<style>
+  .ps__intro {
+    margin: 1.25rem 0 2.5rem;
+  }
+  .ps__list {
+    display: grid;
+    gap: 0;
+    border-top: 2px solid var(--portone);
+  }
+  @media (min-width: 900px) {
+    .ps__list {
+      grid-template-columns: 1fr 1.15fr 1fr;
+      align-items: stretch;
+      border-top: 0;
+      gap: 0;
+    }
+  }
+  .ps__plan {
+    padding: 1.75rem 1.5rem;
+    background: var(--pietra);
+    border-bottom: 1px solid var(--pietra-scura);
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+  }
+  @media (min-width: 900px) {
+    .ps__plan {
+      border-bottom: 0;
+      padding: 2rem 1.75rem;
+    }
+    .ps__plan + .ps__plan:not(.ps__plan--rec) {
+      border-left: 1px solid var(--pietra-scura);
+    }
+  }
+  .ps__plan--rec {
+    background: var(--portone);
+    color: var(--calce);
+  }
+  @media (min-width: 900px) {
+    .ps__plan--rec {
+      margin-block: -1.25rem;
+      padding-block: 3.25rem;
+    }
+  }
+  .ps__plan--rec h3 {
+    color: var(--calce);
+  }
+  .ps__name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .ps__tag {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--portone);
+    background: var(--calce);
+    padding: 0.2rem 0.55rem;
+    border-radius: 3px;
+  }
+  .ps__for {
+    font-size: 1.0625rem;
+  }
+  .ps__prices {
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+    align-items: baseline;
+  }
+  .ps__prices dt {
+    font-family: var(--font-head);
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+  .ps__prices dd {
+    margin: 0;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+  .ps__prices dd.ps__main {
+    font-weight: 850;
+    font-stretch: 116%;
+    font-size: var(--step-3);
+    line-height: 1.05;
+  }
+  .ps__cura {
+    margin: 2.5rem 0 1.75rem;
+    max-width: 60ch;
+  }
+  .ps__cura strong {
+    font-family: var(--font-head);
+    color: var(--portone);
+  }
+</style>

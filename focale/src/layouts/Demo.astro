@@ -1,0 +1,64 @@
+---
+/** Layout for the demo sites of invented businesses: their own look, a slim Focale banner, noindex. */
+import "../styles/global.css";
+interface Props {
+  title: string;
+  description: string;
+  lang?: string;
+  fonts?: string[];
+  themeColor?: string;
+  bodyClass?: string;
+}
+const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bodyClass } = Astro.props;
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="theme-color" content={themeColor} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {fonts.map((f) => <link rel="preload" href={f} as="font" type="font/woff2" crossorigin />)}
+    <slot name="head" />
+  </head>
+  <body class:list={["demo", bodyClass]}>
+    <div class="demo-banner on-dark">
+      <p>Progetto dimostrativo di Focale per un'attività inventata. <a href="/lavori/">Torna a Focale</a></p>
+    </div>
+    <slot />
+  </body>
+</html>
+<style is:global>
+  body.demo {
+    padding-top: 40px;
+  }
+  .demo-banner {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 100;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0.35rem var(--gutter);
+    background: var(--portone);
+    color: var(--calce);
+    font-family: var(--font-head);
+    font-size: 0.875rem;
+    line-height: 1.3;
+    box-sizing: border-box;
+  }
+  .demo-banner a {
+    color: var(--calce);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    display: inline-block;
+    padding: 0.4rem 0;
+  }
+  .demo-banner p {
+    margin: 0;
+  }
+</style>

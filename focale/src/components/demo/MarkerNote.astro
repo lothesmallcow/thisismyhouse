@@ -1,0 +1,85 @@
+---
+/** A red marker note on the old site: a hand-drawn ring plus a numbered label. */
+interface Props {
+  n: number;
+  text: string;
+  area: string;
+}
+const { n, text, area } = Astro.props;
+---
+<span class:list={["mn", `mn--${area}`]} data-note>
+  <svg class="mn__ring" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M14 34 C10 12 70 4 112 6 C160 8 196 18 190 34 C184 52 120 58 76 56 C34 54 6 46 14 28" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+  </svg>
+  <span class="mn__label"><span class="mn__n">{n}</span>{text}</span>
+</span>
+<style>
+  .mn {
+    position: absolute;
+    inset: -4px -6px;
+    color: var(--marker);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .mn__ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .mn__label {
+    position: absolute;
+    right: 4px;
+    bottom: -14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    color: #b02a1f;
+    border: 2px solid var(--marker);
+    border-radius: 4px;
+    padding: 3px 8px 3px 4px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-stretch: 90%;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    transform: rotate(-2deg);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+  }
+  .mn__n {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--marker);
+    color: #fff;
+    font-size: 12px;
+    font-stretch: 100%;
+  }
+  .mn--header .mn__label {
+    bottom: auto;
+    top: calc(100% - 6px);
+    right: 8px;
+  }
+  .mn--photo .mn__label {
+    left: 8px;
+    right: auto;
+    bottom: -12px;
+  }
+  .mn--foot .mn__label {
+    bottom: auto;
+    top: -16px;
+    right: 10px;
+  }
+  .mn--text .mn__label {
+    bottom: -12px;
+  }
+  .mn--cta .mn__label {
+    bottom: -18px;
+    right: 8px;
+  }
+</style>

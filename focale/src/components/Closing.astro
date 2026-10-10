@@ -1,0 +1,36 @@
+---
+import Fuoco from "./Fuoco.astro";
+import Icon from "./Icon.astro";
+import { site } from "../config/site";
+import { whatsappHref } from "../lib/util";
+interface Props {
+  title?: string;
+  text?: string;
+}
+const {
+  title = "Guarda il tuo nuovo sito prima di decidere.",
+  text = `Ti mando l'anteprima in ${site.previewHours} ore. Se non ti convince, non mi devi niente.`,
+} = Astro.props;
+---
+<section class="section section--dark closing on-dark">
+  <div class="wrap">
+    <Fuoco dark />
+    <h2>{title}</h2>
+    <p class="lead measure closing__text">{text}</p>
+    <div class="btn-row">
+      <a href="/anteprima-gratuita" class="btn btn--primary">Voglio l'anteprima gratuita</a>
+      <a href={whatsappHref("Ciao, ho visto il sito di Focale e vorrei l'anteprima gratuita per la mia attività.")} class="btn btn--secondary" target="_blank" rel="noopener">
+        <Icon name="whatsapp" />
+        Scrivimi su WhatsApp
+      </a>
+    </div>
+  </div>
+</section>
+<style>
+  .closing h2 {
+    max-width: 20ch;
+  }
+  .closing__text {
+    margin: 1.25rem 0 2rem;
+  }
+</style>

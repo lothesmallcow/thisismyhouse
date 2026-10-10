@@ -1,0 +1,18 @@
+order: 3
+name: Villa Ortensia
+sector: Location per matrimoni, Lago di Como
+goal: Richieste di visita da coppie già orientate sul budget.
+problems:
+  - Gallerie pesanti che dal telefono non si aprono.
+  - Nessuna idea dei costi, quindi richieste fuori budget.
+  - Moduli lunghissimi.
+choices:
+  - Gallerie leggere per spazio e stagione.
+  - Fasce di prezzo indicative.
+  - Richiesta di visita con data, invitati e budget.
+outcome:
+  - Meno richieste fuori target.
+  - Visite con coppie già interessate.
+settore: location-per-matrimoni
+shotPhone: ../../assets/lavori/villa-ortensia-phone.png
+shotDesktop: ../../assets/lavori/villa-ortensia-desktop.png

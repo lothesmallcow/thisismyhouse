@@ -1,0 +1,59 @@
+---
+/**
+ * HTML/CSS phone. Content is laid out on a 390 x 844 canvas and zoomed to the frame width.
+ * Set --pw (unitless pixels) on the frame or a parent to resize it.
+ */
+interface Props {
+  class?: string;
+  label?: string;
+}
+const { class: cls, label } = Astro.props;
+---
+<div class:list={["pf", cls]} role={label ? "img" : undefined} aria-label={label}>
+  <div class="pf__screen">
+    <div class="pf__canvas" aria-hidden={label ? "true" : undefined}>
+      <slot />
+    </div>
+  </div>
+  <span class="pf__notch" aria-hidden="true"></span>
+  <slot name="overlay" />
+</div>
+<style>
+  .pf {
+    --pw: 300;
+    --s: calc(var(--pw) / 390);
+    position: relative;
+    width: calc(var(--pw) * 1px + 20px);
+    padding: 10px;
+    background: #1b1f1d;
+    border-radius: var(--radius-phone);
+    box-shadow:
+      0 30px 60px -20px rgba(64, 48, 20, 0.35),
+      0 12px 24px -12px rgba(64, 48, 20, 0.25);
+    box-sizing: border-box;
+  }
+  .pf__screen {
+    width: calc(var(--pw) * 1px);
+    height: calc(var(--pw) * 844px / 390);
+    overflow: hidden;
+    border-radius: 6px;
+    background: #fff;
+    position: relative;
+  }
+  .pf__canvas {
+    width: 390px;
+    height: 844px;
+    transform: scale(var(--s));
+    transform-origin: 0 0;
+  }
+  .pf__notch {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    width: 30%;
+    height: 14px;
+    transform: translateX(-50%);
+    background: #1b1f1d;
+    border-radius: 0 0 10px 10px;
+  }
+</style>

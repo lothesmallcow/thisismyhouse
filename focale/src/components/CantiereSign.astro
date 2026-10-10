@@ -1,0 +1,45 @@
+---
+interface Props {
+  class?: string;
+  small?: boolean;
+}
+const { class: cls, small = false } = Astro.props;
+---
+<div class:list={["cs", { "cs--small": small }, cls]} data-cantiere>
+  <span class="cs__title">CANTIERE</span>
+  <span class="cs__line">Lavori in corso sul tuo sito</span>
+</div>
+<style>
+  .cs {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    padding: 0.7rem 1rem 0.75rem;
+    background: var(--giallo);
+    color: #1b1b1b;
+    border: 3px solid #1b1b1b;
+    box-shadow: 0 0 0 4px var(--giallo);
+    transform: rotate(-2deg);
+    font-family: var(--font-head);
+    background-image: repeating-linear-gradient(-45deg, transparent 0 14px, rgba(0, 0, 0, 0.9) 14px 22px);
+    background-size: 100% 10px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    padding-bottom: 1.3rem;
+  }
+  .cs__title {
+    font-weight: 900;
+    font-stretch: 120%;
+    font-size: 1.6rem;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  .cs__line {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .cs--small .cs__title {
+    font-size: 1.25rem;
+  }
+</style>

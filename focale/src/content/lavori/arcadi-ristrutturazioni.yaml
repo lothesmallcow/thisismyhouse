@@ -1,0 +1,20 @@
+order: 1
+name: Arcadi Ristrutturazioni
+sector: Impresa di ristrutturazioni, Milano
+goal: Più richieste di preventivo da chi cerca dal telefono.
+problems:
+  - Foto dei lavori assenti o sparse.
+  - Nessun modo rapido per chiedere un preventivo.
+  - Servizi elencati in una riga, invisibili su Google.
+choices:
+  - Una galleria prima e dopo per ogni lavoro.
+  - Una pagina per servizio, ciascuna con la zona.
+  - Un preventivo guidato che chiede tipo di lavoro, metratura e tempi.
+  - Il pulsante per chiamare sempre visibile da telefono.
+outcome:
+  - Richieste già ordinate su WhatsApp.
+  - Meno telefonate a vuoto.
+  - Un sito che sembra all'altezza dei lavori che fa.
+settore: ristrutturazioni-e-serramenti
+shotPhone: ../../assets/lavori/arcadi-ristrutturazioni-phone.png
+shotDesktop: ../../assets/lavori/arcadi-ristrutturazioni-desktop.png

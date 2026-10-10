@@ -1,0 +1,47 @@
+{
+  "name": "focale-site",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check && tsc --noEmit",
+    "check:placeholders": "node scripts/check-placeholders.mjs",
+    "predeploy": "npm run build && node scripts/check-placeholders.mjs --strict",
+    "screens": "node scripts/screens.mjs",
+    "screens:demo": "node scripts/demo-shots.mjs",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "a11y": "node scripts/a11y.mjs",
+    "nuova-anteprima": "node scripts/nuova-anteprima.mjs",
+    "logo": "node scripts/logo.mjs",
+    "illustrazioni": "node scripts/illustrations/render.mjs"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/jost": "^5.3.0",
+    "@fontsource-variable/literata": "^5.3.0",
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "astro": "^7.3.8",
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.26",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "@tailwindcss/vite": "^4.3.3",
+    "opentype.js": "^2.0.0",
+    "playwright": "^1.64.0",
+    "satori": "^0.47.1",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.3"
+  }
+}

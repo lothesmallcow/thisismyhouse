@@ -1,0 +1,68 @@
+---
+import Icon from "./Icon.astro";
+import { whatsappHref } from "../lib/util";
+---
+<div class="sb on-dark" data-sticky aria-hidden="false">
+  <a href="/anteprima-gratuita" class="btn btn--primary sb__cta">Anteprima gratuita</a>
+  <a href={whatsappHref("Ciao, ho visto il sito di Focale e vorrei l'anteprima gratuita per la mia attività.")} target="_blank" rel="noopener" class="btn btn--secondary sb__wa">
+    <Icon name="whatsapp" />
+    <span>WhatsApp</span>
+  </a>
+</div>
+<style>
+  .sb {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.6rem var(--gutter) calc(0.6rem + env(safe-area-inset-bottom));
+    background: var(--portone);
+    border-top: 4px solid var(--ottone);
+    transform: translateY(110%);
+    transition: transform 0.25s ease;
+  }
+  :global(.sticky-on) .sb {
+    transform: none;
+  }
+  .sb .btn {
+    min-height: 50px;
+  }
+  .sb__cta {
+    flex: 1;
+  }
+  .sb__wa {
+    padding: 0 1rem;
+  }
+  @media (min-width: 768px) {
+    .sb {
+      display: none;
+    }
+  }
+  @media (max-width: 767px) {
+    :global(body.has-sticky) {
+      --sticky-h: calc(76px + env(safe-area-inset-bottom));
+    }
+  }
+</style>
+<script>
+  const bar = document.querySelector<HTMLElement>("[data-sticky]");
+  if (bar) {
+    const root = document.documentElement;
+    const hero = document.querySelector("[data-hero]");
+    const setVisible = (on: boolean) => {
+      root.classList.toggle("sticky-on", on);
+      bar.inert = !on;
+    };
+    setVisible(false);
+    if (hero && "IntersectionObserver" in window) {
+      new IntersectionObserver(([entry]) => setVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0)).observe(hero);
+    } else {
+      const onScroll = () => setVisible(window.scrollY > 400);
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+    }
+  }
+</script>

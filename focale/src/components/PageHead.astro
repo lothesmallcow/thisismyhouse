@@ -1,0 +1,28 @@
+---
+import Fuoco from "./Fuoco.astro";
+interface Props {
+  title: string;
+  lead?: string;
+  class?: string;
+}
+const { title, lead, class: cls } = Astro.props;
+---
+<section class:list={["ph", cls]} data-hero>
+  <div class="wrap">
+    <Fuoco />
+    <h1>{title}</h1>
+    {lead && <p class="lead measure ph__lead">{lead}</p>}
+    <slot />
+  </div>
+</section>
+<style>
+  .ph {
+    padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem) clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  }
+  .ph h1 {
+    max-width: 18ch;
+  }
+  .ph__lead {
+    margin-top: 1.25rem;
+  }
+</style>

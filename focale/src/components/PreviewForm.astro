@@ -1,0 +1,275 @@
+---
+/**
+ * Three-step preview request. Without JS it is one normal form posting to Web3Forms and
+ * redirecting to /grazie. With JS (src/scripts/forms.ts) it becomes a stepped form.
+ */
+import Icon from "./Icon.astro";
+import { site } from "../config/site";
+import { absUrl } from "../lib/util";
+const activities = [
+  { v: "Ristrutturazioni", settore: "ristrutturazioni-e-serramenti" },
+  { v: "Serramenti e infissi", settore: "" },
+  { v: "B&B o agriturismo", settore: "b-and-b-e-agriturismi" },
+  { v: "Location per eventi", settore: "location-per-matrimoni" },
+  { v: "Altro", settore: "" },
+];
+---
+<form
+  class="pf-form"
+  action="https://api.web3forms.com/submit"
+  method="POST"
+  novalidate
+  data-preview-form
+  data-key={site.web3formsKey}
+  data-sheets={site.sheetsEndpoint}
+  data-wa-number={site.whatsappNumber}
+>
+  <input type="hidden" name="access_key" value={site.web3formsKey} />
+  <input type="hidden" name="subject" value="Nuova richiesta di anteprima" />
+  <input type="hidden" name="from_name" value="Sito Focale" />
+  <input type="hidden" name="redirect" value={absUrl("/grazie/")} />
+  <input type="hidden" name="pacchetto" value="" data-hidden="pacchetto" />
+  <input type="hidden" name="fondatori" value="" data-hidden="fondatori" />
+  <input type="hidden" name="provenienza" value="" data-hidden="provenienza" />
+  <input type="checkbox" name="botcheck" class="pf-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+  <div class="pf-progress" data-progress>
+    <p class="pf-progress__label" data-progress-label>Passo 1 di 3</p>
+    <div class="pf-progress__bar" aria-hidden="true"><span data-progress-bar></span></div>
+  </div>
+
+  <p class="pf-package" data-package hidden></p>
+
+  <fieldset class="pf-step" data-step="1" aria-describedby="err-attivita">
+    <legend tabindex="-1">Che attività hai?</legend>
+    <div class="tiles">
+      {
+        activities.map((a) => (
+          <label class="tile">
+            <input type="radio" name="attivita" value={a.v} data-settore={a.settore} required />
+            <span>{a.v}</span>
+          </label>
+        ))
+      }
+    </div>
+    <div class="field pf-other" data-other>
+      <label for="attivita-altro">Dimmi in due parole cosa fai</label>
+      <input id="attivita-altro" name="attivita_altro" type="text" autocomplete="off" />
+    </div>
+    <p class="error" id="err-attivita" data-error="attivita" aria-live="polite"></p>
+    <div class="pf-nav">
+      <button type="button" class="btn btn--primary" data-next>Avanti</button>
+    </div>
+  </fieldset>
+
+  <fieldset class="pf-step" data-step="2" aria-describedby="err-sito">
+    <legend tabindex="-1">Hai già un sito?</legend>
+    <div class="tiles tiles--one">
+      <label class="tile"><input type="radio" name="sito" value="Sì" required /><span>Sì</span></label>
+      <label class="tile"><input type="radio" name="sito" value="No, ho solo i social o la scheda Google" /><span>No, ho solo i social o la scheda Google</span></label>
+      <label class="tile"><input type="radio" name="sito" value="No, niente" /><span>No, niente</span></label>
+    </div>
+    <div class="field pf-url" data-url>
+      <label for="sito-indirizzo">Indirizzo del sito</label>
+      <input id="sito-indirizzo" name="sito_indirizzo" type="text" inputmode="url" autocomplete="url" placeholder="es. www.lamiaattivita.it" />
+    </div>
+    <p class="error" id="err-sito" data-error="sito" aria-live="polite"></p>
+    <div class="pf-nav">
+      <button type="button" class="btn btn--secondary" data-back>Indietro</button>
+      <button type="button" class="btn btn--primary" data-next>Avanti</button>
+    </div>
+  </fieldset>
+
+  <fieldset class="pf-step" data-step="3">
+    <legend tabindex="-1">Come ti contatto?</legend>
+    <div class="pf-fields">
+      <div class="field">
+        <label for="f-nome">Nome</label>
+        <input id="f-nome" name="nome" type="text" autocomplete="given-name" required aria-describedby="err-nome" />
+        <p class="error" id="err-nome" data-error="nome" aria-live="polite"></p>
+      </div>
+      <div class="field">
+        <label for="f-attivita">Nome dell'attività</label>
+        <input id="f-attivita" name="nome_attivita" type="text" autocomplete="organization" required aria-describedby="err-nome_attivita" />
+        <p class="error" id="err-nome_attivita" data-error="nome_attivita" aria-live="polite"></p>
+      </div>
+      <div class="field">
+        <label for="f-tel">Telefono, anche WhatsApp</label>
+        <input id="f-tel" name="telefono" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="err-telefono" />
+        <p class="error" id="err-telefono" data-error="telefono" aria-live="polite"></p>
+      </div>
+      <div class="field">
+        <label for="f-email">Email <span class="pf-opt">(facoltativa)</span></label>
+        <input id="f-email" name="email" type="email" autocomplete="email" aria-describedby="err-email" />
+        <p class="error" id="err-email" data-error="email" aria-live="polite"></p>
+      </div>
+      <div class="field">
+        <label for="f-zona">Comune o zona</label>
+        <input id="f-zona" name="zona" type="text" autocomplete="address-level2" required aria-describedby="err-zona" />
+        <p class="error" id="err-zona" data-error="zona" aria-live="polite"></p>
+      </div>
+      <fieldset class="pf-time">
+        <legend class="label">Quando preferisci essere contattato? <span class="pf-opt">(facoltativo)</span></legend>
+        <div class="pf-time__opts">
+          <label class="tile tile--sm"><input type="radio" name="orario" value="Mattina" /><span>Mattina</span></label>
+          <label class="tile tile--sm"><input type="radio" name="orario" value="Pomeriggio" /><span>Pomeriggio</span></label>
+          <label class="tile tile--sm"><input type="radio" name="orario" value="Sera" /><span>Sera</span></label>
+        </div>
+      </fieldset>
+      <div class="pf-privacy">
+        <label class="check">
+          <input type="checkbox" name="privacy" value="Accettata" required aria-describedby="err-privacy" />
+          <span>Ho letto l'<a class="link" href="/privacy" target="_blank" rel="noopener">informativa privacy</a> e accetto di essere ricontattato per questa richiesta.</span>
+        </label>
+        <p class="error" id="err-privacy" data-error="privacy" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="pf-nav pf-nav--submit">
+      <button type="button" class="btn btn--secondary" data-back>Indietro</button>
+      <button type="submit" class="btn btn--primary" data-submit>Mandami l'anteprima</button>
+    </div>
+    <p class="small muted pf-promise">Niente newsletter, niente spam. I tuoi dati li uso solo io, solo per risponderti.</p>
+  </fieldset>
+
+  <div class="pf-fail" data-fail role="alert" hidden>
+    <p>
+      <Icon name="alert" />
+      <span>Non sono riuscito a inviare la richiesta. Riprova, oppure mandamela su WhatsApp: il messaggio è già pronto.</span>
+    </p>
+    <a class="btn btn--primary" href="#" target="_blank" rel="noopener" data-fail-wa><Icon name="whatsapp" />Mandala su WhatsApp</a>
+  </div>
+</form>
+
+<style>
+  .pf-form {
+    max-width: 44rem;
+    display: grid;
+    gap: 2.5rem;
+  }
+  .pf-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .pf-progress {
+    display: none;
+  }
+  :global(.pf-form.is-steps) .pf-progress {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .pf-progress__label {
+    font-family: var(--font-head);
+    font-weight: 700;
+    color: var(--portone);
+  }
+  .pf-progress__bar {
+    height: 8px;
+    background: var(--pietra);
+  }
+  .pf-progress__bar span {
+    display: block;
+    height: 100%;
+    width: 33.33%;
+    background: var(--portone);
+    transition: width 0.3s ease;
+  }
+  .pf-package {
+    font-family: var(--font-head);
+    font-weight: 600;
+    color: var(--portone);
+    padding: 0.75rem 1rem;
+    border-left: 6px solid var(--ottone);
+    background: var(--pietra);
+  }
+  .pf-step {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    display: grid;
+    gap: 1.25rem;
+  }
+  .pf-step > legend {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-stretch: 110%;
+    font-size: var(--step-2);
+    color: var(--portone);
+    padding: 0;
+    margin-bottom: 1.25rem;
+    outline: none;
+  }
+  .pf-step > legend:focus-visible {
+    outline: 3px solid var(--portone);
+    outline-offset: 4px;
+  }
+  .tiles--one {
+    grid-template-columns: 1fr !important;
+  }
+  :global(.pf-form.is-steps) .pf-step:not(.is-current) {
+    display: none;
+  }
+  :global(.pf-form.is-steps) .pf-other:not(.is-on),
+  :global(.pf-form.is-steps) .pf-url:not(.is-on) {
+    display: none;
+  }
+  .pf-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  :global(.pf-form:not(.is-steps) .pf-nav:not(.pf-nav--submit)),
+  :global(.pf-form:not(.is-steps) [data-back]) {
+    display: none;
+  }
+  .pf-fields {
+    display: grid;
+    gap: 1.4rem;
+  }
+  .pf-opt {
+    font-weight: 500;
+    color: var(--tenue);
+  }
+  .pf-time {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+  .pf-time legend {
+    margin-bottom: 0.6rem;
+    padding: 0;
+  }
+  .pf-time__opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .tile--sm {
+    min-height: 48px;
+    padding: 0.5rem 0.9rem;
+    font-size: 1.0625rem;
+  }
+  .pf-promise {
+    margin-top: 0.25rem;
+  }
+  .pf-fail {
+    padding: 1.25rem;
+    border: 2px solid var(--marker);
+    background: #fff7f6;
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+  .pf-fail p {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0.6rem;
+    color: #8c1f16;
+    font-family: var(--font-head);
+    font-weight: 600;
+  }
+</style>

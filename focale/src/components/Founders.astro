@@ -1,0 +1,77 @@
+---
+/** Founders' programme. The counter is static text read from config: never animated. */
+import Fuoco from "./Fuoco.astro";
+import { site } from "../config/site";
+const open = site.foundersSpotsLeft > 0;
+---
+<section class="section section--pietra fd" id="fondatori">
+  <div class="wrap">
+    <Fuoco />
+    {
+      open ? (
+        <div class="fd__grid">
+          <div>
+            <h2>Cerco i primi {site.foundersSpotsTotal} clienti.</h2>
+            <p class="measure fd__text">
+              Sto avviando Focale e voglio cinque lavori fatti benissimo da mostrare. Per questo ai primi cinque faccio un prezzo fondatori. In
+              cambio ti chiedo due cose: il permesso di mostrare il tuo sito tra i miei lavori, con il nome della tua attività, e di poterti
+              indicare come referenza a chi me lo chiede.
+            </p>
+          </div>
+          <div class="fd__count">
+            <p class="fd__num">
+              Posti fondatori ancora liberi: <strong>{site.foundersSpotsLeft} su {site.foundersSpotsTotal}</strong>
+            </p>
+            <p class="small muted">
+              Quando i cinque posti sono presi, il programma finisce. Il numero qui sopra lo aggiorno a mano ed è quello vero.
+            </p>
+            <a href="/anteprima-gratuita?fondatori=1" class="btn btn--primary">
+              Prenota un posto fondatori
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <h2>Il programma fondatori è chiuso.</h2>
+          <p class="measure fd__text">Grazie ai primi cinque clienti. Da qui in poi valgono i prezzi standard.</p>
+        </div>
+      )
+    }
+  </div>
+</section>
+<style>
+  .fd__grid {
+    display: grid;
+    gap: 2.5rem;
+  }
+  @media (min-width: 900px) {
+    .fd__grid {
+      grid-template-columns: 1.3fr 1fr;
+      align-items: end;
+      gap: 4rem;
+    }
+  }
+  .fd__text {
+    margin-top: 1.25rem;
+  }
+  .fd__count {
+    border-left: var(--bar) solid var(--portone);
+    padding-left: 1.5rem;
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+  .fd__num {
+    font-family: var(--font-head);
+    font-size: var(--step-2);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--portone);
+  }
+  .fd__num strong {
+    display: block;
+    font-weight: 850;
+    font-stretch: 118%;
+    font-size: var(--step-3);
+  }
+</style>

@@ -1,0 +1,30 @@
+order: 3
+short: Location per matrimoni
+formOption: location
+title: Siti web per location di matrimoni ed eventi | Focale
+description: Gallerie veloci, fasce di prezzo indicative e richieste di visita già ordinate. Anteprima gratuita in 72 ore.
+h1: Siti per location di matrimoni ed eventi
+lead: Una coppia guarda decine di location prima di chiederne tre. Se il sito non è all'altezza della villa, la villa non entra nella lista.
+problems:
+  - Gallerie pesanti che dal telefono non si aprono.
+  - Nessuna idea dei costi, quindi richieste fuori budget.
+  - Moduli che chiedono tutto e non portano a niente.
+build:
+  - Gallerie veloci divise per spazi e stagioni
+  - Fasce di prezzo indicative, che filtrano chi non è in target
+  - Una richiesta di visita con data, numero di invitati e budget
+requests: "Le richieste di visita arrivano già ordinate: data dell'evento, invitati, budget indicativo."
+mock:
+  heading: Richiesta di visita dal sito
+  lines:
+    - [Data evento, settembre 2027]
+    - [Invitati, circa 120]
+    - [Budget, fascia media]
+    - [Nomi, Marco e Sara]
+demo: villa-ortensia
+faq:
+  - q: Devo pubblicare i prezzi?
+    a: "Non per forza. Bastano fasce indicative: chi ti scrive sa già di essere nel budget, e tu perdi meno tempo."
+  - q: Mi serve un fotografo?
+    a: Uso le tue foto migliori. Se servono foto nuove, ti aiuto a capire quali e come organizzarle.
+whatsapp: Ciao, ho una location per eventi e vorrei l'anteprima gratuita del mio nuovo sito.

@@ -1,0 +1,43 @@
+---
+/** Real Google reviews only. Renders nothing while site.reviews is empty. */
+import { site } from "../config/site";
+const reviews = site.reviews;
+---
+{
+  reviews.length > 0 && (
+    <section class="section">
+      <div class="wrap">
+        <h2>Cosa dicono i clienti</h2>
+        <ul class="rv">
+          {reviews.map((r) => (
+            <li>
+              <blockquote>
+                <p>{r.text}</p>
+              </blockquote>
+              <p class="small muted">
+                {r.author},{" "}
+                <a class="link" href={r.url} target="_blank" rel="noopener">
+                  {r.source}
+                </a>
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+<style>
+  .rv {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+    display: grid;
+    gap: 2rem;
+    max-width: 50rem;
+  }
+  blockquote {
+    margin: 0 0 0.5rem;
+    font-size: var(--step-1);
+  }
+</style>

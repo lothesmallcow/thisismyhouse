@@ -1,0 +1,564 @@
+---
+import Demo from "../../../layouts/Demo.astro";
+import ReviewsEmpty from "../../../components/demo/ReviewsEmpty.astro";
+import { Image } from "astro:assets";
+import { site } from "../../../config/site";
+
+const img = import.meta.glob<{ default: ImageMetadata }>("../../../assets/demo/cascina-rovere/*.jpg", { eager: true });
+const pic = (n: string) => img[`../../../assets/demo/cascina-rovere/${n}.jpg`].default;
+
+// Every visible string, in Italian and English. The toggle swaps them in place.
+const dict: Record<string, [string, string]> = {
+  nav_rooms: ["Camere", "Rooms"],
+  nav_avail: ["Disponibilità", "Availability"],
+  nav_where: ["Come arrivare", "Getting here"],
+  hero_kicker: ["Agriturismo in Brianza", "Farm stay in Brianza"],
+  hero_h1: ["Sei camere in cascina, a quaranta minuti da Milano.", "Six rooms in a farmhouse, forty minutes from Milan."],
+  hero_sub: [
+    "Colazione con i prodotti dell'orto, colline e silenzio. Scrivici per la disponibilità: rispondiamo in giornata.",
+    "Breakfast from our garden, hills and quiet. Ask us for availability: we reply the same day.",
+  ],
+  hero_cta: ["Chiedi la disponibilità", "Check availability"],
+  hero_alt: ["La cascina tra le colline al tramonto", "The farmhouse among the hills at sunset"],
+  rooms_h2: ["Le camere", "The rooms"],
+  rooms_lead: [
+    "Ognuna ha il nome di qualcosa che vedi dalla finestra. Tutte con bagno privato e colazione inclusa.",
+    "Each is named after something you can see from its window. All with private bathroom and breakfast included.",
+  ],
+  guests: ["ospiti", "guests"],
+  r_noce: ["Pavimento in cotto e travi in noce, vista sull'orto.", "Terracotta floor and walnut beams, looking over the garden."],
+  r_glicine: ["La più luminosa, con il glicine che in maggio entra dalla finestra.", "The brightest, with wisteria at the window in May."],
+  r_fienile: ["Nel vecchio fienile, con il soffitto a travi a vista.", "In the old hayloft, under exposed beams."],
+  r_pergola: ["Accesso diretto alla pergola: ideale per le colazioni lente.", "Direct access to the pergola: made for slow breakfasts."],
+  r_frutteto: ["Per famiglie: letto matrimoniale e due singoli, sul frutteto.", "For families: a double and two singles, over the orchard."],
+  r_torretta: ["In cima alla torretta, con l'oblò sulle colline.", "At the top of the turret, with a round window on the hills."],
+  avail_h2: ["Chiedi la disponibilità", "Check availability"],
+  avail_lead: [
+    "Scegli le date e quante persone siete. Ti rispondiamo su WhatsApp in giornata, con il prezzo esatto.",
+    "Choose your dates and how many you are. We reply on WhatsApp the same day, with the exact price.",
+  ],
+  f_arrivo: ["Arrivo", "Arrival"],
+  f_partenza: ["Partenza", "Departure"],
+  f_ospiti: ["Ospiti", "Guests"],
+  f_lingua: ["Lingua", "Language"],
+  f_nome: ["Nome", "Name"],
+  f_send: ["Invia su WhatsApp", "Send on WhatsApp"],
+  f_note: [
+    "Si apre WhatsApp con il messaggio già scritto. Questo è un sito dimostrativo: il messaggio arriva a Focale.",
+    "WhatsApp opens with the message ready. This is a demo site: the message goes to Focale.",
+  ],
+  lang_it: ["Italiano", "Italian"],
+  lang_en: ["Inglese", "English"],
+  where_h2: ["Come arrivare", "Getting here"],
+  where_car: ["In auto da Milano in circa quaranta minuti.", "By car from Milan in about forty minutes."],
+  where_train: ["In treno fino alla stazione più vicina, poi ti veniamo a prendere.", "By train to the nearest station, then we pick you up."],
+  near_h2: ["Nei dintorni", "Nearby"],
+  n_sentieri: ["Sentieri tra le colline", "Trails in the hills"],
+  n_sentieri_d: ["Passeggiate da un'ora a una giornata, partendo dalla porta.", "Walks from one hour to a full day, right from the door."],
+  n_lago: ["Il lago a dieci minuti", "The lake, ten minutes away"],
+  n_lago_d: ["Un giro in barca o un pranzo in riva all'acqua.", "A boat trip or lunch by the water."],
+  n_borgo: ["Il mercato del borgo", "The village market"],
+  n_borgo_d: ["Ogni sabato mattina, con i produttori della zona.", "Every Saturday morning, with local producers."],
+  reviews_h2: ["Cosa dicono gli ospiti", "What guests say"],
+  reviews_title: ["Recensioni Google", "Google reviews"],
+  reviews_text: ["Qui compaiono le recensioni Google dell'attività.", "This is where the business's Google reviews appear."],
+  foot: ["Cascina Rovere è un'attività inventata. Progetto dimostrativo di Focale.", "Cascina Rovere is an invented business. A Focale demo project."],
+  toggle: ["English", "Italiano"],
+  toggle_label: ["Read this site in English", "Leggi il sito in italiano"],
+};
+const t = (k: string) => dict[k][0];
+const rooms = [
+  { k: "noce", n: "Noce", g: 2 },
+  { k: "glicine", n: "Glicine", g: 2 },
+  { k: "fienile", n: "Fienile", g: 3 },
+  { k: "pergola", n: "Pergola", g: 2 },
+  { k: "frutteto", n: "Frutteto", g: 4 },
+  { k: "torretta", n: "Torretta", g: 2 },
+];
+const near = ["sentieri", "lago", "borgo"];
+---
+<Demo
+  title="Cascina Rovere | Agriturismo in Brianza (demo)"
+  description="Sito dimostrativo di Focale per un agriturismo inventato in Brianza."
+  fonts={["/fonts/demo/fraunces.woff2"]}
+  themeColor="#3f4a2c"
+>
+  <style is:global>
+    @font-face {
+      font-family: "Fraunces";
+      font-style: normal;
+      font-display: swap;
+      font-weight: 100 900;
+      src: url("/fonts/demo/fraunces.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Fraunces";
+      font-style: italic;
+      font-display: swap;
+      font-weight: 100 900;
+      src: url("/fonts/demo/fraunces-italic.woff2") format("woff2");
+    }
+  </style>
+  <div class="cr">
+    <header class="cr-top">
+      <div class="cr-wrap cr-top__in">
+        <a class="cr-logo" href="#">Cascina Rovere</a>
+        <nav aria-label="Menu">
+          <a href="#camere" data-i18n="nav_rooms">{t("nav_rooms")}</a>
+          <a href="#disponibilita" data-i18n="nav_avail">{t("nav_avail")}</a>
+          <a href="#arrivare" data-i18n="nav_where">{t("nav_where")}</a>
+        </nav>
+        <button type="button" class="cr-lang" data-lang-toggle aria-label={t("toggle_label")} data-i18n-aria="toggle_label" lang="en"><span data-i18n="toggle">{t("toggle")}</span></button>
+      </div>
+    </header>
+
+    <section class="cr-hero">
+      <Image src={pic("hero")} alt={t("hero_alt")} data-i18n-alt="hero_alt" widths={[640, 1000, 1600]} sizes="100vw" loading="eager" fetchpriority="high" class="cr-hero__img" />
+      <div class="cr-wrap cr-hero__text">
+        <p class="cr-kicker" data-i18n="hero_kicker">{t("hero_kicker")}</p>
+        <h1 data-i18n="hero_h1">{t("hero_h1")}</h1>
+        <p class="cr-sub" data-i18n="hero_sub">{t("hero_sub")}</p>
+        <a class="cr-btn" href="#disponibilita" data-i18n="hero_cta">{t("hero_cta")}</a>
+      </div>
+    </section>
+
+    <section class="cr-sec" id="camere">
+      <div class="cr-wrap">
+        <h2 data-i18n="rooms_h2">{t("rooms_h2")}</h2>
+        <p class="cr-lead" data-i18n="rooms_lead">{t("rooms_lead")}</p>
+        <ul class="cr-rooms">
+          {
+            rooms.map((r) => (
+              <li>
+                <Image src={pic(r.k)} alt="" widths={[400, 800]} sizes="(min-width: 900px) 380px, 92vw" />
+                <h3>{r.n}</h3>
+                <p class="cr-guests">
+                  {r.g} <span data-i18n="guests">{t("guests")}</span>
+                </p>
+                <p data-i18n={`r_${r.k}`}>{t(`r_${r.k}`)}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="cr-sec cr-sec--leaf" id="disponibilita">
+      <div class="cr-wrap cr-avail">
+        <div>
+          <h2 data-i18n="avail_h2">{t("avail_h2")}</h2>
+          <p class="cr-lead" data-i18n="avail_lead">{t("avail_lead")}</p>
+        </div>
+        <form
+          class="cr-form"
+          data-demo-form
+          data-wa={site.whatsappNumber}
+          data-heading="Richiesta di disponibilità dal sito"
+          data-heading-en="Availability request from the website"
+          data-err="Completa questo campo."
+          data-err-en="Please fill in this field."
+          novalidate
+        >
+          <div class="cr-row">
+            <label>
+              <span data-i18n="f_arrivo">{t("f_arrivo")}</span>
+              <input type="date" name="arrivo" required data-label="Arrivo" data-label-en="Arrival" />
+              <span class="cr-err" data-derr="arrivo" aria-live="polite"></span>
+            </label>
+            <label>
+              <span data-i18n="f_partenza">{t("f_partenza")}</span>
+              <input type="date" name="partenza" required data-label="Partenza" data-label-en="Departure" />
+              <span class="cr-err" data-derr="partenza" aria-live="polite"></span>
+            </label>
+          </div>
+          <div class="cr-row">
+            <label>
+              <span data-i18n="f_ospiti">{t("f_ospiti")}</span>
+              <select name="ospiti" data-label="Ospiti" data-label-en="Guests">
+                <option>1 adulto</option>
+                <option selected>2 adulti</option>
+                <option>2 adulti e 1 bambino</option>
+                <option>2 adulti e 2 bambini</option>
+                <option>3 adulti</option>
+                <option>4 adulti</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="f_lingua">{t("f_lingua")}</span>
+              <select name="lingua" data-label="Lingua" data-label-en="Language">
+                <option data-i18n="lang_it">{t("lang_it")}</option>
+                <option data-i18n="lang_en">{t("lang_en")}</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            <span data-i18n="f_nome">{t("f_nome")}</span>
+            <input type="text" name="nome" autocomplete="given-name" required data-label="Nome" data-label-en="Name" />
+            <span class="cr-err" data-derr="nome" aria-live="polite"></span>
+          </label>
+          <button type="submit" class="cr-btn" data-i18n="f_send">{t("f_send")}</button>
+          <p class="cr-note" data-i18n="f_note">{t("f_note")}</p>
+        </form>
+      </div>
+    </section>
+
+    <section class="cr-sec" id="arrivare">
+      <div class="cr-wrap cr-where">
+        <div>
+          <h2 data-i18n="where_h2">{t("where_h2")}</h2>
+          <p data-i18n="where_car">{t("where_car")}</p>
+          <p data-i18n="where_train">{t("where_train")}</p>
+        </div>
+        <div>
+          <h2 data-i18n="near_h2">{t("near_h2")}</h2>
+          <ul class="cr-near">
+            {
+              near.map((n) => (
+                <li>
+                  <Image src={pic(n)} alt="" widths={[300, 600]} sizes="(min-width: 900px) 200px, 40vw" />
+                  <div>
+                    <h3 data-i18n={`n_${n}`}>{t(`n_${n}`)}</h3>
+                    <p data-i18n={`n_${n}_d`}>{t(`n_${n}_d`)}</p>
+                  </div>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="cr-sec cr-sec--paper">
+      <div class="cr-wrap">
+        <h2 data-i18n="reviews_h2">{t("reviews_h2")}</h2>
+        <ReviewsEmpty />
+      </div>
+    </section>
+
+    <footer class="cr-foot">
+      <div class="cr-wrap">
+        <p class="cr-logo">Cascina Rovere</p>
+        <p data-i18n="foot">{t("foot")}</p>
+      </div>
+    </footer>
+  </div>
+  <script type="application/json" id="cr-dict" set:html={JSON.stringify(dict)} />
+</Demo>
+
+<style>
+  .cr {
+    --leaf: #3f4a2c;
+    --wood: #7a5636;
+    --cream: #f6efe2;
+    --ink: #2c261d;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 19px;
+    line-height: 1.6;
+    font-variation-settings: "SOFT" 50, "opsz" 18;
+  }
+  .cr h1,
+  .cr h2,
+  .cr h3 {
+    font-family: "Fraunces", Georgia, serif;
+    color: var(--ink);
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: -0.01em;
+    font-variation-settings: "SOFT" 100, "opsz" 72;
+  }
+  .cr h2 {
+    font-size: clamp(2.2rem, 1.6rem + 2.5vw, 3.6rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  .cr h3 {
+    font-size: 1.6rem;
+    font-weight: 600;
+  }
+  .cr-wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 clamp(18px, 4vw, 40px);
+  }
+  .cr-top {
+    background: var(--cream);
+    border-bottom: 1px solid #e1d4bd;
+  }
+  .cr-top__in {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 68px;
+    flex-wrap: wrap;
+  }
+  .cr-logo {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: var(--leaf);
+    text-decoration: none;
+    margin-right: auto;
+  }
+  .cr-top nav {
+    display: none;
+    gap: 1.5rem;
+  }
+  @media (min-width: 820px) {
+    .cr-top nav {
+      display: flex;
+    }
+  }
+  .cr-top nav a {
+    color: var(--ink);
+    text-decoration: none;
+    padding: 0.6rem 0;
+  }
+  .cr-top nav a:hover {
+    text-decoration: underline;
+  }
+  .cr-lang {
+    font: inherit;
+    font-size: 1rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border: 1.5px solid var(--leaf);
+    background: transparent;
+    color: var(--leaf);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .cr-hero {
+    position: relative;
+    display: grid;
+  }
+  .cr-hero :global(.cr-hero__img) {
+    width: 100%;
+    height: clamp(360px, 62vh, 680px);
+    object-fit: cover;
+  }
+  .cr-hero__text {
+    padding-block: 2.5rem 0;
+  }
+  @media (min-width: 900px) {
+    .cr-hero__text {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      padding-block: 3rem;
+    }
+    .cr-hero__text > * {
+      max-width: 34rem;
+    }
+    .cr-hero__text::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: min(100%, 44rem);
+      background: var(--cream);
+      border-radius: 0 28px 0 0;
+      z-index: -1;
+    }
+    .cr-hero__text {
+      z-index: 0;
+      max-width: none;
+    }
+  }
+  .cr-kicker {
+    font-style: italic;
+    color: var(--wood);
+    margin-bottom: 0.5rem;
+  }
+  .cr h1 {
+    font-size: clamp(2.4rem, 1.7rem + 3vw, 4.2rem);
+    line-height: 1.02;
+  }
+  .cr-sub {
+    margin: 1.25rem 0 1.75rem;
+    font-size: 1.15rem;
+  }
+  .cr-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 0 1.5rem;
+    background: var(--leaf);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .cr-sec {
+    padding: clamp(60px, 9vw, 120px) 0;
+  }
+  .cr-sec--leaf {
+    background: #e6e2cc;
+  }
+  .cr-sec--paper {
+    background: #efe5d2;
+  }
+  .cr-lead {
+    max-width: 44ch;
+    font-size: 1.15rem;
+  }
+  .cr-rooms {
+    list-style: none;
+    padding: 0;
+    margin: 2.5rem 0 0;
+    display: grid;
+    gap: 2.5rem 2rem;
+  }
+  @media (min-width: 700px) {
+    .cr-rooms {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 1050px) {
+    .cr-rooms {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .cr-rooms :global(img) {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 18px 18px 18px 0;
+    margin-bottom: 1rem;
+  }
+  .cr-guests {
+    color: var(--wood);
+    font-style: italic;
+  }
+  .cr-avail {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .cr-avail {
+      grid-template-columns: 1fr 1.1fr;
+      gap: 4rem;
+    }
+  }
+  .cr-form {
+    display: grid;
+    gap: 1rem;
+    background: var(--cream);
+    padding: clamp(20px, 3vw, 36px);
+    border-radius: 24px 24px 24px 0;
+  }
+  .cr-form label {
+    display: grid;
+    gap: 0.3rem;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .cr-form input,
+  .cr-form select {
+    font: inherit;
+    font-weight: 400;
+    min-height: 50px;
+    padding: 0 0.8rem;
+    border: 1.5px solid #9a8c74;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .cr-row {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 560px) {
+    .cr-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .cr-err {
+    color: #9b2b17;
+    font-size: 0.95rem;
+  }
+  .cr-err:empty {
+    display: none;
+  }
+  .cr-note {
+    font-size: 0.9rem;
+    color: #5b5244;
+  }
+  .cr-where {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 900px) {
+    .cr-where {
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 4rem;
+    }
+  }
+  .cr-where p + p {
+    margin-top: 0.75rem;
+  }
+  .cr-near {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: grid;
+    gap: 1.25rem;
+  }
+  .cr-near li {
+    display: grid;
+    grid-template-columns: 38% 1fr;
+    gap: 1.25rem;
+    align-items: center;
+  }
+  .cr-near :global(img) {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 14px 14px 14px 0;
+  }
+  .cr-near h3 {
+    font-size: 1.3rem;
+  }
+  .cr-foot {
+    background: var(--leaf);
+    color: #efe9d8;
+    padding: 48px 0;
+    font-size: 16px;
+  }
+  .cr-foot .cr-logo {
+    color: #fff;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+</style>
+<script>
+  import { initDemoForms } from "../../../scripts/demo-form";
+  initDemoForms();
+
+  const dict = JSON.parse(document.getElementById("cr-dict")!.textContent!) as Record<string, [string, string]>;
+  const btn = document.querySelector<HTMLButtonElement>("[data-lang-toggle]")!;
+  const apply = (lang: "it" | "en") => {
+    const i = lang === "it" ? 0 : 1;
+    document.documentElement.lang = lang;
+    document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
+      const v = dict[el.dataset.i18n!];
+      if (v) el.textContent = v[i];
+    });
+    document.querySelectorAll<HTMLImageElement>("[data-i18n-alt]").forEach((el) => {
+      const v = dict[el.dataset.i18nAlt!];
+      if (v) el.alt = v[i];
+    });
+    document.querySelectorAll<HTMLElement>("[data-i18n-aria]").forEach((el) => {
+      const v = dict[el.dataset.i18nAria!];
+      if (v) el.setAttribute("aria-label", v[i]);
+    });
+    btn.lang = lang === "it" ? "en" : "it";
+  };
+  btn.addEventListener("click", () => apply(document.documentElement.lang === "en" ? "it" : "en"));
+</script>

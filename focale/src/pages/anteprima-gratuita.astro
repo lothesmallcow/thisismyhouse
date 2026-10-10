@@ -1,0 +1,54 @@
+---
+import Base from "../layouts/Base.astro";
+import Fuoco from "../components/Fuoco.astro";
+import PreviewForm from "../components/PreviewForm.astro";
+import { site } from "../config/site";
+import { breadcrumbs } from "../lib/schema";
+---
+<Base
+  title="Anteprima gratuita del tuo nuovo sito | Focale"
+  description={`Tre domande e in ${site.previewHours} ore ricevi la homepage del tuo nuovo sito. Nessun impegno, nessun pagamento anticipato.`}
+  sticky={false}
+  jsonLd={[breadcrumbs([{ name: "Anteprima gratuita", path: "/anteprima-gratuita/" }])]}
+>
+  <section class="ag" data-hero>
+    <div class="wrap ag-grid">
+      <div class="ag-head">
+        <Fuoco />
+        <h1>Ricevi l'anteprima del tuo nuovo sito. Gratis, in {site.previewHours} ore.</h1>
+        <p class="lead ag-lead">Tre domande veloci. Poi ti scrivo io.</p>
+      </div>
+      <PreviewForm />
+    </div>
+  </section>
+</Base>
+<style>
+  .ag {
+    padding-block: clamp(2rem, 1rem + 3vw, 4rem) var(--space-section);
+  }
+  .ag-grid {
+    display: grid;
+    gap: 2.5rem;
+  }
+  @media (min-width: 1040px) {
+    .ag-grid {
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 5rem;
+      align-items: start;
+    }
+    .ag-head {
+      position: sticky;
+      top: 7rem;
+    }
+  }
+  .ag h1 {
+    font-size: clamp(2.25rem, 1.6rem + 2.6vw, 3.75rem);
+  }
+  .ag-lead {
+    margin-top: 1.25rem;
+  }
+</style>
+<script>
+  import { initPreviewForm } from "../scripts/forms";
+  initPreviewForm();
+</script>

@@ -1,0 +1,297 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
+import Fuoco from "../components/Fuoco.astro";
+import Icon from "../components/Icon.astro";
+import Renovation from "../components/Renovation.astro";
+import Calculator from "../components/Calculator.astro";
+import Steps from "../components/Steps.astro";
+import Founders from "../components/Founders.astro";
+import PriceSummary from "../components/PriceSummary.astro";
+import OwnerPhoto from "../components/OwnerPhoto.astro";
+import Faq from "../components/Faq.astro";
+import Reviews from "../components/Reviews.astro";
+import Closing from "../components/Closing.astro";
+import P from "../components/P.astro";
+import { getCollection } from "astro:content";
+import { site } from "../config/site";
+import { fill } from "../lib/util";
+import { faqPage, professionalService } from "../lib/schema";
+
+const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order);
+const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
+
+const steps = [
+  { title: "Mi racconti la tua attività.", text: "Dieci minuti al telefono o su WhatsApp: cosa fai, per chi, dove." },
+  {
+    title: "Ricevi l'anteprima gratuita.",
+    text: `Entro ${site.previewHours} ore ti mando la homepage del tuo nuovo sito, con il tuo nome e i tuoi servizi. La guardi dal telefono, con calma.`,
+  },
+  {
+    title: "Se ti convince, partiamo.",
+    text: `Mi versi un acconto del ${site.depositPercent}%. In ${site.deliveryDays.professionale} giorni lavorativi dall'arrivo di foto e informazioni, il sito è pronto.`,
+  },
+  {
+    title: "Paghi il saldo solo a sito approvato.",
+    text: "Lo provi, chiedi le modifiche, lo approvi. Solo allora paghi il resto e lo mettiamo online.",
+  },
+];
+
+const inside = [
+  { icon: "mobile", t: "Si legge bene da ogni telefono.", d: "Testi grandi, pulsanti comodi, niente zoom." },
+  { icon: "phone", t: "Ti chiamano con un tocco.", d: "Telefono e WhatsApp sempre a portata di pollice." },
+  {
+    icon: "list",
+    t: "Le richieste arrivano già ordinate.",
+    d: "Chi compila il modulo ti scrive su WhatsApp con un messaggio pronto: cosa serve, dove, quando. E tu ricevi anche una copia via email.",
+  },
+  { icon: "search", t: "Ti trovano su Google.", d: "Pagine scritte per le ricerche della tua zona, scheda Google collegata." },
+  { icon: "bolt", t: "Si apre in fretta.", d: "Punteggio di velocità sopra 90 su PageSpeed di Google, da telefono. Te lo mostro prima di consegnare." },
+  { icon: "shield", t: "In regola.", d: "Privacy, cookie e dati aziendali a posto, senza banner inutili." },
+  { icon: "key", t: "È tuo.", d: "Dominio, codice e accessi intestati a te. Se un giorno vuoi cambiare, porti via tutto." },
+] as const;
+---
+<Base
+  title="Focale | Siti web che portano richieste, per piccole imprese"
+  description={`Rifaccio il sito della tua attività perché si legga bene dal telefono e porti più richieste. Anteprima gratuita in ${site.previewHours} ore, saldo solo a sito approvato.`}
+  jsonLd={[professionalService(), faqPage(faqItems)]}
+>
+  <Hero />
+
+  <section class="section section--pietra problem">
+    <div class="wrap">
+      <Fuoco />
+      <h2>Ogni giorno qualcuno cerca quello che fai. Poi apre il tuo sito.</h2>
+      <ul class="problem__list">
+        <li>
+          <Icon name="zoom" size={36} />
+          <p>Lo apre dal telefono. Deve allargare il testo con due dita per leggerlo. Torna indietro e chiama il secondo risultato.</p>
+        </li>
+        <li>
+          <Icon name="phone" size={36} />
+          <p>Cerca un numero da chiamare. In alto non c'è. Lascia perdere.</p>
+        </li>
+        <li>
+          <Icon name="calendar" size={36} />
+          <p>In fondo alla pagina legge © 2014. Pensa che abbiate chiuso.</p>
+        </li>
+      </ul>
+      <p class="problem__close">Tu non te ne accorgi, perché chi se ne va non ti avvisa.</p>
+    </div>
+  </section>
+
+  <Renovation />
+
+  <Calculator />
+
+  <section class="section">
+    <div class="wrap">
+      <Fuoco />
+      <h2 class="h2-gap">Quattro passi. Il primo è gratis.</h2>
+      <Steps steps={steps} />
+      <p class="after-link"><a class="link ui" href="/come-funziona">Tutti i dettagli</a></p>
+    </div>
+  </section>
+
+  <section class="section section--dark on-dark guarantee">
+    <div class="wrap">
+      <Fuoco dark />
+      <h2>Il rischio me lo prendo io.</h2>
+      <p class="lead measure guarantee__p">
+        L'anteprima è gratuita. Se non ti piace, finisce lì: non mi devi niente e non ti richiamo dieci volte. Se ti piace e partiamo, il
+        saldo lo paghi solo dopo aver approvato il sito finito.
+      </p>
+      <p class="guarantee__small">
+        {site.revisionRounds} giri di modifiche inclusi. Le condizioni sono scritte, chiare e senza asterischi.{" "}
+        <a class="link" href="/condizioni">Leggi le condizioni</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <Fuoco />
+      <h2 class="h2-gap">Cosa trovi nel tuo nuovo sito</h2>
+      <ul class="inside">
+        {
+          inside.map((it) => (
+            <li>
+              <Icon name={it.icon} size={28} />
+              <div>
+                <h3>{it.t}</h3>
+                <p>{it.d}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <Founders />
+
+  <PriceSummary />
+
+  <section class="section section--pietra student">
+    <div class="wrap student__grid">
+      <div>
+        <Fuoco />
+        <h2>Perché affidarti a uno studente?</h2>
+        <p class="lead measure student__p">
+          Domanda giusta. Ho <P value={site.ownerAge} /> anni, studio Economia all'Università Bocconi e non ho un'agenzia con quaranta persone. Per
+          te significa tre cose.
+        </p>
+        <ul class="student__list">
+          <li>
+            <h3>Rispondi a me.</h3>
+            <p>Niente commerciali, niente centralino: chi ti scrive è chi costruisce il sito.</p>
+          </li>
+          <li>
+            <h3>Costo meno, senza fare peggio.</h3>
+            <p>Uso strumenti di intelligenza artificiale per lavorare più in fretta. Il progetto, i testi e il controllo finale li faccio io, uno per uno.</p>
+          </li>
+          <li>
+            <h3>Ho tutto da dimostrare.</h3>
+            <p>Ogni sito è il mio biglietto da visita: non posso permettermi di farne uno mediocre.</p>
+          </li>
+        </ul>
+        <a href="/chi-sono" class="btn btn--secondary">Chi sono</a>
+      </div>
+      <OwnerPhoto />
+    </div>
+  </section>
+
+  <Reviews />
+
+  <section class="section">
+    <div class="wrap">
+      <Fuoco />
+      <h2 class="h2-gap">Domande</h2>
+      <Faq items={faqItems} />
+      <p class="after-link"><a class="link ui" href="/come-funziona#domande">Tutte le domande</a></p>
+    </div>
+  </section>
+
+  <Closing />
+</Base>
+
+<style>
+  .h2-gap {
+    margin-bottom: clamp(2rem, 1.5rem + 2vw, 3.25rem);
+  }
+  .after-link {
+    margin-top: 2.5rem;
+    font-size: var(--step-1);
+    font-weight: 700;
+  }
+  .after-link a {
+    color: var(--portone);
+  }
+  .problem h2 {
+    max-width: 22ch;
+  }
+  .problem__list {
+    list-style: none;
+    padding: 0;
+    margin: clamp(2rem, 1.5rem + 2vw, 3.5rem) 0;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .problem__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3rem;
+    }
+  }
+  .problem__list li {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--portone);
+  }
+  .problem__list :global(.icon) {
+    color: var(--portone);
+  }
+  .problem__list p {
+    font-size: var(--step-1);
+    line-height: 1.5;
+  }
+  .problem__close {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-stretch: 110%;
+    font-size: var(--step-2);
+    color: var(--portone);
+    max-width: 30ch;
+    line-height: 1.2;
+  }
+  .guarantee__p {
+    margin: 1.5rem 0 1.25rem;
+  }
+  .guarantee__small {
+    color: #d5dcd6;
+    max-width: 60ch;
+  }
+  .guarantee__small a {
+    color: var(--calce);
+    font-weight: 600;
+  }
+  .inside {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 2rem 4rem;
+  }
+  @media (min-width: 860px) {
+    .inside {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .inside li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+  .inside :global(.icon) {
+    color: var(--ottone);
+    margin-top: 0.2rem;
+  }
+  .inside h3 {
+    font-size: var(--step-1);
+    margin-bottom: 0.35rem;
+  }
+  .student__grid {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 960px) {
+    .student__grid {
+      grid-template-columns: 1.4fr 0.6fr;
+      align-items: end;
+      gap: 5rem;
+    }
+  }
+  .student__p {
+    margin: 1.25rem 0 2rem;
+  }
+  .student__list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2.5rem;
+    display: grid;
+    gap: 1.5rem;
+    max-width: 44rem;
+  }
+  .student__list h3 {
+    font-size: var(--step-1);
+    margin-bottom: 0.3rem;
+  }
+</style>
+
+<script>
+  import { initSmoothScroll } from "../scripts/smooth";
+  initSmoothScroll();
+</script>

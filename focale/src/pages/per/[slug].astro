@@ -1,0 +1,192 @@
+---
+import Base from "../../layouts/Base.astro";
+import PageHead from "../../components/PageHead.astro";
+import Fuoco from "../../components/Fuoco.astro";
+import Faq from "../../components/Faq.astro";
+import Icon from "../../components/Icon.astro";
+import WhatsAppMock from "../../components/WhatsAppMock.astro";
+import { Image } from "astro:assets";
+import { getCollection, getEntry, type CollectionEntry } from "astro:content";
+import { site } from "../../config/site";
+import { whatsappHref } from "../../lib/util";
+import { breadcrumbs, faqPage } from "../../lib/schema";
+
+export async function getStaticPaths() {
+  const settori = await getCollection("settori");
+  return settori.map((s) => ({ params: { slug: s.id }, props: { s } }));
+}
+const { s } = Astro.props as { s: CollectionEntry<"settori"> };
+const d = s.data;
+const demo = await getEntry("lavori", d.demo);
+---
+<Base
+  title={d.title}
+  description={d.description.replace("72 ore", `${site.previewHours} ore`)}
+  jsonLd={[breadcrumbs([{ name: d.short, path: `/per/${s.id}/` }]), faqPage(d.faq)]}
+>
+  <PageHead title={d.h1} lead={d.lead} class="st-head">
+    <div class="btn-row st-cta">
+      <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${s.id}`}>Voglio l'anteprima gratuita</a>
+    </div>
+  </PageHead>
+
+  <section class="section section--pietra">
+    <div class="wrap">
+      <Fuoco />
+      <h2>I problemi che vedo più spesso</h2>
+      <ol class="st-problems">
+        {d.problems.map((p) => <li><p>{p}</p></li>)}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap st-two">
+      <div>
+        <Fuoco />
+        <h2>Cosa costruisco per te</h2>
+        <ul class="st-build">
+          {d.build.map((b) => <li><Icon name="check" />{b}</li>)}
+        </ul>
+      </div>
+      <div>
+        <Fuoco />
+        <h2>Come ti arrivano le richieste</h2>
+        <p class="lead st-req">{d.requests}</p>
+        <WhatsAppMock heading={d.mock.heading} lines={d.mock.lines} />
+      </div>
+    </div>
+  </section>
+
+  {
+    demo && (
+      <section class="section section--pietra">
+        <div class="wrap st-demo">
+          <Image src={demo.data.shotDesktop} alt={`Il sito dimostrativo di ${demo.data.name}`} widths={[480, 800]} sizes="(min-width: 900px) 560px, 92vw" class="st-demo__img" />
+          <div>
+            <p class="st-demo__label">Progetto dimostrativo per un'attività inventata</p>
+            <h2>Guarda un esempio: {demo.data.name}</h2>
+            <p class="st-demo__goal">{demo.data.goal}</p>
+            <div class="btn-row">
+              <a class="btn btn--secondary" href={`/lavori/${demo.id}/`}>Leggi il progetto</a>
+              <a class="btn btn--secondary" href={`/lavori/${demo.id}/demo/`} target="_blank" rel="noopener">
+                Apri il sito
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section">
+    <div class="wrap">
+      <Fuoco />
+      <h2 class="st-h2">Domande</h2>
+      <Faq items={d.faq} />
+    </div>
+  </section>
+
+  <section class="section section--dark on-dark">
+    <div class="wrap">
+      <Fuoco dark />
+      <h2>Guarda il tuo nuovo sito prima di decidere.</h2>
+      <p class="lead measure st-close">Ti mando l'anteprima in {site.previewHours} ore. Se non ti convince, non mi devi niente.</p>
+      <div class="btn-row">
+        <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${s.id}`}>Voglio l'anteprima gratuita</a>
+        <a class="btn btn--secondary" href={whatsappHref(d.whatsapp)} target="_blank" rel="noopener"><Icon name="whatsapp" />Scrivimi su WhatsApp</a>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  :global(.st-head) h1 {
+    max-width: 20ch;
+  }
+  .st-cta {
+    margin-top: 2rem;
+  }
+  .st-problems {
+    list-style: none;
+    counter-reset: p;
+    padding: 0;
+    margin: 2.5rem 0 0;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .st-problems {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3rem;
+    }
+  }
+  .st-problems li {
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--portone);
+    font-size: var(--step-1);
+    line-height: 1.5;
+  }
+  .st-two {
+    display: grid;
+    gap: 4rem;
+  }
+  @media (min-width: 900px) {
+    .st-two {
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+    }
+  }
+  .st-build {
+    list-style: none;
+    padding: 0;
+    margin: 1.75rem 0 0;
+    display: grid;
+    gap: 0.9rem;
+  }
+  .st-build li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0.75rem;
+    font-size: var(--step-1);
+    line-height: 1.45;
+  }
+  .st-build :global(.icon) {
+    color: var(--portone);
+    margin-top: 0.25rem;
+  }
+  .st-req {
+    margin: 1.5rem 0 2rem;
+  }
+  .st-demo {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  @media (min-width: 900px) {
+    .st-demo {
+      grid-template-columns: 1.1fr 1fr;
+      gap: 4rem;
+    }
+  }
+  .st-demo :global(.st-demo__img) {
+    width: 100%;
+    border: 2px solid #1b1f1d;
+    border-radius: 6px;
+  }
+  .st-demo__label {
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--tenue);
+    margin-bottom: 0.75rem;
+  }
+  .st-demo__goal {
+    margin: 1rem 0 1.75rem;
+  }
+  .st-h2 {
+    margin-bottom: 2rem;
+  }
+  .st-close {
+    margin: 1.25rem 0 2rem;
+  }
+</style>

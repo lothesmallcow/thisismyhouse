@@ -1,0 +1,14 @@
+# ESEMPIO: da cancellare prima del lancio (vedi TODO-LORENZO.md).
+businessName: Arcadi Ristrutturazioni
+sector: Impresa di ristrutturazioni
+area: Milano, Città Studi
+currentSiteUrl: https://www.esempio-arcadi.it
+beforeImage: ../../assets/anteprime/arcadi-ristrutturazioni-k7q2-prima.png
+afterImage: ../../assets/anteprime/arcadi-ristrutturazioni-k7q2-dopo.png
+afterUrl: /lavori/arcadi-ristrutturazioni/demo/
+changes:
+  - Il numero di telefono ora è sempre in vista, anche dal telefono
+  - Le foto dei lavori sono grandi, con il prima e il dopo
+  - Chi chiede un preventivo ti scrive su WhatsApp con tutte le informazioni
+note: "Ho visto che fate bagni e cucine in zona Città Studi: ho messo questi lavori al centro, perché sono quelli che le persone cercano di più."
+published: true

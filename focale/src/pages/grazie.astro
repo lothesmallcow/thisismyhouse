@@ -1,0 +1,55 @@
+---
+import Base from "../layouts/Base.astro";
+import Fuoco from "../components/Fuoco.astro";
+import Icon from "../components/Icon.astro";
+import { site } from "../config/site";
+import { whatsappHref } from "../lib/util";
+---
+<Base title="Richiesta ricevuta | Focale" noindex sticky={false}>
+  <section class="gz" data-hero>
+    <div class="wrap">
+      <Fuoco />
+      <h1>Ricevuto. Ti scrivo entro la prossima giornata lavorativa.</h1>
+      <h2 class="gz-h2">Cosa succede adesso</h2>
+      <ol class="gz-steps">
+        <li>Guardo il tuo sito attuale, se c'è, e la tua scheda Google.</li>
+        <li>Ti scrivo per farti due o tre domande.</li>
+        <li>Entro {site.previewHours} ore ricevi l'anteprima.</li>
+      </ol>
+      <p class="lead measure">Nel frattempo, se vuoi, mandami su WhatsApp due o tre foto dei tuoi lavori migliori. L'anteprima verrà più vera.</p>
+      <div class="btn-row gz-btns">
+        <a class="btn btn--primary" href={whatsappHref("Ciao, ho appena chiesto l'anteprima sul sito. Ti mando qualche foto dei miei lavori.")} target="_blank" rel="noopener">
+          <Icon name="whatsapp" />Mandami le foto su WhatsApp
+        </a>
+        <a class="btn btn--secondary" href="/">Torna alla home</a>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .gz {
+    padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem) var(--space-section);
+  }
+  .gz h1 {
+    max-width: 20ch;
+  }
+  .gz-h2 {
+    font-size: var(--step-2);
+    margin: 3rem 0 1.25rem;
+  }
+  .gz-steps {
+    margin: 0 0 2.5rem;
+    padding-left: 1.5rem;
+    display: grid;
+    gap: 0.6rem;
+    font-size: var(--step-1);
+  }
+  .gz-steps li::marker {
+    font-family: var(--font-head);
+    font-weight: 800;
+    color: var(--portone);
+  }
+  .gz-btns {
+    margin-top: 2rem;
+  }
+</style>

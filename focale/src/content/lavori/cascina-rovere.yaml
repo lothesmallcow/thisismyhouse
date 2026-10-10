@@ -1,0 +1,19 @@
+order: 2
+name: Cascina Rovere
+sector: Agriturismo con camere, Brianza
+goal: Più prenotazioni dirette, meno commissioni ai portali.
+problems:
+  - Foto vecchie o piccole.
+  - Disponibilità e prezzi introvabili.
+  - Nessuna versione in inglese.
+choices:
+  - Camere con foto grandi.
+  - Richiesta di disponibilità con date e ospiti.
+  - Italiano e inglese.
+  - Come arrivare e cosa fare nei dintorni.
+outcome:
+  - Richieste di disponibilità su WhatsApp con date, ospiti e lingua.
+  - Ospiti che tornano e prenotano direttamente.
+settore: b-and-b-e-agriturismi
+shotPhone: ../../assets/lavori/cascina-rovere-phone.png
+shotDesktop: ../../assets/lavori/cascina-rovere-desktop.png

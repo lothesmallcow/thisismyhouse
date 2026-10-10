@@ -1,0 +1,63 @@
+---
+import { Image } from "astro:assets";
+import { site } from "../config/site";
+import { isPlaceholder } from "../lib/util";
+interface Props {
+  size?: "sm" | "lg";
+}
+const { size = "lg" } = Astro.props;
+const photos = import.meta.glob<{ default: ImageMetadata }>("../assets/chi-sono.{jpg,jpeg,png,webp}", { eager: true });
+const photo = site.photo ? Object.values(photos)[0]?.default : undefined;
+const initial = isPlaceholder(site.ownerFirstName) ? "?" : site.ownerFirstName.charAt(0).toUpperCase();
+---
+{
+  photo ? (
+    <figure class:list={["op", `op--${size}`]}>
+      <Image src={photo} alt={`Foto di ${site.ownerFirstName}`} widths={[360, 720]} sizes="(min-width: 768px) 360px, 100vw" />
+    </figure>
+  ) : (
+    <figure class:list={["op", "op--empty", `op--${size}`]} data-placeholder aria-label="Foto da aggiungere">
+      <span class="op__initial" aria-hidden="true">{initial}</span>
+      <span class="op__bar" aria-hidden="true" />
+    </figure>
+  )
+}
+<style>
+  .op {
+    margin: 0;
+    aspect-ratio: 4 / 5;
+    width: 100%;
+    max-width: 22rem;
+    position: relative;
+    background: var(--pietra);
+    overflow: hidden;
+  }
+  .op--sm {
+    max-width: 14rem;
+  }
+  .op img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .op--empty {
+    display: grid;
+    place-items: center;
+  }
+  .op__initial {
+    font-family: var(--font-head);
+    font-weight: 850;
+    font-stretch: 118%;
+    font-size: 7rem;
+    color: var(--portone);
+    line-height: 1;
+  }
+  .op__bar {
+    position: absolute;
+    left: 0;
+    right: -1px;
+    bottom: 18%;
+    height: var(--bar);
+    background: var(--ottone);
+  }
+</style>

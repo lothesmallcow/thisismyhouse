@@ -1,0 +1,46 @@
+---
+import Base from "../layouts/Base.astro";
+import Fuoco from "../components/Fuoco.astro";
+import CantiereSign from "../components/CantiereSign.astro";
+---
+<Base title="Pagina non trovata | Focale" noindex og="home">
+  <section class="nf" data-hero>
+    <div class="wrap nf-grid">
+      <div>
+        <Fuoco />
+        <h1>Questa pagina è in ristrutturazione.</h1>
+        <p class="lead nf-p">Succede anche ai siti migliori. Torna alla home o guarda come funziona.</p>
+        <div class="btn-row">
+          <a class="btn btn--primary" href="/">Torna alla home</a>
+          <a class="btn btn--secondary" href="/come-funziona">Come funziona</a>
+        </div>
+      </div>
+      <div class="nf-sign" aria-hidden="true"><CantiereSign /></div>
+    </div>
+  </section>
+</Base>
+<style>
+  .nf {
+    padding-block: clamp(3rem, 2rem + 5vw, 7rem) var(--space-section);
+  }
+  .nf-grid {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 900px) {
+    .nf-grid {
+      grid-template-columns: 1.5fr 1fr;
+      align-items: center;
+    }
+  }
+  .nf h1 {
+    max-width: 16ch;
+  }
+  .nf-p {
+    margin: 1.25rem 0 2rem;
+  }
+  .nf-sign {
+    justify-self: center;
+    transform: scale(1.4);
+  }
+</style>

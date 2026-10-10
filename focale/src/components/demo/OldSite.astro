@@ -1,0 +1,165 @@
+---
+/**
+ * The deliberately bad 2011 website of "Impresa Edile Arcadi", used by the renovation demo.
+ * Grid areas match ArcadiHero. Annotations (numbered, a real sequence) sit inside each piece.
+ */
+import { getImage } from "astro:assets";
+import photo from "../../assets/demo/arcadi-ristrutturazioni/bagno-dopo.jpg";
+import Note from "./MarkerNote.astro";
+interface Props {
+  annotations?: boolean;
+}
+const { annotations = true } = Astro.props;
+const tiny = await getImage({ src: photo, width: 36, format: "png" });
+const notes = [
+  { n: 1, text: "Dal telefono non si legge", area: "text" },
+  { n: 2, text: "Nessun numero in vista", area: "header" },
+  { n: 3, text: "Foto sgranate, nessun lavoro vero", area: "photo" },
+  { n: 4, text: "© 2011: sembra un'attività chiusa", area: "foot" },
+  { n: 5, text: "\"Leader nel settore\" non dice niente", area: "cta" },
+];
+const note = (area: string) => notes.find((n) => n.area === area);
+---
+<div class="os-wrap">
+  <div class="os">
+    <div class="os__header os__piece" data-old="header">
+      <span class="os__brand">IMPRESA EDILE ARCADI s.n.c.</span>
+      {annotations && <Note {...note("header")!} />}
+    </div>
+    <div class="os__title os__piece" data-old="title">
+      <p class="os__h">Benvenuti nel nostro sito!!!</p>
+    </div>
+    <div class="os__photo os__piece" data-old="photo">
+      <img src={tiny.src} width="36" height="23" alt="" decoding="async" />
+      {annotations && <Note {...note("photo")!} />}
+    </div>
+    <div class="os__text os__piece" data-old="text">
+      <p>
+        Siamo un'azienda leader nel settore delle ristrutturazioni con pluriennale esperienza. Professionalità, serietà e cortesia sono i
+        nostri punti di forza.
+      </p>
+      {annotations && <Note {...note("text")!} />}
+    </div>
+    <div class="os__cta os__piece" data-old="cta">
+      <span class="os__link">Clicca qui per vedere i nostri lavori</span>
+      {annotations && <Note {...note("cta")!} />}
+    </div>
+    <div class="os__extra os__piece" data-old="extra">
+      <span class="os__counter">Sei il visitatore n° <b>004381</b></span>
+    </div>
+    <div class="os__foot os__piece" data-old="foot">
+      <span>© 2011 Tutti i diritti riservati. Sito ottimizzato per Internet Explorer a 1024x768</span>
+      {annotations && <Note {...note("foot")!} />}
+    </div>
+  </div>
+</div>
+<style>
+  .os-wrap {
+    container-type: inline-size;
+    width: 100%;
+    height: 100%;
+  }
+  .os {
+    height: 100%;
+    box-sizing: border-box;
+    background: #fffbe6;
+    background-image: radial-gradient(#e9e2b8 1px, transparent 1px);
+    background-size: 8px 8px;
+    color: #000080;
+    font-family: "Times New Roman", Times, "Liberation Serif", serif;
+    font-size: 11px;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas: "header" "photo" "title" "text" "cta" "extra" "foot";
+    align-content: start;
+    overflow: hidden;
+  }
+  .os__piece {
+    position: relative;
+  }
+  .os__header {
+    grid-area: header;
+    background: linear-gradient(#3a6fd8, #1b3f9a);
+    color: #ffff66;
+    padding: 10px 8px;
+    border-bottom: 3px ridge #c0c0c0;
+    text-align: center;
+  }
+  .os__brand {
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-shadow: 2px 2px 0 #000;
+  }
+  .os__title {
+    grid-area: title;
+    padding: 8px;
+    text-align: center;
+  }
+  .os__h {
+    font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", cursive;
+    color: #d40000;
+    font-size: 17px;
+    font-weight: bold;
+    margin: 0;
+  }
+  .os__photo {
+    grid-area: photo;
+    padding: 6px 8px;
+  }
+  .os__photo img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    image-rendering: pixelated;
+    border: 3px outset #c0c0c0;
+    display: block;
+  }
+  .os__text {
+    grid-area: text;
+    padding: 6px 8px;
+    line-height: 1.25;
+  }
+  .os__text p {
+    margin: 0;
+  }
+  .os__cta {
+    grid-area: cta;
+    padding: 4px 8px;
+  }
+  .os__link {
+    color: #0000ee;
+    text-decoration: underline;
+  }
+  .os__extra {
+    grid-area: extra;
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .os__counter {
+    display: inline-block;
+    background: #000;
+    color: #39ff14;
+    font-family: "Courier New", monospace;
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+  .os__foot {
+    grid-area: foot;
+    padding: 8px;
+    font-size: 9px;
+    color: #555;
+    text-align: center;
+    border-top: 1px dashed #999;
+  }
+  @container (min-width: 520px) {
+    .os {
+      grid-template-columns: 42% 1fr;
+      grid-template-areas: "header header" "title title" "photo text" "photo cta" "extra extra" "foot foot";
+      font-size: 12px;
+    }
+    .os__photo img {
+      width: 60%;
+    }
+  }
+</style>

@@ -1,0 +1,162 @@
+---
+import Icon from "./Icon.astro";
+import PhoneFrame from "./PhoneFrame.astro";
+import ArcadiHero from "./demo/ArcadiHero.astro";
+import { site } from "../config/site";
+---
+<section class="hero" data-hero data-hero-anim>
+  <div class="wrap hero__grid">
+    <div class="hero__text">
+      <h1 data-hero-h1>Chi apre il tuo sito decide in un attimo se chiamarti.</h1>
+      <p class="lead hero__p" data-hero-fade>
+        Rifaccio i siti delle piccole imprese perché portino richieste vere: si leggono bene dal telefono, si aprono in fretta e hanno un
+        pulsante per chiamarti o scriverti su WhatsApp. Prima di spendere un euro, vedi l'anteprima del tuo nuovo sito.
+      </p>
+      <div class="hero__actions" data-hero-fade>
+        <div class="btn-row">
+          <a href="/anteprima-gratuita" class="btn btn--primary">Voglio l'anteprima gratuita</a>
+          <a href="#ristrutturazione" class="btn btn--secondary" data-scroll-to>Guarda come funziona</a>
+        </div>
+        <p class="small hero__note">Pronta in {site.previewHours} ore. Nessun impegno, nessun pagamento anticipato.</p>
+      </div>
+      <ul class="hero__trust" data-hero-fade>
+        <li><Icon name="user" /><span>Parli sempre con me, non con un centralino.</span></li>
+        <li><Icon name="shield" /><span>Saldo solo a sito approvato.</span></li>
+        <li><Icon name="key" /><span>Il sito, il dominio e gli accessi sono tuoi.</span></li>
+      </ul>
+    </div>
+    <figure class="hero__visual" data-hero-phone>
+      <PhoneFrame class="hero__phone" label="Esempio: il sito di un'impresa di ristrutturazioni visto dal telefono">
+        <div class="hero__canvas"><ArcadiHero eager /></div>
+        <div class="notif" slot="overlay" data-notif>
+          <span class="notif__icon" aria-hidden="true"><Icon name="whatsapp" size={18} /></span>
+          <span class="notif__body">
+            <strong>Nuova richiesta di preventivo</strong>
+            <span>Bagno completo, zona Città Studi. Vorrebbero iniziare a marzo.</span>
+          </span>
+        </div>
+      </PhoneFrame>
+      <figcaption class="small muted">Attività di esempio</figcaption>
+    </figure>
+  </div>
+</section>
+<style>
+  .hero {
+    padding-block: clamp(2rem, 1rem + 4vw, 4.5rem) clamp(3.5rem, 2rem + 5vw, 7rem);
+  }
+  .hero__grid {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 960px) {
+    .hero__grid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+      gap: clamp(3rem, 5vw, 6rem);
+      align-items: center;
+    }
+  }
+  .hero h1 {
+    max-width: 15ch;
+  }
+  .hero__p {
+    margin-top: 1.5rem;
+    max-width: 52ch;
+  }
+  .hero__actions {
+    margin-top: 2rem;
+  }
+  .hero__note {
+    margin-top: 0.85rem;
+    color: var(--tenue);
+  }
+  .hero__trust {
+    list-style: none;
+    padding: 1.5rem 0 0;
+    margin: 2rem 0 0;
+    border-top: 1px solid var(--pietra-scura);
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (min-width: 640px) {
+    .hero__trust {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+  .hero__trust li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0.6rem;
+    align-items: start;
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.35;
+    color: var(--portone);
+  }
+  .hero__trust :global(.icon) {
+    color: var(--ottone);
+  }
+  .hero__visual {
+    margin: 0;
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+  }
+  .hero__visual :global(.pf) {
+    --pw: 270;
+  }
+  @media (min-width: 960px) {
+    .hero__visual :global(.pf) {
+      --pw: 300;
+    }
+  }
+  .hero__canvas {
+    width: 390px;
+    height: 844px;
+    padding-top: 34px;
+    box-sizing: border-box;
+    background: #f2f2f0;
+  }
+  .notif {
+    position: absolute;
+    left: 50%;
+    top: 42px;
+    width: calc(100% - 36px);
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 12px;
+    box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.35);
+    font-family: var(--font-head);
+    font-size: 13px;
+    line-height: 1.3;
+    color: #1d2a24;
+    z-index: 2;
+  }
+  .notif__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: #1f7a4f;
+    color: #fff;
+  }
+  .notif__body {
+    display: grid;
+    gap: 2px;
+  }
+  .notif strong {
+    font-weight: 750;
+    font-size: 13.5px;
+  }
+</style>
+<script>
+  import { initHero } from "../scripts/hero";
+  initHero();
+</script>

@@ -1,0 +1,258 @@
+---
+/** Private pitch page for one prospect. noindex, not in the sitemap, unguessable slug. */
+import Base from "../../layouts/Base.astro";
+import Icon from "../../components/Icon.astro";
+import P from "../../components/P.astro";
+import { Image } from "astro:assets";
+import { getCollection, type CollectionEntry } from "astro:content";
+import { site } from "../../config/site";
+import { euro, foundersOpen, whatsappHref } from "../../lib/util";
+
+export async function getStaticPaths() {
+  const all = await getCollection("anteprime", (e) => e.data.published);
+  return all.map((a) => ({ params: { slug: a.id }, props: { a } }));
+}
+const { a } = Astro.props as { a: CollectionEntry<"anteprime"> };
+const d = a.data;
+const owner = site.ownerFirstName;
+const likeMsg = `Ciao ${owner}, ho visto l'anteprima per ${d.businessName}. Mi piace, parliamone.`;
+const doubtMsg = `Ciao ${owner}, ho visto l'anteprima per ${d.businessName}. Ho qualche dubbio:`;
+const noMsg = `Ciao, ho visto l'anteprima per ${d.businessName}: per ora non mi interessa, grazie.`;
+---
+<Base title={`${d.businessName}: la tua anteprima | Focale`} noindex minimal og="home">
+  <section class="ap" data-hero>
+    <div class="wrap">
+      <h1>{d.businessName}, ecco come potrebbe essere il tuo nuovo sito.</h1>
+      <p class="lead ap-lead">L'ho preparato senza impegno, partendo dal tuo sito attuale e dalla tua scheda Google.</p>
+
+      <div class="ap-compare">
+        <figure class="ap-today">
+          <figcaption>Oggi</figcaption>
+          {
+            d.beforeImage ? (
+              <div class="ap-desk">
+                <span class="ap-desk__bar" aria-hidden="true"><i /><i /><i /></span>
+                <Image src={d.beforeImage} alt={`Il sito attuale di ${d.businessName}`} widths={[600, 1000]} sizes="(min-width: 900px) 600px, 92vw" />
+              </div>
+            ) : (
+              <p class="ap-none">Oggi non hai un sito: questa sarebbe la tua prima vetrina online.</p>
+            )
+          }
+        </figure>
+        <figure class="ap-tomorrow">
+          <figcaption>Domani</figcaption>
+          {d.afterImage && (
+            <div class="ap-phone">
+              <Image src={d.afterImage} alt={`L'anteprima del nuovo sito di ${d.businessName}, vista dal telefono`} widths={[300, 600]} sizes="300px" />
+            </div>
+          )}
+          {d.afterUrl && (
+            <a class="btn btn--secondary ap-open" href={d.afterUrl} target="_blank" rel="noopener">
+              Apri l'anteprima
+            </a>
+          )}
+        </figure>
+      </div>
+
+      <div class="ap-cols">
+        <div>
+          <h2>Cosa ho cambiato</h2>
+          <ol class="ap-changes">
+            {d.changes.map((c) => <li>{c}</li>)}
+          </ol>
+        </div>
+        <blockquote class="ap-note">
+          <p>{d.note}</p>
+          <footer><P value={owner} />, Focale</footer>
+        </blockquote>
+      </div>
+
+      <div class="ap-actions" data-actions>
+        <div class="btn-row" data-buttons>
+          <a class="btn btn--primary" href={whatsappHref(likeMsg)} target="_blank" rel="noopener"><Icon name="whatsapp" />Mi piace, parliamone</a>
+          <a class="btn btn--secondary" href={whatsappHref(doubtMsg)} target="_blank" rel="noopener">Ho qualche dubbio</a>
+          <button class="btn btn--secondary" type="button" data-no>Non mi interessa</button>
+        </div>
+        <div class="ap-bye" data-bye hidden>
+          <p class="lead">Grazie per averci dato un'occhiata. Non ti disturbo più.</p>
+          <a class="link small" href={whatsappHref(noMsg)} target="_blank" rel="noopener">Se vuoi, fammelo sapere su WhatsApp</a>
+        </div>
+      </div>
+
+      <div class="ap-terms">
+        <p>
+          <Icon name="shield" />
+          <span>Se decidi di partire, il saldo lo paghi solo dopo aver approvato il sito finito. <a class="link" href="/condizioni">Le condizioni</a></span>
+        </p>
+        {
+          foundersOpen() && (
+            <p>
+              <Icon name="euro" />
+              <span>
+                Prezzo fondatori per i primi {site.foundersSpotsTotal} clienti: Professionale a {euro(site.prices.professionale.founders)}, invece di{" "}
+                {euro(site.prices.professionale.standard)} dal sesto cliente. Posti liberi: {site.foundersSpotsLeft} su {site.foundersSpotsTotal}.
+              </span>
+            </p>
+          )
+        }
+      </div>
+
+      <p class="small muted ap-private">Questa pagina è privata e non compare su Google. Se preferisci, la cancello: basta un messaggio.</p>
+    </div>
+  </section>
+</Base>
+<style>
+  .ap {
+    padding-block: clamp(2rem, 1rem + 3vw, 4rem) var(--space-section);
+  }
+  .ap h1 {
+    max-width: 22ch;
+    font-size: clamp(2.25rem, 1.6rem + 2.8vw, 4rem);
+  }
+  .ap-lead {
+    margin-top: 1.25rem;
+    max-width: 52ch;
+  }
+  .ap-compare {
+    margin-top: 3rem;
+    display: grid;
+    gap: 2.5rem;
+  }
+  @media (min-width: 900px) {
+    .ap-compare {
+      grid-template-columns: 1.6fr 1fr;
+      align-items: end;
+      gap: 3rem;
+    }
+  }
+  .ap-compare figure {
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+  }
+  .ap-compare figcaption {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-stretch: 110%;
+    font-size: var(--step-2);
+    color: var(--portone);
+  }
+  .ap-desk {
+    border: 2px solid #1b1f1d;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+    background: #e6e6e3;
+  }
+  .ap-desk__bar {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .ap-desk__bar i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #b9b9b4;
+  }
+  .ap-desk :global(img) {
+    width: 100%;
+  }
+  .ap-none {
+    padding: 2rem;
+    background: var(--pietra);
+    font-size: var(--step-1);
+  }
+  .ap-phone {
+    width: min(100%, 280px);
+    border: 10px solid #1b1f1d;
+    border-radius: var(--radius-phone);
+    overflow: hidden;
+    box-shadow: 0 30px 60px -20px rgba(64, 48, 20, 0.35);
+  }
+  .ap-phone :global(img) {
+    width: 100%;
+  }
+  .ap-open {
+    margin-top: 0.5rem;
+  }
+  .ap-cols {
+    margin-top: clamp(3rem, 2rem + 4vw, 5rem);
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 900px) {
+    .ap-cols {
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+    }
+  }
+  .ap-cols h2 {
+    font-size: var(--step-3);
+    margin-bottom: 1.5rem;
+  }
+  .ap-changes {
+    padding-left: 1.4rem;
+    display: grid;
+    gap: 1rem;
+    font-size: var(--step-1);
+  }
+  .ap-changes li::marker {
+    font-family: var(--font-head);
+    font-weight: 800;
+    color: var(--portone);
+  }
+  .ap-note {
+    margin: 0;
+    padding: 1.75rem;
+    background: var(--pietra);
+    border-left: var(--bar) solid var(--ottone);
+    font-size: var(--step-1);
+    align-self: start;
+  }
+  .ap-note footer {
+    margin-top: 1rem;
+    font-family: var(--font-head);
+    font-weight: 700;
+    color: var(--portone);
+    font-size: 1rem;
+  }
+  .ap-actions {
+    margin-top: 3rem;
+  }
+  .ap-bye p {
+    margin-bottom: 0.5rem;
+  }
+  .ap-terms {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--pietra-scura);
+    display: grid;
+    gap: 0.9rem;
+    max-width: 52rem;
+  }
+  .ap-terms p {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0.75rem;
+    font-size: 1.0625rem;
+  }
+  .ap-terms :global(.icon) {
+    color: var(--ottone);
+    margin-top: 0.15rem;
+  }
+  .ap-private {
+    margin-top: 2rem;
+  }
+</style>
+<script>
+  const btn = document.querySelector<HTMLButtonElement>("[data-no]");
+  btn?.addEventListener("click", () => {
+    document.querySelector<HTMLElement>("[data-buttons]")!.hidden = true;
+    const bye = document.querySelector<HTMLElement>("[data-bye]")!;
+    bye.hidden = false;
+    bye.querySelector<HTMLElement>("p")?.setAttribute("tabindex", "-1");
+    bye.querySelector<HTMLElement>("p")?.focus();
+  });
+</script>

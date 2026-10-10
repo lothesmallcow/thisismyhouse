@@ -1,0 +1,87 @@
+---
+/** A WhatsApp-style message rendered in HTML. Illustrative, not a real conversation. */
+interface Props {
+  heading: string;
+  lines: [string, string][];
+  time?: string;
+}
+const { heading, lines, time = "18:42" } = Astro.props;
+---
+<figure class="wa">
+  <div class="wa__bar" aria-hidden="true">
+    <span class="wa__avatar"></span>
+    <span>Il tuo telefono</span>
+  </div>
+  <div class="wa__chat">
+    <div class="wa__msg">
+      <p class="wa__head">{heading}.</p>
+      {
+        lines.map(([k, v]) => (
+          <p>
+            {k}: {v}.
+          </p>
+        ))
+      }
+      <span class="wa__time" aria-hidden="true">{time}</span>
+    </div>
+  </div>
+  <figcaption class="small muted">Esempio di messaggio.</figcaption>
+</figure>
+<style>
+  .wa {
+    margin: 0;
+    max-width: 24rem;
+  }
+  .wa__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #1f4b3f;
+    color: #f2f5f3;
+    padding: 0.7rem 1rem;
+    border-radius: 12px 12px 0 0;
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .wa__avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #c9d3cd;
+  }
+  .wa__chat {
+    background: #e7e2d8;
+    padding: 1.25rem 1rem 1.5rem;
+    border-radius: 0 0 12px 12px;
+  }
+  .wa__msg {
+    position: relative;
+    background: #fff;
+    border-radius: 0 10px 10px 10px;
+    padding: 0.75rem 0.9rem 1.4rem;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    line-height: 1.45;
+    color: #1d2a24;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+    max-width: 92%;
+  }
+  .wa__msg p + p {
+    margin-top: 0;
+  }
+  .wa__head {
+    font-weight: 700;
+    margin-bottom: 0.25rem !important;
+  }
+  .wa__time {
+    position: absolute;
+    right: 0.6rem;
+    bottom: 0.35rem;
+    font-size: 0.75rem;
+    color: #5f6b65;
+  }
+  figcaption {
+    margin-top: 0.5rem;
+  }
+</style>

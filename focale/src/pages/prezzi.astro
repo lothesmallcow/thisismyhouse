@@ -1,0 +1,365 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import Fuoco from "../components/Fuoco.astro";
+import Faq from "../components/Faq.astro";
+import Closing from "../components/Closing.astro";
+import Icon from "../components/Icon.astro";
+import P from "../components/P.astro";
+import { getCollection } from "astro:content";
+import { site } from "../config/site";
+import { euro, fill, foundersOpen, absUrl } from "../lib/util";
+import { plans, cura } from "../lib/plans";
+import { breadcrumbs } from "../lib/schema";
+
+const open = foundersOpen();
+const faqs = (await getCollection("faq")).filter((f) => [10, 11, 15, 16].includes(f.data.order)).sort((a, b) => a.data.order - b.data.order);
+const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
+const included = [
+  "Testi scritti da me",
+  `${site.revisionRounds} giri di modifiche`,
+  "Privacy e cookie in regola",
+  "Dominio e accessi intestati a te",
+  "Punteggio di velocità sopra 90 da telefono",
+  "Una breve videochiamata per mostrarti come funziona tutto",
+];
+const service = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Siti web per piccole imprese",
+  provider: { "@type": "ProfessionalService", name: site.brand, url: absUrl("/") },
+  areaServed: "Lombardia",
+  offers: [
+    ...plans.map((p) => ({
+      "@type": "Offer",
+      name: p.name,
+      price: open ? p.founders : p.standard,
+      priceCurrency: "EUR",
+      description: p.forWhom,
+    })),
+    {
+      "@type": "Offer",
+      name: cura.name,
+      price: cura.price,
+      priceCurrency: "EUR",
+      description: cura.forWhom,
+      priceSpecification: { "@type": "UnitPriceSpecification", price: cura.price, priceCurrency: "EUR", unitCode: "MON" },
+    },
+  ],
+};
+---
+<Base
+  title="Prezzi dei siti web per piccole imprese | Focale"
+  description={`Prezzi chiari e scritti: Essenziale, Professionale, Su misura e il piano Cura mensile. Prezzo fondatori per i primi ${site.foundersSpotsTotal} clienti.`}
+  jsonLd={[breadcrumbs([{ name: "Prezzi", path: "/prezzi/" }]), service]}
+>
+  <PageHead
+    title="Quanto costa un sito che porta richieste."
+    lead={`Prezzi finali, scritti qui. Paghi il ${site.depositPercent}% quando partiamo e il resto solo a sito approvato.`}
+  >
+    {
+      open && (
+        <p class="pz-banner">
+          Prezzo fondatori per i primi {site.foundersSpotsTotal} clienti. Posti ancora liberi: {site.foundersSpotsLeft} su {site.foundersSpotsTotal}.{" "}
+          <a class="link" href="/#fondatori">Come funziona il programma</a>
+        </p>
+      )
+    }
+  </PageHead>
+
+  <section class="section pz">
+    <div class="wrap">
+      <div class="pz__plans">
+        {
+          plans.map((p) => (
+            <article class:list={["pz__plan", { "pz__plan--rec on-dark": p.recommended }]} aria-labelledby={`piano-${p.slug}`}>
+              <div class="pz__top">
+                <h2 id={`piano-${p.slug}`}>{p.name}</h2>
+                {p.recommended && <span class="pz__tag">Consigliato</span>}
+              </div>
+              <p class="pz__for">{p.forWhom}</p>
+              <dl class="pz__prices">
+                {open && (
+                  <div class="pz__price pz__price--main">
+                    <dt>Prezzo fondatori</dt>
+                    <dd>
+                      {p.from && <span class="pz__from">da </span>}
+                      {euro(p.founders)}
+                    </dd>
+                  </div>
+                )}
+                <div class:list={["pz__price", { "pz__price--main": !open }]}>
+                  <dt>{open ? "Dal sesto cliente" : "Prezzo"}</dt>
+                  <dd>
+                    {p.from && <span class="pz__from">da </span>}
+                    {euro(p.standard)}
+                  </dd>
+                </div>
+              </dl>
+              {p.intro && <p class="pz__intro">{p.intro}</p>}
+              <ul class="pz__feat">
+                {p.features.map((f) => (
+                  <li>
+                    <Icon name="check" size={20} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <a href={`/anteprima-gratuita?pacchetto=${p.slug}`} class:list={["btn", p.recommended ? "btn--primary" : "btn--secondary", "pz__btn"]}>
+                Voglio l'anteprima gratuita
+              </a>
+            </article>
+          ))
+        }
+      </div>
+
+      <article class="pz__cura" aria-labelledby="piano-cura">
+        <div>
+          <h2 id="piano-cura">{cura.name}</h2>
+          <p class="pz__for">{cura.forWhom}</p>
+          <p class="pz__cura-price">{euro(cura.price)} <span>al mese</span></p>
+        </div>
+        <ul class="pz__feat">
+          {cura.features.map((f) => (
+            <li>
+              <Icon name="check" size={20} />
+              {f}
+            </li>
+          ))}
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="section section--pietra">
+    <div class="wrap pz-two">
+      <div>
+        <Fuoco />
+        <h2>Compreso in tutti i pacchetti</h2>
+        <ul class="pz-incl">
+          {included.map((i) => <li><Icon name="check" />{i}</li>)}
+        </ul>
+      </div>
+      <div>
+        <Fuoco />
+        <h2>Costi a parte</h2>
+        <p class="lead pz-extra">Il dominio, {site.domainCostRange}, intestato a te. Con il piano Cura è compreso. Nient'altro.</p>
+        <p class="small muted pz-vat"><P value={site.vatNote} /></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <Fuoco />
+      <h2 class="pz-h2">Domande sui prezzi</h2>
+      <Faq items={faqItems} />
+    </div>
+  </section>
+
+  <Closing />
+</Base>
+
+<style>
+  .pz-banner {
+    margin-top: 1.75rem;
+    display: inline-block;
+    padding: 0.85rem 1.1rem;
+    border-left: var(--bar) solid var(--ottone);
+    background: var(--pietra);
+    font-family: var(--font-head);
+    font-weight: 600;
+    color: var(--portone);
+    max-width: 48rem;
+  }
+  .pz-banner a {
+    white-space: nowrap;
+  }
+  .pz {
+    padding-top: 1rem;
+  }
+  .pz__plans {
+    display: grid;
+    gap: 1.25rem;
+  }
+  @media (min-width: 1000px) {
+    .pz__plans {
+      grid-template-columns: 1fr 1.12fr 1fr;
+      gap: 0;
+      align-items: stretch;
+    }
+  }
+  .pz__plan {
+    background: var(--pietra);
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  @media (min-width: 1000px) {
+    .pz__plan {
+      padding: 2.25rem 2rem;
+    }
+    .pz__plan:first-child {
+      border-right: 1px solid var(--pietra-scura);
+    }
+  }
+  .pz__plan--rec {
+    background: var(--portone);
+    color: var(--calce);
+  }
+  @media (min-width: 1000px) {
+    .pz__plan--rec {
+      margin-block: -1.5rem;
+      padding-block: 3.5rem;
+    }
+  }
+  .pz__plan--rec h2 {
+    color: var(--calce);
+  }
+  .pz__top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .pz__top h2 {
+    font-size: var(--step-2);
+  }
+  .pz__tag {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--portone);
+    background: var(--calce);
+    padding: 0.2rem 0.55rem;
+    border-radius: 3px;
+  }
+  .pz__for {
+    font-size: 1.0625rem;
+  }
+  .pz__prices {
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    border-block: 1px solid var(--pietra-scura);
+  }
+  .pz__plan--rec .pz__prices {
+    border-color: rgba(243, 244, 240, 0.25);
+  }
+  .pz__price dt {
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+  .pz__price dd {
+    margin: 0;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1.375rem;
+  }
+  .pz__price--main dd {
+    font-weight: 850;
+    font-stretch: 116%;
+    font-size: var(--step-3);
+    line-height: 1.05;
+  }
+  .pz__from {
+    font-size: 0.55em;
+    font-weight: 700;
+    font-stretch: 100%;
+  }
+  .pz__intro {
+    font-family: var(--font-head);
+    font-weight: 700;
+  }
+  .pz__feat {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.6rem;
+    font-size: 1.0625rem;
+    line-height: 1.45;
+  }
+  .pz__feat li {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 0.6rem;
+  }
+  .pz__feat :global(.icon) {
+    margin-top: 0.2rem;
+    color: var(--ottone);
+  }
+  .pz__plan--rec .pz__feat :global(.icon) {
+    color: #e2c27e;
+  }
+  .pz__btn {
+    margin-top: auto;
+  }
+  .pz__cura {
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+    padding: 2rem 1.5rem;
+    border-top: var(--bar) solid var(--portone);
+    display: grid;
+    gap: 1.5rem;
+  }
+  @media (min-width: 900px) {
+    .pz__cura {
+      grid-template-columns: 1fr 1.4fr;
+      padding: 2.5rem 0 0;
+      gap: 4rem;
+    }
+  }
+  .pz__cura h2 {
+    font-size: var(--step-3);
+  }
+  .pz__cura-price {
+    margin-top: 1rem !important;
+    font-family: var(--font-head);
+    font-weight: 850;
+    font-stretch: 116%;
+    font-size: var(--step-3);
+    color: var(--portone);
+  }
+  .pz__cura-price span {
+    font-size: 0.45em;
+    font-weight: 600;
+    font-stretch: 100%;
+  }
+  .pz-two {
+    display: grid;
+    gap: 4rem;
+  }
+  @media (min-width: 900px) {
+    .pz-two {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .pz-incl {
+    list-style: none;
+    padding: 0;
+    margin: 1.75rem 0 0;
+    display: grid;
+    gap: 0.85rem;
+  }
+  .pz-incl li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0.75rem;
+  }
+  .pz-incl :global(.icon) {
+    color: var(--portone);
+    margin-top: 0.2rem;
+  }
+  .pz-extra {
+    margin-top: 1.5rem;
+  }
+  .pz-vat {
+    margin-top: 1rem !important;
+  }
+  .pz-h2 {
+    margin-bottom: 2rem;
+  }
+</style>

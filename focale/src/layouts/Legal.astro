@@ -1,0 +1,60 @@
+---
+import Base from "./Base.astro";
+import Fuoco from "../components/Fuoco.astro";
+import { fillHtml } from "../lib/util";
+import { breadcrumbs } from "../lib/schema";
+import type { LegalDoc } from "../lib/legal";
+interface Props {
+  doc: LegalDoc;
+  pageTitle: string;
+  description: string;
+  path: string;
+}
+const { doc, pageTitle, description, path } = Astro.props;
+---
+<Base title={pageTitle} description={description} jsonLd={[breadcrumbs([{ name: doc.title, path }])]}>
+  <article class="lg">
+    <div class="wrap">
+      <header data-hero>
+        <Fuoco />
+        <h1>{doc.title}</h1>
+        <p class="lg-date">Ultimo aggiornamento: <Fragment set:html={fillHtml("{legalLastUpdated}")} /></p>
+      </header>
+      <div class="lg-body prose">
+        {doc.intro.map((p) => <p set:html={fillHtml(p)} />)}
+        {
+          doc.sections.map((s) => (
+            <section>
+              {s.h && <h2>{s.h}</h2>}
+              {s.p.map((p) => (
+                <p set:html={fillHtml(p)} />
+              ))}
+            </section>
+          ))
+        }
+      </div>
+    </div>
+  </article>
+</Base>
+<style>
+  .lg {
+    padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem) var(--space-section);
+  }
+  .lg-date {
+    margin-top: 1rem;
+    color: var(--tenue);
+    font-family: var(--font-head);
+    font-size: 0.9375rem;
+  }
+  .lg-body {
+    margin-top: 3rem;
+    max-width: var(--measure);
+  }
+  .lg-body h2 {
+    font-size: var(--step-2);
+    margin: 2.5rem 0 0.75rem;
+  }
+  .lg-body p + p {
+    margin-top: 1em;
+  }
+</style>

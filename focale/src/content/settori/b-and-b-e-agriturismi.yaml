@@ -1,0 +1,32 @@
+order: 2
+short: B&B e agriturismi
+formOption: bnb
+title: Siti web per B&B e agriturismi in Lombardia | Focale
+description: "Più prenotazioni dirette: foto grandi, richieste di disponibilità su WhatsApp, versione in inglese. Anteprima gratuita in 72 ore."
+h1: Siti per B&B, agriturismi e piccoli hotel in Lombardia
+lead: Ogni prenotazione diretta è una commissione in meno ai portali. Ma l'ospite prenota da te solo se il tuo sito gli dà fiducia.
+problems:
+  - Foto vecchie o piccole, che non rendono giustizia alle camere.
+  - Disponibilità e prezzi introvabili, quindi l'ospite torna sul portale.
+  - Niente versione in inglese per gli stranieri.
+build:
+  - Camere con foto grandi e dettagli chiari
+  - Una richiesta di disponibilità con date e numero di ospiti
+  - Italiano e inglese
+  - Come arrivare e cosa fare nei dintorni
+requests: Le richieste di disponibilità ti arrivano su WhatsApp con date, numero di ospiti e lingua.
+mock:
+  heading: Richiesta di disponibilità dal sito
+  lines:
+    - [Arrivo, 14 maggio]
+    - [Partenza, 17 maggio]
+    - [Ospiti, 2 adulti]
+    - [Lingua, inglese]
+    - [Nome, Anna]
+demo: cascina-rovere
+faq:
+  - q: Uso già i portali di prenotazione, perché un sito?
+    a: "I portali ti portano ospiti nuovi. Il sito serve a chi ti ha già trovato, ti cerca per nome o torna una seconda volta: se prenota da te, non paghi commissioni."
+  - q: Si collega al mio channel manager?
+    a: Spesso sì, dipende dal sistema che usi. Lo verifico gratis prima di partire.
+whatsapp: Ciao, ho un B&B o agriturismo e vorrei l'anteprima gratuita del mio nuovo sito.

@@ -1,0 +1,506 @@
+---
+import Demo from "../../../layouts/Demo.astro";
+import ReviewsEmpty from "../../../components/demo/ReviewsEmpty.astro";
+import { Image } from "astro:assets";
+import { site } from "../../../config/site";
+
+const img = import.meta.glob<{ default: ImageMetadata }>("../../../assets/demo/villa-ortensia/*.jpg", { eager: true });
+const pic = (n: string) => img[`../../../assets/demo/villa-ortensia/${n}.jpg`].default;
+
+const spaces = [
+  { k: "giardino", t: "Il giardino sul lago", c: "Fino a 180 ospiti per la cerimonia", d: "Il prato scende fino all'acqua. La cerimonia si fa qui, con il lago alle spalle degli sposi." },
+  { k: "salone", t: "Il salone delle feste", c: "Fino a 160 ospiti a tavola", d: "Quattro finestre ad arco sul lago e due lampadari d'epoca. La cena si sposta qui se piove." },
+  { k: "terrazza", t: "La terrazza", c: "Fino a 120 ospiti per l'aperitivo", d: "Il tramonto sulle montagne, le luci accese sopra la balaustra." },
+];
+const seasons = [
+  { t: "Primavera", d: "Le ortensie fioriscono a fine maggio: il giardino è al suo meglio." },
+  { t: "Estate", d: "Cene lunghe in terrazza, il lago ancora chiaro alle nove di sera." },
+  { t: "Autunno", d: "Luce bassa e dorata, montagne nitide, prezzi più dolci." },
+];
+const bands = [
+  { p: "Da 120 € a persona", d: "Menù e allestimento base" },
+  { p: "Da 160 € a persona", d: "Menù completo e allestimento floreale" },
+  { p: "Su misura", d: "Esclusiva della villa per tutto il weekend" },
+];
+const months = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+const years = [2027, 2028];
+---
+<Demo
+  title="Villa Ortensia | Matrimoni sul Lago di Como (demo)"
+  description="Sito dimostrativo di Focale per una location per matrimoni inventata sul Lago di Como."
+  fonts={["/fonts/demo/cormorant-500.woff2", "/fonts/demo/jost.woff2"]}
+  themeColor="#56646b"
+>
+  <style is:global>
+    @font-face {
+      font-family: "Cormorant Garamond";
+      font-style: normal;
+      font-display: swap;
+      font-weight: 500;
+      src: url("/fonts/demo/cormorant-500.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Cormorant Garamond";
+      font-style: italic;
+      font-display: swap;
+      font-weight: 500;
+      src: url("/fonts/demo/cormorant-500-italic.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Jost";
+      font-style: normal;
+      font-display: swap;
+      font-weight: 100 900;
+      src: url("/fonts/demo/jost.woff2") format("woff2");
+    }
+  </style>
+  <div class="vo">
+    <header class="vo-top">
+      <div class="vo-wrap vo-top__in">
+        <a class="vo-logo" href="#">Villa Ortensia</a>
+        <a class="vo-link" href="#visita">Prenota una visita</a>
+      </div>
+    </header>
+
+    <section class="vo-hero">
+      <div class="vo-wrap vo-hero__text">
+        <p class="vo-kicker">Lago di Como</p>
+        <h1>Una villa sul lago, per un giorno solo vostro.</h1>
+        <p class="vo-sub">Fino a 180 ospiti, giardino sull'acqua, cerimonia e ricevimento nello stesso luogo.</p>
+        <a class="vo-btn" href="#visita">Prenota una visita</a>
+      </div>
+      <div class="vo-hero__media" data-reveal>
+        <Image src={pic("hero")} alt="La villa sul lago con il giardino di ortensie e le montagne sullo sfondo" widths={[640, 1100, 1600]} sizes="(min-width: 900px) 60vw, 100vw" loading="eager" fetchpriority="high" />
+      </div>
+    </section>
+
+    <section class="vo-sec">
+      <div class="vo-wrap">
+        <h2>Gli spazi</h2>
+        <ul class="vo-spaces">
+          {
+            spaces.map((s, i) => (
+              <li class:list={{ "vo-spaces__alt": i % 2 === 1 }}>
+                <Image src={pic(s.k)} alt="" widths={[480, 900]} sizes="(min-width: 900px) 55vw, 100vw" />
+                <div>
+                  <h3>{s.t}</h3>
+                  <p class="vo-cap">{s.c}</p>
+                  <p>{s.d}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="vo-sec vo-sec--mist">
+      <div class="vo-wrap">
+        <h2>Le stagioni</h2>
+        <ul class="vo-seasons">
+          {
+            seasons.map((s) => (
+              <li>
+                <h3>{s.t}</h3>
+                <p>{s.d}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="vo-sec">
+      <div class="vo-wrap">
+        <h2>Fasce indicative</h2>
+        <p class="vo-lead">Per sapere subito se siamo nel vostro budget, prima ancora di scriverci.</p>
+        <ul class="vo-bands">
+          {
+            bands.map((b) => (
+              <li>
+                <p class="vo-band">{b.p}</p>
+                <p>{b.d}</p>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="vo-note">Fasce indicative di un'attività inventata.</p>
+      </div>
+    </section>
+
+    <section class="vo-sec vo-sec--mist" id="visita">
+      <div class="vo-wrap vo-visit">
+        <div>
+          <h2>Prenota una visita</h2>
+          <p class="vo-lead">Quattro informazioni e vi proponiamo due date per vedere la villa. Rispondiamo su WhatsApp in giornata.</p>
+        </div>
+        <form class="vo-form" data-demo-form data-wa={site.whatsappNumber} data-heading="Richiesta di visita dal sito" data-err="Completa questo campo." novalidate>
+          <div class="vo-row">
+            <label>Mese dell'evento
+              <select name="mese" data-label="Data evento" required>
+                <option value="">Scegli</option>
+                {years.flatMap((y) => months.map((m) => <option>{`${m} ${y}`}</option>))}
+              </select>
+              <span class="vo-err" data-derr="mese" aria-live="polite"></span>
+            </label>
+            <label>Numero di invitati
+              <select name="invitati" data-label="Invitati" required>
+                <option value="">Scegli</option>
+                <option>meno di 60</option>
+                <option>circa 80</option>
+                <option>circa 120</option>
+                <option>circa 150</option>
+                <option>più di 160</option>
+              </select>
+              <span class="vo-err" data-derr="invitati" aria-live="polite"></span>
+            </label>
+          </div>
+          <fieldset>
+            <legend>Budget indicativo</legend>
+            <div class="vo-opts">
+              {["fascia base", "fascia media", "su misura"].map((o) => (
+                <label class="vo-opt"><input type="radio" name="budget" value={o} data-label="Budget" required /><span>{o.charAt(0).toUpperCase() + o.slice(1)}</span></label>
+              ))}
+            </div>
+            <span class="vo-err" data-derr="budget" aria-live="polite"></span>
+          </fieldset>
+          <label>I vostri nomi
+            <input type="text" name="nomi" placeholder="es. Marco e Sara" required data-label="Nomi" />
+            <span class="vo-err" data-derr="nomi" aria-live="polite"></span>
+          </label>
+          <button type="submit" class="vo-btn">Invia su WhatsApp</button>
+          <p class="vo-note">Si apre WhatsApp con il messaggio già scritto. Questo è un sito dimostrativo: il messaggio arriva a Focale.</p>
+        </form>
+      </div>
+    </section>
+
+    <section class="vo-sec">
+      <div class="vo-wrap">
+        <h2>Le coppie che si sono sposate qui</h2>
+        <ReviewsEmpty />
+      </div>
+    </section>
+
+    <footer class="vo-foot">
+      <div class="vo-wrap">
+        <p class="vo-logo">Villa Ortensia</p>
+        <p>Villa Ortensia è un'attività inventata. Progetto dimostrativo di Focale.</p>
+      </div>
+    </footer>
+  </div>
+</Demo>
+
+<style>
+  .vo {
+    --ink: #2a2f33;
+    --lake: #56646b;
+    --mist: #eef1f0;
+    --rose: #b98fa8;
+    background: #fbfaf7;
+    color: var(--ink);
+    font-family: "Jost", "Archivo", sans-serif;
+    font-weight: 380;
+    font-size: 18px;
+    line-height: 1.65;
+  }
+  .vo h1,
+  .vo h2,
+  .vo h3 {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500;
+    font-stretch: 100%;
+    color: var(--ink);
+    letter-spacing: 0;
+  }
+  .vo h2 {
+    font-size: clamp(2.4rem, 1.8rem + 2.6vw, 4rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  .vo h3 {
+    font-size: 2rem;
+    line-height: 1.1;
+  }
+  .vo-wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 clamp(20px, 5vw, 56px);
+  }
+  .vo-top__in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 76px;
+  }
+  .vo-logo {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 1.75rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .vo-link {
+    color: var(--ink);
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+    padding: 0.6rem 0;
+  }
+  .vo-hero {
+    display: grid;
+    gap: 2.5rem;
+    padding-bottom: clamp(60px, 8vw, 110px);
+  }
+  @media (min-width: 900px) {
+    .vo-hero {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      align-items: center;
+      gap: 0;
+    }
+    .vo-hero__text {
+      padding-right: 3rem;
+      max-width: 34rem;
+      justify-self: end;
+    }
+  }
+  .vo-kicker {
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    color: var(--lake);
+    margin-bottom: 1rem;
+  }
+  .vo h1 {
+    font-size: clamp(2.8rem, 2rem + 3.6vw, 5rem);
+    line-height: 1;
+  }
+  .vo-sub {
+    margin: 1.5rem 0 2rem;
+    font-size: 1.15rem;
+    max-width: 30ch;
+  }
+  .vo-hero__media {
+    overflow: hidden;
+  }
+  .vo-hero__media :global(img) {
+    width: 100%;
+    height: clamp(320px, 70vh, 720px);
+    object-fit: cover;
+  }
+  /* The one gentle image reveal: CSS only, skipped with reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    .vo-hero__media {
+      animation: vo-reveal 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .vo-hero__media :global(img) {
+      animation: vo-zoom 2.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+  @keyframes vo-reveal {
+    from {
+      clip-path: inset(0 0 0 100%);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes vo-zoom {
+    from {
+      transform: scale(1.08);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+  .vo-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 0 1.75rem;
+    background: var(--ink);
+    color: #fff;
+    font: inherit;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .vo-sec {
+    padding: clamp(64px, 9vw, 130px) 0;
+  }
+  .vo-sec--mist {
+    background: var(--mist);
+  }
+  .vo-lead {
+    max-width: 40ch;
+    font-size: 1.15rem;
+  }
+  .vo-spaces {
+    list-style: none;
+    padding: 0;
+    margin: 2.5rem 0 0;
+    display: grid;
+    gap: clamp(3rem, 6vw, 6rem);
+  }
+  .vo-spaces li {
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  @media (min-width: 900px) {
+    .vo-spaces li {
+      grid-template-columns: 1.3fr 1fr;
+      gap: 4rem;
+    }
+    .vo-spaces__alt {
+      grid-template-columns: 1fr 1.3fr !important;
+    }
+    .vo-spaces__alt :global(img) {
+      order: 2;
+    }
+  }
+  .vo-spaces :global(img) {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+  .vo-cap {
+    color: var(--lake);
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    margin: 0.4rem 0 0.75rem;
+  }
+  .vo-seasons,
+  .vo-bands {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .vo-seasons,
+    .vo-bands {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3rem;
+    }
+  }
+  .vo-seasons li,
+  .vo-bands li {
+    border-top: 1px solid #b9c1c3;
+    padding-top: 1.25rem;
+  }
+  .vo-band {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 2rem;
+    line-height: 1.1;
+    margin-bottom: 0.4rem;
+  }
+  .vo-note {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #5d666a;
+  }
+  .vo-visit {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .vo-visit {
+      grid-template-columns: 1fr 1.2fr;
+      gap: 5rem;
+    }
+  }
+  .vo-form {
+    display: grid;
+    gap: 1.1rem;
+    background: #fff;
+    padding: clamp(22px, 3vw, 40px);
+  }
+  .vo-form label,
+  .vo-form legend {
+    display: grid;
+    gap: 0.3rem;
+    font-weight: 500;
+    font-size: 1rem;
+  }
+  .vo-form fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+  .vo-form legend {
+    margin-bottom: 0.5rem;
+    padding: 0;
+  }
+  .vo-form input:not([type="radio"]),
+  .vo-form select {
+    font: inherit;
+    min-height: 50px;
+    padding: 0 0.8rem;
+    border: 1px solid #8f999c;
+    background: #fff;
+    color: var(--ink);
+  }
+  .vo-row {
+    display: grid;
+    gap: 1.1rem;
+  }
+  @media (min-width: 560px) {
+    .vo-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .vo-opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .vo-opt {
+    position: relative;
+    display: block !important;
+  }
+  .vo-opt input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+  .vo-opt span {
+    display: inline-grid;
+    place-items: center;
+    min-height: 48px;
+    padding: 0 1.1rem;
+    border: 1px solid var(--ink);
+  }
+  .vo-opt input:checked + span {
+    background: var(--ink);
+    color: #fff;
+  }
+  .vo-opt input:focus-visible + span {
+    outline: 3px solid var(--rose);
+    outline-offset: 2px;
+  }
+  .vo-err {
+    color: #9b2b17;
+    font-size: 0.95rem;
+  }
+  .vo-err:empty {
+    display: none;
+  }
+  .vo-foot {
+    background: var(--lake);
+    color: #eef1f0;
+    padding: 56px 0;
+    font-size: 16px;
+  }
+  .vo-foot .vo-logo {
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+</style>
+<script>
+  import { initDemoForms } from "../../../scripts/demo-form";
+  initDemoForms();
+</script>

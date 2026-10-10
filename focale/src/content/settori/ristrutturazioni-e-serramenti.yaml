@@ -1,0 +1,32 @@
+order: 1
+short: Imprese di ristrutturazione e serramenti
+formOption: ristrutturazioni
+title: Siti web per imprese di ristrutturazione e serramentisti a Milano | Focale
+description: "Siti che portano richieste di preventivo: galleria prima e dopo, preventivo guidato, richieste su WhatsApp. Anteprima gratuita in 72 ore."
+h1: Siti per imprese di ristrutturazione e serramentisti a Milano
+lead: Chi deve rifare il bagno confronta tre imprese dal telefono, la sera. Sceglie quella che sembra più seria e più facile da contattare.
+problems:
+  - Le foto dei lavori non ci sono, o sono sparse e piccole.
+  - Per chiedere un preventivo bisogna cercare un numero o un'email.
+  - I servizi sono elencati in una riga, quindi Google non sa che fai bagni, cucine o infissi.
+build:
+  - Una galleria prima e dopo per ogni lavoro
+  - Una pagina per ogni servizio, con la tua zona
+  - Un preventivo guidato che chiede tipo di lavoro, metratura e tempi
+  - Il pulsante per chiamarti sempre visibile da telefono
+requests: "La richiesta ti arriva su WhatsApp già completa: tipo di lavoro, zona, metratura indicativa, quando vorrebbero iniziare."
+mock:
+  heading: Richiesta di preventivo dal sito
+  lines:
+    - [Lavoro, bagno completo]
+    - [Zona, Città Studi]
+    - [Metratura, circa 6 mq]
+    - [Inizio, entro 3 mesi]
+    - [Nome, Giulia]
+demo: arcadi-ristrutturazioni
+faq:
+  - q: Ho poche foto, va bene?
+    a: "Sì. Ti spiego come farle col telefono in cantiere: bastano dieci minuti e un po' di luce."
+  - q: Lavoro solo su passaparola, mi serve un sito?
+    a: Anche chi arriva dal passaparola ti cerca su Google prima di chiamarti. Il sito conferma che sei bravo come gli hanno detto.
+whatsapp: Ciao, ho un'impresa di ristrutturazioni e vorrei l'anteprima gratuita del mio nuovo sito.

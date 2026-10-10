@@ -1,0 +1,187 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import Fuoco from "../components/Fuoco.astro";
+import Icon from "../components/Icon.astro";
+import P from "../components/P.astro";
+import { site } from "../config/site";
+import { whatsappHref, telHref, mailHref, absUrl } from "../lib/util";
+import { breadcrumbs } from "../lib/schema";
+---
+<Base
+  title="Contatti | Focale"
+  description="Scrivimi su WhatsApp, chiamami o mandami un'email. Rispondo io, entro la giornata lavorativa."
+  jsonLd={[breadcrumbs([{ name: "Contatti", path: "/contatti/" }])]}
+>
+  <PageHead
+    title="Scrivimi. Rispondo io."
+    lead="Rispondo entro la giornata lavorativa, dal lunedì al venerdì. Lavoro da Milano, in tutta la Lombardia di persona e ovunque online."
+  />
+
+  <section class="ct">
+    <div class="wrap">
+      <ul class="ct-rows">
+        <li>
+          <Icon name="whatsapp" size={32} />
+          <div>
+            <h2>WhatsApp</h2>
+            <a class="btn btn--primary" href={whatsappHref("Ciao, ti scrivo dal sito di Focale.")} target="_blank" rel="noopener">Scrivimi su WhatsApp</a>
+          </div>
+        </li>
+        <li>
+          <Icon name="phone" size={32} />
+          <div>
+            <h2>Telefono</h2>
+            <a class="ct-big" href={telHref()}><P value={site.phoneDisplay} /></a>
+          </div>
+        </li>
+        <li>
+          <Icon name="mail" size={32} />
+          <div>
+            <h2>Email</h2>
+            <a class="ct-big" href={mailHref()}><P value={site.email} /></a>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--pietra">
+    <div class="wrap ct-form-grid">
+      <div>
+        <Fuoco />
+        <h2>Preferisci un messaggio?</h2>
+        <p class="ct-note">
+          Se vuoi l'anteprima gratuita, fai prima da qui: <a class="link" href="/anteprima-gratuita">Voglio l'anteprima gratuita</a>
+        </p>
+      </div>
+      <form
+        class="ct-form"
+        action="https://api.web3forms.com/submit"
+        method="POST"
+        novalidate
+        data-contact-form
+        data-key={site.web3formsKey}
+        data-sheets={site.sheetsEndpoint}
+        data-wa-number={site.whatsappNumber}
+      >
+        <input type="hidden" name="access_key" value={site.web3formsKey} />
+        <input type="hidden" name="subject" value="Nuovo messaggio dal sito" />
+        <input type="hidden" name="from_name" value="Sito Focale" />
+        <input type="hidden" name="redirect" value={absUrl("/grazie/")} />
+        <input type="checkbox" name="botcheck" class="ct-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <div class="field">
+          <label for="c-nome">Nome</label>
+          <input id="c-nome" name="nome" type="text" autocomplete="name" required aria-describedby="err-c-nome" />
+          <p class="error" id="err-c-nome" data-error="nome" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="c-contatto">Telefono o email</label>
+          <input id="c-contatto" name="contatto" type="text" autocomplete="tel" required aria-describedby="err-c-contatto" />
+          <p class="error" id="err-c-contatto" data-error="contatto" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="c-msg">Messaggio</label>
+          <textarea id="c-msg" name="messaggio" rows="5" required aria-describedby="err-c-msg"></textarea>
+          <p class="error" id="err-c-msg" data-error="messaggio" aria-live="polite"></p>
+        </div>
+        <div>
+          <label class="check">
+            <input type="checkbox" name="privacy" value="Accettata" required aria-describedby="err-c-privacy" />
+            <span>Ho letto l'<a class="link" href="/privacy" target="_blank" rel="noopener">informativa privacy</a> e accetto di essere ricontattato per questa richiesta.</span>
+          </label>
+          <p class="error" id="err-c-privacy" data-error="privacy" aria-live="polite"></p>
+        </div>
+        <div>
+          <button type="submit" class="btn btn--primary" data-submit>Invia il messaggio</button>
+        </div>
+        <div class="ct-fail" data-fail role="alert" hidden>
+          <p>Non sono riuscito a inviare la richiesta. Riprova, oppure mandamela su WhatsApp: il messaggio è già pronto.</p>
+          <a class="btn btn--primary" href="#" target="_blank" rel="noopener" data-fail-wa><Icon name="whatsapp" />Mandala su WhatsApp</a>
+        </div>
+      </form>
+    </div>
+  </section>
+</Base>
+<style>
+  .ct {
+    padding-bottom: var(--space-section);
+  }
+  .ct-rows {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    border-top: 2px solid var(--portone);
+  }
+  @media (min-width: 900px) {
+    .ct-rows {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .ct-rows li {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 1rem;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--pietra-scura);
+  }
+  @media (min-width: 900px) {
+    .ct-rows li {
+      border-bottom: 0;
+      padding-right: 1.5rem;
+    }
+  }
+  .ct-rows :global(.icon) {
+    color: var(--portone);
+  }
+  .ct-rows h2 {
+    font-size: var(--step-1);
+    margin-bottom: 0.75rem;
+  }
+  .ct-big {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: var(--step-1);
+    color: var(--portone);
+    overflow-wrap: anywhere;
+  }
+  .ct-form-grid {
+    display: grid;
+    gap: 2.5rem;
+  }
+  @media (min-width: 960px) {
+    .ct-form-grid {
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 5rem;
+    }
+  }
+  .ct-note {
+    margin-top: 1.25rem;
+  }
+  .ct-form {
+    display: grid;
+    gap: 1.4rem;
+    max-width: 40rem;
+  }
+  .ct-hp {
+    position: absolute;
+    left: -9999px;
+    opacity: 0;
+  }
+  .ct-fail {
+    padding: 1.25rem;
+    border: 2px solid var(--marker);
+    background: #fff7f6;
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    color: #8c1f16;
+    font-family: var(--font-head);
+    font-weight: 600;
+  }
+</style>
+<script>
+  import { initContactForm } from "../scripts/forms";
+  initContactForm();
+</script>

@@ -1,0 +1,93 @@
+---
+import { fill } from "../lib/util";
+import Icon from "./Icon.astro";
+interface Props {
+  items: { q: string; a: string }[];
+  dark?: boolean;
+}
+const { items, dark = false } = Astro.props;
+---
+<div class:list={["faq", { "faq--dark": dark }]}>
+  {
+    items.map((it) => (
+      <details class="faq__item">
+        <summary>
+          <span>{fill(it.q)}</span>
+          <Icon name="plus" class="faq__icon" />
+        </summary>
+        <div class="faq__body">
+          <div>
+            <p>{fill(it.a)}</p>
+          </div>
+        </div>
+      </details>
+    ))
+  }
+</div>
+<style>
+  .faq {
+    border-top: 2px solid var(--portone);
+    max-width: 52rem;
+  }
+  .faq__item {
+    border-bottom: 1px solid var(--pietra-scura);
+  }
+  summary {
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.15rem 0;
+    min-height: 44px;
+    cursor: pointer;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-stretch: 104%;
+    font-size: var(--step-1);
+    line-height: 1.25;
+    color: var(--portone);
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq__icon {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    transition: transform 0.25s ease-out;
+  }
+  details[open] .faq__icon {
+    transform: rotate(45deg);
+  }
+  .faq__body > div {
+    padding: 0 0 1.4rem;
+    max-width: 62ch;
+  }
+  /* A5: smooth open where the browser can animate details content */
+  @supports selector(::details-content) {
+    .faq__item::details-content {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition:
+        grid-template-rows 0.25s ease-out,
+        content-visibility 0.25s allow-discrete;
+    }
+    .faq__item[open]::details-content {
+      grid-template-rows: 1fr;
+    }
+    .faq__body {
+      overflow: hidden;
+      min-height: 0;
+    }
+  }
+  .faq--dark {
+    border-top-color: var(--calce);
+  }
+  .faq--dark .faq__item {
+    border-bottom-color: rgba(243, 244, 240, 0.25);
+  }
+  .faq--dark summary {
+    color: var(--calce);
+  }
+</style>

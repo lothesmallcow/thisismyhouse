@@ -1,0 +1,21 @@
+---
+import logo from "../assets/logo/logo.json";
+import { site } from "../config/site";
+interface Props {
+  variant?: "light" | "dark";
+  class?: string;
+  title?: string;
+}
+const { variant = "light", class: cls, title = site.brand } = Astro.props;
+const text = variant === "dark" ? "var(--calce)" : "var(--portone)";
+---
+<svg class:list={["logo", cls]} viewBox={logo.viewBox} role="img" aria-label={title} xmlns="http://www.w3.org/2000/svg">
+  <path d={logo.text} fill={text} />
+  <path d={logo.brackets} fill="none" stroke="var(--ottone)" stroke-width={logo.strokeWidth} stroke-linecap="square" />
+</svg>
+<style>
+  .logo {
+    height: 1.75rem;
+    width: auto;
+  }
+</style>

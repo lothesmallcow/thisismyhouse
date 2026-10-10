@@ -1,0 +1,491 @@
+---
+import Demo from "../../../layouts/Demo.astro";
+import ArcadiHero from "../../../components/demo/ArcadiHero.astro";
+import BeforeAfter from "../../../components/demo/BeforeAfter.astro";
+import ReviewsEmpty from "../../../components/demo/ReviewsEmpty.astro";
+import { Image } from "astro:assets";
+import { site } from "../../../config/site";
+import { telHref } from "../../../lib/util";
+
+const img = import.meta.glob<{ default: ImageMetadata }>("../../../assets/demo/arcadi-ristrutturazioni/*.jpg", { eager: true });
+const pic = (n: string) => img[`../../../assets/demo/arcadi-ristrutturazioni/${n}.jpg`].default;
+
+const services = [
+  { t: "Bagni completi", d: "Dallo smontaggio alle piastrelle, impianti compresi. Di solito in due settimane.", img: "bagno-dopo" },
+  { t: "Cucine", d: "Impianti, muri, pavimenti e montaggio dei mobili, con un solo referente.", img: "cucina-dopo" },
+  { t: "Appartamenti chiavi in mano", d: "Progetto, pratiche e cantiere: ti consegniamo la casa pronta da abitare.", img: "soggiorno-dopo" },
+  { t: "Infissi e serramenti", d: "Finestre nuove che isolano davvero, posate in giornata.", img: "infissi-dopo" },
+];
+const works = [
+  { b: "bagno-prima", a: "bagno-dopo", c: "Bagno, zona Lambrate, 9 giorni di lavoro", alt: "bagno in zona Lambrate" },
+  { b: "cucina-prima", a: "cucina-dopo", c: "Cucina, zona Città Studi, 12 giorni di lavoro", alt: "cucina in zona Città Studi" },
+  { b: "soggiorno-prima", a: "soggiorno-dopo", c: "Soggiorno, NoLo, 15 giorni di lavoro", alt: "soggiorno a NoLo" },
+  { b: "infissi-prima", a: "infissi-dopo", c: "Finestre, Porta Romana, 1 giorno di lavoro", alt: "finestre a Porta Romana" },
+  { b: "vasca-prima", a: "vasca-dopo", c: "Bagno con vasca, Isola, 10 giorni di lavoro", alt: "bagno con vasca all'Isola" },
+  { b: "camera-prima", a: "camera-dopo", c: "Camera, Sesto San Giovanni, 7 giorni di lavoro", alt: "camera a Sesto San Giovanni" },
+];
+const how = [
+  { t: "Sopralluogo", d: "Veniamo a vedere entro 48 ore, gratis. Misuriamo e ascoltiamo." },
+  { t: "Preventivo scritto", d: "Voce per voce, con i tempi. Quello che firmi è quello che paghi." },
+  { t: "Cantiere pulito e puntuale", d: "Proteggiamo pavimenti e mobili, puliamo ogni sera, ti aggiorniamo ogni venerdì." },
+  { t: "Consegna e garanzia", d: "Controlliamo tutto insieme. Due anni di garanzia sui lavori." },
+];
+const zones = ["Città Studi", "Lambrate", "NoLo", "Porta Romana", "Navigli", "Isola", "Sesto San Giovanni"];
+// Demo: calls and messages go to Focale, never to a real business.
+const tel = telHref();
+---
+<Demo
+  title="Arcadi Ristrutturazioni | Ristrutturazioni a Milano (demo)"
+  description="Sito dimostrativo di Focale per un'impresa di ristrutturazioni inventata a Milano."
+  themeColor="#1d1f21"
+>
+  <div class="ar">
+    <ArcadiHero eager headingTag="h1" callHref={tel} quoteHref="#preventivo" class="ar-hero" />
+
+    <section class="ar-sec" id="servizi">
+      <div class="ar-wrap">
+        <h2>Cosa facciamo</h2>
+        <ul class="ar-services">
+          {
+            services.map((s) => (
+              <li>
+                <Image src={pic(s.img)} alt="" widths={[360, 720]} sizes="(min-width: 900px) 280px, 92vw" />
+                <h3>{s.t}</h3>
+                <p>{s.d}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="ar-sec ar-sec--grey" id="lavori">
+      <div class="ar-wrap">
+        <h2>Lavori finiti, prima e dopo</h2>
+        <p class="ar-lead">Trascina la linea per confrontare.</p>
+        <div class="ar-works">
+          {works.map((w) => <BeforeAfter before={pic(w.b)} after={pic(w.a)} caption={w.c} alt={w.alt} />)}
+        </div>
+      </div>
+    </section>
+
+    <section class="ar-sec" id="come-lavoriamo">
+      <div class="ar-wrap">
+        <h2>Come lavoriamo</h2>
+        <ol class="ar-how">
+          {
+            how.map((h, i) => (
+              <li>
+                <span class="ar-how__n">{i + 1}</span>
+                <h3>{h.t}</h3>
+                <p>{h.d}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </section>
+
+    <section class="ar-sec ar-sec--dark" id="zone">
+      <div class="ar-wrap ar-zone">
+        <h2>Dove lavoriamo</h2>
+        <ul>{zones.map((z) => <li>{z}</li>)}</ul>
+      </div>
+    </section>
+
+    <section class="ar-sec" id="preventivo">
+      <div class="ar-wrap ar-quote-grid">
+        <div>
+          <h2>Chiedi un preventivo</h2>
+          <p class="ar-lead">Tre domande. Ti rispondiamo su WhatsApp in giornata, con un giorno per il sopralluogo.</p>
+        </div>
+        <form class="ar-form" data-demo-form data-wa={site.whatsappNumber} data-heading="Richiesta di preventivo dal sito" data-err="Completa questo campo per continuare." novalidate>
+          <p class="ar-form__progress" data-dprogress data-tpl="Passo {n} di 3">Passo 1 di 3</p>
+          <fieldset data-dstep>
+            <legend tabindex="-1">Che lavoro devi fare?</legend>
+            <div class="ar-opts">
+              {["Bagno", "Cucina", "Appartamento", "Infissi", "Altro"].map((o) => (
+                <label class="ar-opt"><input type="radio" name="lavoro" value={o} data-label="Lavoro" required /><span>{o}</span></label>
+              ))}
+            </div>
+            <p class="ar-err" data-derr="lavoro" aria-live="polite"></p>
+            <div class="ar-nav"><button type="button" class="ar-btn" data-dnext>Avanti</button></div>
+          </fieldset>
+          <fieldset data-dstep>
+            <legend tabindex="-1">Dove e quanto?</legend>
+            <label class="ar-field">Zona
+              <select name="zona" data-label="Zona" required>
+                <option value="">Scegli la zona</option>
+                {zones.map((z) => <option>{z}</option>)}
+                <option>Altra zona</option>
+              </select>
+            </label>
+            <p class="ar-err" data-derr="zona" aria-live="polite"></p>
+            <label class="ar-field">Metratura indicativa, in metri quadri
+              <input name="metratura" type="number" inputmode="numeric" min="1" max="1000" required data-label="Metratura" />
+            </label>
+            <p class="ar-err" data-derr="metratura" aria-live="polite"></p>
+            <fieldset class="ar-sub">
+              <legend>Quando vorresti iniziare?</legend>
+              <div class="ar-opts">
+                {["Entro 1 mese", "Entro 3 mesi", "Più avanti"].map((o) => (
+                  <label class="ar-opt"><input type="radio" name="inizio" value={o} data-label="Inizio" required /><span>{o}</span></label>
+                ))}
+              </div>
+              <p class="ar-err" data-derr="inizio" aria-live="polite"></p>
+            </fieldset>
+            <div class="ar-nav"><button type="button" class="ar-btn ar-btn--ghost" data-dback>Indietro</button><button type="button" class="ar-btn" data-dnext>Avanti</button></div>
+          </fieldset>
+          <fieldset data-dstep>
+            <legend tabindex="-1">A chi rispondiamo?</legend>
+            <label class="ar-field">Nome <input name="nome" type="text" autocomplete="given-name" required data-label="Nome" /></label>
+            <p class="ar-err" data-derr="nome" aria-live="polite"></p>
+            <label class="ar-field">Telefono <input name="telefono" type="tel" autocomplete="tel" required data-label="Telefono" /></label>
+            <p class="ar-err" data-derr="telefono" aria-live="polite"></p>
+            <div class="ar-nav"><button type="button" class="ar-btn ar-btn--ghost" data-dback>Indietro</button><button type="submit" class="ar-btn">Invia su WhatsApp</button></div>
+            <p class="ar-small">Si apre WhatsApp con il messaggio già scritto. Questo è un sito dimostrativo: il messaggio arriva a Focale, non a un'impresa.</p>
+          </fieldset>
+        </form>
+      </div>
+    </section>
+
+    <section class="ar-sec ar-sec--grey">
+      <div class="ar-wrap">
+        <h2>Cosa dicono i clienti</h2>
+        <ReviewsEmpty />
+      </div>
+    </section>
+
+    <footer class="ar-foot">
+      <div class="ar-wrap">
+        <p class="ar-foot__logo">ARCADI<small>Ristrutturazioni</small></p>
+        <p>Arcadi Ristrutturazioni è un'attività inventata. Progetto dimostrativo di Focale.</p>
+      </div>
+    </footer>
+
+    <a class="ar-sticky" href={tel}>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5.5 3.5h3l1.5 4.25-2 1.25a11 11 0 0 0 7 7l1.25-2 4.25 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3.5 5.5a2 2 0 0 1 2-2Z"></path></svg>
+      Chiama ora
+    </a>
+  </div>
+</Demo>
+
+<style>
+  .ar {
+    --o: #c4510e;
+    --ink: #1d1f21;
+    --grey: #e4e4e0;
+    background: #f2f2f0;
+    color: var(--ink);
+    font-family: var(--font-head);
+    font-size: 18px;
+    line-height: 1.55;
+    padding-bottom: 80px;
+  }
+  @media (min-width: 900px) {
+    .ar {
+      padding-bottom: 0;
+    }
+  }
+  .ar :global(.ar-hero) {
+    min-height: auto;
+  }
+  .ar h2 {
+    font-family: var(--font-head);
+    font-weight: 850;
+    font-stretch: 72%;
+    font-size: clamp(2.25rem, 1.6rem + 3vw, 4rem);
+    line-height: 0.98;
+    color: var(--ink);
+    letter-spacing: 0;
+    margin-bottom: 1.5rem;
+  }
+  .ar h3 {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-stretch: 85%;
+    font-size: 1.5rem;
+    color: var(--ink);
+  }
+  .ar-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 clamp(18px, 4vw, 40px);
+  }
+  .ar-sec {
+    padding: clamp(56px, 8vw, 110px) 0;
+  }
+  .ar-sec--grey {
+    background: var(--grey);
+  }
+  .ar-sec--dark {
+    background: var(--ink);
+    color: #f2f2f0;
+  }
+  .ar-sec--dark h2 {
+    color: #f2f2f0;
+  }
+  .ar-lead {
+    font-size: 1.25rem;
+    max-width: 40ch;
+    margin-bottom: 2rem;
+  }
+  .ar-services {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 700px) {
+    .ar-services {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 1100px) {
+    .ar-services {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .ar-services :global(img) {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    margin-bottom: 1rem;
+  }
+  .ar-services li {
+    border-top: 6px solid var(--o);
+    padding-top: 1rem;
+  }
+  .ar-services p {
+    margin-top: 0.4rem;
+    color: #3f4347;
+    font-weight: 450;
+  }
+  .ar-works {
+    display: grid;
+    gap: 2.5rem 2rem;
+  }
+  @media (min-width: 900px) {
+    .ar-works {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .ar-how {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .ar-how {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .ar-how__n {
+    display: block;
+    font-weight: 900;
+    font-stretch: 70%;
+    font-size: 3.5rem;
+    line-height: 1;
+    color: var(--o);
+    margin-bottom: 0.5rem;
+  }
+  .ar-how p {
+    margin-top: 0.4rem;
+    font-weight: 450;
+    color: #3f4347;
+  }
+  .ar-zone ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .ar-zone li {
+    padding: 0.5rem 0.9rem;
+    border: 2px solid #f2f2f0;
+    font-weight: 700;
+  }
+  .ar-quote-grid {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .ar-quote-grid {
+      grid-template-columns: 1fr 1.2fr;
+      gap: 4rem;
+    }
+  }
+  .ar-form {
+    background: #fff;
+    padding: clamp(20px, 3vw, 36px);
+    border-top: 8px solid var(--o);
+    display: grid;
+    gap: 1rem;
+  }
+  .ar-form__progress {
+    font-weight: 700;
+    color: var(--o);
+  }
+  .ar-form fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.9rem;
+    min-width: 0;
+  }
+  .ar-form legend {
+    font-weight: 850;
+    font-stretch: 80%;
+    font-size: 1.75rem;
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+    padding: 0;
+  }
+  :global(.ar-form.is-steps) [data-dstep]:not(.is-current) {
+    display: none;
+  }
+  .ar-sub legend {
+    font-size: 1.0625rem;
+    font-stretch: 100%;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .ar-opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .ar-opt {
+    position: relative;
+  }
+  .ar-opt input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+  .ar-opt span {
+    display: inline-grid;
+    place-items: center;
+    min-height: 48px;
+    padding: 0 1.1rem;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  .ar-opt input:checked + span {
+    background: var(--ink);
+    color: #fff;
+  }
+  .ar-opt input:focus-visible + span {
+    outline: 3px solid var(--o);
+    outline-offset: 2px;
+  }
+  .ar-field {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 700;
+  }
+  .ar-field input,
+  .ar-field select {
+    font: inherit;
+    font-weight: 500;
+    min-height: 50px;
+    padding: 0 0.8rem;
+    border: 2px solid #8b8f93;
+    border-radius: 4px;
+    background: #fff;
+  }
+  .ar-err {
+    color: #a3230f;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin: 0;
+  }
+  .ar-err:empty {
+    display: none;
+  }
+  .ar-nav {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+  .ar-btn {
+    font: inherit;
+    font-weight: 750;
+    min-height: 52px;
+    padding: 0 1.4rem;
+    border-radius: 4px;
+    border: 2px solid var(--o);
+    background: var(--o);
+    color: #fff;
+    cursor: pointer;
+  }
+  .ar-btn--ghost {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+  .ar-small {
+    font-size: 0.875rem;
+    color: #55595d;
+  }
+  .ar-foot {
+    background: var(--ink);
+    color: #d9dad6;
+    padding: 48px 0;
+    font-size: 15px;
+  }
+  .ar-foot__logo {
+    font-weight: 900;
+    font-stretch: 68%;
+    font-size: 28px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .ar-foot__logo small {
+    font-size: 11px;
+    font-stretch: 100%;
+    color: #ff8a4c;
+    letter-spacing: 0.08em;
+  }
+  .ar-sticky {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 54px;
+    background: var(--o);
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.125rem;
+    text-decoration: none;
+    border-radius: 6px;
+    box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.45);
+  }
+  @media (min-width: 900px) {
+    .ar-sticky {
+      display: none;
+    }
+  }
+</style>
+<script>
+  import { initDemoForms } from "../../../scripts/demo-form";
+  initDemoForms();
+</script>
