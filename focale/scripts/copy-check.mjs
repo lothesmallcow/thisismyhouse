@@ -18,7 +18,8 @@ const rules = [
   { name: "lorem", re: /lorem/i },
   { name: "TODO", re: /\bTODO\b/ },
   { name: "old name Soglia", re: /soglia/i },
-  { name: "noi / nostro team", re: /\b(noi|il nostro team|la nostra agenzia)\b/i, skipDemo: true },
+  // The studio speaks as "noi" since the company redesign; claims of a big team are still out.
+  { name: "team inventato", re: /\b(il nostro team|la nostra agenzia|i nostri esperti)\b/i, skipDemo: true },
   { name: "English word", re: ENGLISH, skipEnDemo: true },
 ];
 

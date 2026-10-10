@@ -11,7 +11,7 @@ const test = async (name, fn) => {
     await fn();
     results.push(`PASS ${name}`);
   } catch (e) {
-    results.push(`FAIL ${name}\n     ${e.message.split("\n")[0]}`);
+    results.push(`FAIL ${name}\n     ${e.message.split("\n").slice(0, 6).join(" | ")}`);
   }
 };
 
@@ -62,7 +62,7 @@ await test("preview form: steps, validation, payload, redirect", async () => {
   const p = sent[0];
   assert.equal(p.access_key, "test-key");
   assert.equal(p.subject, "Nuova richiesta di anteprima: Cascina di Prova");
-  assert.equal(p.from_name, "Sito Focale");
+  assert.equal(p.from_name, "Sito Focus Design");
   assert.equal(p.attivita, "B&B o agriturismo");
   assert.equal(p.sito, "Sì: www.cascinadiprova.it");
   assert.equal(p.pacchetto, "Professionale");
@@ -140,7 +140,7 @@ await test("home without JavaScript: content readable", async () => {
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const page = await ctx.newPage();
   await page.goto(`${base}/`);
-  for (const sel of ["h1", ".hero__p", "#reno-title", '[data-scene="prima"]', '[data-scene="dopo"]', "[data-check]", ".calc__result"]) {
+  for (const sel of ["h1", ".hero__main .lead", "#reno-title", '[data-scene="prima"]', '[data-scene="dopo"]', "[data-check]", ".calc__result"]) {
     assert.equal(await page.isVisible(sel), true, `${sel} visible`);
   }
   await ctx.close();
@@ -165,7 +165,7 @@ await test("pitch page: 'Non mi interessa' replaces the buttons", async () => {
   assert.equal(await page.getAttribute('meta[name="robots"]', "content"), "noindex,nofollow");
   await page.click("[data-no]");
   assert.equal(await page.isVisible("[data-buttons]"), false);
-  assert.match(await page.textContent("[data-bye]"), /Non ti disturbo più/);
+  assert.match(await page.textContent("[data-bye]"), /Non ti disturbiamo più/);
   await page.close();
 });
 

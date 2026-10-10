@@ -13,13 +13,13 @@ export function ogKey(pathname: string): string {
 }
 
 const STATIC: OgPage[] = [
-  { key: "home", title: "Chi apre il tuo sito decide in un attimo se chiamarti." },
+  { key: "home", title: "Siti che fanno squillare il telefono." },
   { key: "come-funziona", title: "Come funziona" },
   { key: "prezzi", title: "Quanto costa un sito che porta richieste." },
   { key: "lavori", title: "Lavori" },
-  { key: "chi-sono", title: "Chi sono" },
+  { key: "chi-sono", title: "Lo studio" },
   { key: "anteprima-gratuita", title: "Ricevi l'anteprima del tuo nuovo sito. Gratis, in 72 ore." },
-  { key: "contatti", title: "Scrivimi. Rispondo io." },
+  { key: "contatti", title: "Scrivici. Ti rispondiamo in giornata." },
   { key: "condizioni", title: "Condizioni del servizio" },
   { key: "privacy", title: "Informativa privacy" },
   { key: "cookie", title: "Cookie" },

@@ -1,0 +1,201 @@
+---
+/**
+ * The three demo projects as a horizontal reel. Desktop with motion: the section pins and the
+ * reel slides sideways as you scroll. Everywhere else it is a native, swipeable row.
+ */
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.data.order);
+---
+<section class="reel" data-reel aria-labelledby="lavori-t">
+  <div class="reel__pin" data-reel-pin>
+    <div class="wrap reel__head">
+      <p class="sec__label">Lavori</p>
+      <h2 id="lavori-t">Tre siti completi, per tre attività inventate.</h2>
+      <p class="reel__intro muted">
+        Siamo appena partiti: per farti vedere come lavoriamo abbiamo costruito tre siti completi nei settori dove il sito conta di più. Appena i primi
+        clienti ci danno il permesso, i loro lavori compaiono qui.
+      </p>
+    </div>
+    <div class="reel__viewport" data-reel-viewport tabindex="0" aria-label="Lavori, scorri in orizzontale">
+      <ul class="reel__track" data-reel-track>
+        {
+          lavori.map((l) => (
+            <li class="reel__item">
+              <a class="reel__card" href={`/lavori/${l.id}/`} data-cursor="Guarda">
+                <div class="reel__media">
+                  <Image
+                    src={l.data.shotDesktop}
+                    alt={`Il sito dimostrativo di ${l.data.name}`}
+                    widths={[600, 1000, 1400]}
+                    sizes="(min-width: 1000px) 62vw, 86vw"
+                    class="reel__img"
+                    data-reel-img
+                  />
+                </div>
+                <div class="reel__meta">
+                  <h3>{l.data.name}</h3>
+                  <p class="muted">{l.data.sector}</p>
+                </div>
+                <p class="reel__goal">{l.data.goal}</p>
+              </a>
+            </li>
+          ))
+        }
+        <li class="reel__item reel__item--end">
+          <div class="reel__end">
+            <p class="reel__end-t">Il prossimo può essere il tuo.</p>
+            <a class="btn btn--primary" href="/anteprima-gratuita">Voglio l'anteprima gratuita</a>
+            <a class="textlink" href="/lavori">Tutti i lavori</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .reel {
+    padding-block: var(--space-section);
+    overflow: hidden;
+  }
+  .reel__head {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: var(--space-block);
+  }
+  @media (min-width: 900px) {
+    .reel__head {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: clamp(1rem, 0.5rem + 1.5vw, 2rem);
+    }
+    .reel__head .sec__label {
+      grid-column: 1 / span 3;
+    }
+    .reel__head h2 {
+      grid-column: 4 / span 7;
+    }
+    .reel__intro {
+      grid-column: 4 / span 6;
+    }
+  }
+  .reel__head h2 {
+    max-width: 16ch;
+  }
+  .reel__intro {
+    max-width: 48ch;
+  }
+  .reel__viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding-inline: var(--gutter);
+    scroll-padding-inline: var(--gutter);
+  }
+  .reel__viewport::-webkit-scrollbar {
+    display: none;
+  }
+  .reel__viewport:focus-visible {
+    outline-offset: -2px;
+  }
+  .reel__track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: clamp(1rem, 0.5rem + 2vw, 2.5rem);
+    width: max-content;
+  }
+  .reel__item {
+    width: min(86vw, 62rem);
+    scroll-snap-align: start;
+    flex: none;
+  }
+  @media (min-width: 1000px) {
+    .reel__item {
+      width: 62vw;
+    }
+  }
+  .reel__item--end {
+    width: min(70vw, 28rem);
+    display: flex;
+    align-items: center;
+  }
+  .reel__card {
+    display: grid;
+    gap: 1.1rem;
+    text-decoration: none;
+    color: inherit;
+  }
+  .reel__media {
+    overflow: hidden;
+    border-radius: clamp(10px, 0.6vw + 6px, 18px);
+    background: var(--nebbia);
+    aspect-ratio: 16 / 10;
+  }
+  .reel__media :global(.reel__img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    transition: transform 0.9s var(--ease-out);
+  }
+  @media (hover: hover) {
+    .reel__card:hover :global(.reel__img) {
+      transform: scale(1.025);
+    }
+  }
+  .reel__meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    align-items: baseline;
+  }
+  .reel__goal {
+    max-width: 44ch;
+  }
+  .reel__end {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+  .reel__end-t {
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: var(--fs-h2);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+  }
+
+  /* Desktop motion: pinned, driven by scroll (class set by script) */
+  :global(.reel.is-pinned) {
+    padding-block: 0;
+  }
+  :global(.reel.is-pinned) .reel__pin {
+    height: 100vh;
+    height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: var(--header-h);
+    box-sizing: border-box;
+  }
+  :global(.reel.is-pinned) .reel__head {
+    margin-bottom: clamp(2rem, 4vh, 3.5rem);
+  }
+  :global(.reel.is-pinned) .reel__intro {
+    display: none;
+  }
+  :global(.reel.is-pinned) .reel__viewport {
+    overflow: visible;
+  }
+  :global(.reel.is-pinned) .reel__item {
+    width: min(58vw, calc((100svh - 22rem) * 1.6));
+  }
+</style>
+
+<script>
+  import { later } from "../scripts/later";
+  later(() => import("../scripts/reel").then((m) => m.initReel()));
+</script>

@@ -7,15 +7,16 @@ interface Props {
   title?: string;
 }
 const { variant = "light", class: cls, title = site.brand } = Astro.props;
-const text = variant === "dark" ? "var(--calce)" : "var(--portone)";
+const ink = variant === "dark" ? "var(--carta)" : "var(--inchiostro)";
 ---
 <svg class:list={["logo", cls]} viewBox={logo.viewBox} role="img" aria-label={title} xmlns="http://www.w3.org/2000/svg">
-  <path d={logo.text} fill={text} />
-  <path d={logo.brackets} fill="none" stroke="var(--ottone)" stroke-width={logo.strokeWidth} stroke-linecap="square" />
+  <path d={logo.focus} fill={ink} />
+  <path d={logo.design} fill={ink} />
 </svg>
 <style>
   .logo {
-    height: 1.75rem;
+    height: 1.35rem;
     width: auto;
+    overflow: visible;
   }
 </style>

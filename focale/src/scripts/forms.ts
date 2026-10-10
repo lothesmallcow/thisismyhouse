@@ -218,7 +218,7 @@ export function initPreviewForm() {
     if (d.botcheck) return;
     const payload: Fields = {
       subject: `Nuova richiesta di anteprima: ${d.nome_attivita}`,
-      from_name: "Sito Focale",
+      from_name: "Sito Focus Design",
       botcheck: "",
       attivita: d.attivita === "Altro" && d.attivita_altro ? `Altro: ${d.attivita_altro}` : d.attivita,
       sito: d.sito === "Sì" && d.sito_indirizzo ? `Sì: ${d.sito_indirizzo}` : d.sito,
@@ -291,7 +291,7 @@ export function initContactForm() {
     if (d.botcheck) return;
     const payload: Fields = {
       subject: `Nuovo messaggio dal sito: ${d.nome}`,
-      from_name: "Sito Focale",
+      from_name: "Sito Focus Design",
       botcheck: "",
       nome: d.nome,
       contatto: d.contatto,

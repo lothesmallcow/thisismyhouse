@@ -5,7 +5,6 @@
  * Desktop with motion: one pinned frame where the old site is marked, scaffolded, rebuilt and
  * turned into a phone. Mobile with motion: three stacked scenes that each play once.
  */
-import Fuoco from "./Fuoco.astro";
 import OldSite from "./demo/OldSite.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
 import CantiereSign from "./CantiereSign.astro";
@@ -26,9 +25,9 @@ const scaffold = `
   <div class="reno__pin" data-reno-pin>
     <div class="wrap reno__grid">
       <div class="reno__head">
-        <Fuoco />
+        <p class="sec__label reno__label">Prima e dopo</p>
         <h2 id="reno-title">Guarda un sito vecchio diventare uno che lavora.</h2>
-        <p class="reno__intro">Scorri piano. L'attività è inventata, ma i difetti sono quelli che trovo ogni giorno.</p>
+        <p class="reno__intro">Scorri piano. L'attività è inventata, ma i difetti sono quelli che troviamo ogni giorno.</p>
         <p class="sr-only">
           Esempio dimostrativo: un sito vecchio, difficile da leggere dal telefono e senza contatti in vista, viene rifatto in un sito
           moderno con pulsanti per chiamare e scrivere su WhatsApp, foto dei lavori e informazioni aggiornate.
@@ -107,10 +106,17 @@ const scaffold = `
   .reno__head {
     grid-area: head;
   }
+  .reno__label {
+    margin-bottom: 1.5rem;
+  }
+  .reno__head h2 {
+    max-width: 14ch;
+  }
   .reno__intro {
-    margin-top: 1rem;
-    font-size: var(--step-1);
-    max-width: 40ch;
+    margin-top: 1.5rem;
+    font-size: var(--fs-lead);
+    color: var(--grafite);
+    max-width: 36ch;
   }
   .reno__stage {
     grid-area: stage;
@@ -132,12 +138,10 @@ const scaffold = `
   }
 
   .scene__label {
-    font-family: var(--font-head);
-    font-weight: 750;
-    font-stretch: 108%;
-    font-size: 1.125rem;
-    color: var(--portone);
-    margin-bottom: 0.75rem;
+    font-weight: 500;
+    font-size: var(--fs-small);
+    color: var(--grafite);
+    margin-bottom: 0.9rem;
   }
   .scene--cantiere {
     display: none;
@@ -152,9 +156,9 @@ const scaffold = `
     display: flex;
     flex-direction: column;
     background: #c9c9c9;
-    border: 2px solid #1b1f1d;
-    border-radius: 8px;
-    box-shadow: 0 24px 50px -24px rgba(64, 48, 20, 0.35);
+    border: 1px solid #c9c7c1;
+    border-radius: 12px;
+    box-shadow: 0 40px 80px -40px rgba(60, 25, 8, 0.35);
   }
   .frame__chrome {
     flex: none;
@@ -165,7 +169,7 @@ const scaffold = `
     padding: 0 10px;
     background: #e6e6e3;
     border-bottom: 1px solid #b5b5b0;
-    border-radius: 6px 6px 0 0;
+    border-radius: 11px 11px 0 0;
   }
   .frame__dots {
     display: flex;
@@ -194,7 +198,7 @@ const scaffold = `
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    border-radius: 0 0 6px 6px;
+    border-radius: 0 0 11px 11px;
   }
   .layer {
     height: 100%;
@@ -212,7 +216,7 @@ const scaffold = `
     border-radius: var(--radius-phone);
     overflow: hidden;
     background: #f2f2f0;
-    box-shadow: 0 30px 60px -20px rgba(64, 48, 20, 0.35);
+    box-shadow: 0 40px 80px -30px rgba(60, 25, 8, 0.4);
   }
 
   .scaffold {
@@ -251,10 +255,10 @@ const scaffold = `
     grid-template-columns: 26px 1fr;
     gap: 0.75rem;
     align-items: center;
-    font-family: var(--font-head);
-    font-weight: 650;
-    font-size: var(--step-1);
-    color: var(--portone);
+    font-weight: 400;
+    font-stretch: 108%;
+    font-size: var(--fs-lead);
+    letter-spacing: -0.015em;
     line-height: 1.25;
   }
   .checklist svg {
@@ -320,6 +324,9 @@ const scaffold = `
     border-width: 10px;
     border-color: #1b1f1d;
     border-radius: var(--radius-phone);
+  }
+  :global(.reno.is-anim) .frame.is-phone .frame__screen {
+    border-radius: 12px;
   }
   :global(.reno.is-anim) .frame.is-phone .frame__chrome {
     display: none;

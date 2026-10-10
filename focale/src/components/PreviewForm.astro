@@ -26,7 +26,7 @@ const activities = [
 >
   <input type="hidden" name="access_key" value={site.web3formsKey} />
   <input type="hidden" name="subject" value="Nuova richiesta di anteprima" />
-  <input type="hidden" name="from_name" value="Sito Focale" />
+  <input type="hidden" name="from_name" value="Sito Focus Design" />
   <input type="hidden" name="redirect" value={absUrl("/grazie/")} />
   <input type="hidden" name="pacchetto" value="" data-hidden="pacchetto" />
   <input type="hidden" name="fondatori" value="" data-hidden="fondatori" />
@@ -128,13 +128,13 @@ const activities = [
       <button type="button" class="btn btn--secondary" data-back>Indietro</button>
       <button type="submit" class="btn btn--primary" data-submit>Mandami l'anteprima</button>
     </div>
-    <p class="small muted pf-promise">Niente newsletter, niente spam. I tuoi dati li uso solo io, solo per risponderti.</p>
+    <p class="small muted pf-promise">Niente newsletter, niente spam. I tuoi dati li usiamo solo noi, solo per risponderti.</p>
   </fieldset>
 
   <div class="pf-fail" data-fail role="alert" hidden>
     <p>
       <Icon name="alert" />
-      <span>Non sono riuscito a inviare la richiesta. Riprova, oppure mandamela su WhatsApp: il messaggio è già pronto.</span>
+      <span>Non siamo riusciti a inviare la richiesta. Riprova, oppure mandamela su WhatsApp: il messaggio è già pronto.</span>
     </p>
     <a class="btn btn--primary" href="#" target="_blank" rel="noopener" data-fail-wa><Icon name="whatsapp" />Mandala su WhatsApp</a>
   </div>

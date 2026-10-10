@@ -1,13 +1,12 @@
 ---
 import Base from "../layouts/Base.astro";
-import Fuoco from "../components/Fuoco.astro";
+import { site } from "../config/site";
 import CantiereSign from "../components/CantiereSign.astro";
 ---
-<Base title="Pagina non trovata | Focale" noindex og="home">
+<Base title={`Pagina non trovata | ${site.brand}`} noindex og="home">
   <section class="nf" data-hero>
     <div class="wrap nf-grid">
       <div>
-        <Fuoco />
         <h1>Questa pagina è in ristrutturazione.</h1>
         <p class="lead nf-p">Succede anche ai siti migliori. Torna alla home o guarda come funziona.</p>
         <div class="btn-row">

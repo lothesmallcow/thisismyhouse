@@ -1,38 +1,19 @@
-# Il nome: Focale
+# Il nome: Focus Design
 
-Lorenzo ha chiesto un nome "più figo" sul tema *focus*, che possa reggere anche in futuro
-come azienda di AI per migliorare la logistica e le operazioni. Il piano originale usava
-"Soglia" (vedi `docs/PIANO-ORIGINALE.md`).
+Primo nome di lavoro: Soglia (nel brief), poi Focale. Lorenzo ha chiesto un nome con "focus",
+che possa crescere oltre i siti (per esempio in un'azienda AI che migliora la logistica), e ha scelto **Focus Design**.
 
-## Scelta: **Focale**
+## Perché funziona
+- **Si capisce in italiano e in inglese.** "Focus" è entrato nell'italiano di tutti i giorni.
+- **Dice il metodo.** Chi apre un sito guarda poche cose: lo studio mette a fuoco quelle e toglie il resto.
+- **Scala.** "Focus" resta il marchio; "Design" oggi, domani "Focus Ops" o "Focus Logistics" per un prodotto AI.
 
-- **Si capisce in italiano e in inglese.** "Punto focale", "mettere a fuoco", "focal point".
-  Un artigiano di 55 anni lo legge senza spiegazioni; un investitore estero pure.
-- **Il nome è il pitch.** Il sito di una piccola impresa oggi è sfocato: testo minuscolo dal
-  telefono, numero nascosto, foto sgranate. Focale lo mette a fuoco. L'animazione firma del
-  sito (un sito vecchio che passa da sgranato a nitido) è letteralmente una messa a fuoco.
-- **Scala oltre i siti.** "Focale" funziona per un prodotto AI che mette a fuoco le operazioni
-  di una PMI: dove si perdono ordini, tempi, consegne. Il marchio non è legato ai siti web
-  ("Focale Studio" oggi, "Focale" o "Focale Ops" domani).
-- **Simbolo che regge in un'icona da 16 px:** il mirino dell'autofocus (quattro angoli attorno
-  a un punto). Va bene su un sito, su un'app, su un camion.
+## Rischi
+- "Focus" è una parola comune: come marchio da sola è debole e ci sono altre attività con nomi simili.
+  Non è stata fatta una verifica legale.
 
-## Alternative considerate
-
-| Nome | Pro | Contro |
-| --- | --- | --- |
-| **Focale (scelto)** | Chiaro in IT/EN, legato al concetto del sito, scalabile | Parola comune: marchio debole come parola sola, serve un dominio composto |
-| Fovea | Il punto della retina con la vista più nitida: unico, molto "AI" | Sconosciuto ai clienti di oggi, suona medico |
-| Nitido | Italiano, chiarissimo, perfetto per il prima e dopo | Poco internazionale, debole per un'azienda di AI |
-| Fulcro | Leva, ottimizzazione: perfetto per la logistica | Non parla di *focus*, già usato da molte società |
-
-## Da verificare prima di usarlo (10 minuti, da fare a mano)
-
-Non ho potuto verificare domini e marchi da qui. Una ricerca web rapida (ottobre 2026) non ha
-trovato agenzie web chiamate "Focale" a Milano, ma non è una verifica legale.
-
-- [ ] Dominio: `focale.studio`, `focalestudio.it`, `studiofocale.it`, `focale.it`
-- [ ] Marchio: banche dati UIBM (uibm.gov.it) ed EUIPO (eSearch plus), classi 35, 42 e 9
-- [ ] Handle Instagram e LinkedIn
-- [ ] Se "Focale" è bloccato: il nome è in un solo punto (`src/config/site.ts`, campo
-      `brand`) e il logo si rigenera con `npm run logo`.
+## Da verificare (Lorenzo)
+- [ ] Dominio: `focusdesign.it`, `focusdesign.studio`, `studiofocusdesign.it`
+- [ ] Ricerca marchi UIBM/EUIPO nella classe 42 (servizi di progettazione web)
+- [ ] Instagram e Google Business con lo stesso nome
+- [ ] Se il nome è bloccato: cambia `brand` in `src/config/site.ts` e rigenera il logo con `npm run logo`

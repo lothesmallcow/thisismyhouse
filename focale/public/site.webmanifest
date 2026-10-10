@@ -1,11 +1,11 @@
 {
-  "name": "Focale",
-  "short_name": "Focale",
+  "name": "Focus Design",
+  "short_name": "Focus",
   "lang": "it",
   "start_url": "/",
   "display": "browser",
-  "theme_color": "#1E3A2C",
-  "background_color": "#F3F4F0",
+  "theme_color": "#161513",
+  "background_color": "#FBFBF9",
   "icons": [
     { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
     { "src": "/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" },

@@ -6,7 +6,7 @@
 const env = (import.meta as { env?: Record<string, string | undefined> }).env ?? {};
 
 export const site = {
-  brand: "Focale",
+  brand: "Focus Design",
   url: "[DA COMPILARE: dominio definitivo, es. https://www.focalestudio.it]",
   ownerFirstName: "[DA COMPILARE: nome]",
   ownerFullName: "[DA COMPILARE: nome e cognome]",

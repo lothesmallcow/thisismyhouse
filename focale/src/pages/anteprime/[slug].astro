@@ -19,11 +19,11 @@ const likeMsg = `Ciao ${owner}, ho visto l'anteprima per ${d.businessName}. Mi p
 const doubtMsg = `Ciao ${owner}, ho visto l'anteprima per ${d.businessName}. Ho qualche dubbio:`;
 const noMsg = `Ciao, ho visto l'anteprima per ${d.businessName}: per ora non mi interessa, grazie.`;
 ---
-<Base title={`${d.businessName}: la tua anteprima | Focale`} noindex minimal og="home">
+<Base title={`${d.businessName}: la tua anteprima | Focus Design`} noindex minimal og="home">
   <section class="ap" data-hero>
     <div class="wrap">
       <h1>{d.businessName}, ecco come potrebbe essere il tuo nuovo sito.</h1>
-      <p class="lead ap-lead">L'ho preparato senza impegno, partendo dal tuo sito attuale e dalla tua scheda Google.</p>
+      <p class="lead ap-lead">L'abbiamo preparato senza impegno, partendo dal tuo sito attuale e dalla tua scheda Google.</p>
 
       <div class="ap-compare">
         <figure class="ap-today">
@@ -56,14 +56,14 @@ const noMsg = `Ciao, ho visto l'anteprima per ${d.businessName}: per ora non mi 
 
       <div class="ap-cols">
         <div>
-          <h2>Cosa ho cambiato</h2>
+          <h2>Cosa abbiamo cambiato</h2>
           <ol class="ap-changes">
             {d.changes.map((c) => <li>{c}</li>)}
           </ol>
         </div>
         <blockquote class="ap-note">
           <p>{d.note}</p>
-          <footer><P value={owner} />, Focale</footer>
+          <footer><P value={owner} />, Focus Design</footer>
         </blockquote>
       </div>
 
@@ -74,8 +74,8 @@ const noMsg = `Ciao, ho visto l'anteprima per ${d.businessName}: per ora non mi 
           <button class="btn btn--secondary" type="button" data-no>Non mi interessa</button>
         </div>
         <div class="ap-bye" data-bye hidden>
-          <p class="lead">Grazie per averci dato un'occhiata. Non ti disturbo più.</p>
-          <a class="link small" href={whatsappHref(noMsg)} target="_blank" rel="noopener">Se vuoi, fammelo sapere su WhatsApp</a>
+          <p class="lead">Grazie per averci dato un'occhiata. Non ti disturbiamo più.</p>
+          <a class="link small" href={whatsappHref(noMsg)} target="_blank" rel="noopener">Se vuoi, faccelo sapere su WhatsApp</a>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ const noMsg = `Ciao, ho visto l'anteprima per ${d.businessName}: per ora non mi 
         }
       </div>
 
-      <p class="small muted ap-private">Questa pagina è privata e non compare su Google. Se preferisci, la cancello: basta un messaggio.</p>
+      <p class="small muted ap-private">Questa pagina è privata e non compare su Google. Se preferisci, la cancelliamo: basta un messaggio.</p>
     </div>
   </section>
 </Base>

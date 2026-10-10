@@ -1,36 +1,81 @@
 ---
-import Fuoco from "./Fuoco.astro";
 import Icon from "./Icon.astro";
 import { site } from "../config/site";
 import { whatsappHref } from "../lib/util";
 interface Props {
   title?: string;
   text?: string;
+  whatsapp?: string;
+  ctaHref?: string;
 }
 const {
   title = "Guarda il tuo nuovo sito prima di decidere.",
-  text = `Ti mando l'anteprima in ${site.previewHours} ore. Se non ti convince, non mi devi niente.`,
+  text = `Ti mandiamo l'anteprima in ${site.previewHours} ore. Se non ti convince, non ci devi niente.`,
+  whatsapp = `Ciao, ho visto il sito di ${site.brand} e vorrei l'anteprima gratuita per la mia attività.`,
+  ctaHref = "/anteprima-gratuita",
 } = Astro.props;
 ---
-<section class="section section--dark closing on-dark">
-  <div class="wrap">
-    <Fuoco dark />
-    <h2>{title}</h2>
-    <p class="lead measure closing__text">{text}</p>
-    <div class="btn-row">
-      <a href="/anteprima-gratuita" class="btn btn--primary">Voglio l'anteprima gratuita</a>
-      <a href={whatsappHref("Ciao, ho visto il sito di Focale e vorrei l'anteprima gratuita per la mia attività.")} class="btn btn--secondary" target="_blank" rel="noopener">
-        <Icon name="whatsapp" />
-        Scrivimi su WhatsApp
-      </a>
+<section class="closing">
+  <div class="closing__glow" data-sunrise aria-hidden="true"></div>
+  <div class="wrap closing__in">
+    <h2 class="closing__title" data-focus>{title}</h2>
+    <div class="closing__row">
+      <p class="lead closing__text">{text}</p>
+      <div class="btn-row">
+        <a href={ctaHref} class="btn btn--primary" data-magnetic>Voglio l'anteprima gratuita</a>
+        <a href={whatsappHref(whatsapp)} class="btn btn--secondary" target="_blank" rel="noopener">
+          <Icon name="whatsapp" />
+          Scrivici su WhatsApp
+        </a>
+      </div>
     </div>
   </div>
 </section>
 <style>
-  .closing h2 {
-    max-width: 20ch;
+  .closing {
+    position: relative;
+    overflow: hidden;
+    padding-block: var(--space-section) calc(var(--space-section) * 1.15);
+    background: var(--carta);
+    text-align: center;
+  }
+  .closing__glow {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: max(110vw, 900px);
+    aspect-ratio: 2 / 1;
+    transform: translate(-50%, 50%);
+    border-radius: 50%;
+    background: radial-gradient(
+      closest-side,
+      rgba(255, 140, 60, 0.42),
+      rgba(255, 91, 34, 0.16) 55%,
+      rgba(255, 91, 34, 0)
+    );
+    pointer-events: none;
+  }
+  .closing__in {
+    position: relative;
+    display: grid;
+    justify-items: center;
+  }
+  .closing__title {
+    font-size: var(--fs-display);
+    max-width: 14ch;
+    letter-spacing: -0.045em;
+  }
+  .closing__row {
+    display: grid;
+    justify-items: center;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  .closing__row .btn-row {
+    justify-content: center;
   }
   .closing__text {
-    margin: 1.25rem 0 2rem;
+    max-width: 34ch;
+    color: var(--grafite);
   }
 </style>

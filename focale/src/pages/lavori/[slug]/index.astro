@@ -1,10 +1,9 @@
 ---
 import Base from "../../../layouts/Base.astro";
-import Fuoco from "../../../components/Fuoco.astro";
 import Closing from "../../../components/Closing.astro";
-import Icon from "../../../components/Icon.astro";
 import { Image } from "astro:assets";
 import { getCollection, type CollectionEntry } from "astro:content";
+import { site } from "../../../config/site";
 import { breadcrumbs } from "../../../lib/schema";
 
 export async function getStaticPaths() {
@@ -13,40 +12,55 @@ export async function getStaticPaths() {
 }
 const { l } = Astro.props as { l: CollectionEntry<"lavori"> };
 const d = l.data;
+const blocks = [
+  { h: "I problemi tipici del settore", items: d.problems },
+  { h: "Le scelte", items: d.choices },
+  { h: "Cosa ottiene l'attività", items: d.outcome },
+];
 ---
 <Base
-  title={`${d.name}: progetto dimostrativo | Focale`}
+  title={`${d.name}: progetto dimostrativo | ${site.brand}`}
   description={`${d.sector}. ${d.goal} Un sito dimostrativo completo, per un'attività inventata.`}
   jsonLd={[breadcrumbs([{ name: "Lavori", path: "/lavori/" }, { name: d.name, path: `/lavori/${l.id}/` }])]}
 >
   <section class="cs-head" data-hero>
     <div class="wrap">
-      <p class="cs-back"><a class="link ui" href="/lavori/">Tutti i lavori</a></p>
-      <Fuoco />
+      <p class="cs-back"><a class="textlink" href="/lavori/">Tutti i lavori</a></p>
       <h1>{d.name}</h1>
-      <p class="lead cs-sector">{d.sector}</p>
-      <p class="cs-label">Progetto dimostrativo per un'attività inventata</p>
+      <div class="cs-meta">
+        <p>{d.sector}</p>
+        <p class="muted">Progetto dimostrativo per un'attività inventata</p>
+        <a class="btn btn--primary" href={`/lavori/${l.id}/demo/`} target="_blank" rel="noopener">Apri il sito dimostrativo</a>
+      </div>
     </div>
   </section>
 
-  <section class="section cs">
-    <div class="wrap cs__grid">
-      <div class="cs__text">
-        <h2>Obiettivo</h2>
-        <p class="lead">{d.goal}</p>
-        <h2>I problemi tipici del settore</h2>
-        <ul>{d.problems.map((p) => <li><Icon name="alert" />{p}</li>)}</ul>
-        <h2>Le scelte</h2>
-        <ul>{d.choices.map((p) => <li><Icon name="check" />{p}</li>)}</ul>
-        <h2>Cosa ottiene l'attività</h2>
-        <ul>{d.outcome.map((p) => <li><Icon name="check" />{p}</li>)}</ul>
-        <a class="btn btn--primary cs__open" href={`/lavori/${l.id}/demo/`} target="_blank" rel="noopener">
-          Apri il sito dimostrativo
-        </a>
-      </div>
-      <div class="cs__shots">
-        <Image src={d.shotPhone} alt={`Il sito di ${d.name} visto dal telefono`} widths={[300, 600]} sizes="300px" class="cs__phone" />
-        <Image src={d.shotDesktop} alt={`Il sito di ${d.name} visto da computer`} widths={[600, 1000, 1400]} sizes="(min-width: 960px) 560px, 92vw" class="cs__desk" />
+  <div class="wrap">
+    <figure class="cs-stage">
+      <Image src={d.shotDesktop} alt={`Il sito di ${d.name} visto da computer`} widths={[700, 1100, 1500]} sizes="(min-width: 1000px) 72vw, 90vw" class="cs-desk" loading="eager" />
+      <Image src={d.shotPhone} alt={`Il sito di ${d.name} visto dal telefono`} widths={[240, 480]} sizes="240px" class="cs-phone" />
+    </figure>
+  </div>
+
+  <section class="section cs" aria-labelledby="obiettivo">
+    <div class="wrap sec">
+      <p class="sec__label">Obiettivo</p>
+      <div class="sec__body">
+        <h2 id="obiettivo" class="cs-goal" data-focus>{d.goal}</h2>
+        <div class="cs-cols">
+          {
+            blocks.map((b) => (
+              <div>
+                <h3>{b.h}</h3>
+                <ul>
+                  {b.items.map((p) => (
+                    <li>{p}</li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
+        </div>
       </div>
     </div>
   </section>
@@ -55,83 +69,74 @@ const d = l.data;
 </Base>
 <style>
   .cs-head {
-    padding-block: clamp(2rem, 1rem + 3vw, 4rem) 1rem;
+    padding-block: clamp(2rem, 1rem + 4vw, 5rem) clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
   }
   .cs-back {
-    margin-bottom: 2rem;
-    font-weight: 600;
+    margin-bottom: clamp(2rem, 1rem + 3vw, 4rem);
   }
-  .cs-back a {
-    color: var(--portone);
+  .cs-meta {
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 2rem;
   }
-  .cs-sector {
-    margin-top: 1rem;
-    font-family: var(--font-head);
-    font-weight: 600;
-    color: var(--portone);
+  .cs-meta .btn {
+    margin-left: auto;
   }
-  .cs-label {
-    margin-top: 0.5rem !important;
-    color: var(--tenue);
-    font-family: var(--font-head);
-    font-size: 0.9375rem;
-    font-weight: 600;
+  @media (max-width: 699px) {
+    .cs-meta .btn {
+      margin-left: 0;
+    }
   }
-  .cs__grid {
+  .cs-stage {
+    position: relative;
+    margin: 0;
+    padding: clamp(1.25rem, 0.5rem + 4vw, 5rem) clamp(1.25rem, 0.5rem + 4vw, 5rem) clamp(3rem, 2rem + 5vw, 7rem);
+    background: var(--nebbia);
+    border-radius: clamp(14px, 1vw + 8px, 26px);
+    overflow: hidden;
+  }
+  .cs-stage :global(.cs-desk) {
+    width: 82%;
+    border-radius: 10px;
+    box-shadow: 0 40px 80px -40px rgba(60, 25, 8, 0.4);
+  }
+  .cs-stage :global(.cs-phone) {
+    position: absolute;
+    right: 6%;
+    bottom: -4%;
+    width: 21%;
+    border: 7px solid #1b1f1d;
+    border-radius: 20px;
+    box-shadow: 0 40px 70px -30px rgba(60, 25, 8, 0.5);
+  }
+  .cs-goal {
+    max-width: 18ch;
+  }
+  .cs-cols {
     display: grid;
-    gap: 3.5rem;
+    gap: 3rem;
+    margin-top: var(--space-block);
   }
-  @media (min-width: 960px) {
-    .cs__grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 5rem;
-      align-items: start;
-    }
-    .cs__shots {
-      position: sticky;
-      top: 6rem;
+  @media (min-width: 1000px) {
+    .cs-cols {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2rem;
     }
   }
-  .cs__text h2 {
-    font-size: var(--step-2);
-    margin: 2.5rem 0 1rem;
+  .cs-cols h3 {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--inchiostro);
   }
-  .cs__text h2:first-child {
-    margin-top: 0;
-  }
-  .cs__text ul {
+  .cs-cols ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: grid;
-    gap: 0.75rem;
   }
-  .cs__text li {
-    display: grid;
-    grid-template-columns: 24px 1fr;
-    gap: 0.75rem;
-  }
-  .cs__text li :global(.icon) {
-    color: var(--ottone);
-    margin-top: 0.2rem;
-  }
-  .cs__open {
-    margin-top: 2.5rem;
-  }
-  .cs__shots {
-    display: grid;
-    gap: 1.5rem;
-    justify-items: start;
-  }
-  .cs__shots :global(.cs__phone) {
-    width: 240px;
-    border: 8px solid #1b1f1d;
-    border-radius: var(--radius-phone);
-    box-shadow: 0 24px 50px -24px rgba(64, 48, 20, 0.4);
-  }
-  .cs__shots :global(.cs__desk) {
-    width: 100%;
-    border: 2px solid #1b1f1d;
-    border-radius: 6px;
+  .cs-cols li {
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--filo);
+    color: var(--grafite);
   }
 </style>

@@ -1,6 +1,6 @@
-# Focale
+# Focus Design
 
-Website for **Focale**, a one-person web studio in Milan that rebuilds the websites of small
+Website for **Focus Design**, a small web studio in Milan that rebuilds the websites of small
 Italian businesses so they get more enquiries. Static Astro site, Italian copy, hosted on
 Cloudflare Pages. Nothing has been deployed yet.
 

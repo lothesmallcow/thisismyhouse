@@ -1,7 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import PageHead from "../../components/PageHead.astro";
-import Fuoco from "../../components/Fuoco.astro";
+import Closing from "../../components/Closing.astro";
 import Faq from "../../components/Faq.astro";
 import Icon from "../../components/Icon.astro";
 import WhatsAppMock from "../../components/WhatsAppMock.astro";
@@ -20,58 +20,64 @@ const d = s.data;
 const demo = await getEntry("lavori", d.demo);
 ---
 <Base
-  title={d.title}
+  title={d.title.replace("Focale", site.brand)}
   description={d.description.replace("72 ore", `${site.previewHours} ore`)}
   jsonLd={[breadcrumbs([{ name: d.short, path: `/per/${s.id}/` }]), faqPage(d.faq)]}
 >
-  <PageHead title={d.h1} lead={d.lead} class="st-head">
+  <PageHead label={d.short} title={d.h1} lead={d.lead} class="st-head">
     <div class="btn-row st-cta">
       <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${s.id}`}>Voglio l'anteprima gratuita</a>
     </div>
   </PageHead>
 
-  <section class="section section--pietra">
-    <div class="wrap">
-      <Fuoco />
-      <h2>I problemi che vedo più spesso</h2>
-      <ol class="st-problems">
-        {d.problems.map((p) => <li><p>{p}</p></li>)}
-      </ol>
+  <section class="section section--pietra" aria-labelledby="problemi">
+    <div class="wrap sec">
+      <p class="sec__label">Il problema</p>
+      <div class="sec__body">
+        <h2 id="problemi" data-focus>I problemi che vedo più spesso</h2>
+        <ul class="st-problems">
+          {d.problems.map((p) => <li><p>{p}</p></li>)}
+        </ul>
+      </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="wrap st-two">
-      <div>
-        <Fuoco />
-        <h2>Cosa costruisco per te</h2>
-        <ul class="st-build">
-          {d.build.map((b) => <li><Icon name="check" />{b}</li>)}
-        </ul>
-      </div>
-      <div>
-        <Fuoco />
-        <h2>Come ti arrivano le richieste</h2>
-        <p class="lead st-req">{d.requests}</p>
-        <WhatsAppMock heading={d.mock.heading} lines={d.mock.lines} />
+  <section class="section" aria-labelledby="costruisco">
+    <div class="wrap sec">
+      <p class="sec__label">La soluzione</p>
+      <div class="sec__body st-two">
+        <div>
+          <h2 id="costruisco" data-focus>Cosa costruiamo per te</h2>
+          <ul class="st-build">
+            {d.build.map((b) => <li>{b}</li>)}
+          </ul>
+        </div>
+        <div>
+          <h2 data-focus>Come ti arrivano le richieste</h2>
+          <p class="lead st-req">{d.requests}</p>
+          <WhatsAppMock heading={d.mock.heading} lines={d.mock.lines} />
+        </div>
       </div>
     </div>
   </section>
 
   {
     demo && (
-      <section class="section section--pietra">
-        <div class="wrap st-demo">
-          <Image src={demo.data.shotDesktop} alt={`Il sito dimostrativo di ${demo.data.name}`} widths={[480, 800]} sizes="(min-width: 900px) 560px, 92vw" class="st-demo__img" />
-          <div>
-            <p class="st-demo__label">Progetto dimostrativo per un'attività inventata</p>
-            <h2>Guarda un esempio: {demo.data.name}</h2>
-            <p class="st-demo__goal">{demo.data.goal}</p>
-            <div class="btn-row">
-              <a class="btn btn--secondary" href={`/lavori/${demo.id}/`}>Leggi il progetto</a>
-              <a class="btn btn--secondary" href={`/lavori/${demo.id}/demo/`} target="_blank" rel="noopener">
-                Apri il sito
-              </a>
+      <section class="section section--pietra" aria-labelledby="esempio">
+        <div class="wrap sec">
+          <p class="sec__label">Un esempio</p>
+          <div class="sec__body st-demo">
+            <a class="st-demo__media" href={`/lavori/${demo.id}/`}>
+              <Image src={demo.data.shotDesktop} alt={`Il sito dimostrativo di ${demo.data.name}`} widths={[600, 1000]} sizes="(min-width: 1000px) 50vw, 92vw" />
+            </a>
+            <div>
+              <h2 id="esempio" class="st-demo__t">{demo.data.name}</h2>
+              <p class="muted">Progetto dimostrativo per un'attività inventata</p>
+              <p class="st-demo__goal">{demo.data.goal}</p>
+              <div class="st-links">
+                <a class="textlink" href={`/lavori/${demo.id}/`}>Leggi il progetto</a>
+                <a class="textlink" href={`/lavori/${demo.id}/demo/`} target="_blank" rel="noopener">Apri il sito</a>
+              </div>
             </div>
           </div>
         </div>
@@ -79,114 +85,118 @@ const demo = await getEntry("lavori", d.demo);
     )
   }
 
-  <section class="section">
-    <div class="wrap">
-      <Fuoco />
-      <h2 class="st-h2">Domande</h2>
-      <Faq items={d.faq} />
-    </div>
-  </section>
-
-  <section class="section section--dark on-dark">
-    <div class="wrap">
-      <Fuoco dark />
-      <h2>Guarda il tuo nuovo sito prima di decidere.</h2>
-      <p class="lead measure st-close">Ti mando l'anteprima in {site.previewHours} ore. Se non ti convince, non mi devi niente.</p>
-      <div class="btn-row">
-        <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${s.id}`}>Voglio l'anteprima gratuita</a>
-        <a class="btn btn--secondary" href={whatsappHref(d.whatsapp)} target="_blank" rel="noopener"><Icon name="whatsapp" />Scrivimi su WhatsApp</a>
+  <section class="section" aria-labelledby="dom-settore">
+    <div class="wrap sec">
+      <p class="sec__label">Domande</p>
+      <div class="sec__body">
+        <h2 id="dom-settore" class="st-h2" data-focus>Domande</h2>
+        <Faq items={d.faq} />
       </div>
     </div>
   </section>
+
+  <Closing whatsapp={d.whatsapp} ctaHref={`/anteprima-gratuita?settore=${s.id}`} />
 </Base>
 <style>
-  :global(.st-head) h1 {
-    max-width: 20ch;
+  :global(.st-head) .ph__title {
+    max-width: 17ch;
   }
   .st-cta {
-    margin-top: 2rem;
+    margin-top: 2.25rem;
   }
   .st-problems {
     list-style: none;
-    counter-reset: p;
     padding: 0;
-    margin: 2.5rem 0 0;
+    margin: var(--space-block) 0 0;
     display: grid;
-    gap: 2rem;
+    gap: 0;
+    border-top: 1px solid var(--inchiostro);
   }
-  @media (min-width: 900px) {
+  @media (min-width: 1000px) {
     .st-problems {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 3rem;
+      column-gap: 2rem;
     }
   }
   .st-problems li {
-    padding-top: 1.25rem;
-    border-top: 2px solid var(--portone);
-    font-size: var(--step-1);
-    line-height: 1.5;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--filo);
+    font-size: var(--fs-lead);
+    line-height: 1.4;
+  }
+  @media (min-width: 1000px) {
+    .st-problems li {
+      border-bottom: 0;
+    }
   }
   .st-two {
     display: grid;
     gap: 4rem;
   }
-  @media (min-width: 900px) {
+  @media (min-width: 1000px) {
     .st-two {
       grid-template-columns: 1fr 1fr;
-      gap: 5rem;
+      gap: 3rem;
     }
+  }
+  .st-two h2 {
+    font-size: var(--fs-h2);
+    max-width: 12ch;
   }
   .st-build {
     list-style: none;
     padding: 0;
-    margin: 1.75rem 0 0;
-    display: grid;
-    gap: 0.9rem;
+    margin: 2.5rem 0 0;
+    border-top: 1px solid var(--inchiostro);
   }
   .st-build li {
-    display: grid;
-    grid-template-columns: 24px 1fr;
-    gap: 0.75rem;
-    font-size: var(--step-1);
-    line-height: 1.45;
-  }
-  .st-build :global(.icon) {
-    color: var(--portone);
-    margin-top: 0.25rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--filo);
   }
   .st-req {
-    margin: 1.5rem 0 2rem;
+    margin: 2rem 0 2.5rem;
+    max-width: 32ch;
   }
   .st-demo {
     display: grid;
     gap: 2.5rem;
-    align-items: center;
+    align-items: end;
   }
-  @media (min-width: 900px) {
+  @media (min-width: 1000px) {
     .st-demo {
-      grid-template-columns: 1.1fr 1fr;
-      gap: 4rem;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 3rem;
     }
   }
-  .st-demo :global(.st-demo__img) {
-    width: 100%;
-    border: 2px solid #1b1f1d;
-    border-radius: 6px;
+  .st-demo__media {
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
   }
-  .st-demo__label {
-    font-family: var(--font-head);
-    font-weight: 600;
-    font-size: 0.9375rem;
-    color: var(--tenue);
+  .st-demo__media :global(img) {
+    width: 100%;
+    transition: transform 0.9s var(--ease-out);
+  }
+  @media (hover: hover) {
+    .st-demo__media:hover :global(img) {
+      transform: scale(1.02);
+    }
+  }
+  .st-demo__t {
+    font-size: var(--fs-h2);
     margin-bottom: 0.75rem;
   }
   .st-demo__goal {
-    margin: 1rem 0 1.75rem;
+    margin: 1.5rem 0 !important;
+    font-size: var(--fs-lead);
+    line-height: 1.4;
+    max-width: 28ch;
+  }
+  .st-links {
+    display: flex;
+    gap: 1.5rem;
   }
   .st-h2 {
-    margin-bottom: 2rem;
-  }
-  .st-close {
-    margin: 1.25rem 0 2rem;
+    margin-bottom: var(--space-block);
   }
 </style>

@@ -27,7 +27,7 @@ export const plans: Plan[] = [
     recommended: false,
     features: [
       "Sito a pagina unica, fino a 6 sezioni",
-      "Testi scritti da me",
+      "Testi scritti da noi",
       "Pulsanti per chiamarti e scriverti su WhatsApp",
       "Modulo contatti che ti scrive su WhatsApp e via email",
       "Mappa e collegamento alla tua scheda Google",
@@ -80,7 +80,7 @@ export const cura = {
   forWhom: "Il sito sempre in ordine, senza pensarci.",
   price: site.prices.cura,
   features: [
-    "Dominio e hosting gestiti da me",
+    "Dominio e hosting gestiti da noi",
     `Fino a 2 modifiche al mese entro ${site.careResponseHours} ore lavorative`,
     "Un controllo ogni mese che tutto funzioni",
     "Copie di sicurezza",

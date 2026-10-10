@@ -1,28 +1,55 @@
 ---
-import Fuoco from "./Fuoco.astro";
 interface Props {
   title: string;
   lead?: string;
+  label?: string;
   class?: string;
 }
-const { title, lead, class: cls } = Astro.props;
+const { title, lead, label, class: cls } = Astro.props;
 ---
 <section class:list={["ph", cls]} data-hero>
   <div class="wrap">
-    <Fuoco />
-    <h1>{title}</h1>
-    {lead && <p class="lead measure ph__lead">{lead}</p>}
-    <slot />
+    {label && <p class="ph__label">{label}</p>}
+    <h1 class="ph__title">{title}</h1>
+    {
+      (lead || Astro.slots.has("default")) && (
+        <div class="ph__row">
+          <div class="ph__col">
+            {lead && <p class="lead">{lead}</p>}
+            <slot />
+          </div>
+        </div>
+      )
+    }
   </div>
 </section>
 <style>
   .ph {
-    padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem) clamp(2.5rem, 1.5rem + 3vw, 4rem);
+    padding-block: clamp(2.5rem, 1rem + 6vw, 7rem) clamp(4rem, 2.5rem + 5vw, 8rem);
   }
-  .ph h1 {
-    max-width: 18ch;
+  .ph__label {
+    font-size: var(--fs-small);
+    font-weight: 500;
+    color: var(--grafite);
+    margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.75rem);
   }
-  .ph__lead {
-    margin-top: 1.25rem;
+  .ph__title {
+    max-width: 15ch;
+  }
+  .ph__row {
+    margin-top: clamp(2rem, 1rem + 3vw, 4.5rem);
+  }
+  @media (min-width: 900px) {
+    .ph__row {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: clamp(1rem, 0.5rem + 1.5vw, 2rem);
+    }
+    .ph__col {
+      grid-column: 6 / span 7;
+    }
+  }
+  .ph__col .lead {
+    max-width: 38ch;
   }
 </style>

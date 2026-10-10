@@ -1,5 +1,4 @@
 ---
-import Fuoco from "./Fuoco.astro";
 import { site } from "../config/site";
 import { num } from "../lib/util";
 
@@ -8,13 +7,13 @@ const defaults = { valore: 3000, tasso: 3, richieste: 2 };
 const annuo = Math.round((defaults.richieste * 12 * (defaults.tasso / 10) * defaults.valore) / 100) * 100;
 const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(price / defaults.valore)} lavori`;
 ---
-<section class="section section--pietra calc" id="calcolatore">
-  <div class="wrap">
-    <Fuoco />
-    <div class="calc__grid">
-      <div>
-        <h2>Quanto vale una richiesta in più al mese?</h2>
-        <p class="lead calc__intro">Metti i tuoi numeri. Il calcolo lo fai tu.</p>
+<section class="section section--pietra calc" id="calcolatore" aria-labelledby="calc-t">
+  <div class="wrap sec">
+    <p class="sec__label">Calcolatore</p>
+    <div class="sec__body">
+      <h2 id="calc-t" data-focus>Quanto vale una richiesta in più al mese?</h2>
+      <p class="lead calc__intro">Metti i tuoi numeri. Il calcolo lo fai tu.</p>
+      <div class="calc__grid">
         <form class="calc__form" data-calc data-price={price} onsubmit="return false" aria-label="Calcolatore">
           <div class="field">
             <label for="calc-valore">Quanto vale in media un tuo lavoro?</label>
@@ -39,84 +38,83 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
             </div>
           </div>
         </form>
-      </div>
-      <div class="calc__result" aria-live="polite" aria-atomic="true">
-        <p class="calc__big">
-          In un anno sono circa <strong><span data-annuo>{num(annuo)}</span> €</strong> di lavori in più.
-        </p>
-        <p class="calc__payback">
-          Il sito Professionale costa {num(price)} €: si ripaga con <span data-payback>{payback}</span>.
-        </p>
-        <p class="small calc__note">
-          È una stima fatta con i tuoi numeri, non una promessa. Nessuno può garantirti quante richieste arriveranno. Io posso garantirti un
-          sito fatto per non perderle.
-        </p>
+        <div class="calc__result" aria-live="polite" aria-atomic="true">
+          <p class="calc__big">
+            In un anno sono circa <strong><span data-annuo>{num(annuo)}</span> €</strong> di lavori in più.
+          </p>
+          <p class="calc__payback">
+            Il sito Professionale costa {num(price)} €: si ripaga con <span data-payback>{payback}</span>.
+          </p>
+          <p class="small calc__note">
+            È una stima fatta con i tuoi numeri, non una promessa. Nessuno può garantirti quante richieste arriveranno. Noi possiamo garantirti un
+            sito fatto per non perderle.
+          </p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <style>
+  .calc h2 {
+    max-width: 16ch;
+  }
   .calc__intro {
-    margin: 1rem 0 2rem;
+    margin: 1.5rem 0 var(--space-block);
   }
   .calc__grid {
     display: grid;
-    gap: 3rem;
+    gap: 3.5rem;
   }
-  @media (min-width: 960px) {
+  @media (min-width: 1100px) {
     .calc__grid {
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 5rem;
-      align-items: end;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
     }
   }
   .calc__form {
     display: grid;
-    gap: 1.75rem;
-    max-width: 34rem;
+    gap: 2.25rem;
+    max-width: 32rem;
   }
   .calc__money {
     display: flex;
     align-items: center;
     background: #fff;
-    border: 2px solid #8e958f;
-    border-radius: var(--radius-ui);
-    max-width: 16rem;
+    border: 1px solid #a7a49d;
+    border-radius: var(--radius-field);
+    max-width: 15rem;
   }
   .calc__money:focus-within {
-    outline: 3px solid var(--portone);
-    outline-offset: 1px;
-    border-color: var(--portone);
+    border-color: var(--inchiostro);
+    box-shadow: 0 0 0 3px rgba(60, 25, 8, 0.12);
   }
   .calc__money span {
-    padding-left: 0.9rem;
-    font-family: var(--font-head);
-    font-weight: 700;
+    padding-left: 1rem;
+    font-weight: 500;
     font-size: 1.25rem;
-    color: var(--portone);
   }
   .field .calc__money input {
     border: 0;
     outline: none;
-    font-family: var(--font-head);
-    font-weight: 700;
+    box-shadow: none;
+    font-weight: 500;
     font-size: 1.375rem;
-    color: var(--portone);
     background: transparent;
   }
   .calc__range {
     display: grid;
-    grid-template-columns: 1fr 3rem;
+    grid-template-columns: 1fr 2.5rem;
     gap: 1rem;
     align-items: center;
   }
   .calc__range output {
-    font-family: var(--font-head);
-    font-weight: 800;
-    font-size: 1.75rem;
-    color: var(--portone);
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: 2rem;
     text-align: right;
+    font-variant-numeric: tabular-nums;
   }
   input[type="range"] {
     -webkit-appearance: none;
@@ -127,61 +125,63 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
     cursor: pointer;
   }
   input[type="range"]::-webkit-slider-runnable-track {
-    height: 8px;
-    background: var(--portone);
-    border-radius: 0;
+    height: 1.5px;
+    background: var(--inchiostro);
   }
   input[type="range"]::-moz-range-track {
-    height: 8px;
-    background: var(--portone);
+    height: 1.5px;
+    background: var(--inchiostro);
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 30px;
-    height: 30px;
-    margin-top: -11px;
-    background: var(--calce);
-    border: 4px solid var(--portone);
+    width: 26px;
+    height: 26px;
+    margin-top: -12.25px;
+    background: var(--inchiostro);
+    border: 6px solid var(--nebbia);
+    box-shadow: 0 0 0 1.5px var(--inchiostro);
     border-radius: 50%;
   }
   input[type="range"]::-moz-range-thumb {
-    width: 22px;
-    height: 22px;
-    background: var(--calce);
-    border: 4px solid var(--portone);
+    width: 14px;
+    height: 14px;
+    background: var(--inchiostro);
+    border: 6px solid var(--nebbia);
+    box-shadow: 0 0 0 1.5px var(--inchiostro);
     border-radius: 50%;
   }
   input[type="range"]:focus-visible {
-    outline: 3px solid var(--portone);
+    outline: 2px solid var(--inchiostro);
     outline-offset: 4px;
   }
   .calc__result {
-    border-left: var(--bar) solid var(--portone);
-    padding-left: clamp(1.25rem, 1rem + 1vw, 2rem);
+    background: var(--carta);
+    border-radius: 18px;
+    padding: clamp(1.75rem, 1.2rem + 2vw, 3rem);
   }
   .calc__big {
-    font-family: var(--font-head);
-    font-weight: 650;
-    font-size: var(--step-2);
-    line-height: 1.2;
-    color: var(--portone);
+    font-size: var(--fs-lead);
+    line-height: 1.3;
   }
   .calc__big strong {
     display: block;
-    font-weight: 850;
-    font-stretch: 116%;
-    font-size: clamp(2.75rem, 2rem + 3vw, 4.5rem);
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: clamp(2.8rem, 1.8rem + 3vw, 4.75rem);
+    white-space: nowrap;
     line-height: 1;
-    margin: 0.35rem 0;
+    letter-spacing: -0.05em;
+    margin: 0.75rem 0;
     font-variant-numeric: tabular-nums;
   }
   .calc__payback {
-    margin-top: 1.25rem !important;
-    font-size: var(--step-1);
+    margin-top: 1.75rem !important;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--filo);
   }
   .calc__note {
     margin-top: 1.25rem !important;
-    color: var(--tenue);
+    color: var(--grafite);
     max-width: 46ch;
   }
 </style>

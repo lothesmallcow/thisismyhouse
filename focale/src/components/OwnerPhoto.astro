@@ -27,7 +27,7 @@ const initial = isPlaceholder(site.ownerFirstName) ? "?" : site.ownerFirstName.c
     margin: 0;
     aspect-ratio: 4 / 5;
     width: 100%;
-    max-width: 22rem;
+    max-width: 26rem;
     position: relative;
     background: var(--pietra);
     overflow: hidden;
@@ -44,20 +44,18 @@ const initial = isPlaceholder(site.ownerFirstName) ? "?" : site.ownerFirstName.c
     display: grid;
     place-items: center;
   }
+  .op {
+    border-radius: 18px;
+  }
   .op__initial {
-    font-family: var(--font-head);
-    font-weight: 850;
-    font-stretch: 118%;
-    font-size: 7rem;
-    color: var(--portone);
+    font-weight: 200;
+    font-stretch: 100%;
+    font-size: 9rem;
+    letter-spacing: -0.05em;
+    color: var(--inchiostro);
     line-height: 1;
   }
   .op__bar {
-    position: absolute;
-    left: 0;
-    right: -1px;
-    bottom: 18%;
-    height: var(--bar);
-    background: var(--ottone);
+    display: none;
   }
 </style>

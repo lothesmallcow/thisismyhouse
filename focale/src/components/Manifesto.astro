@@ -1,0 +1,99 @@
+---
+/**
+ * The problem, told as one long sentence that lights up word by word as you scroll.
+ * Faded words keep 3:1 contrast (large text), so it reads fine at any scroll position.
+ */
+const problems = [
+  "Lo apre dal telefono. Deve allargare il testo con due dita per leggerlo. Torna indietro e chiama il secondo risultato.",
+  "Cerca un numero da chiamare. In alto non c'è. Lascia perdere.",
+  "In fondo alla pagina legge © 2014. Pensa che abbiate chiuso.",
+];
+---
+<section class="section mf" aria-labelledby="problema">
+  <div class="wrap mf__in">
+    <p class="mf__label">Il problema</p>
+    <div>
+      <h2 id="problema" class="mf__text" data-manifesto>
+        Ogni giorno qualcuno cerca quello che fai. Apre il tuo sito dal telefono e in pochi secondi decide se chiamarti o tornare indietro. Noi
+        lavoriamo su quei pochi secondi.
+      </h2>
+      <ul class="mf__list">
+        {
+          problems.map((p, i) => (
+            <li data-focus>
+              <span class="mf__n" aria-hidden="true">{i + 1}</span>
+              <p>{p}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mf__close" data-focus>Tu non te ne accorgi, perché chi se ne va non ti avvisa.</p>
+    </div>
+  </div>
+</section>
+<style>
+  .mf__in {
+    text-align: center;
+  }
+  .mf__label {
+    font-size: var(--fs-small);
+    font-weight: 600;
+    color: #b8400f;
+    margin-bottom: 1.5rem;
+  }
+  .mf__text {
+    font-size: clamp(2rem, 1rem + 3.4vw, 4.4rem);
+    line-height: 1.08;
+    max-width: 22ch;
+    margin-inline: auto;
+  }
+  :global(.js) .mf__text[data-manifesto-ready] :global(.mf-w) {
+    color: #a3897b;
+  }
+  .mf__list {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-block) 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (min-width: 1000px) {
+    .mf__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .mf__list li {
+    text-align: left;
+    background: var(--nebbia);
+    border-radius: 28px;
+    padding: clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
+    display: grid;
+    gap: 2.5rem;
+    align-content: space-between;
+  }
+  .mf__n {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--inchiostro);
+    color: var(--carta);
+    display: grid;
+    place-items: center;
+    font-weight: 600;
+    font-size: var(--fs-small);
+  }
+  .mf__list p {
+    font-size: var(--fs-lead);
+    line-height: 1.35;
+    letter-spacing: -0.012em;
+  }
+  .mf__close {
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: var(--fs-h3);
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    max-width: 26ch;
+    margin-inline: auto;
+  }
+</style>

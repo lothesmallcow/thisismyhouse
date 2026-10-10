@@ -1,6 +1,5 @@
 ---
 import Base from "./Base.astro";
-import Fuoco from "../components/Fuoco.astro";
 import { fillHtml } from "../lib/util";
 import { breadcrumbs } from "../lib/schema";
 import type { LegalDoc } from "../lib/legal";
@@ -16,7 +15,6 @@ const { doc, pageTitle, description, path } = Astro.props;
   <article class="lg">
     <div class="wrap">
       <header data-hero>
-        <Fuoco />
         <h1>{doc.title}</h1>
         <p class="lg-date">Ultimo aggiornamento: <Fragment set:html={fillHtml("{legalLastUpdated}")} /></p>
       </header>
@@ -41,18 +39,25 @@ const { doc, pageTitle, description, path } = Astro.props;
     padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem) var(--space-section);
   }
   .lg-date {
-    margin-top: 1rem;
-    color: var(--tenue);
-    font-family: var(--font-head);
-    font-size: 0.9375rem;
+    margin-top: 1.5rem;
+    color: var(--grafite);
+    font-size: var(--fs-small);
   }
   .lg-body {
     margin-top: 3rem;
     max-width: var(--measure);
   }
   .lg-body h2 {
-    font-size: var(--step-2);
-    margin: 2.5rem 0 0.75rem;
+    font-size: var(--fs-h3);
+    font-weight: 500;
+    font-stretch: 112%;
+    letter-spacing: -0.015em;
+    margin: 3rem 0 0.9rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--filo);
+  }
+  .lg-body p {
+    color: #33312d;
   }
   .lg-body p + p {
     margin-top: 1em;

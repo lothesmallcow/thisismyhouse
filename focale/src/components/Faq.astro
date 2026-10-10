@@ -1,19 +1,17 @@
 ---
 import { fill } from "../lib/util";
-import Icon from "./Icon.astro";
 interface Props {
   items: { q: string; a: string }[];
-  dark?: boolean;
 }
-const { items, dark = false } = Astro.props;
+const { items } = Astro.props;
 ---
-<div class:list={["faq", { "faq--dark": dark }]}>
+<div class="faq">
   {
     items.map((it) => (
       <details class="faq__item">
         <summary>
           <span>{fill(it.q)}</span>
-          <Icon name="plus" class="faq__icon" />
+          <span class="faq__sign" aria-hidden="true" />
         </summary>
         <div class="faq__body">
           <div>
@@ -26,52 +24,66 @@ const { items, dark = false } = Astro.props;
 </div>
 <style>
   .faq {
-    border-top: 2px solid var(--portone);
-    max-width: 52rem;
+    border-top: 1px solid var(--inchiostro);
+    max-width: 58rem;
   }
   .faq__item {
-    border-bottom: 1px solid var(--pietra-scura);
+    border-bottom: 1px solid var(--filo);
   }
   summary {
     list-style: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
-    padding: 1.15rem 0;
+    gap: 1.5rem;
+    padding: 1.6rem 0;
     min-height: 44px;
     cursor: pointer;
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-stretch: 104%;
-    font-size: var(--step-1);
+    font-size: var(--fs-h3);
+    font-weight: 400;
+    font-stretch: 112%;
+    letter-spacing: -0.02em;
     line-height: 1.25;
-    color: var(--portone);
   }
   summary::-webkit-details-marker {
     display: none;
   }
-  summary :global(.faq__icon) {
+  .faq__sign {
+    position: relative;
     flex: none;
-    width: 1.5rem;
-    height: 1.5rem;
-    transition: transform 0.25s ease-out;
+    width: 18px;
+    height: 18px;
   }
-  details[open] :global(.faq__icon) {
-    transform: rotate(45deg);
+  .faq__sign::before,
+  .faq__sign::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1.5px;
+    margin-top: -0.75px;
+    background: currentColor;
+    transition: transform 0.35s var(--ease-out);
+  }
+  .faq__sign::after {
+    transform: rotate(90deg);
+  }
+  details[open] .faq__sign::after {
+    transform: rotate(0deg);
   }
   .faq__body > div {
-    padding: 0 0 1.4rem;
-    max-width: 62ch;
+    padding: 0 0 1.75rem;
+    max-width: 60ch;
+    color: var(--grafite);
   }
-  /* A5: smooth open where the browser can animate details content */
   @supports selector(::details-content) {
     .faq__item::details-content {
       display: grid;
       grid-template-rows: 0fr;
       transition:
-        grid-template-rows 0.25s ease-out,
-        content-visibility 0.25s allow-discrete;
+        grid-template-rows 0.4s var(--ease-out),
+        content-visibility 0.4s allow-discrete;
     }
     .faq__item[open]::details-content {
       grid-template-rows: 1fr;
@@ -80,14 +92,5 @@ const { items, dark = false } = Astro.props;
       overflow: hidden;
       min-height: 0;
     }
-  }
-  .faq--dark {
-    border-top-color: var(--calce);
-  }
-  .faq--dark .faq__item {
-    border-bottom-color: rgba(243, 244, 240, 0.25);
-  }
-  .faq--dark summary {
-    color: var(--calce);
   }
 </style>

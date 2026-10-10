@@ -8,10 +8,10 @@ posso fare io. In ordine di priorità.
 - [ ] **Commercialista.** Un sito con prezzi pubblici fa pensare ad attività abituale: serve la
       Partita IVA anche sotto i 5.000 €. Una riunione, poi compili `vatNumber` e `vatNote`.
       (Confidenza del piano originale: circa 70%. Non è un parere legale.)
-- [ ] **Nome.** Verifica dominio, marchio e Instagram per "Focale" (dettagli in `docs/NOME.md`).
+- [ ] **Nome.** Verifica dominio, marchio e Instagram per "Focus Design" (dettagli in `docs/NOME.md`).
       Se è preso, il nome si cambia in `src/config/site.ts` (`brand`) e il logo con
-      `npm run logo -- nuovonome`. Restano da aggiornare a mano i testi che citano "Focale"
-      (cerca "Focale" in `src/`).
+      `npm run logo -- nuovonome`. Restano da aggiornare a mano i testi che citano "Focus Design"
+      (cerca "Focus Design" in `src/`).
 - [ ] **Condizioni e privacy riviste da un professionista.** Le bozze sono complete
       (`src/lib/legal.ts`), ma definiscono la tua garanzia: non pubblicarle senza una lettura
       di un avvocato o del commercialista.
@@ -26,7 +26,7 @@ hanno un bordo giallo tratteggiato, così li vedi subito.
 
 | Campo | Cosa scrivere |
 | --- | --- |
-| `url` | Il dominio definitivo, es. `https://www.focalestudio.it` (senza barra finale) |
+| `url` | Il dominio definitivo, es. `https://www.focusdesign.it` (senza barra finale) |
 | `ownerFirstName` | Lorenzo |
 | `ownerFullName` | Nome e cognome |
 | `ownerAge` | La tua età (dopo il 22 novembre: 18) |

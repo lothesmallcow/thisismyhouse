@@ -5,13 +5,13 @@ import { site } from "../config/site";
 import { whatsappHref, telHref, mailHref } from "../lib/util";
 const year = new Date().getFullYear();
 ---
-<footer class="ftr on-dark">
+<footer class="ftr section--sole">
   <div class="wrap">
     <div class="ftr__top">
-      <div class="ftr__brand">
-        <a href="/" aria-label="Focale, torna alla home"><Logo variant="dark" /></a>
-        <p>Siti web per piccole imprese che vogliono più richieste.</p>
-        <p class="muted">Lavoro da Milano, per tutta la Lombardia e online.</p>
+      <div class="ftr__intro">
+        <p class="ftr__claim">Siti web per piccole imprese che vogliono più richieste.</p>
+        <p class="ftr__where">Lavoriamo da Milano, per tutta la Lombardia e online.</p>
+        <a href="/anteprima-gratuita" class="btn btn--primary">Voglio l'anteprima gratuita</a>
       </div>
       <nav class="ftr__cols" aria-label="Piè di pagina">
         <div>
@@ -20,7 +20,7 @@ const year = new Date().getFullYear();
             <li><a href="/come-funziona">Come funziona</a></li>
             <li><a href="/prezzi">Prezzi</a></li>
             <li><a href="/lavori">Lavori</a></li>
-            <li><a href="/chi-sono">Chi sono</a></li>
+            <li><a href="/chi-sono">Lo studio</a></li>
             <li><a href="/anteprima-gratuita">Anteprima gratuita</a></li>
           </ul>
         </div>
@@ -35,10 +35,9 @@ const year = new Date().getFullYear();
         <div>
           <h2>Contatti</h2>
           <ul>
-            <li><a href={whatsappHref("Ciao, ti scrivo dal sito di Focale.")} target="_blank" rel="noopener">WhatsApp</a></li>
+            <li><a href={whatsappHref(`Ciao, vi scrivo dal sito di ${site.brand}.`)} target="_blank" rel="noopener">WhatsApp</a></li>
             <li><a href={telHref()}><P value={site.phoneDisplay} /></a></li>
             <li><a href={mailHref()}><P value={site.email} /></a></li>
-            <li><a href="/contatti">Tutti i contatti</a></li>
           </ul>
         </div>
         <div>
@@ -51,88 +50,97 @@ const year = new Date().getFullYear();
         </div>
       </nav>
     </div>
+    <a href="/" class="ftr__mark" aria-label={`${site.brand}, torna alla home`}><Logo /></a>
     <div class="ftr__legal">
       <p>
         © {year} <P value={site.legalName} />. P.IVA <P value={site.vatNumber} />. <P value={site.registeredAddress} />.
       </p>
-      <p class="ftr__sign">Sito costruito da Focale, ovviamente.</p>
+      <p>Sito costruito da {site.brand}, ovviamente.</p>
     </div>
   </div>
 </footer>
 <style>
   .ftr {
-    background: var(--portone);
-    color: var(--calce);
-    padding: clamp(3.5rem, 2.5rem + 4vw, 6rem) 0 2rem;
-    border-top: var(--bar) solid var(--ottone);
+    background: var(--mandarino);
+    color: var(--inchiostro);
+    padding: clamp(4.5rem, 3rem + 6vw, 9rem) 0 2rem;
   }
-  .ftr a {
-    color: var(--calce);
+  .ftr a:not(.btn) {
+    color: var(--inchiostro);
   }
   .ftr__top {
     display: grid;
-    gap: 3rem;
+    gap: 4rem;
   }
-  @media (min-width: 960px) {
+  @media (min-width: 1000px) {
     .ftr__top {
-      grid-template-columns: 1.1fr 2fr;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 3rem;
     }
   }
-  .ftr__brand :global(.logo) {
-    height: 2rem;
-    margin-bottom: 1.25rem;
+  .ftr__claim {
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: var(--fs-h3);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    max-width: 18ch;
   }
-  .ftr__brand p {
-    max-width: 26rem;
-  }
-  .ftr__brand .muted {
-    margin-top: 0.5rem;
-    color: #c8d0c9;
+  .ftr__where {
+    margin: 1rem 0 2rem !important;
+    color: #3a1a0b;
   }
   .ftr__cols {
     display: grid;
-    gap: 2rem 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    gap: 2.5rem 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   }
   .ftr h2 {
-    font-size: 1rem;
-    font-stretch: 104%;
-    font-weight: 700;
-    color: #e2c27e;
-    margin-bottom: 0.75rem;
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    font-stretch: 100%;
     letter-spacing: 0;
+    color: #3a1a0b;
+    margin-bottom: 1rem;
   }
   .ftr ul {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 0.15rem;
+    gap: 0.1rem;
   }
   .ftr ul a {
     display: inline-block;
-    padding: 0.45rem 0;
-    font-family: var(--font-head);
-    font-size: 1rem;
+    padding: 0.4rem 0;
+    font-size: 0.9375rem;
     text-decoration: none;
-    line-height: 1.35;
     overflow-wrap: anywhere;
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+    transition: background-size 0.35s var(--ease-out);
   }
   .ftr ul a:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    background-size: 100% 1px;
+  }
+  .ftr__mark {
+    display: block;
+    margin: clamp(4rem, 2rem + 8vw, 9rem) 0 2rem;
+  }
+  .ftr__mark :global(.logo) {
+    width: 100%;
+    height: auto;
   }
   .ftr__legal {
-    margin-top: 3.5rem;
     padding-top: 1.5rem;
-    border-top: 1px solid rgba(243, 244, 240, 0.2);
-    font-size: 0.9375rem;
-    color: #c8d0c9;
-    display: grid;
-    gap: 0.5rem;
+    border-top: 1px solid rgba(36, 19, 12, 0.22);
+    font-size: var(--fs-micro);
+    color: #3a1a0b;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
   }
-  .ftr__sign {
-    font-size: 0.875rem;
+  .ftr__legal p + p {
     margin: 0;
   }
 </style>

@@ -1,22 +1,23 @@
 ---
 import Logo from "./Logo.astro";
-import Icon from "./Icon.astro";
+import { site } from "../config/site";
 interface Props {
   minimal?: boolean;
 }
 const { minimal = false } = Astro.props;
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
 const nav = [
-  { href: "/come-funziona", label: "Come funziona" },
-  { href: "/prezzi", label: "Prezzi" },
+  { href: "/come-funziona", label: "Metodo" },
   { href: "/lavori", label: "Lavori" },
-  { href: "/chi-sono", label: "Chi sono" },
+  { href: "/prezzi", label: "Prezzi" },
+  { href: "/chi-sono", label: "Studio" },
+  { href: "/contatti", label: "Contatti" },
 ];
 const isCurrent = (href: string) => path === href || path.startsWith(href + "/");
 ---
 <header class="hdr" data-header>
   <div class="wrap hdr__inner">
-    <a href="/" class="hdr__logo" aria-label="Focale, torna alla home">
+    <a href="/" class="hdr__logo" aria-label={`${site.brand}, home`}>
       <Logo />
     </a>
     {
@@ -32,14 +33,16 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
                 </li>
               ))}
             </ul>
+          </nav>
+          <div class="hdr__end">
             <a href="/anteprima-gratuita" class="btn btn--primary hdr__cta">
               Anteprima gratuita
             </a>
-          </nav>
-          <button class="hdr__menu" type="button" aria-expanded="false" aria-controls="menu-mobile" data-menu-open>
-            <Icon name="menu" />
-            <span>Menu</span>
-          </button>
+            <button class="hdr__menu" type="button" aria-expanded="false" aria-controls="menu-mobile" data-menu-open>
+              <span class="hdr__burger" aria-hidden="true"><i></i><i></i></span>
+              <span>Menu</span>
+            </button>
+          </div>
         </>
       )
     }
@@ -48,13 +51,12 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
 <div class="hdr-spacer" aria-hidden="true"></div>
 {
   !minimal && (
-    <div class="mm on-dark" id="menu-mobile" role="dialog" aria-modal="true" aria-label="Menu" hidden data-menu>
+    <div class="mm section--sole" id="menu-mobile" role="dialog" aria-modal="true" aria-label="Menu" hidden data-menu>
       <div class="wrap mm__top">
-        <a href="/" class="hdr__logo" aria-label="Focale, torna alla home">
-          <Logo variant="dark" />
+        <a href="/" class="hdr__logo" aria-label={`${site.brand}, home`}>
+          <Logo />
         </a>
         <button class="hdr__menu hdr__menu--dark" type="button" data-menu-close>
-          <Icon name="close" />
           <span>Chiudi</span>
         </button>
       </div>
@@ -68,7 +70,6 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
               </a>
             </li>
           ))}
-          <li><a href="/contatti">Contatti</a></li>
         </ul>
         <a href="/anteprima-gratuita" class="btn btn--primary mm__cta">
           Voglio l'anteprima gratuita
@@ -83,92 +84,119 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
     position: fixed;
     inset: 0 0 auto 0;
     z-index: 50;
-    background: rgba(243, 244, 240, 0.97);
-    border-bottom: 1px solid transparent;
+    background: rgba(255, 248, 242, 0);
     transition:
-      border-color 0.2s ease,
-      background-color 0.2s ease;
+      transform 0.45s var(--ease-out),
+      background-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  :global(.is-compact) .hdr {
+    background: rgba(255, 248, 242, 0.94);
+    backdrop-filter: saturate(140%) blur(10px);
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+    box-shadow: 0 1px 0 var(--filo);
+  }
+  :global(.hdr-hidden) .hdr {
+    transform: translateY(-100%);
   }
   .hdr__inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 1.5rem;
     height: var(--header-h);
-    transition: height 0.2s ease;
-  }
-  :global(.is-compact) .hdr {
-    border-bottom-color: var(--pietra-scura);
-  }
-  :global(.is-compact) .hdr__inner {
-    height: 3.75rem;
   }
   .hdr-spacer {
     height: var(--header-h);
   }
   .hdr__logo {
     display: inline-flex;
-    padding: 0.5rem 0;
-    min-height: 44px;
     align-items: center;
-  }
-  .hdr__logo :global(.logo) {
-    height: 1.6rem;
+    min-height: 44px;
   }
   .hdr__nav {
     display: none;
-    align-items: center;
-    gap: 2rem;
   }
   .hdr__nav ul {
     display: flex;
-    gap: 1.75rem;
+    gap: 2.25rem;
     list-style: none;
     margin: 0;
     padding: 0;
   }
-  .hdr__nav a:not(.btn) {
-    font-family: var(--font-head);
-    font-weight: 600;
-    font-stretch: 104%;
-    color: var(--portone);
+  .hdr__nav a {
+    position: relative;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--inchiostro);
     text-decoration: none;
-    font-size: 1.0625rem;
-    padding: 0.6rem 0;
-    background: linear-gradient(currentColor, currentColor) 0 calc(100% - 0.35rem) / 0 2px no-repeat;
-    transition: background-size 0.15s ease;
+    padding: 0.75rem 0;
   }
-  .hdr__nav a:not(.btn):hover,
-  .hdr__nav a[aria-current="page"] {
-    background-size: 100% 2px;
+  .hdr__nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.45rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s var(--ease-out);
+  }
+  .hdr__nav a:hover::after,
+  .hdr__nav a[aria-current="page"]::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .hdr__end {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
   .hdr__cta {
-    --h: 46px;
-    min-height: 46px;
+    --h: 44px;
+    padding: 0 1.25rem;
+    font-size: 0.9375rem;
+    display: none;
   }
   .hdr__menu {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.6rem;
     min-height: 44px;
-    min-width: 44px;
-    padding: 0 0.85rem;
-    border: 2px solid var(--portone);
+    padding: 0 1rem;
+    border: 1px solid var(--inchiostro);
     border-radius: var(--radius-ui);
     background: transparent;
-    color: var(--portone);
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 1rem;
+    color: var(--inchiostro);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 500;
     cursor: pointer;
   }
-  .hdr__menu--dark {
-    color: var(--calce);
-    border-color: var(--calce);
+  .hdr__burger {
+    display: grid;
+    gap: 5px;
   }
-  @media (min-width: 960px) {
+  .hdr__burger i {
+    display: block;
+    width: 16px;
+    height: 1.5px;
+    background: currentColor;
+  }
+  .hdr__menu--dark {
+    color: var(--inchiostro);
+    border-color: var(--inchiostro);
+  }
+  @media (min-width: 720px) {
+    .hdr__cta {
+      display: inline-flex;
+    }
+  }
+  @media (min-width: 1040px) {
     .hdr__nav {
-      display: flex;
+      display: block;
     }
     .hdr__menu {
       display: none;
@@ -178,8 +206,8 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
     position: fixed;
     inset: 0;
     z-index: 60;
-    background: var(--portone);
-    color: var(--calce);
+    background: var(--mandarino);
+    color: var(--inchiostro);
     overflow-y: auto;
     padding-bottom: calc(2rem + env(safe-area-inset-bottom));
   }
@@ -194,28 +222,22 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
   }
   .mm__nav ul {
     list-style: none;
-    margin: 2rem 0 2.5rem;
+    margin: 2.5rem 0 3rem;
     padding: 0;
-    border-top: var(--bar) solid var(--ottone);
-  }
-  .mm__nav li {
-    border-bottom: 1px solid rgba(243, 244, 240, 0.18);
   }
   .mm__nav a:not(.btn) {
     display: block;
-    padding: 1rem 0;
-    font-family: var(--font-head);
-    font-weight: 800;
-    font-stretch: 112%;
-    font-size: clamp(1.75rem, 1.2rem + 3vw, 2.5rem);
-    line-height: 1.1;
-    color: var(--calce);
+    padding: 0.55rem 0;
+    font-weight: 300;
+    font-stretch: 125%;
+    letter-spacing: -0.035em;
+    font-size: clamp(2.4rem, 1.5rem + 5vw, 3.5rem);
+    line-height: 1.05;
+    color: var(--inchiostro);
     text-decoration: none;
   }
   .mm__nav a[aria-current="page"] {
-    text-decoration: underline;
-    text-decoration-thickness: 3px;
-    text-underline-offset: 6px;
+    color: #3a1a0b;
   }
   .mm__cta {
     width: 100%;
@@ -223,16 +245,27 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
 </style>
 
 <script>
-  const header = document.querySelector<HTMLElement>("[data-header]");
   const root = document.documentElement;
-  const onScroll = () => root.classList.toggle("is-compact", window.scrollY > 80);
+  let lastY = window.scrollY;
+  const onScroll = () => {
+    const y = window.scrollY;
+    root.classList.toggle("is-compact", y > 40);
+    // Hide while scrolling down past the first screen, show again on the way up.
+    const menuOpen = document.body.classList.contains("menu-open");
+    if (!menuOpen) root.classList.toggle("hdr-hidden", y > 500 && y > lastY + 2);
+    if (y < lastY - 2) root.classList.remove("hdr-hidden");
+    lastY = y;
+  };
   onScroll();
   window.addEventListener("scroll", onScroll, { passive: true });
+  document.addEventListener("focusin", (e) => {
+    if ((e.target as HTMLElement).closest?.("[data-header]")) root.classList.remove("hdr-hidden");
+  });
 
   const menu = document.querySelector<HTMLElement>("[data-menu]");
   const openBtn = document.querySelector<HTMLButtonElement>("[data-menu-open]");
   const closeBtn = document.querySelector<HTMLButtonElement>("[data-menu-close]");
-  if (menu && openBtn && closeBtn && header) {
+  if (menu && openBtn && closeBtn) {
     const focusables = () =>
       Array.from(menu.querySelectorAll<HTMLElement>("a[href], button:not([disabled])")).filter((el) => el.offsetParent !== null);
     const open = () => {
@@ -270,7 +303,7 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
         first.focus();
       }
     });
-    window.matchMedia("(min-width: 960px)").addEventListener("change", (m) => {
+    window.matchMedia("(min-width: 1040px)").addEventListener("change", (m) => {
       if (m.matches && !menu.hidden) close(false);
     });
   }

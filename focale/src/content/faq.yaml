@@ -8,22 +8,22 @@
   order: 2
   home: true
   q: Il sito resta mio?
-  a: Sì. Dominio, codice e accessi sono intestati a te. Se un giorno vuoi cambiare fornitore, ti consegno tutto.
+  a: Sì. Dominio, codice e accessi sono intestati a te. Se un giorno vuoi cambiare fornitore, ti consegniamo tutto.
 - id: se-sparisci
   order: 3
   home: true
-  q: E se tra un anno sparisci?
-  a: "Il sito continua a funzionare anche senza di me: è su un servizio affidabile e il codice è tuo. Qualsiasi sviluppatore può prenderlo in mano."
+  q: E se tra un anno sparite?
+  a: "Il sito continua a funzionare anche senza di noi: è su un servizio affidabile e il codice è tuo. Qualsiasi sviluppatore può prenderlo in mano."
 - id: testi
   order: 4
   home: true
   q: Devo scrivere io i testi?
-  a: No. Li scrivo io dopo la nostra chiacchierata, tu li correggi. Mi servono solo le foto dei tuoi lavori, anche fatte con il telefono.
+  a: No. Li scriviamo noi dopo la nostra chiacchierata, tu li correggi. Ci servono solo le foto dei tuoi lavori, anche fatte con il telefono.
 - id: tempi
   order: 5
   home: true
   q: Quanto ci vuole?
-  a: L'anteprima arriva entro {previewHours} ore. Il sito completo in {deliveryDays.professionale} giorni lavorativi da quando ho foto e informazioni ({deliveryDays.essenziale} per il pacchetto Essenziale).
+  a: L'anteprima arriva entro {previewHours} ore. Il sito completo in {deliveryDays.professionale} giorni lavorativi da quando abbiamo foto e informazioni ({deliveryDays.essenziale} per il pacchetto Essenziale).
 - id: pagamento
   order: 6
   home: true
@@ -32,35 +32,35 @@
 - id: modificarlo
   order: 7
   q: Posso modificarlo da solo?
-  a: Con il piano Cura le modifiche le faccio io entro {careResponseHours} ore lavorative. Se vuoi cambiare testi e foto in autonomia, il pacchetto Su misura include un pannello semplice per farlo.
+  a: Con il piano Cura le modifiche le facciamo noi entro {careResponseHours} ore lavorative. Se vuoi cambiare testi e foto in autonomia, il pacchetto Su misura include un pannello semplice per farlo.
 - id: fuori-milano
   order: 8
-  q: Lavori anche fuori Milano?
+  q: Lavorate anche fuori Milano?
   a: "Sì: in tutta la Lombardia anche di persona, ovunque online."
 - id: altro
   order: 9
-  q: Fai anche pubblicità, social o e-commerce?
-  a: "No. Faccio una cosa sola e la faccio bene: siti che portano richieste. Se ti serve altro, ti dico onestamente a chi rivolgerti."
+  q: Fate anche pubblicità, social o e-commerce?
+  a: "No. Facciamo una cosa sola e la facciamo bene: siti che portano richieste. Se ti serve altro, ti diciamo onestamente a chi rivolgerti."
 - id: perche-costi-meno
   order: 10
-  q: Perché costi meno di un'agenzia?
-  a: Perché lavoro da solo, senza uffici né commerciali, e uso l'intelligenza artificiale per le parti ripetitive. Il tempo che risparmio lo metto nei dettagli.
+  q: Perché costate meno di un'agenzia?
+  a: Perché siamo uno studio piccolo, senza uffici di rappresentanza né commerciali, e usiamo l'intelligenza artificiale per le parti ripetitive. Il tempo che risparmiamo lo mettiamo nei dettagli.
 - id: non-approvo
   order: 11
   q: Cosa succede se non approvo il sito finito?
-  a: "Lo sistemo: {revisionRounds} giri di modifiche sono inclusi. Se dopo i due giri non sei soddisfatto, trattengo solo l'acconto e il saldo non lo paghi."
+  a: "Lo sistemiamo: {revisionRounds} giri di modifiche sono inclusi. Se dopo i due giri non sei soddisfatto, tratteniamo solo l'acconto e il saldo non lo paghi."
 - id: foto
   order: 12
   q: Mi servono foto nuove?
-  a: "Non sempre. Le foto dei lavori fatte col telefono vanno benissimo se sono nitide e con buona luce: ti mando una guida di una pagina su come farle. Per le immagini generiche uso foto libere da diritti."
+  a: "Non sempre. Le foto dei lavori fatte col telefono vanno benissimo se sono nitide e con buona luce: ti mandiamo una guida di una pagina su come farle. Per le immagini generiche usiamo foto libere da diritti."
 - id: sito-esistente
   order: 13
   q: "Ho già un sito: devo buttarlo?"
-  a: No. Tengo quello che funziona, come dominio, email e testi buoni, e rifaccio il resto. Le tue email restano dove sono.
+  a: No. Teniamo quello che funziona, come dominio, email e testi buoni, e rifacciamo il resto. Le tue email restano dove sono.
 - id: primo-google
   order: 14
   q: Comparirò primo su Google?
-  a: "Nessuno onesto può promettertelo. Ti garantisco pagine scritte bene per le ricerche della tua zona, un sito veloce e la scheda Google collegata: sono le basi che contano."
+  a: "Nessuno onesto può promettertelo. Ti garantiamo pagine scritte bene per le ricerche della tua zona, un sito veloce e la scheda Google collegata: sono le basi che contano."
 - id: upgrade
   order: 15
   q: Posso passare da Essenziale a Professionale più avanti?
@@ -68,4 +68,4 @@
 - id: cura-obbligatorio
   order: 16
   q: Il piano Cura è obbligatorio?
-  a: No. Se non lo prendi, il sito è tuo e lo gestisci come vuoi. Te lo consiglio se non vuoi pensare a rinnovi, modifiche e controlli.
+  a: No. Se non lo prendi, il sito è tuo e lo gestisci come vuoi. Te lo consigliamo se non vuoi pensare a rinnovi, modifiche e controlli.

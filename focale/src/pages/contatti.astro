@@ -1,7 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHead from "../components/PageHead.astro";
-import Fuoco from "../components/Fuoco.astro";
 import Icon from "../components/Icon.astro";
 import P from "../components/P.astro";
 import { site } from "../config/site";
@@ -9,13 +8,14 @@ import { whatsappHref, telHref, mailHref, absUrl } from "../lib/util";
 import { breadcrumbs } from "../lib/schema";
 ---
 <Base
-  title="Contatti | Focale"
-  description="Scrivimi su WhatsApp, chiamami o mandami un'email. Rispondo io, entro la giornata lavorativa."
+  title={`Contatti | ${site.brand}`}
+  description="Scrivici su WhatsApp, chiamaci o mandaci un'email. Ti rispondiamo entro la giornata lavorativa."
   jsonLd={[breadcrumbs([{ name: "Contatti", path: "/contatti/" }])]}
 >
   <PageHead
-    title="Scrivimi. Rispondo io."
-    lead="Rispondo entro la giornata lavorativa, dal lunedì al venerdì. Lavoro da Milano, in tutta la Lombardia di persona e ovunque online."
+    label="Contatti"
+    title="Scrivici. Ti rispondiamo in giornata."
+    lead="Rispondiamo entro la giornata lavorativa, dal lunedì al venerdì. Lavoriamo da Milano, in tutta la Lombardia di persona e ovunque online."
   />
 
   <section class="ct">
@@ -25,7 +25,7 @@ import { breadcrumbs } from "../lib/schema";
           <Icon name="whatsapp" size={32} />
           <div>
             <h2>WhatsApp</h2>
-            <a class="btn btn--primary" href={whatsappHref("Ciao, ti scrivo dal sito di Focale.")} target="_blank" rel="noopener">Scrivimi su WhatsApp</a>
+            <a class="btn btn--primary" href={whatsappHref("Ciao, vi scrivo dal sito di Focus Design.")} target="_blank" rel="noopener">Scrivici su WhatsApp</a>
           </div>
         </li>
         <li>
@@ -49,7 +49,6 @@ import { breadcrumbs } from "../lib/schema";
   <section class="section section--pietra">
     <div class="wrap ct-form-grid">
       <div>
-        <Fuoco />
         <h2>Preferisci un messaggio?</h2>
         <p class="ct-note">
           Se vuoi l'anteprima gratuita, fai prima da qui: <a class="link" href="/anteprima-gratuita">Voglio l'anteprima gratuita</a>
@@ -67,7 +66,7 @@ import { breadcrumbs } from "../lib/schema";
       >
         <input type="hidden" name="access_key" value={site.web3formsKey} />
         <input type="hidden" name="subject" value="Nuovo messaggio dal sito" />
-        <input type="hidden" name="from_name" value="Sito Focale" />
+        <input type="hidden" name="from_name" value="Sito Focus Design" />
         <input type="hidden" name="redirect" value={absUrl("/grazie/")} />
         <input type="checkbox" name="botcheck" class="ct-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
         <div class="field">
@@ -96,7 +95,7 @@ import { breadcrumbs } from "../lib/schema";
           <button type="submit" class="btn btn--primary" data-submit>Invia il messaggio</button>
         </div>
         <div class="ct-fail" data-fail role="alert" hidden>
-          <p>Non sono riuscito a inviare la richiesta. Riprova, oppure mandamela su WhatsApp: il messaggio è già pronto.</p>
+          <p>Non siamo riusciti a inviare la richiesta. Riprova, oppure mandamela su WhatsApp: il messaggio è già pronto.</p>
           <a class="btn btn--primary" href="#" target="_blank" rel="noopener" data-fail-wa><Icon name="whatsapp" />Mandala su WhatsApp</a>
         </div>
       </form>
@@ -112,56 +111,69 @@ import { breadcrumbs } from "../lib/schema";
     padding: 0;
     margin: 0;
     display: grid;
-    border-top: 2px solid var(--portone);
+    border-top: 1px solid var(--inchiostro);
   }
-  @media (min-width: 900px) {
+  @media (min-width: 1000px) {
     .ct-rows {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 2rem;
     }
   }
   .ct-rows li {
     display: grid;
-    grid-template-columns: 32px 1fr;
+    grid-template-columns: 28px 1fr;
     gap: 1rem;
-    padding: 1.75rem 0;
-    border-bottom: 1px solid var(--pietra-scura);
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--filo);
   }
-  @media (min-width: 900px) {
+  @media (min-width: 1000px) {
     .ct-rows li {
       border-bottom: 0;
-      padding-right: 1.5rem;
     }
   }
-  .ct-rows :global(.icon) {
-    color: var(--portone);
-  }
   .ct-rows h2 {
-    font-size: var(--step-1);
-    margin-bottom: 0.75rem;
+    font-size: var(--fs-small);
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: 0;
+    color: var(--grafite);
+    margin-bottom: 0.9rem;
   }
   .ct-big {
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: var(--step-1);
-    color: var(--portone);
+    font-weight: 600;
+    font-stretch: 120%;
+    font-size: var(--fs-h3);
+    letter-spacing: -0.03em;
+    text-decoration: none;
     overflow-wrap: anywhere;
   }
   .ct-form-grid {
     display: grid;
     gap: 2.5rem;
   }
-  @media (min-width: 960px) {
+  @media (min-width: 1000px) {
     .ct-form-grid {
-      grid-template-columns: 0.8fr 1.2fr;
-      gap: 5rem;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: clamp(1rem, 0.5rem + 1.5vw, 2rem);
+    }
+    .ct-form-grid > div:first-child {
+      grid-column: 1 / span 5;
+    }
+    .ct-form {
+      grid-column: 7 / -1;
     }
   }
+  .ct-form-grid h2 {
+    max-width: 10ch;
+  }
   .ct-note {
-    margin-top: 1.25rem;
+    margin-top: 1.5rem;
+    color: var(--grafite);
+    max-width: 34ch;
   }
   .ct-form {
     display: grid;
-    gap: 1.4rem;
+    gap: 1.5rem;
     max-width: 40rem;
   }
   .ct-hp {
@@ -171,14 +183,13 @@ import { breadcrumbs } from "../lib/schema";
   }
   .ct-fail {
     padding: 1.25rem;
-    border: 2px solid var(--marker);
-    background: #fff7f6;
+    border: 1px solid var(--punto-testo);
+    border-radius: 12px;
     display: grid;
     gap: 1rem;
     justify-items: start;
-    color: #8c1f16;
-    font-family: var(--font-head);
-    font-weight: 600;
+    color: var(--punto-testo);
+    font-weight: 500;
   }
 </style>
 <script>

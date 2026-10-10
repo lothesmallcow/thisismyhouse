@@ -1,10 +1,11 @@
 ---
 import Icon from "./Icon.astro";
+import { site } from "../config/site";
 import { whatsappHref } from "../lib/util";
 ---
-<div class="sb on-dark" data-sticky aria-hidden="false">
+<div class="sb" data-sticky>
   <a href="/anteprima-gratuita" class="btn btn--primary sb__cta">Anteprima gratuita</a>
-  <a href={whatsappHref("Ciao, ho visto il sito di Focale e vorrei l'anteprima gratuita per la mia attività.")} target="_blank" rel="noopener" class="btn btn--secondary sb__wa">
+  <a href={whatsappHref(`Ciao, ho visto il sito di ${site.brand} e vorrei l'anteprima gratuita per la mia attività.`)} target="_blank" rel="noopener" class="btn btn--secondary sb__wa" aria-label="WhatsApp">
     <Icon name="whatsapp" />
     <span>WhatsApp</span>
   </a>
@@ -12,32 +13,33 @@ import { whatsappHref } from "../lib/util";
 <style>
   .sb {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
     z-index: 40;
     display: flex;
-    gap: 0.5rem;
-    padding: 0.6rem var(--gutter) calc(0.6rem + env(safe-area-inset-bottom));
-    background: var(--portone);
-    border-top: 4px solid var(--ottone);
-    transform: translateY(110%);
-    transition: transform 0.25s ease;
+    gap: 0.4rem;
+    padding: 0.4rem;
+    background: rgba(255, 248, 242, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--filo);
+    border-radius: var(--radius-ui);
+    box-shadow: 0 10px 30px -12px rgba(60, 25, 8, 0.25);
+    transform: translateY(calc(100% + 2rem));
+    transition: transform 0.45s var(--ease-out);
   }
   :global(.sticky-on) .sb {
     transform: none;
   }
   .sb .btn {
-    min-height: 50px;
+    --h: 48px;
     white-space: nowrap;
-    font-size: 1rem;
-    padding: 0 0.9rem;
+    font-size: 0.9375rem;
+    padding: 0 1rem;
   }
   .sb__cta {
     flex: 1;
-  }
-  .sb__wa {
-    padding: 0 1rem;
   }
   @media (min-width: 768px) {
     .sb {
@@ -46,7 +48,7 @@ import { whatsappHref } from "../lib/util";
   }
   @media (max-width: 767px) {
     :global(body.has-sticky) {
-      --sticky-h: calc(76px + env(safe-area-inset-bottom));
+      --sticky-h: calc(84px + env(safe-area-inset-bottom));
     }
   }
 </style>

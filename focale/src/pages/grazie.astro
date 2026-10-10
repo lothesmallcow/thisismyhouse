@@ -1,25 +1,23 @@
 ---
 import Base from "../layouts/Base.astro";
-import Fuoco from "../components/Fuoco.astro";
 import Icon from "../components/Icon.astro";
 import { site } from "../config/site";
 import { whatsappHref } from "../lib/util";
 ---
-<Base title="Richiesta ricevuta | Focale" noindex sticky={false}>
+<Base title={`Richiesta ricevuta | ${site.brand}`} noindex sticky={false}>
   <section class="gz" data-hero>
     <div class="wrap">
-      <Fuoco />
-      <h1>Ricevuto. Ti scrivo entro la prossima giornata lavorativa.</h1>
+      <h1>Ricevuto. Ti scriviamo entro la prossima giornata lavorativa.</h1>
       <h2 class="gz-h2">Cosa succede adesso</h2>
       <ol class="gz-steps">
-        <li>Guardo il tuo sito attuale, se c'è, e la tua scheda Google.</li>
-        <li>Ti scrivo per farti due o tre domande.</li>
+        <li>Guardiamo il tuo sito attuale, se c'è, e la tua scheda Google.</li>
+        <li>Ti scriviamo per farti due o tre domande.</li>
         <li>Entro {site.previewHours} ore ricevi l'anteprima.</li>
       </ol>
-      <p class="lead measure">Nel frattempo, se vuoi, mandami su WhatsApp due o tre foto dei tuoi lavori migliori. L'anteprima verrà più vera.</p>
+      <p class="lead measure">Nel frattempo, se vuoi, mandaci su WhatsApp due o tre foto dei tuoi lavori migliori. L'anteprima verrà più vera.</p>
       <div class="btn-row gz-btns">
-        <a class="btn btn--primary" href={whatsappHref("Ciao, ho appena chiesto l'anteprima sul sito. Ti mando qualche foto dei miei lavori.")} target="_blank" rel="noopener">
-          <Icon name="whatsapp" />Mandami le foto su WhatsApp
+        <a class="btn btn--primary" href={whatsappHref("Ciao, ho appena chiesto l'anteprima sul sito. Vi mando qualche foto dei miei lavori.")} target="_blank" rel="noopener">
+          <Icon name="whatsapp" />Mandaci le foto su WhatsApp
         </a>
         <a class="btn btn--secondary" href="/">Torna alla home</a>
       </div>
@@ -46,9 +44,7 @@ import { whatsappHref } from "../lib/util";
     font-size: var(--step-1);
   }
   .gz-steps li::marker {
-    font-family: var(--font-head);
-    font-weight: 800;
-    color: var(--portone);
+    font-weight: 500;
   }
   .gz-btns {
     margin-top: 2rem;
