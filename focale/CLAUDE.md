@@ -33,6 +33,11 @@ nuova-anteprima, logo, illustrazioni.
   (`scripts/illustrations/`, `npm run illustrazioni`). Same room before/after, so sliders line up.
 - `.check` is the global checkbox-row class: don't reuse it for lists.
 - Satori sizes are content-box: subtract padding from width/height.
+- Below-the-fold scripts load through `later()` (after load + idle) to keep LCP under 2 s.
+  Stylesheets are inlined (`inlineStylesheets: "always"`) for the same reason.
+- Hero fades start at opacity 0.01 so the paragraph counts as painted for LCP.
+- Arcadi orange: #c4510e for button backgrounds (white text 4.6:1), #a8430b for small text.
+- Scoped Astro styles don't reach child component roots: style `<Icon class>` via `:global()`.
 
 ## Phases
 - [x] 1 Setup
@@ -41,8 +46,8 @@ nuova-anteprima, logo, illustrazioni.
 - [x] 4 Interactions
 - [x] 5 Demo projects
 - [x] 6 Private pitch pages
-- [ ] 7 Animations verified
-- [ ] 8 SEO and technical verified
-- [ ] 9 Automation
-- [ ] 10 Quality pass
-- [ ] 11 Handover
+- [x] 7 Animations verified
+- [x] 8 SEO and technical verified
+- [x] 9 Automation
+- [x] 10 Quality pass
+- [x] 11 Handover

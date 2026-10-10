@@ -1,2 +1,1 @@
-/styleguide/ @390
-  horizontal overflow: 78px
+No console errors, failed requests or horizontal overflow.
