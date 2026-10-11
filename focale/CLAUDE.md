@@ -27,7 +27,9 @@ Archivo variable: headings weight 300 at width 125% with negative tracking; UI 5
 Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm run logo` regenerates the paths).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
-- Full-screen scenes with CSS scroll snap (no wheel hijacking) and a side progress nav (scripts/scenes.ts).
+- Full-screen scenes and a side progress nav (scripts/scenes.ts). Desktop (fine pointer): initStepper moves one
+  scene per wheel/trackpad gesture or key, ignoring trackpad momentum until a 220 ms silence; touch keeps
+  native scroll with CSS proximity snap. Test with real wheel events, not scrollIntoView.
   Scenes: inizio, attività, problema, lavori, metodo, prezzi, domande. Content marked [data-in] plays in per scene.
 - Opening: ONE iPhone (IPhone.astro: titanium band, Dynamic Island, status bar; inner sizes in cqw so
   nothing spills). scripts/hero.ts plays a film: site scrolls, a tap on "Chiama ora" rings the Dynamic Island,

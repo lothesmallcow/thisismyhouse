@@ -636,10 +636,9 @@ html:has(.scenes) {
   scroll-padding-top: 0;
   scroll-snap-type: y proximity;
 }
-@media (min-width: 900px) and (min-height: 620px) {
-  html:has(.scenes) {
-    scroll-snap-type: y mandatory;
-  }
+/* With the JS stepper active, it drives the scenes and CSS snapping stands aside. */
+html.stepper:has(.scenes) {
+  scroll-snap-type: none;
 }
 .scene {
   position: relative;
