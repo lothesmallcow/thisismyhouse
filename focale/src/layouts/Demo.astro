@@ -105,14 +105,17 @@ const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bod
   }
   .d-rev {
     transform: translateY(26px);
-    filter: blur(6px);
     transition:
       transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
       filter 0.9s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .d-rev.is-in {
     transform: none;
-    filter: none;
+  }
+  @media (pointer: fine) {
+    .d-rev:not(.is-in) {
+      filter: blur(6px);
+    }
   }
   .demo-banner p {
     margin: 0;

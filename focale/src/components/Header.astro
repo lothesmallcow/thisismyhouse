@@ -91,10 +91,16 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
       box-shadow 0.3s ease;
   }
   :global(.is-compact) .hdr {
-    background: rgba(255, 248, 242, 0.94);
-    backdrop-filter: saturate(140%) blur(10px);
-    -webkit-backdrop-filter: saturate(140%) blur(10px);
+    background: rgba(255, 248, 242, 0.97);
     box-shadow: 0 1px 0 var(--filo);
+  }
+  /* Glass blur only with a mouse: on phones it re-blurs the moving background every frame (jank). */
+  @media (hover: hover) and (pointer: fine) {
+    :global(.is-compact) .hdr {
+      background: rgba(255, 248, 242, 0.94);
+      backdrop-filter: saturate(140%) blur(10px);
+      -webkit-backdrop-filter: saturate(140%) blur(10px);
+    }
   }
   :global(.hdr-hidden) .hdr {
     transform: translateY(-100%);

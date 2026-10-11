@@ -20,9 +20,8 @@ import { whatsappHref } from "../lib/util";
     display: flex;
     gap: 0.4rem;
     padding: 0.4rem;
-    background: rgba(255, 248, 242, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* Solid, not blurred: it lives on phones, where a backdrop blur over moving content stutters. */
+    background: rgba(255, 248, 242, 0.97);
     border: 1px solid var(--filo);
     border-radius: var(--radius-ui);
     box-shadow: 0 10px 30px -12px rgba(60, 25, 8, 0.25);

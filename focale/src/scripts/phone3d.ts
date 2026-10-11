@@ -154,7 +154,12 @@ class Rig {
       antialias: true,
       powerPreference: "high-performance",
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    // Phones have 3x screens and less GPU: 1.5x is sharp enough; while the phone moves, 1x
+    // (motion hides it), then one sharp frame once it stops.
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    this.sharp = Math.min(window.devicePixelRatio, coarse ? 1.5 : 1.75);
+    this.moving = coarse ? 1 : this.sharp;
+    this.renderer.setPixelRatio(this.sharp);
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -169,24 +174,49 @@ class Rig {
     this.scene.add(this.holder);
     this.camera.matrixAutoUpdate = false;
 
-    new IntersectionObserver(([e]) => {
-      this.visible = e.isIntersecting;
-      if (this.visible) this.loop();
-    }).observe(eye);
+    new IntersectionObserver(
+      ([e]) => {
+        this.visible = e.isIntersecting;
+        if (this.visible) this.loop();
+      },
+      // Start drawing a little before it scrolls in.
+      { rootMargin: "25% 0px" },
+    ).observe(eye);
+    // Compile the shaders and draw once while the browser is idle, not when the phone first
+    // scrolls into view (on phones that first draw is a visible stall).
+    const warm = () => {
+      this.renderer.compile(this.scene, this.camera);
+      this.frame();
+    };
+    if ("requestIdleCallback" in window) requestIdleCallback(warm, { timeout: 2500 });
+    else setTimeout(warm, 300);
   }
+
+  sharp = 1;
+  moving = 1;
+  changedAt = 0;
+  blurry = false;
 
   loop = () => {
     if (!this.visible) return;
-    this.frame();
+    if (this.frame()) {
+      this.changedAt = performance.now();
+    } else if (this.blurry && performance.now() - this.changedAt > 160) {
+      // Still for a moment: redraw the last pose at full sharpness.
+      this.renderer.setPixelRatio(this.sharp);
+      this.renderer.render(this.scene, this.camera);
+      this.blurry = false;
+    }
     requestAnimationFrame(this.loop);
   };
 
+  /** Draws the phone if its pose or box changed; returns whether it drew. */
   frame() {
     const eye = this.eye;
     const phone = this.phone;
     const pw = phone.offsetWidth;
     const ph = phone.offsetHeight;
-    if (!pw || !ph || !eye.offsetWidth) return;
+    if (!pw || !ph || !eye.offsetWidth) return false;
     const ecs = getComputedStyle(eye);
     const p = parseFloat(ecs.perspective) || 1200;
     const [pox, poy] = ecs.perspectiveOrigin.split(" ").map(parseFloat);
@@ -201,7 +231,11 @@ class Rig {
     const cw = pw + 2 * mx;
     const ch = ph + 2 * my;
     const key = `${x0},${y0},${cw},${ch},${pox},${poy},${p}|${m.toString()}`;
-    if (key === this.last) return;
+    if (key === this.last) return false;
+    // Moving (a second change within a few frames): the lighter resolution.
+    const ratio = performance.now() - this.changedAt < 100 ? this.moving : this.sharp;
+    if (this.renderer.getPixelRatio() !== ratio) this.renderer.setPixelRatio(ratio);
+    this.blurry = ratio !== this.sharp;
     this.last = key;
 
     const size = this.renderer.getSize(new Vector2());
@@ -247,6 +281,7 @@ class Rig {
     this.holder.matrixWorldNeedsUpdate = true;
     this.renderer.render(this.scene, this.camera);
     if (!phone.classList.contains("iph--gl")) phone.classList.add("iph--gl");
+    return true;
   }
 }
 

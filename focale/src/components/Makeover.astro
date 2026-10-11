@@ -2,8 +2,9 @@
 /**
  * The makeover, filmed like the opening: one iPhone with a real-looking old website (a desktop
  * layout squeezed onto a phone, as non-responsive sites really look). Scrolling plays it like a
- * video: a pinch to read, a search for the phone number, then the old site is rebuilt into the
- * new one while the phone turns around in 3D, and a tap calls. Tags sit outside the phone.
+ * video: a scan finds the five problems in one pass (numbered boxes on the screen, labels beside
+ * the phone), the phone turns around in 3D and comes back with the new site, then each label turns
+ * green on the part of the new site that fixes it, and a tap calls.
  * Without JS or with reduced motion: the finished site and the steps as a list.
  * Logic in scripts/makeover.ts.
  */
@@ -13,16 +14,19 @@ import ArcadiHero from "./demo/ArcadiHero.astro";
 
 const steps = [
   { t: "Il sito di oggi, aperto dal telefono.", d: "Fatto per il computer, nel 2011." },
-  { t: "Per leggere bisogna ingrandire.", d: "Chi ha fretta torna indietro." },
-  { t: "Il numero non si trova.", d: "E chi non lo trova chiama un altro." },
+  { t: "Cinque problemi, in un colpo d'occhio.", d: "Numero nascosto, foto sgranate, testo minuscolo, niente preventivo, fermo al 2011." },
   { t: "Il makeover.", d: "Stessa impresa, sito nuovo: in 10 giorni." },
+  { t: "Ogni problema, risolto.", d: "Chiama con un tocco, si legge senza zoom, preventivo in 3 domande." },
   { t: "Chi lo apre, ti chiama.", d: "Un tocco e il telefono squilla." },
 ];
-const tags = [
-  { k: "zoom", t: "Testo illeggibile", bad: true },
-  { k: "num", t: "Nessun numero in vista", bad: true },
-  { k: "read", t: "Si legge senza zoom", bad: false },
-  { k: "call", t: "Chiama con un tocco", bad: false },
+// Each problem of the old site and the part of the new site that fixes it (same number).
+// `old` is a [data-old] piece of OldSite, `fix` a selector inside ArcadiHero.
+const fixes = [
+  { old: "header", fix: ".ah__phone", bad: "Numero nascosto", good: "Chiama con un tocco" },
+  { old: "photo", fix: "[data-piece='photo']", bad: "Foto sgranate", good: "Lavori in primo piano" },
+  { old: "text", fix: "[data-piece='title']", bad: "Testo minuscolo", good: "Si legge senza zoom" },
+  { old: "cta", fix: ".ah__btn--main", bad: "Niente preventivo", good: "Preventivo in 3 domande" },
+  { old: "foot", fix: "[data-piece='foot']", bad: "Fermo al 2011", good: "Ultimi lavori in vista" },
 ];
 ---
 <section class="mk" id="makeover" aria-labelledby="mk-t" data-makeover>
@@ -54,6 +58,21 @@ const tags = [
               </div>
               <div class="mk__new" data-mk-new><ArcadiHero /></div>
               <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
+              <span class="mk__scan" data-mk-scan aria-hidden="true"></span>
+              {
+                fixes.map((f, i) => (
+                  <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true">
+                    <i>{i + 1}</i>
+                  </span>
+                ))
+              }
+              {
+                fixes.map((f, i) => (
+                  <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true">
+                    <i>{i + 1}</i>
+                  </span>
+                ))
+              }
             </div>
             <span class="mk__finger mk__finger--a" data-mk-fa aria-hidden="true"></span>
             <span class="mk__finger mk__finger--b" data-mk-fb aria-hidden="true"></span>
@@ -61,12 +80,18 @@ const tags = [
         </div>
         </div>
         </div>
-        <ul class="mk__tags" aria-hidden="true">
+        <ul class="mk__tags" aria-hidden="true" data-mk-tags>
           {
-            tags.map((t) => (
-              <li class:list={["mk__tag", `mk__tag--${t.k}`, { "is-bad": t.bad }]} data-mk-tag={t.k}>
-                <span class="mk__dot">{t.bad ? "×" : "✓"}</span>
-                {t.t}
+            fixes.map((f, i) => (
+              <li class:list={["mk__tag", i % 2 ? "mk__tag--r" : "mk__tag--l"]} data-mk-tag={i}>
+                <span class="mk__dot">
+                  <span class="mk__dot-bad">{i + 1}</span>
+                  <span class="mk__dot-good">✓</span>
+                </span>
+                <span class="mk__tx">
+                  <span class="mk__bad">{f.bad}</span>
+                  <span class="mk__good">{f.good}</span>
+                </span>
               </li>
             ))
           }
@@ -266,66 +291,113 @@ const tags = [
     pointer-events: none;
   }
 
-  /* Tags outside the phone */
+  /* The scan: a band of warm light running down the old site, finding the problems. */
+  .mk__scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -25%;
+    height: 22%;
+    background: linear-gradient(180deg, rgba(255, 91, 34, 0) 0%, rgba(255, 91, 34, 0.18) 70%, rgba(255, 91, 34, 0.75) 98%, rgba(255, 91, 34, 0) 100%);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 6;
+    pointer-events: none;
+  }
+  /* Numbered boxes on the screen: red on the old site, green on the new one. */
+  .mk__mark {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border: 2px solid #d92d20;
+    border-radius: 6px;
+    background: rgba(217, 45, 32, 0.08);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 7;
+    pointer-events: none;
+  }
+  .mk__mark i {
+    position: absolute;
+    left: -8px;
+    top: -8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #d92d20;
+    color: #fff;
+    font: 700 11px/1 var(--font);
+    font-style: normal;
+  }
+  .mk__mark--good {
+    border-color: #1f8a4c;
+    background: rgba(31, 138, 76, 0.08);
+  }
+  .mk__mark--good i {
+    background: #1f8a4c;
+  }
+
+  /* Labels beside the phone, one per problem; each turns into its fix. Positioned by makeover.ts. */
   .mk__tags {
     list-style: none;
     margin: 0;
     padding: 0;
+    visibility: hidden;
+  }
+  :global(.mk-live) .mk__tags {
+    visibility: visible;
   }
   .mk__tag {
     position: absolute;
+    top: 0;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.45rem 0.8rem 0.45rem 0.45rem;
-    border-radius: var(--radius-ui);
+    padding: 0.4rem 0.8rem 0.4rem 0.4rem;
+    border-radius: 999px;
     background: var(--carta);
-    box-shadow: 0 10px 24px -14px rgba(60, 25, 8, 0.5);
-    font-size: 0.88rem;
+    box-shadow: 0 12px 26px -14px rgba(60, 25, 8, 0.55);
+    font-size: 0.86rem;
     font-weight: 500;
     white-space: nowrap;
     opacity: 0;
     visibility: hidden;
+    z-index: 4;
   }
   .mk__dot {
+    position: relative;
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 50%;
+    flex: none;
+    background: #d92d20;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .mk__dot > span {
+    position: absolute;
+    inset: 0;
     display: grid;
     place-items: center;
-    background: #1f7a4f;
-    color: #fff;
-    font-size: 0.8rem;
   }
-  .mk__tag.is-bad .mk__dot {
-    background: #b3261a;
+  .mk__tx {
+    display: grid;
   }
-  .mk__tag--zoom {
-    top: 30%;
-    left: 0;
+  .mk__bad,
+  .mk__good {
+    grid-area: 1 / 1;
   }
-  .mk__tag--num {
-    top: 12%;
-    right: 0;
+  .mk__bad {
+    color: #9b1c12;
   }
-  .mk__tag--read {
-    top: 44%;
-    left: 0;
-  }
-  .mk__tag--call {
-    top: 62%;
-    right: 0;
-  }
-  /* No JS: the two good tags are part of the final frame. */
-  .mk__tag:not(.is-bad) {
-    opacity: 1;
-    visibility: visible;
-  }
-  :global(.mk-live) .mk__tag {
+  .mk__good,
+  .mk__dot-good {
     opacity: 0;
-    visibility: hidden;
   }
-  /* On phones the step line says it all: no tags around the phone. */
+  /* On phones the step line says it all: no labels around the phone. */
   @media (max-width: 899px) {
     .mk__tags {
       display: none;

@@ -8,6 +8,8 @@ gsap.registerPlugin(ScrollTrigger);
  * Content is visible without JS and with reduced motion.
  */
 export function initScenes() {
+  // Safari's address bar resizes the viewport while scrolling: never re-measure for that (jumps).
+  ScrollTrigger.config({ ignoreMobileResize: true });
   const sections = Array.from(document.querySelectorAll<HTMLElement>(".scenes > section"));
   if (!sections.length || !window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
   document.documentElement.classList.add("scenes-live");

@@ -58,14 +58,25 @@ export function initLive() {
   const uM = gl.getUniformLocation(prog, "m");
   const uS = gl.getUniformLocation(prog, "s");
 
-  const scale = 0.5;
+  // Phones: fewer pixels and frames (it is a soft blur of colour: nobody sees the difference).
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const scale = coarse ? 0.3 : 0.5;
+  const step = coarse ? 50 : 33;
+  // Sized from the canvas box (100lvh tall): Safari's bars coming and going never reallocate it.
   const resize = () => {
-    canvas.width = Math.max(1, Math.round(innerWidth * scale));
-    canvas.height = Math.max(1, Math.round(innerHeight * scale));
-    gl.viewport(0, 0, canvas.width, canvas.height);
+    const w = Math.max(1, Math.round(canvas.clientWidth * scale));
+    const h = Math.max(1, Math.round(canvas.clientHeight * scale));
+    if (w === canvas.width && h === canvas.height) return;
+    canvas.width = w;
+    canvas.height = h;
+    gl.viewport(0, 0, w, h);
   };
   resize();
-  addEventListener("resize", resize);
+  new ResizeObserver(resize).observe(canvas);
+  let maxScroll = 1;
+  const measure = () => (maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight));
+  measure();
+  new ResizeObserver(measure).observe(document.body);
 
   const mouse = { x: 0.75, y: 0.6, tx: 0.75, ty: 0.6 };
   addEventListener("pointermove", (e) => {
@@ -73,21 +84,26 @@ export function initLive() {
     mouse.ty = 1 - e.clientY / innerHeight;
   }, { passive: true });
 
+  // Phones: hold the (slow, barely moving) background still while the finger scrolls, so the
+  // GPU spends those frames on the page and the 3D phone. It resumes a moment after scrolling stops.
+  let scrolledAt = 0;
+  if (coarse) addEventListener("scroll", () => (scrolledAt = performance.now()), { passive: true });
+
   let last = 0;
   let running = true;
   const t0 = performance.now();
   const frame = (now: number) => {
     if (!running) return;
     requestAnimationFrame(frame);
-    if (now - last < 33) return;
+    if (now - last < step) return;
+    if (coarse && now - scrolledAt < 180) return;
     last = now;
     mouse.x += (mouse.tx - mouse.x) * 0.06;
     mouse.y += (mouse.ty - mouse.y) * 0.06;
-    const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
     gl.uniform2f(uR, canvas.width, canvas.height);
     gl.uniform1f(uT, (now - t0) / 1000);
     gl.uniform2f(uM, mouse.x, mouse.y);
-    gl.uniform1f(uS, Math.min(1, scrollY / max));
+    gl.uniform1f(uS, Math.min(1, scrollY / maxScroll));
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   };
   requestAnimationFrame(frame);

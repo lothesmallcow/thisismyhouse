@@ -575,7 +575,7 @@ a.link:hover {
 }
 
 /* ---------- Focus motif: headings come into focus once (JS adds .will-focus) ---------- */
-@media (prefers-reduced-motion: no-preference) {
+@media (prefers-reduced-motion: no-preference) and (pointer: fine) {
   .will-focus {
     filter: blur(12px);
     transition: filter 1.2s var(--ease-out);
@@ -678,4 +678,10 @@ body.home {
   z-index: 0;
   pointer-events: none;
   filter: drop-shadow(0 28px 34px rgba(60, 25, 8, 0.28));
+}
+@media (pointer: coarse) {
+  /* A filter on a canvas that redraws every frame is expensive on phones: the contact shadow suffices. */
+  .phone3d {
+    filter: none;
+  }
 }

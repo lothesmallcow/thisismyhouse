@@ -92,6 +92,12 @@ const loading = eager ? "eager" : "lazy";
     --w: var(--dv-phone, clamp(200px, 30vh, 290px));
     filter: drop-shadow(0 30px 40px rgba(60, 25, 8, 0.28));
   }
+  @media (pointer: coarse) {
+    /* The framed site scrolls inside: a filter would repaint it on every frame. */
+    .dv__phone {
+      filter: none;
+    }
+  }
   .dv__site {
     position: absolute;
     inset: 13.7cqw 0 0;

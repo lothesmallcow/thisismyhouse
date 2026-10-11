@@ -13,7 +13,10 @@
 <style>
   .live {
     position: fixed;
-    inset: 0;
+    inset: 0 0 auto;
+    /* The large viewport height: constant while Safari's bars come and go. */
+    height: 100vh;
+    height: 100lvh;
     z-index: -1;
     pointer-events: none;
     background:
