@@ -7,6 +7,7 @@ import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
 import Choose from "../components/Choose.astro";
 import Makeover from "../components/Makeover.astro";
+import LiveBackground from "../components/LiveBackground.astro";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
 import { getCollection } from "astro:content";
@@ -32,6 +33,7 @@ const steps = [
   jsonLd={[professionalService(), faqPage(faqItems)]}
   bodyClass="home"
 >
+  <LiveBackground />
   <div class="scenes">
     <HeroScene />
 
@@ -177,9 +179,8 @@ const steps = [
     align-items: center;
     justify-content: space-between;
     gap: 1rem 2rem;
-    padding: clamp(1.25rem, 3vh, 2rem) clamp(1.25rem, 3vw, 2.5rem);
-    border-radius: 22px;
-    background: var(--mandarino);
+    padding-top: 1.25rem;
+    border-top: 3px solid var(--mandarino);
   }
   .sc-how__promise p {
     font-weight: 300;
@@ -222,17 +223,20 @@ const steps = [
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
+  /* Columns, not boxes: a rule on top, the recommended one in tangerine. */
   .sc-price__plan {
     display: grid;
-    gap: 0.5rem;
-    align-content: start;
     gap: 0.75rem;
-    padding: clamp(1.5rem, 4vh, 2.75rem);
-    border-radius: 24px;
-    background: var(--nebbia);
+    align-content: start;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--inchiostro);
   }
   .sc-price__plan.is-rec {
-    background: var(--mandarino);
+    border-top: 3px solid var(--mandarino);
+    padding-top: calc(1.25rem - 2px);
+  }
+  .sc-price__plan.is-rec .sc-price__num {
+    color: #b8400f;
   }
   .sc-price__name {
     display: flex;
@@ -251,10 +255,7 @@ const steps = [
   .sc-price__for {
     color: var(--grafite);
   }
-  .is-rec .sc-price__for,
-  .is-rec .sc-price__old {
-    color: #3a1a0b;
-  }
+
   .sc-price__num {
     margin-top: 0.75rem;
     font-weight: 300;
@@ -283,11 +284,7 @@ const steps = [
   }
 
   /* ---------- Chiusura e domande ---------- */
-  .sc-end {
-    background:
-      radial-gradient(70% 60% at 15% 100%, rgba(255, 91, 34, 0.32), rgba(255, 178, 63, 0.16) 45%, rgba(255, 248, 242, 0) 75%),
-      var(--carta);
-  }
+
   .sc-end__in {
     display: grid;
     gap: clamp(2rem, 5vh, 3.5rem);
@@ -314,9 +311,6 @@ const steps = [
     display: grid;
     gap: 1rem;
     justify-items: start;
-    background: var(--nebbia);
-    border-radius: 24px;
-    padding: clamp(1.25rem, 3vh, 2rem);
   }
   .sc-end__faq :global(.faq) {
     width: 100%;

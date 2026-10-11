@@ -44,6 +44,8 @@ const tags = [
       </div>
 
       <figure class="mk__stage">
+        <div class="mk__rig">
+        <div class="mk__obj" data-mk-obj>
         <div class="mk__phone" data-mk-phone>
           <IPhone label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
             <div class="mk__screen" data-mk-screen>
@@ -56,6 +58,15 @@ const tags = [
             <span class="mk__finger mk__finger--a" data-mk-fa aria-hidden="true"></span>
             <span class="mk__finger mk__finger--b" data-mk-fb aria-hidden="true"></span>
           </IPhone>
+        </div>
+        <!-- Exploded view: copies of the screen as separate sheets, outside the clipped screen so 3D works. -->
+        <div class="mk__layers" data-mk-layers aria-hidden="true">
+          <div class="mk__ly mk__ly--old" data-mk-ly-old><div class="mk__oldpage"><OldSite annotations={false} /></div></div>
+          <div class="mk__ly mk__ly--n1" data-mk-ly-new><ArcadiHero /></div>
+          <div class="mk__ly mk__ly--n2" data-mk-ly-new><ArcadiHero /></div>
+          <div class="mk__ly mk__ly--n3" data-mk-ly-new><ArcadiHero /></div>
+        </div>
+        </div>
         </div>
         <ul class="mk__tags" aria-hidden="true">
           {
@@ -74,7 +85,6 @@ const tags = [
 
 <style>
   .mk {
-    background: var(--nebbia);
     overflow-x: clip;
   }
   .mk__pin {
@@ -167,12 +177,60 @@ const tags = [
   }
   .mk__phone {
     position: relative;
+  }
+  /* ---------- 3D rig ---------- */
+  .mk__rig {
+    perspective: 1600px;
+    perspective-origin: 50% 40%;
+  }
+  .mk__obj {
+    position: relative;
+    transform-style: preserve-3d;
     --w: clamp(190px, 34vh, 310px);
   }
   @media (max-width: 899px) {
-    .mk__phone {
+    .mk__obj {
       --w: clamp(170px, 30vh, 240px);
     }
+  }
+  /* The sheets sit exactly over the site area of the screen (below the status bar). */
+  .mk__layers {
+    position: absolute;
+    left: calc(var(--w) * 0.041);
+    top: calc(var(--w) * (0.041 + 0.918 * 0.137));
+    width: calc(var(--w) * 0.918);
+    height: calc(var(--w) * 0.918 * (852 / 393 - 0.137));
+    transform-style: preserve-3d;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .mk__ly {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: #f2f2f0;
+    border-radius: 0 0 calc(var(--w) * 0.13) calc(var(--w) * 0.13);
+    box-shadow: 0 30px 60px -20px rgba(60, 25, 8, 0.45);
+    container-type: inline-size;
+  }
+  .mk__ly--old {
+    background: #fffbe6;
+  }
+  /* The new site cut into three sheets: header and photo, title and text, buttons. */
+  .mk__ly--n1 {
+    clip-path: inset(0 0 58% 0);
+    background: transparent;
+    box-shadow: none;
+  }
+  .mk__ly--n2 {
+    clip-path: inset(42% 0 33% 0);
+    background: transparent;
+    box-shadow: none;
+  }
+  .mk__ly--n3 {
+    clip-path: inset(67% 0 0 0);
+    background: transparent;
+    box-shadow: none;
   }
   .mk__phone::after {
     content: "";

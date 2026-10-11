@@ -27,9 +27,12 @@ Archivo variable: headings weight 300 at width 125% with negative tracking; UI 5
 Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm run logo` regenerates the paths).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
-- Continuous scroll (Lorenzo: snapping scenes felt like Google Slides). Only the opening fills the screen;
-  other sections have natural height. [data-in] content rises out of a clip-path mask once (no opacity
-  fade: axe measures half-faded text). No side dots, no stepper, no CSS snap.
+- Keynote without boxes: every home section is a full-screen scene over one living WebGL background
+  (LiveBackground.astro, scripts/live.ts: warm flowing gradient, pointer glow, grain; CSS fallback).
+  No snapping, no section colours, no card boxes. Scenes enter with a clip-path mask ([data-in], no opacity:
+  axe measures half-faded text) and exit drifting up and dissolving (scripts/scenes.ts). Exit triggers use
+  refreshPriority -1 so they are measured after the makeover pin, and a ResizeObserver refreshes ScrollTrigger
+  when the page height changes (opening a sector path).
 - Opening: ONE iPhone (IPhone.astro: titanium band, Dynamic Island, status bar; inner sizes in cqw so
   nothing spills). scripts/hero.ts plays a film: site scrolls, a tap on "Chiama ora" rings the Dynamic Island,
   a tap on "Chiedi un preventivo" drops iOS banners (WhatsApp, Mail). Sound (scripts/sound.ts, WebAudio,
@@ -38,8 +41,11 @@ Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm 
   (scripts/tilt.ts), contact shadows. Lenis smooth scroll on fine pointers.
 - Sector chooser (Choose.astro): radios + CSS :has(); paths.ts animates with Flip. Nothing stored.
 - Makeover (Makeover.astro, scripts/makeover.ts): pinned, scroll-scrubbed film on the same iPhone; the old
-  site is a desktop page squeezed onto the phone (non-responsive look), pinch, search for the number, orange
-  scan line rebuilds it into the new site, tap to call. Replaced the three works on the home (they live on /lavori).
+  site is a desktop page squeezed onto the phone (non-responsive look), pinch, search for the number, then an
+  exploded 3D view: the phone tilts, the old site lifts off as a sheet and flies away, the new site lands in
+  three sheets, the phone turns back, tap to call. The 3D sheets live outside the clipped screen
+  (overflow/opacity/clip-path on a parent flatten preserve-3d).
+- docs/video/focus-design-home-telefono.mp4: vertical recording of the home (made with Playwright + ffmpeg). Replaced the three works on the home (they live on /lavori).
 - Calculator lives on /prezzi. Renovation.astro, Manifesto, WorkReel are no longer on the home.
 - Section labels sit above content (no empty 3-column label gutter: Lorenzo called it dead space).
 - `node scripts/overflow-check.mjs` finds cut-off text and sideways scroll on every page at 6 widths.

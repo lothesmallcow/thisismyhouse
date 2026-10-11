@@ -632,7 +632,22 @@ html.lenis body {
 }
 
 /* ---------- Home (pages/index.astro, scripts/scenes.ts) ---------- */
-/* Continuous scroll. Only the opening fills the screen; the rest flows at natural height. */
+/* Keynote without boxes: every section is a full-screen scene over one living background
+   (LiveBackground.astro). Scenes flow into each other: no snapping, no coloured blocks. */
+body.home {
+  background: transparent;
+}
+.home .scenes > section {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  align-items: center;
+  box-sizing: border-box;
+  padding-block: calc(var(--header-h) + clamp(1rem, 4vh, 3rem)) clamp(2rem, 6vh, 4rem);
+}
+.home .scenes > section.mk {
+  padding: 0;
+}
 .scene {
   position: relative;
   min-height: 100vh;

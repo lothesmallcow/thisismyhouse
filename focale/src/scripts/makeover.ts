@@ -5,8 +5,12 @@ import { spring } from "./spring";
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * The makeover film, scrubbed by the scroll: the section pins and scrolling moves the film
- * forward or back like a video. Steps on the left light up in sync. See Makeover.astro.
+ * The makeover film, scrubbed by the scroll (the section pins; scrolling plays it forward or back):
+ * 1. the old site on the phone: a pinch to read, a search for the number;
+ * 2. the phone turns in 3D and the screen comes apart in sheets: the old site lifts off and
+ *    flies away, the new site lands in three pieces, one after another;
+ * 3. the phone turns back, a tap calls.
+ * See Makeover.astro for the markup and the no-JS final frame.
  */
 export function initMakeover() {
   const root = document.querySelector<HTMLElement>("[data-makeover]");
@@ -16,10 +20,12 @@ export function initMakeover() {
   const oldWrap = q("[data-mk-old]");
   const oldPage = q("[data-mk-oldpage]");
   const newSite = q("[data-mk-new]");
-  const scan = q("[data-mk-scan]");
   const fa = q("[data-mk-fa]");
   const fb = q("[data-mk-fb]");
-  const phone = q("[data-mk-phone]");
+  const obj = q("[data-mk-obj]");
+  const layers = q("[data-mk-layers]");
+  const lyOld = q("[data-mk-ly-old]");
+  const lyNew = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-ly-new]"));
   const steps = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-step]"));
   const tag = (k: string) => q(`[data-mk-tag="${k}"]`);
   const callBtn = newSite.querySelector<HTMLElement>(".ah__btn--ghost");
@@ -28,71 +34,89 @@ export function initMakeover() {
   const setStep = (i: number) => steps.forEach((s, j) => s.classList.toggle("is-on", j === i));
   setStep(0);
 
-  gsap.set(newSite, { clipPath: "inset(0% 0% 100% 0%)" });
+  gsap.set(newSite, { autoAlpha: 0 });
   gsap.set([fa, fb], { opacity: 0 });
-  const showTag = (k: string, at: number) => tl.fromTo(tag(k), { autoAlpha: 0, y: 10, scale: 0.92 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.25, ease: spring(0.3) }, at);
-  const hideTag = (k: string, at: number) => tl.to(tag(k), { autoAlpha: 0, y: -8, duration: 0.15 }, at);
+  gsap.set(obj, { transformPerspective: 0 });
+  gsap.set(lyNew, { z: 420, autoAlpha: 0 });
+  gsap.set(lyOld, { z: 0 });
 
   const tl = gsap.timeline({
     defaults: { ease: "power2.inOut" },
     scrollTrigger: {
       trigger: root,
       start: "top top",
-      end: () => `+=${window.innerHeight * 2.6}`,
+      end: () => `+=${window.innerHeight * 3}`,
       pin: q("[data-mk-pin]"),
-      scrub: 0.8,
+      scrub: 1,
       anticipatePin: 1,
       invalidateOnRefresh: true,
       onUpdate: (self) => {
         const p = self.progress;
-        setStep(p < 0.12 ? 0 : p < 0.36 ? 1 : p < 0.56 ? 2 : p < 0.8 ? 3 : 4);
+        setStep(p < 0.08 ? 0 : p < 0.24 ? 1 : p < 0.36 ? 2 : p < 0.82 ? 3 : 4);
       },
     },
   });
+  const showTag = (k: string, at: number) =>
+    tl.fromTo(tag(k), { autoAlpha: 0, y: 10, scale: 0.92 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.03, ease: spring(0.3) }, at);
+  const hideTag = (k: string, at: number) => tl.to(tag(k), { autoAlpha: 0, y: -8, duration: 0.02 }, at);
+  const W = () => screen.offsetWidth;
+  const Hs = () => screen.offsetHeight;
 
-  // 1. Pinch to zoom on the tiny text: two fingertips spread, the page grows, then shrinks back.
-  const cx = () => screen.offsetLeft + screen.offsetWidth * 0.55;
-  const cy = () => screen.offsetTop + screen.offsetHeight * 0.32;
-  tl.set([fa, fb], { left: cx, top: cy }, 0.1);
-  tl.to([fa, fb], { opacity: 0.95, duration: 0.05 }, 0.12);
-  tl.to(fa, { x: () => -screen.offsetWidth * 0.18, y: () => -screen.offsetWidth * 0.14, duration: 0.18 }, 0.15);
-  tl.to(fb, { x: () => screen.offsetWidth * 0.18, y: () => screen.offsetWidth * 0.14, duration: 0.18 }, 0.15);
-  tl.to(oldPage, { scale: 1.1, x: () => -screen.offsetWidth * 0.55, y: () => -screen.offsetHeight * 0.45, duration: 0.18 }, 0.15);
-  showTag("zoom", 0.2);
-  tl.to([fa, fb], { opacity: 0, duration: 0.05 }, 0.34);
-  tl.to(oldPage, { scale: 0.5556, x: 0, y: 0, duration: 0.12 }, 0.36);
-  hideTag("zoom", 0.38);
+  // 1a. Pinch to read the tiny text.
+  tl.set([fa, fb], { left: () => screen.offsetLeft + W() * 0.55, top: () => screen.offsetTop + Hs() * 0.32, x: 0, y: 0 }, 0.07);
+  tl.to([fa, fb], { opacity: 0.95, duration: 0.01 }, 0.08);
+  tl.to(fa, { x: () => -W() * 0.18, y: () => -W() * 0.14, duration: 0.08 }, 0.09);
+  tl.to(fb, { x: () => W() * 0.18, y: () => W() * 0.14, duration: 0.08 }, 0.09);
+  tl.to(oldPage, { scale: 1.1, x: () => -W() * 0.55, y: () => -Hs() * 0.45, duration: 0.08 }, 0.09);
+  showTag("zoom", 0.12);
+  tl.to([fa, fb], { opacity: 0, duration: 0.01 }, 0.19);
+  tl.to(oldPage, { scale: 0.5556, x: 0, y: 0, duration: 0.05 }, 0.2);
+  hideTag("zoom", 0.22);
 
-  // 2. Looking for the number: a finger drags the page up and down, nothing.
-  tl.set(fa, { x: 0, y: 0, left: () => screen.offsetLeft + screen.offsetWidth * 0.5, top: () => screen.offsetTop + screen.offsetHeight * 0.7 }, 0.4);
-  tl.to(fa, { opacity: 0.95, duration: 0.03 }, 0.41);
-  tl.to(fa, { y: () => -screen.offsetHeight * 0.35, duration: 0.08 }, 0.42);
-  tl.to(oldPage, { y: () => -screen.offsetHeight * 0.12, duration: 0.08 }, 0.42);
-  showTag("num", 0.44);
-  tl.to(fa, { y: 0, duration: 0.06 }, 0.5);
-  tl.to(oldPage, { y: 0, duration: 0.06 }, 0.5);
-  tl.to(fa, { opacity: 0, duration: 0.03 }, 0.55);
+  // 1b. Looking for the phone number.
+  tl.set(fa, { x: 0, y: 0, left: () => screen.offsetLeft + W() * 0.5, top: () => screen.offsetTop + Hs() * 0.7 }, 0.24);
+  tl.to(fa, { opacity: 0.95, duration: 0.01 }, 0.245);
+  tl.to(fa, { y: () => -Hs() * 0.35, duration: 0.04 }, 0.25);
+  tl.to(oldPage, { y: () => -Hs() * 0.12, duration: 0.04 }, 0.25);
+  showTag("num", 0.26);
+  tl.to(fa, { y: 0, duration: 0.03 }, 0.3);
+  tl.to(oldPage, { y: 0, duration: 0.03 }, 0.3);
+  tl.to(fa, { opacity: 0, duration: 0.01 }, 0.33);
+  hideTag("num", 0.35);
 
-  // 3. The makeover: an orange line sweeps down, the new site appears behind it.
-  hideTag("num", 0.57);
-  tl.to(scan, { opacity: 1, duration: 0.02 }, 0.58);
-  tl.to(scan, { top: "100%", duration: 0.18, ease: "power1.inOut" }, 0.58);
-  tl.to(newSite, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.18, ease: "power1.inOut" }, 0.58);
-  tl.to(oldWrap, { filter: "blur(3px) grayscale(1)", opacity: 0.6, duration: 0.18 }, 0.58);
-  tl.to(scan, { opacity: 0, duration: 0.02 }, 0.76);
-  tl.fromTo(phone, { scale: 1 }, { scale: 1.03, duration: 0.05, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0.76);
-  showTag("read", 0.78);
+  // 2. The phone turns in 3D, the screen comes apart in sheets.
+  tl.to(obj, { rotationX: 50, rotationZ: -22, scale: 0.92, duration: 0.1, ease: "power3.inOut" }, 0.37);
+  tl.set(layers, { visibility: "visible" }, 0.42);
+  tl.set(oldWrap, { visibility: "hidden" }, 0.42);
+  tl.to(lyOld, { z: 130, duration: 0.06, ease: "power2.out" }, 0.43);
+  // The old site lifts off, tips and flies away.
+  tl.to(lyOld, { z: 380, rotationX: -18, y: () => -Hs() * 0.25, autoAlpha: 0, duration: 0.1, ease: "power2.in" }, 0.49);
+  // The new site lands in three sheets, top to bottom.
+  lyNew.forEach((ly, i) => {
+    const at = 0.55 + i * 0.06;
+    tl.to(ly, { autoAlpha: 1, duration: 0.01 }, at);
+    tl.to(ly, { z: 0, duration: 0.08, ease: spring(0.22) }, at);
+  });
+  // 3. Sheets merge into the screen, the phone turns back.
+  tl.set(newSite, { autoAlpha: 1 }, 0.74);
+  tl.set(layers, { visibility: "hidden" }, 0.745);
+  tl.to(obj, { rotationX: 0, rotationZ: 0, scale: 1, duration: 0.08, ease: spring(0.18) }, 0.74);
+  showTag("read", 0.8);
 
   // 4. A tap on "Chiama ora".
   if (callBtn) {
-    tl.set(fa, { left: () => screen.offsetLeft + offsetIn(callBtn, newSite).x + callBtn.offsetWidth / 2, top: () => screen.offsetTop + offsetIn(callBtn, newSite).y + callBtn.offsetHeight / 2, x: 0, y: 0, scale: 1.3 }, 0.84);
-    tl.to(fa, { opacity: 0.95, scale: 0.9, duration: 0.03 }, 0.85);
-    tl.to(callBtn, { scale: 0.93, duration: 0.02 }, 0.86);
-    tl.to(callBtn, { scale: 1, duration: 0.05, ease: spring(0.35) }, 0.88);
-    tl.to(fa, { opacity: 0, scale: 1.5, duration: 0.04 }, 0.89);
+    const pos = () => offsetIn(callBtn, newSite);
+    tl.set(fa, { left: () => screen.offsetLeft + pos().x + callBtn.offsetWidth / 2, top: () => screen.offsetTop + pos().y + callBtn.offsetHeight / 2, x: 0, y: 0, scale: 1.3 }, 0.85);
+    tl.to(fa, { opacity: 0.95, scale: 0.9, duration: 0.02 }, 0.86);
+    tl.to(callBtn, { scale: 0.93, duration: 0.015 }, 0.87);
+    tl.to(callBtn, { scale: 1, duration: 0.04, ease: spring(0.35) }, 0.885);
+    tl.to(fa, { opacity: 0, scale: 1.5, duration: 0.03 }, 0.9);
   }
   showTag("call", 0.9);
-  tl.to({}, { duration: 0.1 }, 0.95);
+  tl.to({}, { duration: 0.06 }, 0.94);
+  // This pin adds three screens of scroll: every trigger below it must be measured again.
+  ScrollTrigger.sort();
+  ScrollTrigger.refresh();
 }
 
 function offsetIn(el: HTMLElement, ancestor: HTMLElement) {
