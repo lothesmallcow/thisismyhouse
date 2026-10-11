@@ -27,27 +27,32 @@ Archivo variable: headings weight 300 at width 125% with negative tracking; UI 5
 Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm run logo` regenerates the paths).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
-- Keynote without boxes: every home section is a full-screen scene over one living WebGL background
-  (LiveBackground.astro, scripts/live.ts: warm flowing gradient, pointer glow, grain; CSS fallback).
-  No snapping, no section colours, no card boxes. Scenes enter with a clip-path mask ([data-in], no opacity:
-  axe measures half-faded text) and exit drifting up and dissolving (scripts/scenes.ts). Exit triggers use
-  refreshPriority -1 so they are measured after the makeover pin, and a ResizeObserver refreshes ScrollTrigger
-  when the page height changes (opening a sector path).
-- Opening: ONE iPhone (IPhone.astro: titanium band, Dynamic Island, status bar; inner sizes in cqw so
-  nothing spills). scripts/hero.ts plays a film: site scrolls, a tap on "Chiama ora" rings the Dynamic Island,
-  a tap on "Chiedi un preventivo" drops iOS banners (WhatsApp, Mail). Sound (scripts/sound.ts, WebAudio,
-  synthesised) only after the visitor presses the speaker button.
-- Motion feels physical: spring easing (scripts/spring.ts), 3D tilt with glass reflection on fine pointers
-  (scripts/tilt.ts), contact shadows. Lenis smooth scroll on fine pointers.
-- Sector chooser (Choose.astro): radios + CSS :has(); paths.ts animates with Flip. Nothing stored.
-- Makeover (Makeover.astro, scripts/makeover.ts): pinned, scroll-scrubbed film on the same iPhone; the old
-  site is a desktop page squeezed onto the phone (non-responsive look), pinch, search for the number, then an
-  exploded 3D view: the phone tilts, the old site lifts off as a sheet and flies away, the new site lands in
-  three sheets, the phone turns back, tap to call. The 3D sheets live outside the clipped screen
-  (overflow/opacity/clip-path on a parent flatten preserve-3d).
-- docs/video/focus-design-home-telefono.mp4: vertical recording of the home (made with Playwright + ffmpeg). Replaced the three works on the home (they live on /lavori).
-- Calculator lives on /prezzi. Renovation.astro, Manifesto, WorkReel are no longer on the home.
-- Section labels sit above content (no empty 3-column label gutter: Lorenzo called it dead space).
+- A website, not slides: only the opening fills the screen and only the makeover pins; every other section
+  has its natural height and its own layout, over one living WebGL background (LiveBackground.astro,
+  scripts/live.ts). No exit fades. Content enters with a clip-path mask ([data-in], no opacity: axe measures
+  half-faded text). A ResizeObserver refreshes ScrollTrigger when the page height changes.
+- Order: opening film, sector ticker (CSS marquee, wraps with reduced motion), "Che attività hai?" chooser,
+  makeover, Metodo (heading sticky on the left, steps on a rail that fills in orange), Prezzi, CTA + FAQ.
+- The phone: IPhone.astro is the HTML phone (live screen in cqw units, Dynamic Island, status bar). In the hero
+  and the makeover a real 3D model (scripts/phone3d.ts, public/models/iphone.glb, credits in docs/CREDITI.md)
+  is drawn with WebGL under it and copies its CSS 3D pose every frame (CSS transform chain up to the
+  [data-phone3d] rig, camera = CSS perspective). The HTML screen stays on top; the CSS body hides (.iph--gl).
+  three.js + model load at the visitor's first gesture (Lighthouse and first load stay light); until then,
+  or without WebGL, the CSS phone shows (`solid` adds CSS thickness and a back for the makeover spin).
+  The 3D canvas is sized to the phone only and moved with transform (no layout shift).
+- Opening film (scripts/hero.ts): tap on "Chiama ora" rings the Dynamic Island, iOS banners drop in.
+  Sound (scripts/sound.ts) only after the visitor presses the speaker button.
+- Makeover (Makeover.astro, scripts/makeover.ts): pinned, scrubbed; old non-responsive site, pinch, search for
+  the number, then the phone lifts and turns 360 degrees (back and cameras visible), the site is swapped while
+  it faces away, a light sweep, a tap to call.
+- Sector chooser (Choose.astro, scripts/paths.ts): radios + CSS :has(), Flip. Each path shows the live demo.
+- Live demos (DemoViewer.astro, scripts/demo-viewer.ts): a real iframe of /lavori/<slug>/demo/, phone frame
+  (390 px wide, scaled) on phones, browser window (1280 px, scaled) on computers, a switch between them.
+  Loaded only when visible. On touch the site wakes with a tap ("Fatto" puts it back to sleep) so it never traps
+  the page scroll. Demo pages hide their banner when framed (Demo.astro adds .in-frame).
+- Demos on phones: long lists are swipe rails (`ul.d-rail`, focusable, with aria-label), Arcadi's works show 3
+  then "Altri lavori" (`.d-more` + `.d-more-btn`). Arcadi's call bar appears after the hero.
+- docs/video/focus-design-home-telefono.mp4: vertical recording of the home (Playwright + ffmpeg).
 - `node scripts/overflow-check.mjs` finds cut-off text and sideways scroll on every page at 6 widths.
 - Do not use the CSS `translate` property on elements GSAP transforms: GSAP folds it into its own transform.
 

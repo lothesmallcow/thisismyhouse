@@ -55,7 +55,9 @@ for (const f of files) {
       // Root page: the host wraps it in its own skeleton, so keep head and body contents only.
       const head = /<head>([\s\S]*?)<\/head>/.exec(html)?.[1] ?? "";
       const bodyTag = /<body([^>]*)>/.exec(html);
-      const body = /<body[^>]*>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "";
+      // Astro emits page-level scripts after </html>: keep them, or the page loses its own logic.
+      const tail = /<\/html>([\s\S]*)$/.exec(html)?.[1] ?? "";
+      const body = (/<body[^>]*>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "") + tail;
       const bodyClass = /class="([^"]*)"/.exec(bodyTag?.[1] ?? "")?.[1] ?? "";
       const title = /<title>[\s\S]*?<\/title>/.exec(head)?.[0] ?? "";
       const rest = head.replace(title, "").replace(/<meta charset[^>]*>|<meta name="viewport"[^>]*>/g, "");
@@ -66,8 +68,11 @@ for (const f of files) {
       const home = join(out, "home/index.html");
       writeFileSync(home, readFileSync(home, "utf8").replaceAll("_astro/", "assets/"));
     }
+  } else if (f.endsWith(".glb")) {
+    // Artifact hosts do not serve .glb: ship it as base64 text (phone3d.ts decodes a .txt model).
+    writeFileSync(`${dst}.txt`, readFileSync(src).toString("base64"));
   } else if (f.endsWith(".js")) {
-    let js = readFileSync(src, "utf8").replace("n=function(e){return`/`+e}", "n=function(e){return new URL(`../`+e,import.meta.url).href}");
+    let js = readFileSync(src, "utf8").replace("models/iphone.glb", "models/iphone.glb.txt").replace("n=function(e){return`/`+e}", "n=function(e){return new URL(`../`+e,import.meta.url).href}");
     writeFileSync(dst, js.replaceAll("_astro/", "assets/"));
   } else if (f.endsWith(".css")) {
     writeFileSync(dst, readFileSync(src, "utf8").replaceAll("_astro/", "assets/").replace(/url\((["']?)\/(fonts\/[^)"']+)\1\)/g, "url($1../$2$1)"));

@@ -29,7 +29,7 @@ const banners = [
       </div>
     </div>
 
-    <figure class="film" data-film data-tilt-area>
+    <figure class="film" data-film data-tilt-area data-phone3d>
       <div class="film__phone" data-tilt="7">
         <IPhone label="Il sito di Arcadi Ristrutturazioni, un'impresa inventata, su un iPhone: arriva una chiamata e poi le richieste su WhatsApp e per email">
           <div class="film__site" data-site>
@@ -122,6 +122,7 @@ const banners = [
 
   .film {
     margin: 0;
+    perspective: 1100px;
     display: grid;
     justify-items: center;
     gap: 1.25rem;
@@ -144,6 +145,7 @@ const banners = [
   }
   .film__phone {
     position: relative;
+    transform-style: preserve-3d;
     --w: clamp(200px, 33vh, 320px);
   }
   @media (max-width: 899px) {
@@ -343,6 +345,8 @@ const banners = [
   .film__cap {
     display: flex;
     align-items: center;
+    /* Room for the sound and replay buttons, shown by JS: no jump when they appear. */
+    min-height: 44px;
     gap: 0.75rem;
     font-size: var(--fs-small);
     color: var(--grafite);

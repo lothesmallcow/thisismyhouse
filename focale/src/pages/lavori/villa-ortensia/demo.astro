@@ -76,7 +76,7 @@ const years = [2027, 2028];
     <section class="vo-sec">
       <div class="vo-wrap">
         <h2>Gli spazi</h2>
-        <ul class="vo-spaces">
+        <ul class="vo-spaces d-rail" tabindex="0" aria-label="Gli spazi">
           {
             spaces.map((s, i) => (
               <li class:list={{ "vo-spaces__alt": i % 2 === 1 }}>
@@ -274,7 +274,7 @@ const years = [2027, 2028];
   }
   .vo-hero__media :global(img) {
     width: 100%;
-    height: clamp(320px, 70vh, 720px);
+    height: clamp(260px, 46vh, 720px);
     object-fit: cover;
   }
   /* The one gentle image reveal: CSS only, skipped with reduced motion */
@@ -318,7 +318,7 @@ const years = [2027, 2028];
     cursor: pointer;
   }
   .vo-sec {
-    padding: clamp(64px, 9vw, 130px) 0;
+    padding: clamp(52px, 8vw, 120px) 0;
   }
   .vo-sec--mist {
     background: var(--mist);

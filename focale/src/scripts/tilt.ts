@@ -10,7 +10,9 @@ export function initTilt() {
   if (!ok) return;
   document.querySelectorAll<HTMLElement>("[data-tilt]").forEach((el) => {
     const max = Number(el.dataset.tilt || 8);
-    gsap.set(el, { transformPerspective: 1100, transformStyle: "preserve-3d" });
+    // A parent with its own CSS perspective (a 3D rig, see phone3d.ts) supplies the depth.
+    const own = el.parentElement && getComputedStyle(el.parentElement).perspective === "none";
+    gsap.set(el, { transformStyle: "preserve-3d", ...(own ? { transformPerspective: 1100 } : {}) });
     const rx = gsap.quickTo(el, "rotationX", { duration: 0.9, ease: "elastic.out(1, 0.6)" });
     const ry = gsap.quickTo(el, "rotationY", { duration: 0.9, ease: "elastic.out(1, 0.6)" });
     const glares = el.querySelectorAll<HTMLElement>("[data-tilt-glare]");

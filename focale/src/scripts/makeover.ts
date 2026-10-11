@@ -23,9 +23,7 @@ export function initMakeover() {
   const fa = q("[data-mk-fa]");
   const fb = q("[data-mk-fb]");
   const obj = q("[data-mk-obj]");
-  const layers = q("[data-mk-layers]");
-  const lyOld = q("[data-mk-ly-old]");
-  const lyNew = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-ly-new]"));
+  const sweep = q("[data-mk-sweep]");
   const steps = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-step]"));
   const tag = (k: string) => q(`[data-mk-tag="${k}"]`);
   const callBtn = newSite.querySelector<HTMLElement>(".ah__btn--ghost");
@@ -36,9 +34,6 @@ export function initMakeover() {
 
   gsap.set(newSite, { autoAlpha: 0 });
   gsap.set([fa, fb], { opacity: 0 });
-  gsap.set(obj, { transformPerspective: 0 });
-  gsap.set(lyNew, { z: 420, autoAlpha: 0 });
-  gsap.set(lyOld, { z: 0 });
 
   const tl = gsap.timeline({
     defaults: { ease: "power2.inOut" },
@@ -84,23 +79,16 @@ export function initMakeover() {
   tl.to(fa, { opacity: 0, duration: 0.01 }, 0.33);
   hideTag("num", 0.35);
 
-  // 2. The phone turns in 3D, the screen comes apart in sheets.
-  tl.to(obj, { rotationX: 50, rotationZ: -22, scale: 0.92, duration: 0.1, ease: "power3.inOut" }, 0.37);
-  tl.set(layers, { visibility: "visible" }, 0.42);
-  tl.set(oldWrap, { visibility: "hidden" }, 0.42);
-  tl.to(lyOld, { z: 130, duration: 0.06, ease: "power2.out" }, 0.43);
-  // The old site lifts off, tips and flies away.
-  tl.to(lyOld, { z: 380, rotationX: -18, y: () => -Hs() * 0.25, autoAlpha: 0, duration: 0.1, ease: "power2.in" }, 0.49);
-  // The new site lands in three sheets, top to bottom.
-  lyNew.forEach((ly, i) => {
-    const at = 0.55 + i * 0.06;
-    tl.to(ly, { autoAlpha: 1, duration: 0.01 }, at);
-    tl.to(ly, { z: 0, duration: 0.08, ease: spring(0.22) }, at);
-  });
-  // 3. Sheets merge into the screen, the phone turns back.
-  tl.set(newSite, { autoAlpha: 1 }, 0.74);
-  tl.set(layers, { visibility: "hidden" }, 0.745);
-  tl.to(obj, { rotationX: 0, rotationZ: 0, scale: 1, duration: 0.08, ease: spring(0.18) }, 0.74);
+  // 2. The makeover: the phone lifts and turns all the way around (titanium back, cameras);
+  //    when it faces away the old site is swapped for the new one, then light crosses the glass.
+  tl.to(obj, { y: -20, scale: 1.04, rotationX: 8, duration: 0.05, ease: "power2.out" }, 0.37);
+  tl.to(obj, { rotationY: 360, duration: 0.3, ease: "power2.inOut" }, 0.4);
+  tl.set(oldWrap, { autoAlpha: 0 }, 0.55);
+  tl.set(newSite, { autoAlpha: 1 }, 0.55);
+  tl.to(obj, { y: 0, scale: 1, rotationX: 0, duration: 0.08, ease: spring(0.25) }, 0.68);
+  tl.set(obj, { rotationY: 0 }, 0.76);
+  tl.fromTo(sweep, { left: "-60%", opacity: 0 }, { left: "120%", opacity: 1, duration: 0.07, ease: "power1.inOut" }, 0.72);
+  tl.to(sweep, { opacity: 0, duration: 0.01 }, 0.79);
   showTag("read", 0.8);
 
   // 4. A tap on "Chiama ora".

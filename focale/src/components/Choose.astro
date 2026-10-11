@@ -7,7 +7,7 @@
  */
 import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
-import IPhone from "./IPhone.astro";
+import DemoViewer from "./DemoViewer.astro";
 import imgArcadi from "../assets/demo/arcadi-ristrutturazioni/cucina-dopo.jpg";
 import imgCascina from "../assets/demo/cascina-rovere/hero.jpg";
 import imgVilla from "../assets/demo/villa-ortensia/terrazza.jpg";
@@ -67,12 +67,8 @@ const rules = [...paths.map((p) => p.slug), "altro"]
           <article class="path" data-path={p.slug} aria-label={p.chip}>
             <div class="path__media">
               <Image src={p.img} alt="" widths={[640, 1000, 1400]} sizes="(min-width: 900px) 50vw, 92vw" class="path__img" data-path-img />
-              <div class="path__phone" data-path-phone>
-                <IPhone label={`Il sito dimostrativo di ${p.demo.data.name} visto dal telefono`}>
-                  <div class="path__site">
-                    <Image src={p.demo.data.shotPhone} alt="" widths={[300, 600]} sizes="200px" />
-                  </div>
-                </IPhone>
+              <div class="path__demo" data-path-phone>
+                <DemoViewer slug={p.demo.id} name={p.demo.data.name} shotPhone={p.demo.data.shotPhone} shotDesktop={p.demo.data.shotDesktop} />
               </div>
             </div>
             <div class="path__body">
@@ -82,7 +78,7 @@ const rules = [...paths.map((p) => p.slug), "altro"]
               </ul>
               <div class="btn-row" data-path-item>
                 <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${p.slug}`}>{p.cta}</a>
-                <a class="btn btn--secondary" href={`/lavori/${p.demo.id}/demo/`}>Il sito demo</a>
+                <a class="btn btn--secondary" href={`/lavori/${p.demo.id}/`}>Com'è fatto</a>
               </div>
             </div>
           </article>
@@ -212,13 +208,14 @@ const rules = [...paths.map((p) => p.slug), "altro"]
   }
   @media (min-width: 900px) {
     .path {
-      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-      height: clamp(380px, 56vh, 620px);
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      min-height: clamp(380px, 56vh, 620px);
     }
   }
   .path__media {
     position: relative;
-    min-height: 240px;
+    display: grid;
+    align-items: center;
     overflow: hidden;
   }
   .path__media :global(.path__img) {
@@ -228,27 +225,19 @@ const rules = [...paths.map((p) => p.slug), "altro"]
     height: 100%;
     object-fit: cover;
   }
-  .path__phone {
+  /* The live demo sits over the business photo; a soft latte veil keeps its controls readable. */
+  .path__media::after {
+    content: "";
     position: absolute;
-    right: 8%;
-    top: 10%;
-    --w: clamp(120px, 15vh, 200px);
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 248, 242, 0) 40%, rgba(255, 248, 242, 0.75));
+    pointer-events: none;
   }
-  @media (max-width: 899px) {
-    .path__phone {
-      --w: 110px;
-      top: 12%;
-    }
-  }
-  .path__site {
-    position: absolute;
-    inset: 13.7cqw 0 0;
-    background: #fff;
-  }
-  .path__site :global(img) {
-    display: block;
-    width: 100%;
-    height: auto;
+  .path__demo {
+    position: relative;
+    z-index: 1;
+    padding: clamp(1rem, 0.5rem + 2vw, 2.25rem);
+    --dv-phone: clamp(190px, 28vh, 250px);
   }
   .path__body {
     padding: clamp(1.25rem, 1rem + 2vw, 2.75rem);

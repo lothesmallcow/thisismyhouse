@@ -125,7 +125,7 @@ const near = ["sentieri", "lago", "borgo"];
       <div class="cr-wrap">
         <h2 data-i18n="rooms_h2">{t("rooms_h2")}</h2>
         <p class="cr-lead" data-i18n="rooms_lead">{t("rooms_lead")}</p>
-        <ul class="cr-rooms">
+        <ul class="cr-rooms d-rail" tabindex="0" aria-label="Le camere">
           {
             rooms.map((r) => (
               <li>

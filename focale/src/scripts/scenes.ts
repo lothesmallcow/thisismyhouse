@@ -33,14 +33,14 @@ export function initScenes() {
     clearTimeout(tm);
     tm = window.setTimeout(() => ScrollTrigger.refresh(), 150);
   }).observe(document.querySelector(".scenes")!);
-  // Each scene drifts up and dissolves as the next one arrives, like a keynote transition.
-  sections.slice(0, -1).forEach((s) => {
-    const inner = s.querySelector<HTMLElement>(":scope > .wrap, .mk__in");
-    if (!inner) return;
-    gsap.fromTo(
-      inner,
-      { y: 0, opacity: 1 },
-      { y: -90, opacity: 0, ease: "none", immediateRender: false, scrollTrigger: { trigger: s, start: "bottom 75%", end: "bottom 10%", scrub: true, invalidateOnRefresh: true, refreshPriority: -1 } },
-    );
-  });
+  // Metodo: the orange rail fills as the steps scroll past.
+  const how = document.querySelector<HTMLElement>("[data-how]");
+  if (how)
+    ScrollTrigger.create({
+      trigger: how,
+      start: "top 70%",
+      end: "bottom 55%",
+      refreshPriority: -1,
+      onUpdate: (self) => how.style.setProperty("--p", self.progress.toFixed(3)),
+    });
 }

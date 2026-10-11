@@ -1,0 +1,260 @@
+---
+/**
+ * A demo site you can actually scroll, inside the page: on phones it sits in an iPhone, on
+ * computers in a browser window (the visitor can switch). The page is a real iframe of
+ * /lavori/<slug>/demo/, loaded only when the viewer comes into view, and rendered at true
+ * phone (390 px) or desktop (1280 px) width, then scaled to fit. On touch screens the site
+ * wakes with a tap, so a swipe over it never traps the page scroll. Without JS: screenshots
+ * and a link. Logic in scripts/demo-viewer.ts.
+ */
+import { Image } from "astro:assets";
+import IPhone from "./IPhone.astro";
+
+interface Props {
+  slug: string;
+  name: string;
+  shotPhone: ImageMetadata;
+  shotDesktop: ImageMetadata;
+  class?: string;
+  /** Lazy screenshots (below the fold) or eager (first screen). */
+  eager?: boolean;
+}
+const { slug, name, shotPhone, shotDesktop, class: cls, eager = false } = Astro.props;
+const src = `/lavori/${slug}/demo/`;
+// An address that is clearly not a real site (.demo is not a domain anyone can own).
+const domain = `${slug}.demo`;
+const loading = eager ? "eager" : "lazy";
+---
+<div class:list={["dv", cls]} data-dv data-src={src} data-mode="phone">
+  <div class="dv__stage">
+    <div class="dv__phone">
+      <IPhone>
+        <div class="dv__site" data-dv-fit="390">
+          <Image src={shotPhone} alt="" widths={[300, 600]} sizes="280px" class="dv__shot" loading={loading} />
+          <iframe data-dv-frame title={`Il sito dimostrativo di ${name}, versione telefono`} tabindex="-1"></iframe>
+        </div>
+      </IPhone>
+    </div>
+
+    <div class="dv__desk">
+      <div class="dv__win">
+        <div class="dv__chrome" aria-hidden="true">
+          <span class="dv__dots"><i></i><i></i><i></i></span>
+          <span class="dv__url">{domain}</span>
+        </div>
+        <div class="dv__view" data-dv-fit="1280">
+          <Image src={shotDesktop} alt="" widths={[800, 1400]} sizes="(min-width: 900px) 60vw, 92vw" class="dv__shot" loading={loading} />
+          <iframe data-dv-frame title={`Il sito dimostrativo di ${name}, versione computer`} tabindex="-1"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="dv__wake" data-dv-wake hidden>
+      <span class="dv__wake-in">Tocca per scorrere il sito</span>
+    </button>
+  </div>
+
+  <div class="dv__bar">
+    <div class="dv__switch" role="group" aria-label="Guarda il sito come su" data-dv-switch hidden>
+      <button type="button" data-dv-to="phone" aria-pressed="true">Telefono</button>
+      <button type="button" data-dv-to="desk" aria-pressed="false">Computer</button>
+    </div>
+    <button type="button" class="dv__done" data-dv-done hidden>Fatto, torna alla pagina</button>
+    <a class="dv__open" href={src} target="_blank" rel="noopener">Apri a schermo intero</a>
+  </div>
+</div>
+
+<style>
+  .dv {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 0.9rem;
+    width: 100%;
+  }
+  .dv__stage {
+    position: relative;
+    width: 100%;
+    display: grid;
+    justify-items: center;
+  }
+  .dv__desk {
+    display: none;
+    width: 100%;
+  }
+  .dv[data-mode="desk"] .dv__desk {
+    display: block;
+  }
+  .dv[data-mode="desk"] .dv__phone {
+    display: none;
+  }
+  .dv__phone {
+    --w: var(--dv-phone, clamp(200px, 30vh, 290px));
+    filter: drop-shadow(0 30px 40px rgba(60, 25, 8, 0.28));
+  }
+  .dv__site {
+    position: absolute;
+    inset: 13.7cqw 0 0;
+    overflow: hidden;
+    background: #fff;
+  }
+  /* Browser window */
+  .dv__win {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow:
+      0 50px 90px -45px rgba(60, 25, 8, 0.6),
+      0 0 0 1px rgba(36, 19, 12, 0.1);
+  }
+  .dv__chrome {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 34px;
+    padding: 0 12px;
+    background: #f3f0ec;
+    border-bottom: 1px solid #e2ddd6;
+  }
+  .dv__dots {
+    display: flex;
+    gap: 7px;
+    flex: none;
+  }
+  .dv__dots i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #ff5f57;
+  }
+  .dv__dots i:nth-child(2) {
+    background: #febc2e;
+  }
+  .dv__dots i:nth-child(3) {
+    background: #28c840;
+  }
+  .dv__url {
+    flex: 1;
+    min-width: 0;
+    max-width: 22rem;
+    margin-inline: auto;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 12px;
+    color: #5a5550;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dv__view {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: var(--dv-ratio, 16 / 9.6);
+    background: #fff;
+  }
+  /* The iframe renders at true width and is scaled to fit (scripts/demo-viewer.ts sets --k). */
+  .dv iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 0;
+    transform-origin: 0 0;
+    transform: scale(var(--k, 1));
+    width: var(--fw, 100%);
+    height: var(--fh, 100%);
+    background: #fff;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .dv iframe.is-ready {
+    opacity: 1;
+  }
+  .dv__shot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: auto;
+  }
+  /* Touch: the site sleeps behind a tap, so swiping over it scrolls the page. */
+  .dv.is-touch:not(.is-live) iframe {
+    pointer-events: none;
+  }
+  .dv__wake {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: end center;
+    padding-bottom: 18%;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 6;
+  }
+  .dv__wake[hidden] {
+    display: none;
+  }
+  .dv__wake-in {
+    padding: 0.7rem 1.1rem;
+    border-radius: 999px;
+    background: rgba(36, 19, 12, 0.82);
+    color: #fff;
+    font: 500 0.92rem/1.2 var(--font);
+    box-shadow: 0 10px 24px -10px rgba(36, 19, 12, 0.6);
+  }
+  .dv__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem 1.1rem;
+  }
+  .dv__switch {
+    display: inline-flex;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255, 248, 242, 0.92);
+    box-shadow: 0 0 0 1px rgba(36, 19, 12, 0.08);
+  }
+  .dv__switch[hidden],
+  .dv__done[hidden] {
+    display: none;
+  }
+  .dv__switch button,
+  .dv__done {
+    min-height: 44px;
+    padding: 0 1.15rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    font: 500 0.92rem/1 var(--font);
+    color: var(--inchiostro);
+    cursor: pointer;
+  }
+  .dv__switch button[aria-pressed="true"] {
+    background: var(--mandarino);
+    color: var(--inchiostro);
+  }
+  .dv__done {
+    background: var(--inchiostro);
+    color: #fff;
+  }
+  .dv__open {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 0.4rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--inchiostro);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+</style>
+<script>
+  import { initDemoViewers } from "../scripts/demo-viewer";
+  initDemoViewers();
+</script>

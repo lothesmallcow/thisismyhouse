@@ -23,6 +23,11 @@ const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bod
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     {fonts.map((f) => <link rel="preload" href={f} as="font" type="font/woff2" crossorigin />)}
     <slot name="head" />
+    <script is:inline>
+      document.documentElement.classList.add("js");
+      // Shown inside Focus Design's own pages (DemoViewer): no banner, it is already framed.
+      if (window.self !== window.top) document.documentElement.classList.add("in-frame");
+    </script>
   </head>
   <body class:list={["demo", bodyClass]}>
     <div class="demo-banner on-dark">
@@ -32,6 +37,15 @@ const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bod
       <slot />
     </main>
     <script>
+      document.querySelectorAll<HTMLElement>(".d-more").forEach((list) => {
+        const btn = list.nextElementSibling as HTMLButtonElement | null;
+        if (!btn?.classList.contains("d-more-btn")) return;
+        list.classList.add("is-short");
+        btn.addEventListener("click", () => {
+          list.classList.remove("is-short");
+          btn.remove();
+        });
+      });
       // Soft reveal of section content as it scrolls in. Content is visible without JS and with reduced motion.
       if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches && "IntersectionObserver" in window) {
         const els = Array.from(document.querySelectorAll<HTMLElement>("main section:not(:first-of-type) :is(h2, li, figure, form, dl, p)"));
@@ -59,6 +73,12 @@ const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bod
 <style is:global>
   body.demo {
     padding-top: 40px;
+  }
+  .in-frame body.demo {
+    padding-top: 0;
+  }
+  .in-frame .demo-banner {
+    display: none;
   }
   .demo-banner {
     position: fixed;
@@ -96,5 +116,40 @@ const { title, description, lang = "it", fonts = [], themeColor = "#1E3A2C", bod
   }
   .demo-banner p {
     margin: 0;
+  }
+  /* Phones: long lists become a row you swipe, the next card peeking in (no endless column). */
+  @media (max-width: 760px) {
+    body.demo ul.d-rail {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: var(--rail-pad, 18px);
+      margin-inline: calc(-1 * var(--rail-pad, 18px));
+      padding-inline: var(--rail-pad, 18px);
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+    body.demo ul.d-rail::-webkit-scrollbar {
+      display: none;
+    }
+    body.demo ul.d-rail > li {
+      flex: 0 0 82%;
+      scroll-snap-align: start;
+    }
+  }
+  /* Phones: only the first works, the rest behind a button (scripts below). */
+  @media (max-width: 760px) {
+    .d-more.is-short > :nth-child(n + 4) {
+      display: none;
+    }
+  }
+  .d-more-btn {
+    display: none;
+  }
+  @media (max-width: 760px) {
+    .d-more.is-short + .d-more-btn {
+      display: inline-flex;
+    }
   }
 </style>

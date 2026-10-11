@@ -12,10 +12,33 @@ interface Props {
   time?: string;
   /** Status bar and home indicator in white, for dark or colourful screens. */
   light?: boolean;
+  /** A solid 3D phone: titanium sides with real thickness and a back with cameras, so it can turn around. */
+  solid?: boolean;
 }
-const { label, class: cls, time = "9:41", light = false } = Astro.props;
+const { label, class: cls, time = "9:41", light = false, solid = false } = Astro.props;
+// Thickness is built from thin slices stacked in depth (the "layered" 3D pattern).
+const slices = solid ? Array.from({ length: 22 }, (_, i) => i) : [];
 ---
-<div class:list={["iph", cls, { "iph--light": light }]} role={label ? "img" : undefined} aria-label={label}>
+<div class:list={["iph", cls, { "iph--light": light, "iph--solid": solid }]} role={label ? "img" : undefined} aria-label={label}>
+  {
+    solid && (
+      <>
+        {slices.map((i) => (
+          <span class="iph__slice" style={`--i:${i}`} aria-hidden="true" />
+        ))}
+        <span class="iph__back" aria-hidden="true">
+          <span class="iph__plateau">
+            <i class="iph__lens iph__lens--a" />
+            <i class="iph__lens iph__lens--b" />
+            <i class="iph__lens iph__lens--c" />
+            <i class="iph__flash" />
+            <i class="iph__lidar" />
+            <i class="iph__mic" />
+          </span>
+        </span>
+      </>
+    )
+  }
   <span class="iph__b iph__b--action" aria-hidden="true"></span>
   <span class="iph__b iph__b--up" aria-hidden="true"></span>
   <span class="iph__b iph__b--down" aria-hidden="true"></span>
@@ -46,6 +69,121 @@ const { label, class: cls, time = "9:41", light = false } = Astro.props;
     position: relative;
     width: var(--_w);
     flex: none;
+  }
+  /* ---------- Solid 3D body ---------- */
+  .iph--solid {
+    --_t: calc(var(--_w) * 0.115);
+    transform-style: preserve-3d;
+  }
+  .iph--solid .iph__b {
+    display: none;
+  }
+  .iph--solid .iph__band {
+    position: relative;
+    background: linear-gradient(135deg, #b4b5b8 0%, #f4f4f5 16%, #c4c5c8 34%, #ececed 58%, #a9aaad 80%, #d9d9db 100%);
+    transform: translateZ(0.5px);
+    backface-visibility: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  }
+  /* The WebGL model (scripts/phone3d.ts) has taken over the body: only the live screen stays. */
+  .iph--gl .iph__slice,
+  .iph--gl .iph__back,
+  .iph--gl .iph__b {
+    display: none;
+  }
+  .iph--gl .iph__band,
+  .iph--gl .iph__bezel {
+    background: transparent;
+    box-shadow: none;
+  }
+  .iph__slice {
+    position: absolute;
+    inset: 0;
+    border-radius: calc(var(--_w) * 0.172);
+    /* Silver aluminium edge: bright where it catches the light, softer on the curve. */
+    background: linear-gradient(90deg, #a9aaad, #f2f2f3 14%, #cfd0d3 34%, #e4e4e6 70%, #a3a4a7 100%);
+    transform: translateZ(calc(var(--_t) * var(--i) / -21));
+  }
+  /* The back, modelled on the current Pro: silver aluminium, a camera plateau across the whole
+     top, matte glass below. From the back the lenses sit on the left. */
+  .iph__back {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: calc(var(--_w) * 0.172);
+    background:
+      radial-gradient(90% 55% at 70% 75%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 70%),
+      linear-gradient(175deg, #f4f4f5, #e3e3e5 60%, #d6d6d9);
+    transform: translateZ(calc(var(--_t) * -1)) rotateY(180deg);
+    backface-visibility: hidden;
+    box-shadow: inset 0 0 0 calc(var(--_w) * 0.008) #c4c5c8;
+  }
+  .iph__plateau {
+    position: absolute;
+    inset: 0 0 auto;
+    height: calc(var(--_w) * 0.6);
+    border-radius: calc(var(--_w) * 0.172) calc(var(--_w) * 0.172) calc(var(--_w) * 0.05) calc(var(--_w) * 0.05);
+    background:
+      linear-gradient(100deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 45%),
+      linear-gradient(180deg, #ececee, #d9dadc);
+    box-shadow:
+      0 calc(var(--_w) * 0.012) calc(var(--_w) * 0.025) rgba(40, 40, 45, 0.22),
+      inset 0 calc(var(--_w) * -0.004) 0 rgba(255, 255, 255, 0.8);
+  }
+  .iph__lens {
+    position: absolute;
+    width: calc(var(--_w) * 0.222);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    /* Glass: deep blue-black with a coloured coating reflection. */
+    background:
+      radial-gradient(circle at 36% 32%, rgba(190, 210, 255, 0.55) 0 6%, rgba(190, 210, 255, 0) 14%),
+      radial-gradient(circle at 50% 50%, #1b2234 0 30%, #07090e 31% 58%, #23262d 59% 64%, #050608 65%);
+    box-shadow:
+      0 0 0 calc(var(--_w) * 0.016) #c9cacd,
+      0 0 0 calc(var(--_w) * 0.02) #9fa0a4,
+      0 calc(var(--_w) * 0.012) calc(var(--_w) * 0.03) calc(var(--_w) * 0.01) rgba(30, 30, 35, 0.35);
+  }
+  .iph__lens--a {
+    left: calc(var(--_w) * 0.06);
+    top: calc(var(--_w) * 0.06);
+  }
+  .iph__lens--b {
+    left: calc(var(--_w) * 0.06);
+    top: calc(var(--_w) * 0.32);
+  }
+  .iph__lens--c {
+    left: calc(var(--_w) * 0.295);
+    top: calc(var(--_w) * 0.19);
+  }
+  .iph__flash {
+    position: absolute;
+    right: calc(var(--_w) * 0.1);
+    top: calc(var(--_w) * 0.12);
+    width: calc(var(--_w) * 0.075);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fffdf3 0 35%, #e8e2c8 60%, #cfc9b1);
+    box-shadow: 0 0 0 calc(var(--_w) * 0.006) #b9babd;
+  }
+  .iph__lidar {
+    position: absolute;
+    right: calc(var(--_w) * 0.105);
+    top: calc(var(--_w) * 0.36);
+    width: calc(var(--_w) * 0.065);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #3a3d44, #0c0d10 70%);
+    box-shadow: 0 0 0 calc(var(--_w) * 0.006) #b9babd;
+  }
+  .iph__mic {
+    position: absolute;
+    right: calc(var(--_w) * 0.13);
+    top: calc(var(--_w) * 0.26);
+    width: calc(var(--_w) * 0.016);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #6e7075;
   }
   .iph__band {
     padding: calc(var(--_w) * 0.011);

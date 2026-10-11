@@ -1,7 +1,7 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import Closing from "../../../components/Closing.astro";
-import { Image } from "astro:assets";
+import DemoViewer from "../../../components/DemoViewer.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { site } from "../../../config/site";
 import { breadcrumbs } from "../../../lib/schema";
@@ -36,10 +36,7 @@ const blocks = [
   </section>
 
   <div class="wrap">
-    <figure class="cs-stage">
-      <Image src={d.shotDesktop} alt={`Il sito di ${d.name} visto da computer`} widths={[700, 1100, 1500]} sizes="(min-width: 1000px) 72vw, 90vw" class="cs-desk" loading="eager" />
-      <Image src={d.shotPhone} alt={`Il sito di ${d.name} visto dal telefono`} widths={[240, 480]} sizes="240px" class="cs-phone" />
-    </figure>
+    <DemoViewer slug={l.id} name={d.name} shotPhone={d.shotPhone} shotDesktop={d.shotDesktop} eager class="cs-live" />
   </div>
 
   <section class="section cs" aria-labelledby="obiettivo">
@@ -89,27 +86,10 @@ const blocks = [
       margin-left: 0;
     }
   }
-  .cs-stage {
-    position: relative;
-    margin: 0;
-    padding: clamp(1.25rem, 0.5rem + 4vw, 5rem) clamp(1.25rem, 0.5rem + 4vw, 5rem) clamp(3rem, 2rem + 5vw, 7rem);
-    background: var(--nebbia);
-    border-radius: clamp(14px, 1vw + 8px, 26px);
-    overflow: hidden;
-  }
-  .cs-stage :global(.cs-desk) {
-    width: 82%;
-    border-radius: 10px;
-    box-shadow: 0 40px 80px -40px rgba(60, 25, 8, 0.4);
-  }
-  .cs-stage :global(.cs-phone) {
-    position: absolute;
-    right: 6%;
-    bottom: -4%;
-    width: 21%;
-    border: 7px solid #1b1f1d;
-    border-radius: 20px;
-    box-shadow: 0 40px 70px -30px rgba(60, 25, 8, 0.5);
+  .wrap :global(.cs-live) {
+    --dv-phone: clamp(220px, 34vh, 300px);
+    max-width: 1120px;
+    margin-inline: auto;
   }
   .cs-goal {
     max-width: 18ch;

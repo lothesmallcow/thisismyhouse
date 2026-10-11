@@ -632,18 +632,14 @@ html.lenis body {
 }
 
 /* ---------- Home (pages/index.astro, scripts/scenes.ts) ---------- */
-/* Keynote without boxes: every section is a full-screen scene over one living background
-   (LiveBackground.astro). Scenes flow into each other: no snapping, no coloured blocks. */
+/* A website over one living background (LiveBackground.astro): only the opening fills the screen
+   and only the makeover pins; every other section has its natural height and its own layout. */
 body.home {
   background: transparent;
 }
-.home .scenes > section {
-  min-height: 100vh;
-  min-height: 100svh;
-  display: grid;
-  align-items: center;
+.home .scenes > section:not(.scene) {
   box-sizing: border-box;
-  padding-block: calc(var(--header-h) + clamp(1rem, 4vh, 3rem)) clamp(2rem, 6vh, 4rem);
+  padding-block: clamp(4.5rem, 3rem + 7vh, 8.5rem);
 }
 .home .scenes > section.mk {
   padding: 0;
@@ -669,4 +665,17 @@ body.home {
     clip-path: inset(0 0 100% 0);
     transform: translateY(36px);
   }
+}
+
+/* ---------- Real 3D phone (scripts/phone3d.ts) ---------- */
+[data-phone3d] {
+  position: relative;
+}
+.phone3d {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 28px 34px rgba(60, 25, 8, 0.28));
 }

@@ -73,7 +73,7 @@ const tel = telHref();
     <section class="ar-sec" id="servizi">
       <div class="ar-wrap">
         <h2>Cosa facciamo</h2>
-        <ul class="ar-services">
+        <ul class="ar-services d-rail" tabindex="0" aria-label="I servizi">
           {
             services.map((s) => (
               <li>
@@ -91,9 +91,10 @@ const tel = telHref();
       <div class="ar-wrap">
         <h2>Lavori finiti, prima e dopo</h2>
         <p class="ar-lead">Trascina la linea per confrontare.</p>
-        <div class="ar-works">
+        <div class="ar-works d-more">
           {works.map((w) => <BeforeAfter before={pic(w.b)} after={pic(w.a)} caption={w.c} alt={w.alt} />)}
         </div>
+        <button type="button" class="d-more-btn ar-btn ar-btn--ghost ar-more">Altri {works.length - 3} lavori</button>
       </div>
     </section>
 
@@ -114,7 +115,7 @@ const tel = telHref();
       </div>
     </section>
 
-    <section class="ar-sec ar-sec--dark" id="zone">
+    <section class="ar-sec ar-sec--warm" id="zone">
       <div class="ar-wrap ar-zone">
         <h2>Dove lavoriamo</h2>
         <ul>{zones.map((z) => <li>{z}</li>)}</ul>
@@ -280,7 +281,7 @@ const tel = telHref();
   }
   @media (max-width: 899px) {
     .ar-hero2__media::after {
-      background: linear-gradient(0deg, rgba(20, 18, 16, 0.94) 0%, rgba(20, 18, 16, 0.7) 45%, rgba(20, 18, 16, 0) 78%);
+      background: linear-gradient(0deg, rgba(20, 18, 16, 0.94) 0%, rgba(20, 18, 16, 0.8) 50%, rgba(20, 18, 16, 0.55) 72%, rgba(20, 18, 16, 0) 94%);
     }
   }
   .ar-hero2__line {
@@ -477,12 +478,8 @@ const tel = telHref();
   .ar-sec--grey {
     background: var(--grey);
   }
-  .ar-sec--dark {
-    background: var(--ink);
-    color: #f2f2f0;
-  }
-  .ar-sec--dark h2 {
-    color: #f2f2f0;
+  .ar-sec--warm {
+    background: #f7e6da;
   }
   .ar-lead {
     font-size: 1.25rem;
@@ -565,8 +562,11 @@ const tel = telHref();
     gap: 0.6rem;
   }
   .ar-zone li {
-    padding: 0.5rem 0.9rem;
-    border: 2px solid #f2f2f0;
+    padding: 0.5rem 0.95rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: inset 0 0 0 2px var(--o);
+    color: #a8430b;
     font-weight: 700;
   }
   .ar-quote-grid {
@@ -688,6 +688,10 @@ const tel = telHref();
     color: #fff;
     cursor: pointer;
   }
+  .ar-more {
+    margin-top: 1.75rem;
+    align-items: center;
+  }
   .ar-btn--ghost {
     background: transparent;
     color: var(--ink);
@@ -737,6 +741,11 @@ const tel = telHref();
     text-decoration: none;
     border-radius: 6px;
     box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.45);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* It arrives once the hero (with its own call button) has scrolled away. */
+  :global(.js) .ar-sticky:not(.is-on) {
+    transform: translateY(calc(100% + 30px));
   }
   @media (min-width: 900px) {
     .ar-sticky {
@@ -747,4 +756,7 @@ const tel = telHref();
 <script>
   import { initDemoForms } from "../../../scripts/demo-form";
   initDemoForms();
+  const sticky = document.querySelector<HTMLElement>(".ar-sticky");
+  const hero = document.querySelector<HTMLElement>(".ar-hero2");
+  if (sticky && hero) new IntersectionObserver(([e]) => sticky.classList.toggle("is-on", !e.isIntersecting), { rootMargin: "-40% 0px 0px 0px" }).observe(hero);
 </script>

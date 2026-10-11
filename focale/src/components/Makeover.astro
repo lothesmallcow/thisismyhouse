@@ -3,7 +3,7 @@
  * The makeover, filmed like the opening: one iPhone with a real-looking old website (a desktop
  * layout squeezed onto a phone, as non-responsive sites really look). Scrolling plays it like a
  * video: a pinch to read, a search for the phone number, then the old site is rebuilt into the
- * new one behind an orange line, and a tap calls. Tags sit outside the phone.
+ * new one while the phone turns around in 3D, and a tap calls. Tags sit outside the phone.
  * Without JS or with reduced motion: the finished site and the steps as a list.
  * Logic in scripts/makeover.ts.
  */
@@ -44,27 +44,20 @@ const tags = [
       </div>
 
       <figure class="mk__stage">
-        <div class="mk__rig">
+        <div class="mk__rig" data-phone3d>
         <div class="mk__obj" data-mk-obj>
         <div class="mk__phone" data-mk-phone>
-          <IPhone label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
+          <IPhone solid label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
             <div class="mk__screen" data-mk-screen>
               <div class="mk__old" data-mk-old>
                 <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
               </div>
               <div class="mk__new" data-mk-new><ArcadiHero /></div>
-              <span class="mk__scan" data-mk-scan aria-hidden="true"></span>
+              <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
             </div>
             <span class="mk__finger mk__finger--a" data-mk-fa aria-hidden="true"></span>
             <span class="mk__finger mk__finger--b" data-mk-fb aria-hidden="true"></span>
           </IPhone>
-        </div>
-        <!-- Exploded view: copies of the screen as separate sheets, outside the clipped screen so 3D works. -->
-        <div class="mk__layers" data-mk-layers aria-hidden="true">
-          <div class="mk__ly mk__ly--old" data-mk-ly-old><div class="mk__oldpage"><OldSite annotations={false} /></div></div>
-          <div class="mk__ly mk__ly--n1" data-mk-ly-new><ArcadiHero /></div>
-          <div class="mk__ly mk__ly--n2" data-mk-ly-new><ArcadiHero /></div>
-          <div class="mk__ly mk__ly--n3" data-mk-ly-new><ArcadiHero /></div>
         </div>
         </div>
         </div>
@@ -169,6 +162,11 @@ const tags = [
     }
   }
 
+  /* The words stay readable above the phone while it turns. */
+  .mk__text {
+    position: relative;
+    z-index: 2;
+  }
   .mk__stage {
     position: relative;
     margin: 0;
@@ -177,6 +175,7 @@ const tags = [
   }
   .mk__phone {
     position: relative;
+    transform-style: preserve-3d;
   }
   /* ---------- 3D rig ---------- */
   .mk__rig {
@@ -192,45 +191,6 @@ const tags = [
     .mk__obj {
       --w: clamp(170px, 30vh, 240px);
     }
-  }
-  /* The sheets sit exactly over the site area of the screen (below the status bar). */
-  .mk__layers {
-    position: absolute;
-    left: calc(var(--w) * 0.041);
-    top: calc(var(--w) * (0.041 + 0.918 * 0.137));
-    width: calc(var(--w) * 0.918);
-    height: calc(var(--w) * 0.918 * (852 / 393 - 0.137));
-    transform-style: preserve-3d;
-    pointer-events: none;
-    visibility: hidden;
-  }
-  .mk__ly {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    background: #f2f2f0;
-    border-radius: 0 0 calc(var(--w) * 0.13) calc(var(--w) * 0.13);
-    box-shadow: 0 30px 60px -20px rgba(60, 25, 8, 0.45);
-    container-type: inline-size;
-  }
-  .mk__ly--old {
-    background: #fffbe6;
-  }
-  /* The new site cut into three sheets: header and photo, title and text, buttons. */
-  .mk__ly--n1 {
-    clip-path: inset(0 0 58% 0);
-    background: transparent;
-    box-shadow: none;
-  }
-  .mk__ly--n2 {
-    clip-path: inset(42% 0 33% 0);
-    background: transparent;
-    box-shadow: none;
-  }
-  .mk__ly--n3 {
-    clip-path: inset(67% 0 0 0);
-    background: transparent;
-    box-shadow: none;
   }
   .mk__phone::after {
     content: "";
@@ -278,16 +238,18 @@ const tags = [
   :global(.mk-live) .mk__old {
     visibility: visible;
   }
-  .mk__scan {
+  /* A band of light crossing the glass when the new site lands. */
+  .mk__sweep {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 3px;
-    background: var(--mandarino);
-    box-shadow: 0 0 18px 5px rgba(255, 91, 34, 0.55);
+    top: -20%;
+    bottom: -20%;
+    left: -60%;
+    width: 45%;
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-12deg);
     opacity: 0;
     z-index: 3;
+    pointer-events: none;
   }
   .mk__finger {
     position: absolute;

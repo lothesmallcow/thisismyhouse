@@ -26,7 +26,7 @@ for (const path of pages()) {
       const out = [];
       const vw = document.documentElement.clientWidth;
       if (document.documentElement.scrollWidth > vw + 1) out.push(`page scrolls sideways (${document.documentElement.scrollWidth} > ${vw})`);
-      const skip = (el) => el.closest(".iph, .pf, [aria-hidden='true'], .sr-only, .dots, .sc-work__list, .ftr__mark, .mq, details:not([open]) .faq__body");
+      const skip = (el) => el.closest(".iph, .pf, [aria-hidden='true'], .sr-only, .dots, .sc-work__list, .ftr__mark, .mq, .d-rail, details:not([open]) .faq__body");
       for (const el of document.querySelectorAll("h1, h2, h3, h4, p, li, a, button, label, dt, dd, strong, figcaption, legend")) {
         if (skip(el)) continue;
         const cs = getComputedStyle(el);

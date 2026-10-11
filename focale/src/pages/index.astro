@@ -1,7 +1,7 @@
 ---
 /**
- * Home as a sequence of full-screen scenes, advanced one at a time like a video (CSS scroll
- * snap: keyboard, scrollbar and screen readers keep working). See docs/RICERCA-DESIGN.md.
+ * Home: a full-screen opening with the iPhone film, then a normal website flow over the living
+ * background (natural heights, varied layouts); only the makeover pins. See docs/RICERCA-DESIGN.md.
  */
 import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
@@ -20,6 +20,7 @@ const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b)
 const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
 const open = foundersOpen();
 
+const who = ["Imprese di ristrutturazione", "Serramentisti", "B&B", "Agriturismi", "Location per matrimoni", "Ville per eventi", "Piccole imprese che vivono di richieste"];
 const steps = [
   { t: "Ci racconti l'attività", d: "Dieci minuti, al telefono o su WhatsApp." },
   { t: "Vedi l'anteprima", d: `La homepage del tuo nuovo sito, entro ${site.previewHours} ore. Gratis.` },
@@ -37,28 +38,39 @@ const steps = [
   <div class="scenes">
     <HeroScene />
 
+    <div class="ticker" data-ticker>
+      <ul class="ticker__row" aria-label="Per chi lavoriamo">
+        {who.map((w) => <li>{w}</li>)}
+      </ul>
+      <ul class="ticker__row" aria-hidden="true">
+        {who.map((w) => <li>{w}</li>)}
+      </ul>
+    </div>
+
     <Choose />
 
     <Makeover />
 
     <section class="section sc-how" id="metodo" aria-labelledby="metodo-t">
       <div class="wrap sc-how__in">
-        <h2 id="metodo-t" data-in>Quattro passi. Il primo è gratis.</h2>
-        <ol class="sc-how__steps">
+        <div class="sc-how__side">
+          <h2 id="metodo-t" data-in>Quattro passi. Il primo è gratis.</h2>
+          <p class="sc-how__promise" data-in style="--d: 0.1s">Il rischio ce lo prendiamo noi: se l'anteprima non ti piace, finisce lì.</p>
+          <a class="textlink" href="/condizioni/" data-in style="--d: 0.15s">Le condizioni</a>
+        </div>
+        <ol class="sc-how__steps" data-how>
           {
             steps.map((s, i) => (
-              <li data-in style={`--d: ${0.1 + i * 0.12}s`}>
+              <li data-in style={`--d: ${0.1 + i * 0.08}s`}>
                 <span class="sc-how__n" aria-hidden="true">{i + 1}</span>
-                <h3>{s.t}</h3>
-                <p>{s.d}</p>
+                <div>
+                  <h3>{s.t}</h3>
+                  <p>{s.d}</p>
+                </div>
               </li>
             ))
           }
         </ol>
-        <div class="sc-how__promise" data-in style="--d: 0.6s">
-          <p>Il rischio ce lo prendiamo noi: se l'anteprima non ti piace, finisce lì.</p>
-          <a class="textlink" href="/condizioni/">Le condizioni</a>
-        </div>
       </div>
     </section>
 
@@ -128,67 +140,177 @@ const steps = [
   import { initScenes } from "../scripts/scenes";
   import { initPaths } from "../scripts/paths";
   import { initTilt } from "../scripts/tilt";
+  import { later } from "../scripts/later";
   initScenes();
   initPaths();
   initTilt();
+  // The real 3D phone (three.js and the model, about 1 MB) loads at the visitor's first gesture,
+  // so it never weighs on the first load; until then the CSS phone stands in, almost identical.
+  const wake = ["pointermove", "pointerdown", "wheel", "touchstart", "keydown", "scroll"];
+  const go = () => {
+    wake.forEach((e) => removeEventListener(e, go));
+    later(() => import("../scripts/phone3d").then((m) => m.initPhone3D()));
+  };
+  wake.forEach((e) => addEventListener(e, go, { passive: true }));
 </script>
 
 <style>
-  /* ---------- Metodo ---------- */
-  .sc-how__in {
-    display: grid;
-    gap: clamp(2rem, 6vh, 4.5rem);
-    width: 100%;
+  /* ---------- Per chi (ticker) ---------- */
+  .ticker {
+    display: flex;
+    overflow: hidden;
+    padding-block: clamp(1rem, 2.5vh, 1.6rem);
+    border-block: 1px solid rgba(36, 19, 12, 0.14);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   }
-  .sc-how__steps {
+  .ticker__row {
+    display: flex;
+    flex: none;
+    gap: 0;
     list-style: none;
-    padding: 0;
     margin: 0;
-    display: grid;
-    gap: 1.25rem;
+    padding: 0;
+    animation: ticker 48s linear infinite;
   }
-  @media (min-width: 900px) {
-    .sc-how__steps {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: clamp(1.5rem, 3vw, 3rem);
-    }
-  }
-  .sc-how__steps li {
-    display: grid;
-    gap: 0.75rem;
-    align-content: start;
-    padding-top: 1rem;
-    border-top: 1px solid var(--inchiostro);
-  }
-  .sc-how__n {
+  .ticker__row li {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
     font-weight: 300;
     font-stretch: 125%;
-    font-size: clamp(2rem, 1.4rem + 1.6vw, 3.2rem);
+    letter-spacing: -0.03em;
+    font-size: clamp(1.4rem, 1rem + 1.6vw, 2.6rem);
+  }
+  .ticker__row li::after {
+    content: "";
+    width: 0.32em;
+    height: 0.32em;
+    margin-inline: 0.9em;
+    border-radius: 50%;
+    background: var(--mandarino);
+  }
+  @keyframes ticker {
+    to {
+      transform: translateX(-100%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker {
+      flex-wrap: wrap;
+    }
+    .ticker__row {
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: 0.4rem;
+      padding-inline: var(--gutter);
+      animation: none;
+    }
+    .ticker__row[aria-hidden] {
+      display: none;
+    }
+    .ticker {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .ticker__row li {
+      white-space: normal;
+      font-size: clamp(1.2rem, 1rem + 1vw, 2rem);
+    }
+  }
+
+  /* ---------- Metodo: the heading stays while the steps scroll past, a line fills as you read ---------- */
+  .sc-how__in {
+    display: grid;
+    gap: clamp(2rem, 5vh, 3.5rem);
+    width: 100%;
+  }
+  @media (min-width: 900px) {
+    .sc-how__in {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: clamp(2rem, 6vw, 7rem);
+      align-items: start;
+    }
+    .sc-how__side {
+      position: sticky;
+      top: calc(var(--header-h) + 2.5rem);
+    }
+  }
+  .sc-how__side {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+  .sc-how__side h2 {
+    max-width: 12ch;
+  }
+  .sc-how__promise {
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: clamp(1.15rem, 1rem + 0.7vw, 1.6rem);
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    max-width: 26ch;
+    color: var(--grafite);
+  }
+  .sc-how__steps {
+    --p: 0;
+    position: relative;
+    list-style: none;
+    padding: 0 0 0 clamp(4rem, 3rem + 3vw, 6rem);
+    margin: 0;
+    display: grid;
+    gap: clamp(2rem, 6vh, 4.5rem);
+  }
+  /* The rail and its orange fill (scripts/scenes.ts sets --p while the list scrolls past). */
+  .sc-how__steps::before,
+  .sc-how__steps::after {
+    content: "";
+    position: absolute;
+    left: calc(clamp(1.4rem, 1rem + 1vw, 2rem));
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    background: rgba(36, 19, 12, 0.14);
+  }
+  .sc-how__steps::after {
+    background: var(--mandarino);
+    transform-origin: top;
+    transform: scaleY(var(--p));
+  }
+  .sc-how__steps li {
+    position: relative;
+  }
+  .sc-how__n {
+    position: absolute;
+    left: calc(-1 * clamp(4rem, 3rem + 3vw, 6rem));
+    top: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: clamp(2.8rem, 2rem + 2vw, 4rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--carta);
+    box-shadow: 0 0 0 2px var(--mandarino);
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: clamp(1.2rem, 1rem + 0.8vw, 1.8rem);
     line-height: 1;
-    color: var(--mandarino-scuro, #b8400f);
+    color: #b8400f;
   }
   .sc-how__steps h3 {
-    font-size: var(--fs-h3);
+    font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2.2rem);
+    font-weight: 300;
+    font-stretch: 125%;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
   }
   .sc-how__steps p {
     color: var(--grafite);
-  }
-  .sc-how__promise {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-    padding-top: 1.25rem;
-    border-top: 3px solid var(--mandarino);
-  }
-  .sc-how__promise p {
-    font-weight: 300;
-    font-stretch: 125%;
-    font-size: clamp(1.25rem, 1rem + 1vw, 1.9rem);
-    letter-spacing: -0.03em;
-    line-height: 1.15;
-    max-width: 34ch;
+    max-width: 40ch;
   }
 
   /* ---------- Prezzi ---------- */
