@@ -28,6 +28,19 @@ const how = [
   { t: "Cantiere pulito e puntuale", d: "Proteggiamo pavimenti e mobili, puliamo ogni sera, ti aggiorniamo ogni venerdì." },
   { t: "Consegna e garanzia", d: "Controlliamo tutto insieme. Due anni di garanzia sui lavori." },
 ];
+const nav = [
+  { href: "#servizi", t: "Servizi" },
+  { href: "#lavori", t: "Lavori" },
+  { href: "#come-lavoriamo", t: "Come lavoriamo" },
+  { href: "#zone", t: "Zone" },
+];
+const bandWords = ["Bagni", "Cucine", "Appartamenti", "Infissi", "Impianti", "Pavimenti", "Cartongesso"];
+const numbers = [
+  { v: 48, u: "ore", d: "per il sopralluogo gratuito" },
+  { v: 2, u: "anni", d: "di garanzia sui lavori" },
+  { v: 1, u: "referente", d: "dal preventivo alla consegna" },
+  { v: 7, u: "zone", d: "di Milano e prima cintura" },
+];
 const zones = ["Città Studi", "Lambrate", "NoLo", "Porta Romana", "Navigli", "Isola", "Sesto San Giovanni"];
 // Demo: calls and messages go to Focus Design, never to a real business.
 const tel = telHref();
@@ -35,79 +48,136 @@ const tel = telHref();
 <Demo
   title="Arcadi Ristrutturazioni | Ristrutturazioni a Milano (demo)"
   description="Sito dimostrativo di Focus Design per un'impresa di ristrutturazioni inventata a Milano."
-  themeColor="#1d1f21"
+  themeColor="#171717"
   fonts={["/fonts/archivo-latin.woff2"]}
 >
   <div class="ar">
-    <header class="ar-top">
+    <header class="ar-top" data-dh>
       <div class="ar-wrap ar-top__in">
-        <span class="ar-logo">ARCADI<small>Ristrutturazioni</small></span>
-        <a class="ar-top__call" href={tel}>Chiama</a>
+        <a class="ar-logo" href="#">ARCADI<small>Ristrutturazioni</small></a>
+        <nav class="ar-nav-main" aria-label="Menu">
+          {nav.map((n) => <a href={n.href}>{n.t}</a>)}
+        </nav>
+        <a class="ar-top__quote" href="#preventivo" data-magnetic>Preventivo gratuito</a>
+        <a class="ar-top__call" href={tel}>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5.5 3.5h3l1.5 4.25-2 1.25a11 11 0 0 0 7 7l1.25-2 4.25 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3.5 5.5a2 2 0 0 1 2-2Z"></path></svg>
+          Chiama
+        </a>
+        <button type="button" class="ar-burger" data-menu aria-controls="ar-menu" aria-expanded="false">
+          <span class="ar-burger__lines" aria-hidden="true"><i></i><i></i></span>
+          <span class="sr-only">Menu</span>
+        </button>
       </div>
     </header>
+    <div class="ar-menu" id="ar-menu" data-menu-panel hidden>
+      <nav aria-label="Menu">
+        {nav.map((n) => <a href={n.href}>{n.t}</a>)}
+      </nav>
+      <a class="ar-btn" href="#preventivo">Chiedi un preventivo</a>
+    </div>
 
     <section class="ar-hero2" aria-labelledby="ar-h1">
       <div class="ar-hero2__media" aria-hidden="true">
         <Image src={pic("bagno-prima")} alt="" widths={[800, 1400, 1800]} sizes="100vw" loading="eager" class="ar-hero2__img" />
         <Image src={pic("bagno-dopo")} alt="" widths={[800, 1400, 1800]} sizes="100vw" loading="eager" fetchpriority="high" class="ar-hero2__img ar-hero2__after" />
-        <span class="ar-hero2__line"></span>
+        <span class="ar-hero2__track"><span class="ar-hero2__line"></span></span>
         <span class="ar-hero2__tag ar-hero2__tag--prima">Prima</span>
         <span class="ar-hero2__tag ar-hero2__tag--dopo">Dopo</span>
       </div>
       <div class="ar-wrap ar-hero2__text">
         <p class="ar-hero2__kicker">Milano e prima cintura</p>
-        <h1 id="ar-h1">Ristrutturiamo case a Milano. Bene, e nei tempi detti.</h1>
+        <h1 id="ar-h1" data-split="load">Ristrutturiamo case a Milano. Bene, e nei tempi detti.</h1>
         <p class="ar-hero2__sub">Bagni, cucine e appartamenti completi. Sopralluogo e preventivo gratuiti entro 48 ore.</p>
         <div class="ar-hero2__cta">
-          <a class="ar-hero2__btn" href="#preventivo">Chiedi un preventivo</a>
+          <a class="ar-hero2__btn" href="#preventivo" data-magnetic>Chiedi un preventivo</a>
           <a class="ar-hero2__btn ar-hero2__btn--ghost" href={tel}>Chiama ora</a>
         </div>
-        <ul class="ar-hero2__chips">
-          <li>Preventivo scritto</li>
-          <li>Cantiere pulito</li>
+        <ul class="ar-hero2__chips" aria-label="Le nostre garanzie">
+          <li>Preventivo scritto, voce per voce</li>
+          <li>Cantiere pulito ogni sera</li>
           <li>Due anni di garanzia</li>
         </ul>
       </div>
     </section>
 
-    <section class="ar-sec" id="servizi">
-      <div class="ar-wrap">
-        <h2>Cosa facciamo</h2>
-        <ul class="ar-services d-rail" tabindex="0" aria-label="I servizi">
+
+    <section class="ar-sec ar-svc-sec" id="servizi">
+      <div class="ar-wrap ar-svc">
+        <div class="ar-svc__stage" aria-hidden="true">
           {
-            services.map((s) => (
-              <li>
-                <Image src={pic(s.img)} alt="" widths={[360, 720]} sizes="(min-width: 900px) 280px, 92vw" />
-                <h3>{s.t}</h3>
-                <p>{s.d}</p>
-              </li>
+            services.map((s, i) => (
+              <div class:list={["ar-svc__pic", { "is-on": i === 0 }]} data-svc-pic={i}>
+                <Image src={pic(s.img)} alt="" widths={[600, 1000]} sizes="(min-width: 900px) 46vw, 92vw" />
+              </div>
             ))
           }
-        </ul>
+        </div>
+        <div class="ar-svc__list">
+          <h2 data-split>Cosa facciamo</h2>
+          <ol class="ar-services d-rail" tabindex="0" aria-label="I servizi">
+            {
+              services.map((s, i) => (
+                <li class:list={["ar-service", { "is-on": i === 0 }]} data-svc={i}>
+                  <div class="ar-service__pic">
+                    <Image src={pic(s.img)} alt="" widths={[360, 720]} sizes="82vw" />
+                  </div>
+                  <span class="ar-service__n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+                  <h3>{s.t}</h3>
+                  <p>{s.d}</p>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
       </div>
     </section>
 
-    <section class="ar-sec ar-sec--grey" id="lavori">
+    <section class="ar-works-sec" id="lavori" data-hscroll>
+      <div class="ar-wrap ar-works-head">
+        <h2 data-split>Lavori finiti, prima e dopo</h2>
+        <p class="ar-lead" data-rise>Trascina la linea per confrontare.</p>
+      </div>
+      <div class="ar-works d-more" data-hscroll-track>
+        {works.map((w) => <BeforeAfter before={pic(w.b)} after={pic(w.a)} caption={w.c} alt={w.alt} />)}
+      </div>
       <div class="ar-wrap">
-        <h2>Lavori finiti, prima e dopo</h2>
-        <p class="ar-lead">Trascina la linea per confrontare.</p>
-        <div class="ar-works d-more">
-          {works.map((w) => <BeforeAfter before={pic(w.b)} after={pic(w.a)} caption={w.c} alt={w.alt} />)}
-        </div>
         <button type="button" class="d-more-btn ar-btn ar-btn--ghost ar-more">Altri {works.length - 3} lavori</button>
       </div>
     </section>
 
-    <section class="ar-sec" id="come-lavoriamo">
+    <section class="ar-numbers" aria-label="In numeri">
       <div class="ar-wrap">
-        <h2>Come lavoriamo</h2>
-        <ol class="ar-how">
+        <dl class="ar-numbers__list" data-rise-group>
+          {
+            numbers.map((n) => (
+              <div>
+                <dt>
+                  <span data-count={n.v}>{n.v}</span>
+                  <small>{n.u}</small>
+                </dt>
+                <dd>{n.d}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    <section class="ar-sec" id="come-lavoriamo">
+      <div class="ar-wrap ar-how-grid">
+        <div class="ar-how-side">
+          <h2 data-split>Come lavoriamo</h2>
+          <p class="ar-lead" data-rise>Quattro passi, sempre gli stessi. Sai sempre a che punto siamo.</p>
+        </div>
+        <ol class="ar-how" data-how-rail>
           {
             how.map((h, i) => (
-              <li>
-                <span class="ar-how__n">{i + 1}</span>
-                <h3>{h.t}</h3>
-                <p>{h.d}</p>
+              <li data-rise>
+                <span class="ar-how__n">{String(i + 1).padStart(2, "0")}</span>
+                <div>
+                  <h3>{h.t}</h3>
+                  <p>{h.d}</p>
+                </div>
               </li>
             ))
           }
@@ -117,16 +187,17 @@ const tel = telHref();
 
     <section class="ar-sec ar-sec--warm" id="zone">
       <div class="ar-wrap ar-zone">
-        <h2>Dove lavoriamo</h2>
-        <ul>{zones.map((z) => <li>{z}</li>)}</ul>
+        <h2 data-split>Dove lavoriamo</h2>
+        <p class="ar-lead" data-rise>Milano e prima cintura. Il sopralluogo è gratuito in tutte queste zone.</p>
+        <ul class="ar-zones" data-rise-group>{zones.map((z) => <li>{z}</li>)}</ul>
       </div>
     </section>
 
     <section class="ar-sec" id="preventivo">
       <div class="ar-wrap ar-quote-grid">
         <div>
-          <h2>Chiedi un preventivo</h2>
-          <p class="ar-lead">Tre domande. Ti rispondiamo su WhatsApp in giornata, con un giorno per il sopralluogo.</p>
+          <h2 data-split>Chiedi un preventivo</h2>
+          <p class="ar-lead" data-rise>Tre domande. Ti rispondiamo su WhatsApp in giornata, con un giorno per il sopralluogo.</p>
         </div>
         <form class="ar-form" data-demo-form data-wa={site.whatsappNumber} data-heading="Richiesta di preventivo dal sito" data-err="Completa questo campo per continuare." novalidate>
           <p class="ar-form__progress" data-dprogress data-tpl="Passo {n} di 3">Passo 1 di 3</p>
@@ -180,8 +251,25 @@ const tel = telHref();
 
     <footer class="ar-foot">
       <div class="ar-wrap">
-        <p class="ar-foot__logo">ARCADI<small>Ristrutturazioni</small></p>
-        <p>Arcadi Ristrutturazioni è un'attività inventata. Progetto dimostrativo di Focus Design.</p>
+        <div class="ar-foot__top">
+          <p class="ar-foot__logo">ARCADI<small>Ristrutturazioni</small></p>
+          <a class="ar-btn" href="#preventivo">Chiedi un preventivo</a>
+        </div>
+        <div class="ar-foot__cols">
+          <p class="ar-foot__tag">Bagni, cucine e appartamenti a Milano. Bene, e nei tempi detti.</p>
+          <div>
+            <p class="ar-foot__h">Il sito</p>
+            <ul>{nav.map((n) => <li><a href={n.href}>{n.t}</a></li>)}</ul>
+          </div>
+          <div>
+            <p class="ar-foot__h">Contatti</p>
+            <ul>
+              <li><a href={tel}>Chiama</a></li>
+              <li><a href="#preventivo">Preventivo in 3 domande</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="ar-foot__note">Arcadi Ristrutturazioni è un'attività inventata. Progetto dimostrativo di Focus Design.</p>
       </div>
     </footer>
 
@@ -213,15 +301,20 @@ const tel = telHref();
     min-height: auto;
   }
   /* Header and hero: the bathroom renovates itself behind an orange line as the page opens. */
+  /* ---------- Header: see-through over the hero, white once the page moves ---------- */
   .ar-top {
-    background: #f2f2f0;
-    border-bottom: 1px solid #d9d9d4;
+    color: #fff;
+  }
+  .ar-top.is-solid {
+    background: rgba(242, 242, 240, 0.97);
+    color: var(--ink);
+    box-shadow: 0 1px 0 #d9d9d4;
   }
   .ar-top__in {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    min-height: 64px;
+    gap: 1.5rem;
+    min-height: 70px;
   }
   .ar-logo {
     font-weight: 900;
@@ -229,6 +322,9 @@ const tel = telHref();
     font-size: 1.5rem;
     letter-spacing: 0.02em;
     line-height: 1;
+    color: inherit;
+    text-decoration: none;
+    margin-right: auto;
   }
   .ar-logo small {
     display: block;
@@ -236,18 +332,132 @@ const tel = telHref();
     font-weight: 700;
     font-stretch: 100%;
     letter-spacing: 0.04em;
+    color: #ff8a4c;
+  }
+  .ar-top.is-solid .ar-logo small {
     color: #a8430b;
+  }
+  .ar-nav-main {
+    display: none;
+    gap: 1.6rem;
+  }
+  .ar-nav-main a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 650;
+    font-size: 0.98rem;
+    padding: 0.6rem 0;
+    background: linear-gradient(var(--o), var(--o)) 0 calc(100% - 0.3rem) / 0 3px no-repeat;
+    transition: background-size 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ar-nav-main a:hover {
+    background-size: 100% 3px;
+  }
+  .ar-top__quote {
+    display: none;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 1.1rem;
+    border-radius: 4px;
+    border: 2px solid currentColor;
+    color: inherit;
+    font-weight: 750;
+    text-decoration: none;
   }
   .ar-top__call {
     display: inline-flex;
     align-items: center;
+    gap: 0.45rem;
     min-height: 44px;
     padding: 0 1.1rem;
-    border-radius: 999px;
+    border-radius: 4px;
     background: var(--o);
     color: #fff;
-    font-weight: 700;
+    font-weight: 750;
     text-decoration: none;
+  }
+  .ar-burger {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  .ar-burger__lines {
+    display: grid;
+    gap: 7px;
+    width: 24px;
+  }
+  .ar-burger__lines i {
+    display: block;
+    height: 2.5px;
+    background: currentColor;
+    transition: transform 0.35s ease;
+  }
+  .ar-burger[aria-expanded="true"] .ar-burger__lines i:first-child {
+    transform: translateY(4.75px) rotate(45deg);
+  }
+  .ar-burger[aria-expanded="true"] .ar-burger__lines i:last-child {
+    transform: translateY(-4.75px) rotate(-45deg);
+  }
+  @media (min-width: 1000px) {
+    .ar-nav-main,
+    .ar-top__quote {
+      display: inline-flex;
+    }
+    .ar-burger {
+      display: none;
+    }
+  }
+  .ar-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 85;
+    display: grid;
+    align-content: center;
+    gap: 2.5rem;
+    padding: 6rem clamp(24px, 8vw, 48px) 3rem;
+    background: var(--ink);
+    color: #fff;
+  }
+  .ar-menu nav {
+    display: grid;
+    gap: 0.25rem;
+  }
+  .ar-menu nav a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 900;
+    font-stretch: 72%;
+    font-size: clamp(2.6rem, 12vw, 3.6rem);
+    line-height: 1.1;
+  }
+  .ar-menu .ar-btn {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+  :global(.dm-menu-open) .ar-top {
+    color: #fff;
+    background: transparent;
+    box-shadow: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ar-menu:not([hidden]) {
+      animation: ar-menu 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes ar-menu {
+      from {
+        clip-path: inset(0 0 100% 0);
+      }
+      to {
+        clip-path: inset(0 0 0 0);
+      }
+    }
   }
   .ar-hero2 {
     position: relative;
@@ -261,8 +471,9 @@ const tel = telHref();
   }
   .ar-hero2__media {
     position: relative;
-    height: min(86vh, 860px);
-    min-height: 520px;
+    height: 100vh;
+    height: 100svh;
+    min-height: 600px;
   }
   .ar-hero2__media :global(.ar-hero2__img) {
     position: absolute;
@@ -277,23 +488,32 @@ const tel = telHref();
     position: absolute;
     inset: 0;
     z-index: 2;
-    background: linear-gradient(90deg, rgba(20, 18, 16, 0.86) 0%, rgba(20, 18, 16, 0.6) 38%, rgba(20, 18, 16, 0.05) 70%);
+    background:
+      linear-gradient(180deg, rgba(20, 18, 16, 0.7) 0%, rgba(20, 18, 16, 0) 22%),
+      linear-gradient(90deg, rgba(20, 18, 16, 0.86) 0%, rgba(20, 18, 16, 0.6) 38%, rgba(20, 18, 16, 0.05) 70%);
   }
   @media (max-width: 899px) {
     .ar-hero2__media::after {
       background: linear-gradient(0deg, rgba(20, 18, 16, 0.94) 0%, rgba(20, 18, 16, 0.8) 50%, rgba(20, 18, 16, 0.55) 72%, rgba(20, 18, 16, 0) 94%);
     }
   }
+  /* The line rides a full-width track moved by transform: no layout shift. */
+  .ar-hero2__track {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    transform: translateX(100%);
+  }
   .ar-hero2__line {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 100%;
+    left: 0;
     width: 4px;
     margin-left: -2px;
     background: #ff6a1f;
     box-shadow: 0 0 30px 8px rgba(255, 106, 31, 0.55);
-    z-index: 1;
     opacity: 0;
   }
   .ar-hero2__tag {
@@ -319,8 +539,11 @@ const tel = telHref();
     .ar-hero2__media :global(.ar-hero2__after) {
       animation: ar-wipe 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.9s both;
     }
+    .ar-hero2__track {
+      animation: ar-track 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.9s both;
+    }
     .ar-hero2__line {
-      animation: ar-line 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.9s both;
+      animation: ar-line 2.2s linear 0.9s both;
     }
     .ar-hero2__tag--prima {
       animation: ar-tag-out 3.2s ease both;
@@ -345,16 +568,20 @@ const tel = telHref();
       clip-path: inset(0 0 0 0);
     }
   }
-  @keyframes ar-line {
-    0% {
-      left: 100%;
-      opacity: 1;
+  @keyframes ar-track {
+    from {
+      transform: translateX(100%);
     }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes ar-line {
+    0%,
     90% {
       opacity: 1;
     }
     100% {
-      left: 0%;
       opacity: 0;
     }
   }
@@ -386,7 +613,7 @@ const tel = telHref();
     align-self: center;
     width: 100%;
     color: #fff;
-    padding-block: 3rem;
+    padding-block: calc(var(--banner) + 96px) 3rem;
   }
   @media (max-width: 899px) {
     .ar-hero2__text {
@@ -486,6 +713,59 @@ const tel = telHref();
     max-width: 40ch;
     margin-bottom: 2rem;
   }
+  /* ---------- Band of services, sliding ---------- */
+  .ar-band {
+    overflow: hidden;
+    background: var(--o);
+    color: #fff;
+    padding: 1rem 0;
+  }
+  .ar-band__row {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    width: max-content;
+  }
+  .ar-band__row li {
+    display: flex;
+    align-items: center;
+    font-weight: 900;
+    font-stretch: 72%;
+    font-size: clamp(1.6rem, 1rem + 2.2vw, 2.8rem);
+    line-height: 1;
+    text-transform: none;
+  }
+  .ar-band__row li::after {
+    content: "";
+    width: 0.45em;
+    height: 0.45em;
+    margin-inline: 0.8em;
+    background: var(--ink);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ar-band__row {
+      animation: ar-band 30s linear infinite;
+    }
+    @keyframes ar-band {
+      to {
+        transform: translateX(-50%);
+      }
+    }
+  }
+
+  /* ---------- Services: the picture stays while the list scrolls (wide screens) ---------- */
+  .ar-svc {
+    display: grid;
+    gap: 2rem;
+  }
+  /* Grid children may shrink below their content (the swipe rail inside would widen the page). */
+  .ar-svc > * {
+    min-width: 0;
+  }
+  .ar-svc__stage {
+    display: none;
+  }
   .ar-services {
     list-style: none;
     padding: 0;
@@ -493,65 +773,261 @@ const tel = telHref();
     display: grid;
     gap: 2rem;
   }
-  @media (min-width: 700px) {
-    .ar-services {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  .ar-service {
+    border-top: 6px solid var(--o);
+    padding-top: 1rem;
   }
-  @media (min-width: 1100px) {
-    .ar-services {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-  .ar-services :global(img) {
+  .ar-service__pic :global(img) {
+    display: block;
     width: 100%;
     aspect-ratio: 4 / 3;
     object-fit: cover;
     margin-bottom: 1rem;
   }
-  .ar-services li {
-    border-top: 6px solid var(--o);
-    padding-top: 1rem;
+  .ar-service__n {
+    display: block;
+    font-weight: 900;
+    font-stretch: 72%;
+    color: var(--o);
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
   }
-  .ar-services p {
+  .ar-service p {
     margin-top: 0.4rem;
     color: #3f4347;
     font-weight: 450;
   }
+  @media (min-width: 761px) and (max-width: 899px) {
+    .ar-services {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 900px) {
+    .ar-svc {
+      grid-template-columns: 1.05fr 1fr;
+      gap: clamp(3rem, 6vw, 6rem);
+      align-items: start;
+    }
+    .ar-svc__stage {
+      display: block;
+      position: sticky;
+      top: calc(var(--banner) + 100px);
+      aspect-ratio: 4 / 5;
+      max-height: calc(100vh - var(--banner) - 140px);
+      width: 100%;
+      overflow: hidden;
+      border-radius: 6px;
+    }
+    .ar-svc__pic {
+      position: absolute;
+      inset: 0;
+      clip-path: inset(0 0 100% 0);
+      transition: clip-path 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .ar-svc__pic.is-on {
+      clip-path: inset(0 0 0 0);
+      z-index: 1;
+    }
+    .ar-svc__pic :global(img) {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .ar-service__pic {
+      display: none;
+    }
+    .ar-services {
+      gap: 0;
+      margin-top: 2.5rem;
+    }
+    .ar-service {
+      border-top: 1px solid #c9c9c4;
+      padding: 2rem 0 3.5rem;
+      min-height: 32vh;
+      transition: color 0.4s ease;
+      /* Dimmed but still AA on stone (5:1): the active item is ink, with its picture. */
+      color: #626468;
+      cursor: default;
+    }
+    .ar-service h3 {
+      font-size: clamp(2rem, 1.2rem + 1.8vw, 3rem);
+      font-weight: 900;
+      font-stretch: 72%;
+      line-height: 1;
+      color: inherit;
+      transition: color 0.4s ease;
+    }
+    .ar-service p {
+      color: inherit;
+      max-width: 36ch;
+      font-size: 1.1rem;
+    }
+    .ar-service.is-on {
+      color: var(--ink);
+      border-top-color: var(--o);
+    }
+    .ar-service.is-on p {
+      color: #3f4347;
+    }
+  }
+
+  /* ---------- Works: a row that slides sideways with the scroll (wide screens) ---------- */
+  .ar-works-sec {
+    padding: clamp(56px, 8vw, 110px) 0;
+    background: var(--grey);
+    overflow: hidden;
+  }
   .ar-works {
     display: grid;
     gap: 2.5rem 2rem;
+    padding: 0 clamp(18px, 4vw, 40px);
   }
-  @media (min-width: 900px) {
+  @media (min-width: 761px) and (max-width: 899px) {
     .ar-works {
       grid-template-columns: repeat(2, 1fr);
     }
   }
-  .ar-how {
-    list-style: none;
-    padding: 0;
-    margin: 2rem 0 0;
+  @media (min-width: 900px) {
+    .ar-works-sec {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-content: center;
+      padding-top: calc(var(--banner) + 80px);
+    }
+    .ar-works-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 2rem;
+      width: 100%;
+    }
+    .ar-works-head .ar-lead {
+      margin-bottom: 1.6rem;
+    }
+    .ar-works {
+      display: flex;
+      justify-self: start;
+      width: max-content;
+      gap: 2rem;
+      padding-inline: max(clamp(18px, 4vw, 40px), calc((100vw - 1200px) / 2 + 40px)) 8vw;
+    }
+    .ar-works > :global(*) {
+      width: clamp(380px, 38vw, 560px);
+      flex: none;
+    }
+  }
+
+  /* ---------- Numbers ---------- */
+  .ar-numbers {
+    background: var(--ink);
+    color: #fff;
+    padding: clamp(56px, 7vw, 90px) 0;
+  }
+  .ar-numbers__list {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem 1.5rem;
+  }
+  @media (min-width: 900px) {
+    .ar-numbers__list {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .ar-numbers dt {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-weight: 900;
+    font-stretch: 70%;
+    font-size: clamp(3.4rem, 2rem + 4vw, 6rem);
+    line-height: 1;
+    color: #ff8a4c;
+  }
+  .ar-numbers dt small {
+    font-size: 0.32em;
+    font-stretch: 85%;
+    color: #fff;
+  }
+  .ar-numbers dd {
+    margin: 0.5rem 0 0;
+    color: #d6d7d3;
+    font-size: 1rem;
+  }
+
+  /* ---------- How we work: heading stays, a rail fills in orange ---------- */
+  .ar-how-grid {
     display: grid;
     gap: 2rem;
   }
   @media (min-width: 900px) {
-    .ar-how {
-      grid-template-columns: repeat(4, 1fr);
+    .ar-how-grid {
+      grid-template-columns: 1fr 1.2fr;
+      gap: clamp(3rem, 6vw, 6rem);
+      align-items: start;
+    }
+    .ar-how-side {
+      position: sticky;
+      top: calc(var(--banner) + 110px);
     }
   }
+  .ar-how {
+    --p: 0;
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 4.5rem;
+    display: grid;
+    gap: clamp(2rem, 5vh, 3.5rem);
+  }
+  .ar-how::before,
+  .ar-how::after {
+    content: "";
+    position: absolute;
+    left: 1.5rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 3px;
+    margin-left: -1.5px;
+    background: #d4d4cf;
+  }
+  .ar-how::after {
+    background: var(--o);
+    transform-origin: top;
+    transform: scaleY(var(--p));
+  }
+  .ar-how li {
+    position: relative;
+  }
   .ar-how__n {
-    display: block;
+    position: absolute;
+    left: -4.5rem;
+    top: -0.2rem;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: #f2f2f0;
+    box-shadow: inset 0 0 0 3px var(--o);
     font-weight: 900;
-    font-stretch: 70%;
-    font-size: 3.5rem;
-    line-height: 1;
+    font-stretch: 72%;
+    font-size: 1.4rem;
     color: var(--o);
-    margin-bottom: 0.5rem;
+  }
+  .ar-how h3 {
+    font-size: clamp(1.5rem, 1.1rem + 1vw, 2.1rem);
+    font-weight: 900;
+    font-stretch: 75%;
+    line-height: 1.05;
   }
   .ar-how p {
     margin-top: 0.4rem;
     font-weight: 450;
     color: #3f4347;
+    max-width: 40ch;
   }
   .ar-zone ul {
     list-style: none;
@@ -704,24 +1180,73 @@ const tel = telHref();
   .ar-foot {
     background: var(--ink);
     color: #d9dad6;
-    padding: 48px 0;
+    padding: clamp(56px, 8vw, 96px) 0 36px;
     font-size: 15px;
+  }
+  .ar-foot__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid rgba(217, 218, 214, 0.2);
+  }
+  .ar-foot__top .ar-btn {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
   }
   .ar-foot__logo {
     font-weight: 900;
     font-stretch: 68%;
-    font-size: 28px;
+    font-size: clamp(3rem, 1.5rem + 7vw, 7rem);
     color: #fff;
     display: flex;
     flex-direction: column;
-    line-height: 1;
-    margin-bottom: 1rem;
+    line-height: 0.9;
   }
   .ar-foot__logo small {
-    font-size: 11px;
+    font-size: 0.16em;
     font-stretch: 100%;
     color: #ff8a4c;
     letter-spacing: 0.08em;
+    margin-top: 0.4rem;
+  }
+  .ar-foot__cols {
+    display: grid;
+    gap: 2rem;
+    padding: 2.5rem 0;
+  }
+  @media (min-width: 760px) {
+    .ar-foot__cols {
+      grid-template-columns: 1.4fr 1fr 1fr;
+    }
+  }
+  .ar-foot__tag {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    max-width: 24ch;
+  }
+  .ar-foot__h {
+    color: #ff8a4c;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .ar-foot ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ar-foot a:not(.ar-btn) {
+    color: #fff;
+    display: inline-block;
+    padding: 0.35rem 0;
+  }
+  .ar-foot__note {
+    color: #b9bab6;
+    font-size: 0.85rem;
   }
   .ar-sticky {
     position: fixed;
@@ -752,6 +1277,292 @@ const tel = telHref();
       display: none;
     }
   }
+
+  /* ================= Studio look =================
+     A renovation firm that wants to look like an architecture practice: stone and ink, one
+     rust accent used sparingly, lighter type, hairlines, square buttons, quieter pictures. */
+  .ar {
+    --o: #9a3c16;
+    --o-soft: #d98a63;
+    --ink: #171717;
+    --stone: #ecebe6;
+    --stone-2: #e2e0d9;
+    --line: #cdcac2;
+    background: var(--stone);
+    letter-spacing: -0.005em;
+  }
+  .ar :global(img) {
+    filter: saturate(0.78) contrast(1.04) brightness(1.01);
+  }
+  .ar h2 {
+    font-weight: 450;
+    font-stretch: 100%;
+    font-size: clamp(2.3rem, 1.4rem + 3vw, 4.4rem);
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+  .ar h3 {
+    font-weight: 550;
+    font-stretch: 100%;
+    letter-spacing: -0.02em;
+  }
+  .ar .ar-lead {
+    color: #4a4a48;
+    font-size: 1.15rem;
+  }
+  /* Header */
+  .ar .ar-logo {
+    font-weight: 700;
+    font-stretch: 100%;
+    font-size: 1.05rem;
+    letter-spacing: 0.34em;
+  }
+  .ar .ar-logo small {
+    font-weight: 450;
+    letter-spacing: 0.08em;
+    font-size: 0.72em;
+    margin-top: 0.35rem;
+    color: inherit;
+    opacity: 0.75;
+  }
+  .ar .ar-nav-main a {
+    font-weight: 450;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0 1px;
+  }
+  .ar .ar-nav-main a:hover {
+    background-size: 100% 1px;
+  }
+  .ar .ar-top__quote {
+    border-width: 1px;
+    border-radius: 0;
+    font-weight: 500;
+  }
+  .ar .ar-top__call {
+    border-radius: 0;
+    font-weight: 500;
+    background: var(--o);
+  }
+  .ar .ar-menu nav a {
+    font-weight: 400;
+    font-stretch: 100%;
+    letter-spacing: -0.03em;
+  }
+  /* Hero: room for the fixed header above the text (.ar-wrap would reset the padding) */
+  .ar .ar-hero2__text {
+    padding-top: calc(var(--banner) + 96px);
+    padding-bottom: 3rem;
+  }
+  .ar .ar-hero2__kicker {
+    color: #e9c3ad;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .ar .ar-hero2__text h1 {
+    font-weight: 500;
+    font-stretch: 100%;
+    font-size: clamp(2.7rem, 1.2rem + 5vw, 6.2rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    max-width: 13ch;
+  }
+  .ar .ar-hero2__btn {
+    border-radius: 0;
+    font-weight: 500;
+    background: #fff;
+    color: var(--ink);
+  }
+  .ar .ar-hero2__btn--ghost {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+  }
+  .ar .ar-hero2__chips {
+    gap: 0.4rem 2rem;
+    margin-top: 2.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    max-width: 40rem;
+  }
+  .ar .ar-hero2__chips li {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    font-size: 0.92rem;
+    color: #e7e5e0;
+  }
+  .ar .ar-hero2__tag {
+    border-radius: 0;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  /* Services */
+  .ar .ar-service {
+    border-top-width: 1px;
+    border-top-color: var(--line);
+  }
+  .ar .ar-service__n {
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: 0.04em;
+  }
+  @media (min-width: 900px) {
+    .ar .ar-service h3 {
+      font-weight: 450;
+      font-stretch: 100%;
+      letter-spacing: -0.035em;
+    }
+    .ar .ar-service.is-on {
+      border-top-color: var(--ink);
+    }
+    .ar .ar-svc__stage {
+      border-radius: 0;
+    }
+  }
+  /* Works */
+  .ar .ar-works-sec {
+    background: var(--stone-2);
+  }
+  /* Numbers */
+  .ar .ar-numbers {
+    background: var(--ink);
+  }
+  .ar .ar-numbers dt {
+    font-weight: 250;
+    font-stretch: 100%;
+    letter-spacing: -0.05em;
+    color: #fff;
+  }
+  .ar .ar-numbers dt small {
+    font-weight: 450;
+    letter-spacing: 0;
+    color: var(--o-soft);
+  }
+  .ar .ar-numbers__list > div {
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    padding-top: 1.25rem;
+  }
+  /* How we work */
+  .ar .ar-how::before {
+    width: 1px;
+    margin-left: -0.5px;
+    background: var(--line);
+  }
+  .ar .ar-how::after {
+    width: 2px;
+    margin-left: -1px;
+  }
+  .ar .ar-how__n {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--stone);
+    font-weight: 500;
+    font-stretch: 100%;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+    color: var(--o);
+  }
+  .ar .ar-how h3 {
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: -0.03em;
+  }
+  /* Zones: a quiet list with hairlines */
+  .ar .ar-sec--warm {
+    background: var(--stone);
+    border-top: 1px solid var(--line);
+  }
+  .ar .ar-zone .ar-zones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 2rem;
+    margin-top: 2rem;
+  }
+  @media (min-width: 900px) {
+    .ar .ar-zone .ar-zones {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .ar .ar-zone .ar-zones li {
+    padding: 0.9rem 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    border-top: 1px solid var(--line);
+    color: var(--ink);
+    font-weight: 450;
+    font-size: 1.1rem;
+  }
+  /* Form */
+  .ar .ar-form {
+    border-top: 2px solid var(--ink);
+  }
+  .ar .ar-form__progress {
+    color: var(--o);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .ar .ar-form legend {
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: -0.03em;
+  }
+  .ar .ar-opt span {
+    border-width: 1px;
+    border-radius: 0;
+    font-weight: 450;
+  }
+  .ar .ar-field {
+    font-weight: 500;
+  }
+  .ar .ar-field input,
+  .ar .ar-field select {
+    border-width: 1px;
+    border-radius: 0;
+  }
+  .ar .ar-btn {
+    border-radius: 0;
+    font-weight: 500;
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .ar .ar-btn--ghost {
+    background: transparent;
+    color: var(--ink);
+  }
+  /* Footer and phone call bar */
+  .ar .ar-foot__logo {
+    font-weight: 700;
+    font-stretch: 100%;
+    letter-spacing: 0.3em;
+    font-size: clamp(2.2rem, 1rem + 5vw, 5rem);
+  }
+  .ar .ar-foot__logo small {
+    font-size: 0.2em;
+    font-weight: 450;
+    letter-spacing: 0.1em;
+    color: #b9b7b0;
+  }
+  .ar .ar-foot .ar-btn {
+    background: #fff;
+    color: var(--ink);
+    border-color: #fff;
+  }
+  .ar .ar-foot__h {
+    color: var(--o-soft);
+    font-weight: 500;
+  }
+  .ar .ar-foot__tag {
+    font-weight: 450;
+    letter-spacing: -0.02em;
+  }
+  .ar .ar-sticky {
+    background: var(--ink);
+    border-radius: 0;
+    font-weight: 500;
+  }
 </style>
 <script>
   import { initDemoForms } from "../../../scripts/demo-form";
@@ -759,4 +1570,39 @@ const tel = telHref();
   const sticky = document.querySelector<HTMLElement>(".ar-sticky");
   const hero = document.querySelector<HTMLElement>(".ar-hero2");
   if (sticky && hero) new IntersectionObserver(([e]) => sticky.classList.toggle("is-on", !e.isIntersecting), { rootMargin: "-40% 0px 0px 0px" }).observe(hero);
+
+  // Services (wide screens): the item in the middle of the screen, or under the mouse, shows its picture.
+  const items = Array.from(document.querySelectorAll<HTMLElement>("[data-svc]"));
+  const pics = Array.from(document.querySelectorAll<HTMLElement>("[data-svc-pic]"));
+  const show = (i: number) => {
+    items.forEach((el, j) => el.classList.toggle("is-on", i === j));
+    pics.forEach((el, j) => el.classList.toggle("is-on", i === j));
+  };
+  const io = new IntersectionObserver(
+    (entries) => entries.forEach((e) => e.isIntersecting && show(Number((e.target as HTMLElement).dataset.svc))),
+    { rootMargin: "-45% 0px -45% 0px" },
+  );
+  items.forEach((el) => {
+    io.observe(el);
+    el.addEventListener("pointerenter", () => show(Number(el.dataset.svc)));
+  });
+
+  // How we work: the orange rail fills as the steps scroll past.
+  const rail = document.querySelector<HTMLElement>("[data-how-rail]");
+  if (rail && window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    let ticking = false;
+    const fill = () => {
+      ticking = false;
+      const r = rail.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (innerHeight * 0.65 - r.top) / r.height));
+      rail.style.setProperty("--p", p.toFixed(3));
+    };
+    addEventListener("scroll", () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(fill);
+      }
+    }, { passive: true });
+    fill();
+  } else if (rail) rail.style.setProperty("--p", "1");
 </script>

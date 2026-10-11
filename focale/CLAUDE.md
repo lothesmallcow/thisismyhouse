@@ -42,16 +42,33 @@ Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm 
   The 3D canvas is sized to the phone only and moved with transform (no layout shift).
 - Opening film (scripts/hero.ts): tap on "Chiama ora" rings the Dynamic Island, iOS banners drop in.
   Sound (scripts/sound.ts) only after the visitor presses the speaker button.
-- Makeover (Makeover.astro, scripts/makeover.ts): pinned, scrubbed; old non-responsive site, pinch, search for
-  the number, then the phone lifts and turns 360 degrees (back and cameras visible), the site is swapped while
-  it faces away, a light sweep, a tap to call.
+- Makeover (Makeover.astro, scripts/makeover.ts): pinned, scrubbed. A scan runs down the old non-responsive
+  site and boxes its five problems in one pass (numbered red boxes on the screen, labels beside the phone on
+  wide screens), the phone lifts and turns 360 degrees (back and cameras visible), the site is swapped while
+  it faces away (the new site is painted under the old one by opacity, so nothing decodes mid-turn), then each
+  label glides to the part of the new site that fixes it and turns green, and a tap calls. The `fixes` list in
+  Makeover.astro pairs each OldSite piece with its fix in ArcadiHero.
 - Sector chooser (Choose.astro, scripts/paths.ts): radios + CSS :has(), Flip. Each path shows the live demo.
 - Live demos (DemoViewer.astro, scripts/demo-viewer.ts): a real iframe of /lavori/<slug>/demo/, phone frame
   (390 px wide, scaled) on phones, browser window (1280 px, scaled) on computers, a switch between them.
   Loaded only when visible. On touch the site wakes with a tap ("Fatto" puts it back to sleep) so it never traps
   the page scroll. Demo pages hide their banner when framed (Demo.astro adds .in-frame).
-- Demos on phones: long lists are swipe rails (`ul.d-rail`, focusable, with aria-label), Arcadi's works show 3
-  then "Altri lavori" (`.d-more` + `.d-more-btn`). Arcadi's call bar appears after the hero.
+- Demo sites are built like real client sites with a shared motion kit (scripts/demo-motion.ts, loaded by
+  layouts/Demo.astro, data attributes documented at the top of the file): fixed header that turns solid and
+  hides on scroll ([data-dh], sits under the Focus banner via --banner), full-screen phone menu ([data-menu]),
+  line-by-line headings ([data-split]), mask reveals ([data-rise], never on forms: clip-path blocks clicks),
+  picture wipes, parallax, pinned sideways galleries ([data-hscroll]), stacking cards ([data-stack]),
+  count-ups, highlighter strokes ([data-mark]), magnetic buttons. Lenis on mouse only. Language switches must
+  use setText() from demo-motion so split headings survive.
+  Cascina Rovere: warm serif, rooms gallery sliding sideways, "Una giornata in cascina". Villa Ortensia:
+  editorial, spaces as stacking cards, seasons, price bands. Arcadi: "studio" look (stone, ink, one rust
+  accent, square buttons, hairlines, quieter pictures): Lorenzo found the bold orange version childish.
+- Demos on phones: long lists are swipe rails (`:is(ul, ol).d-rail`, focusable, with aria-label), Arcadi's works
+  show 3 then "Altri lavori" (`.d-more` + `.d-more-btn` anywhere in the section). Grid children holding a
+  rail need `min-width: 0` or they widen the page. Arcadi's call bar appears after the hero.
+- Phones: no backdrop blur over moving content, no filters on redrawing layers, the living background is
+  100lvh and pauses while scrolling on touch, the 3D phone draws at 1x while moving. Animate transform, never
+  left/top (layout shift).
 - docs/video/focus-design-home-telefono.mp4: vertical recording of the home (Playwright + ffmpeg).
 - `node scripts/overflow-check.mjs` finds cut-off text and sideways scroll on every page at 6 widths.
 - Do not use the CSS `translate` property on elements GSAP transforms: GSAP folds it into its own transform.

@@ -1,4 +1,10 @@
 ---
+/**
+ * Demo: Cascina Rovere, an invented agriturismo in Brianza. Built like a real client site with the
+ * motion kit (scripts/demo-motion.ts): see-through header over a full-screen hero, a statement
+ * with highlighter strokes, the rooms in a gallery that slides sideways with the scroll, a day at
+ * the farmhouse in four moments, availability on WhatsApp, Italian/English toggle.
+ */
 import Demo from "../../../layouts/Demo.astro";
 import { Image } from "astro:assets";
 import { site } from "../../../config/site";
@@ -9,8 +15,12 @@ const pic = (n: string) => img[`../../../assets/demo/cascina-rovere/${n}.jpg`].d
 // Every visible string, in Italian and English. The toggle swaps them in place.
 const dict: Record<string, [string, string]> = {
   nav_rooms: ["Camere", "Rooms"],
+  nav_day: ["La giornata", "A day here"],
   nav_avail: ["Disponibilità", "Availability"],
   nav_where: ["Come arrivare", "Getting here"],
+  nav_book: ["Prenota", "Book"],
+  menu: ["Menu", "Menu"],
+  menu_close: ["Chiudi", "Close"],
   hero_kicker: ["Agriturismo in Brianza", "Farm stay in Brianza"],
   hero_h1: ["Sei camere in cascina, a quaranta minuti da Milano.", "Six rooms in a farmhouse, forty minutes from Milan."],
   hero_sub: [
@@ -18,24 +28,56 @@ const dict: Record<string, [string, string]> = {
     "Breakfast from our garden, hills and quiet. Ask us for availability: we reply the same day.",
   ],
   hero_cta: ["Chiedi la disponibilità", "Check availability"],
+  hero_more: ["Scopri le camere", "See the rooms"],
   hero_alt: ["La cascina tra le colline al tramonto", "The farmhouse among the hills at sunset"],
+  intro_1: ["Una cascina dell'Ottocento tra le colline, sistemata con calma. Qui si viene per ", "A nineteenth-century farmhouse in the hills, restored slowly. People come here to "],
+  intro_2: ["dormire bene", "sleep well"],
+  intro_3: [", fare colazione con ", ", have breakfast with "],
+  intro_4: ["quello che cresce nell'orto", "what grows in the garden"],
+  intro_5: [" e camminare ", " and walk "],
+  intro_6: ["fino al lago", "down to the lake"],
+  intro_7: [".", "."],
+  f_rooms: ["camere, tutte con bagno", "rooms, all en suite"],
+  f_milan: ["minuti da Milano", "minutes from Milan"],
+  f_lake: ["minuti dal lago", "minutes from the lake"],
   rooms_h2: ["Le camere", "The rooms"],
   rooms_lead: [
-    "Ognuna ha il nome di qualcosa che vedi dalla finestra. Tutte con bagno privato e colazione inclusa.",
-    "Each is named after something you can see from its window. All with private bathroom and breakfast included.",
+    "Ognuna ha il nome di qualcosa che vedi dalla finestra. Bagno privato e colazione inclusa.",
+    "Each is named after something you can see from its window. Private bathroom and breakfast included.",
   ],
+  rooms_hint: ["Scorri per vederle tutte", "Scroll to see them all"],
   guests: ["ospiti", "guests"],
+  ask_room: ["Chiedi questa camera", "Ask for this room"],
   r_noce: ["Pavimento in cotto e travi in noce, vista sull'orto.", "Terracotta floor and walnut beams, looking over the garden."],
   r_glicine: ["La più luminosa, con il glicine che in maggio entra dalla finestra.", "The brightest, with wisteria at the window in May."],
   r_fienile: ["Nel vecchio fienile, con il soffitto a travi a vista.", "In the old hayloft, under exposed beams."],
   r_pergola: ["Accesso diretto alla pergola: ideale per le colazioni lente.", "Direct access to the pergola: made for slow breakfasts."],
   r_frutteto: ["Per famiglie: letto matrimoniale e due singoli, sul frutteto.", "For families: a double and two singles, over the orchard."],
   r_torretta: ["In cima alla torretta, con l'oblò sulle colline.", "At the top of the turret, with a round window on the hills."],
+  day_h2: ["Una giornata in cascina", "A day at the farmhouse"],
+  m_pergola_w: ["Mattina", "Morning"],
+  m_pergola_t: ["Colazione sotto la pergola", "Breakfast under the pergola"],
+  m_pergola_d: [
+    "Pane del forno del paese, uova delle nostre galline, marmellate dell'orto. Fino alle dieci e mezza, senza fretta.",
+    "Bread from the village bakery, eggs from our hens, jams from the garden. Until half past ten, no rush.",
+  ],
+  m_sentieri_w: ["Pomeriggio", "Afternoon"],
+  m_sentieri_t: ["Sentieri tra le colline", "Trails in the hills"],
+  m_sentieri_d: ["Passeggiate da un'ora a una giornata, partendo dalla porta. La mappa te la diamo noi.", "Walks from one hour to a full day, right from the door. We give you the map."],
+  m_lago_w: ["Sera", "Evening"],
+  m_lago_t: ["Il lago a dieci minuti", "The lake, ten minutes away"],
+  m_lago_d: ["Un giro in barca o un aperitivo in riva all'acqua, e si torna per cena.", "A boat trip or a drink by the water, and back for dinner."],
+  m_borgo_w: ["Sabato", "Saturday"],
+  m_borgo_t: ["Il mercato del borgo", "The village market"],
+  m_borgo_d: ["Ogni sabato mattina, con i produttori della zona. A piedi sono venti minuti.", "Every Saturday morning, with local producers. Twenty minutes on foot."],
   avail_h2: ["Chiedi la disponibilità", "Check availability"],
   avail_lead: [
     "Scegli le date e quante persone siete. Ti rispondiamo su WhatsApp in giornata, con il prezzo esatto.",
     "Choose your dates and how many you are. We reply on WhatsApp the same day, with the exact price.",
   ],
+  avail_p1: ["Risposta in giornata", "Reply the same day"],
+  avail_p2: ["Prezzo esatto, niente sorprese", "Exact price, no surprises"],
+  avail_p3: ["Colazione sempre inclusa", "Breakfast always included"],
   f_arrivo: ["Arrivo", "Arrival"],
   f_partenza: ["Partenza", "Departure"],
   f_ospiti: ["Ospiti", "Guests"],
@@ -49,18 +91,14 @@ const dict: Record<string, [string, string]> = {
   lang_it: ["Italiano", "Italian"],
   lang_en: ["Inglese", "English"],
   where_h2: ["Come arrivare", "Getting here"],
-  where_car: ["In auto da Milano in circa quaranta minuti.", "By car from Milan in about forty minutes."],
-  where_train: ["In treno fino alla stazione più vicina, poi ti veniamo a prendere.", "By train to the nearest station, then we pick you up."],
-  near_h2: ["Nei dintorni", "Nearby"],
-  n_sentieri: ["Sentieri tra le colline", "Trails in the hills"],
-  n_sentieri_d: ["Passeggiate da un'ora a una giornata, partendo dalla porta.", "Walks from one hour to a full day, right from the door."],
-  n_lago: ["Il lago a dieci minuti", "The lake, ten minutes away"],
-  n_lago_d: ["Un giro in barca o un pranzo in riva all'acqua.", "A boat trip or lunch by the water."],
-  n_borgo: ["Il mercato del borgo", "The village market"],
-  n_borgo_d: ["Ogni sabato mattina, con i produttori della zona.", "Every Saturday morning, with local producers."],
-  reviews_h2: ["Cosa dicono gli ospiti", "What guests say"],
-  reviews_title: ["Recensioni Google", "Google reviews"],
-  reviews_text: ["Qui compaiono le recensioni Google dell'attività.", "This is where the business's Google reviews appear."],
+  where_car_t: ["In auto", "By car"],
+  where_car: ["Da Milano in circa quaranta minuti, parcheggio nel cortile.", "From Milan in about forty minutes, parking in the courtyard."],
+  where_train_t: ["In treno", "By train"],
+  where_train: ["Fino alla stazione più vicina, poi ti veniamo a prendere noi.", "To the nearest station, then we pick you up."],
+  foot_tag: ["Sei camere in cascina, tra le colline della Brianza.", "Six rooms in a farmhouse, in the hills of Brianza."],
+  foot_nav: ["Il sito", "This site"],
+  foot_contact: ["Scrivici", "Write to us"],
+  foot_wa: ["WhatsApp, rispondiamo in giornata", "WhatsApp, we reply the same day"],
   foot: ["Cascina Rovere è un'attività inventata. Progetto dimostrativo di Focus Design.", "Cascina Rovere is an invented business. A Focus Design demo project."],
   toggle: ["English", "Italiano"],
   toggle_label: ["Read this site in English", "Leggi il sito in italiano"],
@@ -74,7 +112,14 @@ const rooms = [
   { k: "frutteto", n: "Frutteto", g: 4 },
   { k: "torretta", n: "Torretta", g: 2 },
 ];
-const near = ["sentieri", "lago", "borgo"];
+const moments = ["pergola", "sentieri", "lago", "borgo"];
+const nav = [
+  { href: "#camere", k: "nav_rooms" },
+  { href: "#giornata", k: "nav_day" },
+  { href: "#disponibilita", k: "nav_avail" },
+  { href: "#arrivare", k: "nav_where" },
+];
+const waHref = `https://wa.me/${site.whatsappNumber}`;
 ---
 <Demo
   title="Cascina Rovere | Agriturismo in Brianza (demo)"
@@ -99,54 +144,121 @@ const near = ["sentieri", "lago", "borgo"];
     }
   </style>
   <div class="cr">
-    <header class="cr-top">
+    <header class="cr-top" data-dh>
       <div class="cr-wrap cr-top__in">
         <a class="cr-logo" href="#">Cascina Rovere</a>
-        <nav aria-label="Menu">
-          <a href="#camere" data-i18n="nav_rooms">{t("nav_rooms")}</a>
-          <a href="#disponibilita" data-i18n="nav_avail">{t("nav_avail")}</a>
-          <a href="#arrivare" data-i18n="nav_where">{t("nav_where")}</a>
+        <nav class="cr-nav" aria-label="Menu">
+          {nav.map((n) => <a href={n.href} data-i18n={n.k}>{t(n.k)}</a>)}
         </nav>
         <button type="button" class="cr-lang" data-lang-toggle aria-label={t("toggle_label")} data-i18n-aria="toggle_label" lang="en"><span data-i18n="toggle">{t("toggle")}</span></button>
+        <a class="cr-btn cr-btn--sm cr-top__book" href="#disponibilita" data-i18n="nav_book">{t("nav_book")}</a>
+        <button type="button" class="cr-burger" data-menu aria-controls="cr-menu" aria-expanded="false">
+          <span class="cr-burger__lines" aria-hidden="true"><i></i><i></i></span>
+          <span data-i18n="menu">{t("menu")}</span>
+        </button>
       </div>
     </header>
+    <div class="cr-menu" id="cr-menu" data-menu-panel hidden>
+      <nav aria-label="Menu">
+        {nav.map((n) => <a href={n.href} data-i18n={n.k}>{t(n.k)}</a>)}
+      </nav>
+      <a class="cr-btn cr-btn--light" href="#disponibilita" data-i18n="hero_cta">{t("hero_cta")}</a>
+      <button type="button" class="cr-lang cr-lang--menu" data-lang-toggle aria-label={t("toggle_label")} data-i18n-aria="toggle_label" lang="en"><span data-i18n="toggle">{t("toggle")}</span></button>
+    </div>
 
     <section class="cr-hero">
-      <Image src={pic("hero")} alt={t("hero_alt")} data-i18n-alt="hero_alt" widths={[640, 1000, 1600]} sizes="100vw" loading="eager" fetchpriority="high" class="cr-hero__img" />
+      <div class="cr-hero__media">
+        <div class="cr-hero__drift" data-parallax="10">
+          <Image src={pic("hero")} alt={t("hero_alt")} data-i18n-alt="hero_alt" widths={[640, 1000, 1600, 2200]} sizes="100vw" loading="eager" fetchpriority="high" class="cr-hero__img" />
+        </div>
+      </div>
       <div class="cr-wrap cr-hero__text">
         <p class="cr-kicker" data-i18n="hero_kicker">{t("hero_kicker")}</p>
-        <h1 data-i18n="hero_h1">{t("hero_h1")}</h1>
+        <h1 data-split="load" data-i18n="hero_h1">{t("hero_h1")}</h1>
         <p class="cr-sub" data-i18n="hero_sub">{t("hero_sub")}</p>
-        <a class="cr-btn" href="#disponibilita" data-i18n="hero_cta">{t("hero_cta")}</a>
+        <div class="cr-hero__cta">
+          <a class="cr-btn cr-btn--light" href="#disponibilita" data-magnetic data-i18n="hero_cta">{t("hero_cta")}</a>
+          <a class="cr-link cr-link--light" href="#camere" data-i18n="hero_more">{t("hero_more")}</a>
+        </div>
+      </div>
+      <span class="cr-hero__cue" aria-hidden="true"><span class="dm-cue"></span></span>
+    </section>
+
+    <section class="cr-intro">
+      <div class="cr-wrap">
+        <p class="cr-statement" data-rise>
+          <span data-i18n="intro_1">{t("intro_1")}</span><span data-mark data-i18n="intro_2">{t("intro_2")}</span><span data-i18n="intro_3">{t("intro_3")}</span><span data-mark data-i18n="intro_4">{t("intro_4")}</span><span data-i18n="intro_5">{t("intro_5")}</span><span data-mark data-i18n="intro_6">{t("intro_6")}</span><span data-i18n="intro_7">{t("intro_7")}</span>
+        </p>
+        <dl class="cr-facts" data-rise-group>
+          <div><dt><span data-count="6">6</span></dt><dd data-i18n="f_rooms">{t("f_rooms")}</dd></div>
+          <div><dt><span data-count="40">40</span></dt><dd data-i18n="f_milan">{t("f_milan")}</dd></div>
+          <div><dt><span data-count="10">10</span></dt><dd data-i18n="f_lake">{t("f_lake")}</dd></div>
+        </dl>
       </div>
     </section>
 
-    <section class="cr-sec" id="camere">
-      <div class="cr-wrap">
-        <h2 data-i18n="rooms_h2">{t("rooms_h2")}</h2>
+    <section class="cr-rooms-sec" id="camere" data-hscroll>
+      <div class="cr-wrap cr-rooms-head">
+        <h2 data-split data-i18n="rooms_h2">{t("rooms_h2")}</h2>
         <p class="cr-lead" data-i18n="rooms_lead">{t("rooms_lead")}</p>
-        <ul class="cr-rooms d-rail" tabindex="0" aria-label="Le camere">
-          {
-            rooms.map((r) => (
-              <li>
-                <Image src={pic(r.k)} alt="" widths={[400, 800]} sizes="(min-width: 900px) 380px, 92vw" />
+        <p class="cr-hint" aria-hidden="true"><span data-i18n="rooms_hint">{t("rooms_hint")}</span> <span class="cr-hint__arrow"></span></p>
+      </div>
+      <ul class="cr-rooms d-rail" data-hscroll-track tabindex="0" aria-label="Le camere">
+        {
+          rooms.map((r, i) => (
+            <li class="cr-room">
+              <div class="cr-room__pic dm-zoom">
+                <Image src={pic(r.k)} alt="" widths={[400, 800, 1100]} sizes="(min-width: 900px) 34vw, 82vw" />
+                <span class="cr-room__n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+              </div>
+              <div class="cr-room__body">
                 <h3>{r.n}</h3>
                 <p class="cr-guests">
                   {r.g} <span data-i18n="guests">{t("guests")}</span>
                 </p>
                 <p data-i18n={`r_${r.k}`}>{t(`r_${r.k}`)}</p>
+                <a class="cr-link" href="#disponibilita" data-i18n="ask_room">{t("ask_room")}</a>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="cr-day" id="giornata">
+      <div class="cr-wrap">
+        <h2 class="cr-day__h" data-split data-i18n="day_h2">{t("day_h2")}</h2>
+        <ol class="cr-moments">
+          {
+            moments.map((m, i) => (
+              <li class:list={["cr-moment", { "cr-moment--alt": i % 2 }]}>
+                <figure class="cr-moment__pic" data-wipe>
+                  <div class="cr-moment__drift" data-parallax="7">
+                    <Image src={pic(m)} alt="" widths={[600, 1000, 1400]} sizes="(min-width: 900px) 55vw, 100vw" />
+                  </div>
+                </figure>
+                <div class="cr-moment__txt">
+                  <p class="cr-when" data-rise data-i18n={`m_${m}_w`}>{t(`m_${m}_w`)}</p>
+                  <h3 data-split data-i18n={`m_${m}_t`}>{t(`m_${m}_t`)}</h3>
+                  <p data-rise data-i18n={`m_${m}_d`}>{t(`m_${m}_d`)}</p>
+                </div>
               </li>
             ))
           }
-        </ul>
+        </ol>
       </div>
     </section>
 
-    <section class="cr-sec cr-sec--leaf" id="disponibilita">
+    <section class="cr-avail-sec" id="disponibilita">
       <div class="cr-wrap cr-avail">
-        <div>
-          <h2 data-i18n="avail_h2">{t("avail_h2")}</h2>
-          <p class="cr-lead" data-i18n="avail_lead">{t("avail_lead")}</p>
+        <div class="cr-avail__intro">
+          <h2 data-split data-i18n="avail_h2">{t("avail_h2")}</h2>
+          <p class="cr-lead" data-rise data-i18n="avail_lead">{t("avail_lead")}</p>
+          <ul class="cr-promises" data-rise-group>
+            <li data-i18n="avail_p1">{t("avail_p1")}</li>
+            <li data-i18n="avail_p2">{t("avail_p2")}</li>
+            <li data-i18n="avail_p3">{t("avail_p3")}</li>
+          </ul>
         </div>
         <form
           class="cr-form"
@@ -195,42 +307,49 @@ const near = ["sentieri", "lago", "borgo"];
             <input type="text" name="nome" autocomplete="given-name" required data-label="Nome" data-label-en="Name" />
             <span class="cr-err" data-derr="nome" aria-live="polite"></span>
           </label>
-          <button type="submit" class="cr-btn" data-i18n="f_send">{t("f_send")}</button>
+          <button type="submit" class="cr-btn" data-magnetic data-i18n="f_send">{t("f_send")}</button>
           <p class="cr-note" data-i18n="f_note">{t("f_note")}</p>
         </form>
       </div>
     </section>
 
-    <section class="cr-sec" id="arrivare">
-      <div class="cr-wrap cr-where">
-        <div>
-          <h2 data-i18n="where_h2">{t("where_h2")}</h2>
-          <p data-i18n="where_car">{t("where_car")}</p>
-          <p data-i18n="where_train">{t("where_train")}</p>
-        </div>
-        <div>
-          <h2 data-i18n="near_h2">{t("near_h2")}</h2>
-          <ul class="cr-near">
-            {
-              near.map((n) => (
-                <li>
-                  <Image src={pic(n)} alt="" widths={[300, 600]} sizes="(min-width: 900px) 200px, 40vw" />
-                  <div>
-                    <h3 data-i18n={`n_${n}`}>{t(`n_${n}`)}</h3>
-                    <p data-i18n={`n_${n}_d`}>{t(`n_${n}_d`)}</p>
-                  </div>
-                </li>
-              ))
-            }
-          </ul>
+    <section class="cr-where-sec" id="arrivare">
+      <div class="cr-wrap">
+        <h2 data-split data-i18n="where_h2">{t("where_h2")}</h2>
+        <div class="cr-ways" data-rise-group>
+          <div class="cr-way">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 19l2.5-7.5A3 3 0 0 1 11.3 9.5h9.4a3 3 0 0 1 2.8 2L26 19v6h-3v-2.5H9V25H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /><circle cx="10.5" cy="19" r="1.6" fill="currentColor" /><circle cx="21.5" cy="19" r="1.6" fill="currentColor" /></svg>
+            <h3 data-i18n="where_car_t">{t("where_car_t")}</h3>
+            <p data-i18n="where_car">{t("where_car")}</p>
+          </div>
+          <div class="cr-way">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="8" y="4.5" width="16" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M8 14h16M12 27.5l2.5-5M20 27.5l-2.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><circle cx="12.5" cy="18.5" r="1.4" fill="currentColor" /><circle cx="19.5" cy="18.5" r="1.4" fill="currentColor" /></svg>
+            <h3 data-i18n="where_train_t">{t("where_train_t")}</h3>
+            <p data-i18n="where_train">{t("where_train")}</p>
+          </div>
         </div>
       </div>
     </section>
 
     <footer class="cr-foot">
       <div class="cr-wrap">
-        <p class="cr-logo">Cascina Rovere</p>
-        <p data-i18n="foot">{t("foot")}</p>
+        <p class="cr-foot__name">Cascina Rovere</p>
+        <div class="cr-foot__cols">
+          <p class="cr-foot__tag" data-i18n="foot_tag">{t("foot_tag")}</p>
+          <div>
+            <p class="cr-foot__h" data-i18n="foot_nav">{t("foot_nav")}</p>
+            <ul>
+              {nav.map((n) => <li><a href={n.href} data-i18n={n.k}>{t(n.k)}</a></li>)}
+            </ul>
+          </div>
+          <div>
+            <p class="cr-foot__h" data-i18n="foot_contact">{t("foot_contact")}</p>
+            <ul>
+              <li><a href={waHref} target="_blank" rel="noopener" data-i18n="foot_wa">{t("foot_wa")}</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="cr-foot__note" data-i18n="foot">{t("foot")}</p>
       </div>
     </footer>
   </div>
@@ -240,9 +359,12 @@ const near = ["sentieri", "lago", "borgo"];
 <style>
   .cr {
     --leaf: #3f4a2c;
+    --leaf-deep: #2f3820;
     --wood: #7a5636;
     --cream: #f6efe2;
+    --paper: #efe5d2;
     --ink: #2c261d;
+    --mark: rgba(226, 178, 76, 0.55);
     background: var(--cream);
     color: var(--ink);
     font-family: "Fraunces", Georgia, serif;
@@ -254,188 +376,592 @@ const near = ["sentieri", "lago", "borgo"];
   .cr h2,
   .cr h3 {
     font-family: "Fraunces", Georgia, serif;
-    color: var(--ink);
-    font-weight: 500;
+    color: inherit;
+    font-weight: 450;
     font-stretch: 100%;
-    letter-spacing: -0.01em;
-    font-variation-settings: "SOFT" 100, "opsz" 72;
+    letter-spacing: -0.015em;
+    font-variation-settings: "SOFT" 100, "opsz" 96;
   }
   .cr h2 {
-    font-size: clamp(2.2rem, 1.6rem + 2.5vw, 3.6rem);
-    line-height: 1.05;
+    font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.6rem);
+    line-height: 1;
     margin-bottom: 1rem;
   }
   .cr h3 {
-    font-size: 1.6rem;
-    font-weight: 600;
+    font-size: clamp(1.5rem, 1.2rem + 0.9vw, 2rem);
+    font-weight: 500;
+    line-height: 1.15;
   }
   .cr-wrap {
-    max-width: 1180px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: 0 clamp(18px, 4vw, 40px);
+    padding: 0 clamp(18px, 4vw, 48px);
   }
+
+  /* ---------- Header: see-through over the hero, cream once the page moves ---------- */
   .cr-top {
-    background: var(--cream);
-    border-bottom: 1px solid #e1d4bd;
+    color: #fffaf0;
+  }
+  .cr-top.is-solid {
+    background: rgba(246, 239, 226, 0.97);
+    color: var(--ink);
+    box-shadow: 0 1px 0 #e1d4bd;
   }
   .cr-top__in {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    min-height: 68px;
-    flex-wrap: wrap;
+    gap: 1.25rem;
+    min-height: 72px;
   }
   .cr-logo {
-    font-family: "Fraunces", serif;
+    white-space: nowrap;
     font-style: italic;
     font-weight: 600;
     font-size: 1.5rem;
-    color: var(--leaf);
+    color: inherit;
     text-decoration: none;
     margin-right: auto;
+    letter-spacing: -0.01em;
   }
-  .cr-top nav {
+  .cr-nav {
     display: none;
-    gap: 1.5rem;
+    gap: 1.75rem;
   }
-  @media (min-width: 820px) {
-    .cr-top nav {
-      display: flex;
-    }
-  }
-  .cr-top nav a {
-    color: var(--ink);
+  .cr-nav a {
+    color: inherit;
     text-decoration: none;
+    font-size: 1rem;
     padding: 0.6rem 0;
+    background: linear-gradient(currentColor, currentColor) 0 calc(100% - 0.35rem) / 0 1px no-repeat;
+    transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .cr-top nav a:hover {
-    text-decoration: underline;
+  .cr-nav a:hover {
+    background-size: 100% 1px;
   }
   .cr-lang {
     font: inherit;
-    font-size: 1rem;
+    font-size: 0.95rem;
     min-height: 44px;
     padding: 0 1rem;
-    border: 1.5px solid var(--leaf);
+    border: 1.5px solid currentColor;
     background: transparent;
-    color: var(--leaf);
+    color: inherit;
     border-radius: 999px;
     cursor: pointer;
   }
-  .cr-hero {
-    position: relative;
+  .cr-top .cr-top__book {
+    display: none;
+  }
+  .cr-burger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    padding: 0 0.25rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .cr-burger__lines {
     display: grid;
+    gap: 6px;
+    width: 22px;
   }
-  .cr-hero :global(.cr-hero__img) {
-    width: 100%;
-    height: clamp(360px, 62vh, 680px);
-    object-fit: cover;
+  .cr-burger__lines i {
+    display: block;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.35s ease;
   }
-  .cr-hero__text {
-    padding-block: 2.5rem 0;
+  .cr-burger[aria-expanded="true"] .cr-burger__lines i:first-child {
+    transform: translateY(3.75px) rotate(45deg);
   }
-  @media (min-width: 900px) {
-    .cr-hero {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-      align-items: center;
+  .cr-burger[aria-expanded="true"] .cr-burger__lines i:last-child {
+    transform: translateY(-3.75px) rotate(-45deg);
+  }
+  @media (min-width: 960px) {
+    .cr-nav,
+    .cr-top .cr-top__book {
+      display: inline-flex;
     }
-    .cr-hero :global(.cr-hero__img) {
-      order: 2;
-      height: min(78vh, 760px);
-      border-radius: 0 0 0 36px;
-    }
-    .cr-hero__text {
-      order: 1;
-      max-width: none;
-      margin: 0;
-      padding: 3rem 3rem 3rem max(clamp(18px, 4vw, 40px), calc((100vw - 1180px) / 2 + 40px));
+    .cr-burger {
+      display: none;
     }
   }
-  .cr-kicker {
-    font-style: italic;
-    color: var(--wood);
-    margin-bottom: 0.5rem;
+  .cr-lang--menu {
+    justify-self: start;
   }
-  .cr h1 {
-    font-size: clamp(2.4rem, 1.7rem + 3vw, 4.2rem);
-    line-height: 1.02;
+  /* Narrow phones: the language switch moves into the menu. */
+  @media (max-width: 480px) {
+    .cr-top .cr-lang {
+      display: none;
+    }
   }
-  .cr-sub {
-    margin: 1.25rem 0 1.75rem;
-    font-size: 1.15rem;
+  /* Phone menu: the whole screen, big serif links */
+  .cr-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 85;
+    display: grid;
+    align-content: center;
+    gap: 2.5rem;
+    padding: 6rem clamp(24px, 8vw, 48px) 3rem;
+    background: var(--leaf);
+    color: #fffaf0;
   }
+  .cr-menu nav {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .cr-menu nav a {
+    color: inherit;
+    text-decoration: none;
+    font-size: clamp(2.2rem, 9vw, 3rem);
+    line-height: 1.2;
+    font-variation-settings: "SOFT" 100, "opsz" 96;
+  }
+  :global(.dm-menu-open) .cr-top {
+    color: #fffaf0;
+    background: transparent;
+    box-shadow: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cr-menu:not([hidden]) {
+      animation: cr-menu 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes cr-menu {
+      from {
+        clip-path: inset(0 0 100% 0);
+      }
+      to {
+        clip-path: inset(0 0 0 0);
+      }
+    }
+  }
+
+  /* ---------- Buttons and links ---------- */
   .cr-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 52px;
-    padding: 0 1.5rem;
+    min-height: 54px;
+    padding: 0 1.6rem;
     background: var(--leaf);
     color: #fff;
     font: inherit;
     font-weight: 600;
+    font-size: 1.05rem;
     text-decoration: none;
     border: 0;
     border-radius: 999px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
   }
-  .cr-sec {
-    padding: clamp(60px, 9vw, 120px) 0;
+  .cr-btn:hover {
+    background: var(--leaf-deep);
   }
-  .cr-sec--leaf {
-    background: #e6e2cc;
+  .cr-btn--sm {
+    min-height: 44px;
+    padding: 0 1.2rem;
+    font-size: 0.98rem;
   }
-  .cr-sec--paper {
-    background: #efe5d2;
+  .cr-btn--light {
+    background: #fffaf0;
+    color: var(--leaf-deep);
+  }
+  .cr-btn--light:hover {
+    background: #fff;
+  }
+  .cr-top.is-solid .cr-top__book {
+    background: var(--leaf);
+    color: #fff;
+  }
+  .cr-top:not(.is-solid) .cr-top__book {
+    background: #fffaf0;
+    color: var(--leaf-deep);
+  }
+  .cr-link {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .cr-link--light {
+    color: #fffaf0;
+  }
+
+  /* ---------- Hero: the farmhouse fills the screen ---------- */
+  .cr-hero {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid;
+    align-items: end;
+    overflow: hidden;
+    color: #fffaf0;
+    background: #3a2a18;
+  }
+  .cr-hero__media,
+  .cr-hero__text {
+    grid-area: 1 / 1;
+  }
+  .cr-hero__media {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .cr-hero__drift {
+    position: absolute;
+    inset: 0;
+  }
+  .cr-hero__media :global(.cr-hero__img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 68% 50%;
+  }
+  .cr-hero__media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(0deg, rgba(30, 20, 8, 0.88) 0%, rgba(30, 20, 8, 0.55) 38%, rgba(30, 20, 8, 0.05) 70%),
+      linear-gradient(90deg, rgba(30, 20, 8, 0.45), rgba(30, 20, 8, 0) 60%);
+  }
+  .cr-hero__text {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding-top: calc(var(--banner) + 110px);
+    padding-bottom: clamp(3.5rem, 9vh, 6rem);
+  }
+  .cr-kicker {
+    font-style: italic;
+    color: #f3d6a4;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+  }
+  .cr h1 {
+    font-size: clamp(2.8rem, 1.4rem + 5vw, 6.4rem);
+    line-height: 0.98;
+    max-width: 14ch;
+    color: #fffaf0;
+  }
+  .cr-sub {
+    margin: 1.5rem 0 2rem;
+    font-size: clamp(1.08rem, 1rem + 0.3vw, 1.25rem);
+    max-width: 38ch;
+    color: #f4ead8;
+  }
+  .cr-hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.75rem;
+  }
+  .cr-hero__cue {
+    position: absolute;
+    right: clamp(18px, 4vw, 48px);
+    bottom: 2rem;
+    z-index: 2;
+    color: #fffaf0;
+  }
+  @media (max-width: 700px) {
+    .cr-hero__cue {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cr-hero__media :global(.cr-hero__img) {
+      animation: cr-zoom 2.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes cr-zoom {
+      from {
+        transform: scale(1.14);
+      }
+    }
+  }
+
+  /* ---------- Statement with highlighter strokes ---------- */
+  .cr-intro {
+    padding: clamp(80px, 12vw, 170px) 0 clamp(60px, 9vw, 120px);
+  }
+  .cr-statement {
+    font-size: clamp(1.7rem, 1rem + 2.6vw, 3.3rem);
+    line-height: 1.22;
+    letter-spacing: -0.015em;
+    max-width: 26ch;
+    font-variation-settings: "SOFT" 100, "opsz" 72;
+  }
+  .cr-statement [data-mark] {
+    background-image: linear-gradient(var(--mark), var(--mark));
+  }
+  .cr-facts {
+    margin: clamp(3rem, 6vw, 5rem) 0 0;
+    display: grid;
+    gap: 1.5rem;
+    border-top: 1px solid #d9c9ac;
+    padding-top: 2rem;
+  }
+  @media (min-width: 700px) {
+    .cr-facts {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .cr-facts dt {
+    font-size: clamp(3rem, 2rem + 3vw, 5rem);
+    line-height: 1;
+    font-variation-settings: "SOFT" 100, "opsz" 144;
+    color: var(--leaf);
+  }
+  .cr-facts dd {
+    margin: 0.4rem 0 0;
+    color: #5b5244;
+    font-size: 1rem;
+  }
+
+  /* ---------- Rooms: a gallery that slides sideways with the scroll (wide screens) ---------- */
+  .cr-rooms-sec {
+    padding: clamp(60px, 8vw, 110px) 0;
+    background: var(--paper);
+    overflow: hidden;
+  }
+  .cr-rooms-head {
+    display: grid;
+    gap: 0.5rem 3rem;
+    margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
   }
   .cr-lead {
     max-width: 44ch;
     font-size: 1.15rem;
   }
+  .cr-hint {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    font-style: italic;
+    color: var(--wood);
+    font-size: 1rem;
+  }
+  .cr-hint__arrow {
+    width: 42px;
+    height: 1px;
+    background: currentColor;
+    position: relative;
+  }
+  .cr-hint__arrow::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: -4px;
+    width: 9px;
+    height: 9px;
+    border-top: 1px solid currentColor;
+    border-right: 1px solid currentColor;
+    transform: rotate(45deg);
+  }
+  /* Phones: the swipe rail runs edge to edge (it is not inside .cr-wrap). */
+  @media (max-width: 760px) {
+    .cr .cr-rooms.d-rail {
+      --rail-pad: 18px;
+      margin-inline: 0;
+    }
+  }
   .cr-rooms {
     list-style: none;
-    padding: 0;
-    margin: 2.5rem 0 0;
+    margin: 0;
+    padding: 0 clamp(18px, 4vw, 48px);
     display: grid;
-    gap: 2.5rem 2rem;
+    gap: 2.5rem 1.5rem;
   }
-  @media (min-width: 700px) {
+  @media (min-width: 761px) and (max-width: 899px) {
     .cr-rooms {
       grid-template-columns: repeat(2, 1fr);
     }
   }
-  @media (min-width: 1050px) {
+  @media (min-width: 900px) {
+    .cr-rooms-sec {
+      min-height: 100vh;
+      display: grid;
+      /* One column as wide as the screen: the track overflows it instead of widening it. */
+      grid-template-columns: minmax(0, 1fr);
+      align-content: center;
+      padding-top: calc(var(--banner) + 80px);
+    }
+    .cr-rooms-head {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+    }
+    .cr-rooms-head h2 {
+      grid-row: span 2;
+      margin: 0;
+    }
+    .cr-hint {
+      display: inline-flex;
+    }
     .cr-rooms {
-      grid-template-columns: repeat(3, 1fr);
+      display: flex;
+      justify-self: start;
+      width: max-content;
+      gap: clamp(1.5rem, 2.5vw, 2.5rem);
+      padding-inline: max(clamp(18px, 4vw, 48px), calc((100vw - 1240px) / 2 + 48px)) clamp(18px, 6vw, 96px);
+    }
+    .cr-room {
+      width: clamp(320px, 31vw, 440px);
     }
   }
-  .cr-rooms :global(img) {
+  .cr-room__pic {
+    position: relative;
+    border-radius: 22px 22px 22px 0;
+    overflow: hidden;
+  }
+  .cr-room__pic :global(img) {
+    display: block;
     width: 100%;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 5 / 4;
     object-fit: cover;
-    border-radius: 18px 18px 18px 0;
-    margin-bottom: 1rem;
+  }
+  .cr-room__n {
+    position: absolute;
+    left: 1rem;
+    top: 0.8rem;
+    color: #fffaf0;
+    font-size: 0.95rem;
+    font-style: italic;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+  }
+  .cr-room__body {
+    padding-top: 1.1rem;
+  }
+  .cr-room__body p {
+    font-size: 1.02rem;
   }
   .cr-guests {
     color: var(--wood);
     font-style: italic;
+    margin-bottom: 0.4rem;
+  }
+
+  /* ---------- A day at the farmhouse ---------- */
+  .cr-day {
+    padding: clamp(80px, 11vw, 150px) 0;
+  }
+  .cr-day__h {
+    max-width: 12ch;
+  }
+  .cr-moments {
+    list-style: none;
+    margin: clamp(2.5rem, 5vw, 4.5rem) 0 0;
+    padding: 0;
+    display: grid;
+    gap: clamp(3.5rem, 8vw, 8rem);
+  }
+  .cr-moment {
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  @media (min-width: 900px) {
+    .cr-moment {
+      grid-template-columns: 1.35fr 1fr;
+      gap: clamp(2.5rem, 5vw, 5rem);
+    }
+    .cr-moment--alt {
+      grid-template-columns: 1fr 1.35fr;
+    }
+    .cr-moment--alt .cr-moment__pic {
+      order: 2;
+    }
+  }
+  .cr-moment__pic {
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px 26px 26px 0;
+    aspect-ratio: 4 / 3;
+  }
+  .cr-moment__drift {
+    position: absolute;
+    inset: 0;
+  }
+  .cr-moment__pic :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cr-when {
+    font-style: italic;
+    color: var(--wood);
+    font-size: 1.1rem;
+    margin-bottom: 0.4rem;
+  }
+  .cr-moment__txt h3 {
+    font-size: clamp(1.9rem, 1.3rem + 1.8vw, 3rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  .cr-moment__txt p:last-child {
+    max-width: 34ch;
+    font-size: 1.1rem;
+  }
+
+  /* ---------- Availability ---------- */
+  .cr-avail-sec {
+    padding: clamp(80px, 10vw, 140px) 0;
+    background: var(--leaf);
+    color: #f6efe2;
   }
   .cr-avail {
     display: grid;
-    gap: 2rem;
+    gap: 2.5rem;
   }
   @media (min-width: 900px) {
     .cr-avail {
-      grid-template-columns: 1fr 1.1fr;
-      gap: 4rem;
+      grid-template-columns: 1fr 1.05fr;
+      gap: 5rem;
+      align-items: start;
     }
+  }
+  .cr-avail-sec .cr-lead {
+    color: #e9e2cf;
+  }
+  .cr-promises {
+    list-style: none;
+    margin: 2rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .cr-promises li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .cr-promises li::before {
+    content: "";
+    width: 22px;
+    height: 22px;
+    flex: none;
+    border-radius: 50%;
+    background:
+      no-repeat center / 12px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.5l2.5 2.5L10 3.5' fill='none' stroke='%232f3820' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+      #e7d6a8;
   }
   .cr-form {
     display: grid;
     gap: 1rem;
     background: var(--cream);
-    padding: clamp(20px, 3vw, 36px);
-    border-radius: 24px 24px 24px 0;
+    color: var(--ink);
+    padding: clamp(22px, 3vw, 40px);
+    border-radius: 28px 28px 28px 0;
+    box-shadow: 0 40px 80px -40px rgba(10, 14, 4, 0.6);
   }
   .cr-form label {
     display: grid;
@@ -447,12 +973,17 @@ const near = ["sentieri", "lago", "borgo"];
   .cr-form select {
     font: inherit;
     font-weight: 400;
-    min-height: 50px;
-    padding: 0 0.8rem;
+    min-height: 52px;
+    padding: 0 0.85rem;
     border: 1.5px solid #9a8c74;
-    border-radius: 10px;
+    border-radius: 12px;
     background: #fff;
     color: var(--ink);
+  }
+  .cr-form input:focus-visible,
+  .cr-form select:focus-visible {
+    outline: 3px solid #c99a3c;
+    outline-offset: 1px;
   }
   .cr-row {
     display: grid;
@@ -474,113 +1005,99 @@ const near = ["sentieri", "lago", "borgo"];
     font-size: 0.9rem;
     color: #5b5244;
   }
-  .cr-where {
-    display: grid;
-    gap: 3rem;
+
+  /* ---------- Getting here ---------- */
+  .cr-where-sec {
+    padding: clamp(80px, 10vw, 130px) 0;
   }
-  @media (min-width: 900px) {
-    .cr-where {
-      grid-template-columns: 0.8fr 1.2fr;
-      gap: 4rem;
+  .cr-ways {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  @media (min-width: 760px) {
+    .cr-ways {
+      grid-template-columns: 1fr 1fr;
     }
   }
-  .cr-where p + p {
-    margin-top: 0.75rem;
+  .cr-way {
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    border-top: 1px solid #d9c9ac;
   }
-  .cr-near {
-    list-style: none;
-    padding: 0;
-    margin: 1rem 0 0;
-    display: grid;
-    gap: 1.25rem;
+  .cr-way svg {
+    width: 40px;
+    height: 40px;
+    color: var(--leaf);
+    margin-bottom: 1rem;
   }
-  .cr-near li {
-    display: grid;
-    grid-template-columns: 38% 1fr;
-    gap: 1.25rem;
-    align-items: center;
+  .cr-way h3 {
+    margin-bottom: 0.5rem;
   }
-  .cr-near :global(img) {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: 14px 14px 14px 0;
-  }
-  .cr-near h3 {
-    font-size: 1.3rem;
-  }
+
+  /* ---------- Footer ---------- */
   .cr-foot {
-    background: var(--leaf);
+    background: var(--leaf-deep);
     color: #efe9d8;
-    padding: 48px 0;
+    padding: clamp(60px, 8vw, 100px) 0 40px;
     font-size: 16px;
   }
-  .cr-foot .cr-logo {
-    color: #fff;
-    display: block;
-    margin-bottom: 0.75rem;
+  .cr-foot__name {
+    font-style: italic;
+    font-size: clamp(3rem, 1rem + 8vw, 8rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: #fffaf0;
+    margin-bottom: 2.5rem;
   }
-  /* Full-bleed hero on wide screens: the farmhouse fills the screen, text over a warm shade. */
-  @media (min-width: 900px) {
-    .cr-hero {
-      grid-template-columns: 1fr;
-      position: relative;
-      overflow: hidden;
-    }
-    .cr-hero :global(.cr-hero__img) {
-      order: 0;
-      grid-area: 1 / 1;
-      height: min(88vh, 900px);
-      border-radius: 0;
-      object-position: 75% 50%;
-    }
-    .cr-hero::after {
-      content: "";
-      grid-area: 1 / 1;
-      position: relative;
-      z-index: 1;
-      align-self: stretch;
-      background: linear-gradient(90deg, rgba(40, 24, 8, 0.86) 0%, rgba(40, 24, 8, 0.62) 34%, rgba(40, 24, 8, 0) 62%);
-      pointer-events: none;
-    }
-    .cr-hero__text {
-      grid-area: 1 / 1;
-      position: relative;
-      z-index: 2;
-      align-self: center;
-      max-width: 36rem;
-      color: #fffaf0;
-    }
-    .cr-hero__text .cr-kicker {
-      color: #f6dcae;
-    }
-    .cr-hero__text h1 {
-      color: #fffaf0;
+  .cr-foot__cols {
+    display: grid;
+    gap: 2rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid rgba(239, 233, 216, 0.25);
+  }
+  @media (min-width: 760px) {
+    .cr-foot__cols {
+      grid-template-columns: 1.4fr 1fr 1fr;
     }
   }
-  @media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
-    .cr-hero :global(.cr-hero__img) {
-      animation: cr-zoom 2.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-    @keyframes cr-zoom {
-      from {
-        transform: scale(1.12);
-      }
-    }
+  .cr-foot__tag {
+    font-size: 1.2rem;
+    max-width: 24ch;
+  }
+  .cr-foot__h {
+    font-style: italic;
+    color: #d9c9a0;
+    margin-bottom: 0.5rem;
+  }
+  .cr-foot ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .cr-foot a {
+    color: #fffaf0;
+    display: inline-block;
+    padding: 0.35rem 0;
+  }
+  .cr-foot__note {
+    padding-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #cfc8b4;
   }
 </style>
 <script>
   import { initDemoForms } from "../../../scripts/demo-form";
+  import { setText } from "../../../scripts/demo-motion";
   initDemoForms();
 
   const dict = JSON.parse(document.getElementById("cr-dict")!.textContent!) as Record<string, [string, string]>;
-  const btn = document.querySelector<HTMLButtonElement>("[data-lang-toggle]")!;
+  const btns = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-lang-toggle]"));
   const apply = (lang: "it" | "en") => {
     const i = lang === "it" ? 0 : 1;
     document.documentElement.lang = lang;
     document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
       const v = dict[el.dataset.i18n!];
-      if (v) el.textContent = v[i];
+      if (v) setText(el, v[i]);
     });
     document.querySelectorAll<HTMLImageElement>("[data-i18n-alt]").forEach((el) => {
       const v = dict[el.dataset.i18nAlt!];
@@ -590,7 +1107,7 @@ const near = ["sentieri", "lago", "borgo"];
       const v = dict[el.dataset.i18nAria!];
       if (v) el.setAttribute("aria-label", v[i]);
     });
-    btn.lang = lang === "it" ? "en" : "it";
+    btns.forEach((b) => (b.lang = lang === "it" ? "en" : "it"));
   };
-  btn.addEventListener("click", () => apply(document.documentElement.lang === "en" ? "it" : "en"));
+  btns.forEach((b) => b.addEventListener("click", () => apply(document.documentElement.lang === "en" ? "it" : "en")));
 </script>
