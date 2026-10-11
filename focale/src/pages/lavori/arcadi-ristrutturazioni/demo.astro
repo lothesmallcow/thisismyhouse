@@ -1292,7 +1292,13 @@ const tel = telHref();
     letter-spacing: -0.005em;
   }
   .ar :global(img) {
-    filter: saturate(0.78) contrast(1.04) brightness(1.01);
+    filter: saturate(0.85) contrast(1.04) brightness(1.01);
+  }
+  /* Before in black and white, after in colour: the portfolio convention of architecture
+     studios, and it reads as a choice rather than as a drawing. */
+  .ar :global(.ba__media > .ba__img),
+  .ar .ar-hero2__media :global(.ar-hero2__img:not(.ar-hero2__after)) {
+    filter: grayscale(1) sepia(0.14) contrast(1.06) brightness(1.03);
   }
   .ar h2 {
     font-weight: 450;
