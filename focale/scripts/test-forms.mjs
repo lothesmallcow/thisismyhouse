@@ -123,9 +123,9 @@ await test("contact form: validation and payload", async () => {
   await page.close();
 });
 
-await test("calculator: defaults, recompute, Italian format", async () => {
+await test("calculator (prices page): defaults, recompute, Italian format", async () => {
   const page = await browser.newPage({ reducedMotion: "reduce" });
-  await page.goto(`${base}/`);
+  await page.goto(`${base}/prezzi/`);
   await page.waitForTimeout(1500);
   assert.equal(await page.textContent("[data-annuo]"), "21.600");
   await page.fill("#calc-valore", "500");
@@ -140,7 +140,7 @@ await test("home without JavaScript: content readable", async () => {
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const page = await ctx.newPage();
   await page.goto(`${base}/`);
-  for (const sel of ["h1", ".hero__main .lead", ".pick__q", ".lens__head", "[data-lens-step]", ".calc__result"]) {
+  for (const sel of ["h1", ".hero__lead", ".choose__t", ".bn", "#problema h2", ".sc-price__plan", ".sc-end h2"]) {
     assert.equal(await page.isVisible(sel), true, `${sel} visible`);
   }
   // The sector chooser works with CSS alone.

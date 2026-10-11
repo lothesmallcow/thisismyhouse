@@ -1,266 +1,527 @@
 ---
+/**
+ * Home as a sequence of full-screen scenes, advanced one at a time like a video (CSS scroll
+ * snap: keyboard, scrollbar and screen readers keep working). See docs/RICERCA-DESIGN.md.
+ */
 import Base from "../layouts/Base.astro";
-import Hero from "../components/Hero.astro";
-import Manifesto from "../components/Manifesto.astro";
-import Icon from "../components/Icon.astro";
-import Calculator from "../components/Calculator.astro";
-import Steps from "../components/Steps.astro";
-import Founders from "../components/Founders.astro";
-import PriceSummary from "../components/PriceSummary.astro";
-import WorkReel from "../components/WorkReel.astro";
+import HeroScene from "../components/HeroScene.astro";
+import Choose from "../components/Choose.astro";
 import Faq from "../components/Faq.astro";
-import Reviews from "../components/Reviews.astro";
-import Closing from "../components/Closing.astro";
+import Icon from "../components/Icon.astro";
+import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { site } from "../config/site";
-import { fill } from "../lib/util";
+import { fill, euro, foundersOpen, whatsappHref } from "../lib/util";
+import { plans, cura } from "../lib/plans";
 import { faqPage, professionalService } from "../lib/schema";
 
 const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order).slice(0, 4);
 const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
+const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.data.order);
+const open = foundersOpen();
 
-const steps = [
-  { title: "Ci racconti la tua attività.", text: "Dieci minuti, al telefono o su WhatsApp." },
-  {
-    title: "Ricevi l'anteprima gratuita.",
-    text: `Entro ${site.previewHours} ore vedi la homepage del tuo nuovo sito.`,
-  },
-  {
-    title: "Se ti convince, partiamo.",
-    text: `Acconto del ${site.depositPercent}%. Il sito è pronto in ${site.deliveryDays.professionale} giorni lavorativi.`,
-  },
-  {
-    title: "Paghi il saldo solo a sito approvato.",
-    text: "Lo provi, chiedi le modifiche, lo approvi. Poi va online.",
-  },
+const facts = [
+  { t: "Dal telefono non si legge.", d: "Torna indietro e chiama il prossimo." },
+  { t: "Il numero non si trova.", d: "Lascia perdere." },
+  { t: "In fondo c'è scritto 2014.", d: "Pensa che abbiate chiuso." },
 ];
-
-const inside = [
-  { icon: "mobile", t: "Si legge bene da ogni telefono.", d: "Testi grandi, pulsanti comodi, niente zoom." },
-  { icon: "phone", t: "Ti chiamano con un tocco.", d: "Telefono e WhatsApp sempre a portata di pollice." },
-  {
-    icon: "list",
-    t: "Le richieste arrivano già ordinate.",
-    d: "Su WhatsApp, già complete: cosa serve, dove, quando. Più una copia via email.",
-  },
-  { icon: "search", t: "Ti trovano su Google.", d: "Pagine scritte per le ricerche della tua zona, scheda Google collegata." },
-  { icon: "bolt", t: "Si apre in fretta.", d: "Sopra 90 su PageSpeed di Google, da telefono." },
-  { icon: "shield", t: "In regola.", d: "Privacy, cookie e dati aziendali a posto, senza banner inutili." },
-  { icon: "key", t: "È tuo.", d: "Dominio, codice e accessi intestati a te." },
-] as const;
-
+const steps = [
+  { t: "Ci racconti l'attività", d: "Dieci minuti, al telefono o su WhatsApp." },
+  { t: "Vedi l'anteprima", d: `La homepage del tuo nuovo sito, entro ${site.previewHours} ore. Gratis.` },
+  { t: "Se ti convince, partiamo", d: `Acconto del ${site.depositPercent}%, sito pronto in ${site.deliveryDays.professionale} giorni lavorativi.` },
+  { t: "Approvi e va online", d: "Il saldo lo paghi solo a sito approvato." },
+];
+const scenes = [
+  { id: "inizio", label: "Inizio" },
+  { id: "attivita", label: "La tua attività" },
+  { id: "problema", label: "Il problema" },
+  { id: "lavori", label: "Lavori" },
+  { id: "metodo", label: "Metodo" },
+  { id: "prezzi", label: "Prezzi" },
+  { id: "domande", label: "Domande" },
+];
 ---
 <Base
   title={`${site.brand} | Siti web che portano richieste, per piccole imprese`}
   description={`Rifacciamo il sito della tua attività perché si legga bene dal telefono e porti più richieste. Anteprima gratuita in ${site.previewHours} ore, saldo solo a sito approvato.`}
   jsonLd={[professionalService(), faqPage(faqItems)]}
+  bodyClass="home"
 >
-  <Hero />
+  <nav class="dots" aria-label="Sezioni della pagina" data-dots>
+    <ol>
+      {
+        scenes.map((s) => (
+          <li>
+            <a href={`#${s.id}`} data-dot={s.id}>
+              <span class="dots__label">{s.label}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
 
-  <Manifesto />
+  <div class="scenes">
+    <HeroScene />
 
-  <Calculator />
+    <Choose />
 
-  <section class="section" aria-labelledby="metodo">
-    <div class="wrap sec">
-      <p class="sec__label">Metodo</p>
-      <div class="sec__body">
-        <h2 id="metodo" class="h2-gap" data-focus>Quattro passi. Il primo è gratis.</h2>
-        <Steps steps={steps} />
-        <a class="textlink after-link" href="/come-funziona">Tutti i dettagli</a>
+    <section class="scene sc-prob" id="problema" aria-labelledby="problema-t">
+      <div class="wrap sc-prob__in">
+        <h2 id="problema-t" class="sc-prob__t" data-in>Ogni giorno qualcuno cerca quello che fai e apre il tuo sito.</h2>
+        <p class="sc-prob__q" data-in style="--d: 0.15s">In pochi secondi decide se chiamarti.</p>
+        <ul class="sc-prob__facts">
+          {
+            facts.map((f, i) => (
+              <li data-in style={`--d: ${0.3 + i * 0.12}s`}>
+                <strong>{f.t}</strong>
+                <span>{f.d}</span>
+              </li>
+            ))
+          }
+        </ul>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="section section--sole guarantee" aria-labelledby="garanzia">
-    <div class="wrap sec">
-      <p class="sec__label">Garanzia</p>
-      <div class="sec__body">
-        <h2 id="garanzia" class="guarantee__title" data-focus>Il rischio ce lo prendiamo noi.</h2>
-        <div class="guarantee__cols">
-          <p class="lead">
-            L'anteprima è gratuita. Se non ti piace, finisce lì. Se partiamo, il saldo lo paghi solo a sito approvato.
-          </p>
-          <div>
-            <p class="muted">{site.revisionRounds} giri di modifiche inclusi. Le condizioni sono scritte, chiare e senza asterischi.</p>
-            <a class="textlink guarantee__link" href="/condizioni">Leggi le condizioni</a>
-          </div>
+    <section class="scene sc-work" id="lavori" aria-labelledby="lavori-t">
+      <div class="wrap sc-work__in">
+        <div class="sc-work__head">
+          <h2 id="lavori-t" data-in>Tre siti completi, per tre attività inventate.</h2>
+          <p class="muted" data-in style="--d: 0.1s">Progetti dimostrativi: i lavori dei primi clienti arriveranno qui.</p>
+          <a class="textlink" href="/lavori/" data-in style="--d: 0.15s">Tutti i lavori</a>
+        </div>
+        <ul class="sc-work__list">
+          {
+            lavori.map((l, i) => (
+              <li data-in style={`--d: ${0.15 + i * 0.12}s`}>
+                <a href={`/lavori/${l.id}/demo/`} class="sc-work__card">
+                  <span class="sc-work__shot" data-tilt="6">
+                    <Image src={l.data.shotDesktop} alt={`Il sito dimostrativo di ${l.data.name}`} widths={[480, 800, 1100]} sizes="(min-width: 900px) 30vw, 88vw" />
+                  </span>
+                  <span class="sc-work__name">{l.data.name}</span>
+                  <span class="sc-work__sector">{l.data.sector}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="scene sc-how" id="metodo" aria-labelledby="metodo-t">
+      <div class="wrap sc-how__in">
+        <h2 id="metodo-t" data-in>Quattro passi. Il primo è gratis.</h2>
+        <ol class="sc-how__steps">
+          {
+            steps.map((s, i) => (
+              <li data-in style={`--d: ${0.1 + i * 0.12}s`}>
+                <span class="sc-how__n" aria-hidden="true">{i + 1}</span>
+                <h3>{s.t}</h3>
+                <p>{s.d}</p>
+              </li>
+            ))
+          }
+        </ol>
+        <div class="sc-how__promise" data-in style="--d: 0.6s">
+          <p>Il rischio ce lo prendiamo noi: se l'anteprima non ti piace, finisce lì.</p>
+          <a class="textlink" href="/condizioni/">Le condizioni</a>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <WorkReel />
-
-  <section class="section bento-sec" aria-labelledby="dentro">
-    <div class="wrap">
-      <h2 id="dentro" class="bento__title" data-focus>Cosa trovi nel tuo nuovo sito.</h2>
-      <ul class="bento">
-        {
-          inside.map((it, i) => (
-            <li class:list={["bento__tile", `bento__tile--${i + 1}`]} data-tile>
-              <Icon name={it.icon} size={30} />
-              <h3>{it.t}</h3>
-              <p>{it.d}</p>
-            </li>
-          ))
-        }
-      </ul>
-    </div>
-  </section>
-
-  <Founders />
-
-  <PriceSummary />
-
-  <Reviews />
-
-  <section class="section section--pietra faq-sec" aria-labelledby="domande">
-    <div class="wrap faq-grid">
-      <div class="faq-side">
-        <h2 id="domande" data-focus>Domande frequenti</h2>
-        <p class="muted">Le quattro che ci fanno tutti. Le altre sono nella pagina del metodo.</p>
-        <a class="textlink" href="/come-funziona#domande">Tutte le domande</a>
+    <section class="scene sc-price" id="prezzi" aria-labelledby="prezzi-t">
+      <div class="wrap sc-price__in">
+        <div class="sc-price__head">
+          <h2 id="prezzi-t" data-in>Prezzi scritti qui, non "su richiesta".</h2>
+          {
+            open && (
+              <p class="sc-price__founders" data-in style="--d: 0.1s">
+                Prezzo fondatori per i primi {site.foundersSpotsTotal} clienti. Posti liberi: {site.foundersSpotsLeft} su {site.foundersSpotsTotal}.
+              </p>
+            )
+          }
+        </div>
+        <ul class="sc-price__plans">
+          {
+            plans.map((p, i) => (
+              <li class:list={["sc-price__plan", { "is-rec": p.recommended }]} data-in style={`--d: ${0.15 + i * 0.1}s`}>
+                <span class="sc-price__name">
+                  {p.name}
+                  {p.recommended && <span class="sc-price__tag">Consigliato</span>}
+                </span>
+                <span class="sc-price__for">{p.forWhom}</span>
+                <span class="sc-price__num">
+                  {p.from && <small>da </small>}
+                  {euro(open ? p.founders : p.standard)}
+                </span>
+                {open && <span class="sc-price__old">poi {euro(p.standard)}</span>}
+              </li>
+            ))
+          }
+        </ul>
+        <div class="sc-price__foot" data-in style="--d: 0.5s">
+          <p>
+            <strong>{cura.name}</strong>, {euro(cura.price)} al mese: sito sempre in ordine, disdici quando vuoi.
+          </p>
+          <a class="btn btn--secondary" href="/prezzi/">Confronta i pacchetti</a>
+        </div>
       </div>
-      <Faq items={faqItems} compact />
-    </div>
-  </section>
+    </section>
 
-  <Closing />
+    <section class="scene sc-end" id="domande" aria-labelledby="domande-t">
+      <div class="wrap sc-end__in">
+        <div class="sc-end__cta">
+          <h2 data-in>Guarda il tuo nuovo sito prima di decidere.</h2>
+          <p class="lead" data-in style="--d: 0.1s">Anteprima in {site.previewHours} ore. Se non ti convince, non ci devi niente.</p>
+          <div class="btn-row" data-in style="--d: 0.2s">
+            <a href="/anteprima-gratuita" class="btn btn--primary" data-magnetic>Voglio l'anteprima gratuita</a>
+            <a href={whatsappHref(`Ciao, ho visto il sito di ${site.brand} e vorrei l'anteprima gratuita per la mia attività.`)} class="btn btn--secondary" target="_blank" rel="noopener">
+              <Icon name="whatsapp" />
+              WhatsApp
+            </a>
+          </div>
+        </div>
+        <div class="sc-end__faq" data-in style="--d: 0.25s">
+          <h2 id="domande-t" class="sc-end__faq-t">Domande frequenti</h2>
+          <Faq items={faqItems} compact />
+          <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
+        </div>
+      </div>
+    </section>
+  </div>
 </Base>
 
+<script>
+  import { initScenes } from "../scripts/scenes";
+  import { initPaths } from "../scripts/paths";
+  import { initTilt } from "../scripts/tilt";
+  initScenes();
+  initPaths();
+  initTilt();
+</script>
+
 <style>
-  .h2-gap {
-    margin-bottom: var(--space-block);
-  }
-  .faq-grid {
+  /* ---------- Problema ---------- */
+  .sc-prob__in {
     display: grid;
-    gap: 2rem;
+    gap: clamp(1.25rem, 3vh, 2.25rem);
+    width: 100%;
+  }
+  .sc-prob__t {
+    font-size: clamp(2.2rem, 1rem + 4.2vw, 5.6rem);
+    line-height: 1;
+    max-width: 18ch;
+  }
+  .sc-prob__q {
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: clamp(1.6rem, 1rem + 2.4vw, 3.4rem);
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: var(--mandarino-scuro, #b8400f);
+  }
+  .sc-prob__facts {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.5rem, 7vh, 5rem) 0 0;
+    display: grid;
+    gap: 1.5rem;
   }
   @media (min-width: 900px) {
-    .faq-grid {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-      gap: clamp(2rem, 5vw, 6rem);
-      align-items: start;
+    .sc-prob__facts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(2rem, 4vw, 4rem);
     }
   }
-  .faq-side {
+  .sc-prob__facts li {
     display: grid;
-    gap: 1rem;
+    gap: 0.6rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--inchiostro);
+  }
+  .sc-prob__facts strong {
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: clamp(1.4rem, 1rem + 1.2vw, 2.2rem);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .sc-prob__facts span {
+    color: var(--grafite);
+    font-size: var(--fs-lead);
+  }
+
+  /* ---------- Lavori ---------- */
+  .sc-work__in {
+    display: grid;
+    gap: clamp(2rem, 6vh, 4.5rem);
+    width: 100%;
+  }
+  .sc-work__head {
+    display: grid;
+    gap: 0.75rem;
     justify-items: start;
   }
-  .faq-side h2 {
-    max-width: 10ch;
-  }
-  .faq-side p {
-    max-width: 30ch;
-  }
-  .after-link {
-    margin-top: 3rem;
-  }
-  .guarantee__title {
-    font-size: var(--fs-display);
-    max-width: 12ch;
-  }
-  .guarantee__cols {
-    display: grid;
-    gap: 2rem;
-    margin-top: var(--space-block);
-  }
   @media (min-width: 900px) {
-    .guarantee__cols {
-      grid-template-columns: 1.4fr 1fr;
-      gap: 4rem;
+    .sc-work__head {
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
       align-items: end;
+      gap: 2rem;
     }
   }
-  .guarantee__link {
-    margin-top: 1rem;
-  }
-  .bento-sec {
-    background: var(--nebbia);
-  }
-  .bento__title {
-    text-align: center;
-    font-size: var(--fs-h2);
-    margin: 0 auto var(--space-block);
+  .sc-work__head h2 {
     max-width: 16ch;
   }
-  .bento {
+  .sc-work__list {
     list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
-    gap: 0.9rem;
-  }
-  @media (min-width: 760px) {
-    .bento {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .bento__tile--1,
-    .bento__tile--7 {
-      grid-column: 1 / -1;
-    }
-  }
-  @media (min-width: 1100px) {
-    .bento {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-    }
-    .bento__tile {
-      grid-column: span 2;
-    }
-    .bento__tile--1 {
-      grid-column: span 4;
-    }
-    .bento__tile--2 {
-      grid-column: span 2;
-    }
-    .bento__tile--3 {
-      grid-column: span 3;
-    }
-    .bento__tile--4 {
-      grid-column: span 3;
-    }
-    .bento__tile--7 {
-      grid-column: 1 / -1;
-    }
-  }
-  .bento__tile {
-    background: var(--carta);
-    border-radius: 28px;
-    padding: clamp(1.75rem, 1.2rem + 1.8vw, 3rem);
-    min-height: clamp(15rem, 12rem + 8vw, 21rem);
-    display: grid;
-    grid-template-rows: auto 1fr auto;
     gap: 1rem;
-    color: var(--inchiostro);
   }
-  .bento__tile :global(.icon) {
-    color: var(--mandarino);
+  @media (min-width: 900px) {
+    .sc-work__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(1.25rem, 2.5vw, 2.5rem);
+    }
   }
-  .bento__tile h3 {
-    align-self: end;
-    font-size: clamp(1.6rem, 1.1rem + 1.4vw, 2.5rem);
-    letter-spacing: -0.035em;
-    line-height: 1.05;
-    max-width: 14ch;
+  @media (max-width: 899px) {
+    .sc-work__list {
+      grid-auto-flow: column;
+      grid-auto-columns: 78%;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 0.5rem;
+    }
+    .sc-work__list li {
+      scroll-snap-align: start;
+    }
   }
-  .bento__tile p {
+  .sc-work__card {
+    display: grid;
+    gap: 0.3rem;
+    text-decoration: none;
+    color: inherit;
+  }
+  .sc-work__shot {
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 16 / 11;
+    background: var(--nebbia);
+    box-shadow: 0 24px 50px -30px rgba(60, 25, 8, 0.5);
+    margin-bottom: 0.6rem;
+  }
+  .sc-work__shot :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    transition: transform 0.8s var(--ease-out);
+  }
+  .sc-work__card:hover .sc-work__shot :global(img) {
+    transform: scale(1.04);
+  }
+  .sc-work__name {
+    font-weight: 500;
+    font-size: var(--fs-h3);
+    letter-spacing: -0.02em;
+  }
+  .sc-work__sector {
     color: var(--grafite);
-    max-width: 40ch;
+    font-size: var(--fs-small);
   }
-  .bento__tile--1 {
-    background:
-      radial-gradient(120% 140% at 100% 100%, rgba(255, 91, 34, 0.9) 0%, rgba(255, 178, 63, 0.55) 35%, rgba(255, 248, 242, 0) 70%),
-      var(--carta);
+
+  /* ---------- Metodo ---------- */
+  .sc-how__in {
+    display: grid;
+    gap: clamp(2rem, 6vh, 4.5rem);
+    width: 100%;
   }
-  .bento__tile--5 {
+  .sc-how__steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1.25rem;
+  }
+  @media (min-width: 900px) {
+    .sc-how__steps {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: clamp(1.5rem, 3vw, 3rem);
+    }
+  }
+  .sc-how__steps li {
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+    padding-top: 1rem;
+    border-top: 1px solid var(--inchiostro);
+  }
+  .sc-how__n {
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: clamp(2rem, 1.4rem + 1.6vw, 3.2rem);
+    line-height: 1;
+    color: var(--mandarino-scuro, #b8400f);
+  }
+  .sc-how__steps h3 {
+    font-size: var(--fs-h3);
+  }
+  .sc-how__steps p {
+    color: var(--grafite);
+  }
+  .sc-how__promise {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding: clamp(1.25rem, 3vh, 2rem) clamp(1.25rem, 3vw, 2.5rem);
+    border-radius: 22px;
     background: var(--mandarino);
   }
-  .bento__tile--5 :global(.icon) {
-    color: var(--inchiostro);
+  .sc-how__promise p {
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.9rem);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    max-width: 34ch;
   }
-  .bento__tile--5 p {
-    color: var(--inchiostro);
+
+  /* ---------- Prezzi ---------- */
+  .sc-price__in {
+    display: grid;
+    gap: clamp(2rem, 5vh, 3.5rem);
+    width: 100%;
+  }
+  .sc-price__head {
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (min-width: 900px) {
+    .sc-price__head {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      align-items: end;
+      gap: 2rem;
+    }
+  }
+  .sc-price__founders {
+    color: var(--grafite);
+  }
+  .sc-price__plans {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: clamp(0.75rem, 1.5vw, 1.5rem);
+  }
+  @media (min-width: 900px) {
+    .sc-price__plans {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .sc-price__plan {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+    gap: 0.75rem;
+    padding: clamp(1.5rem, 4vh, 2.75rem);
+    border-radius: 24px;
+    background: var(--nebbia);
+  }
+  .sc-price__plan.is-rec {
+    background: var(--mandarino);
+  }
+  .sc-price__name {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    font-size: var(--fs-h3);
+  }
+  .sc-price__tag {
+    font-size: var(--fs-micro);
+    padding: 0.25rem 0.6rem;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-ui);
+  }
+  .sc-price__for {
+    color: var(--grafite);
+  }
+  .is-rec .sc-price__for,
+  .is-rec .sc-price__old {
+    color: #3a1a0b;
+  }
+  .sc-price__num {
+    margin-top: 0.75rem;
+    font-weight: 300;
+    font-stretch: 125%;
+    font-size: clamp(2.6rem, 1.8rem + 2.4vw, 4.4rem);
+    letter-spacing: -0.045em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .sc-price__num small {
+    font-size: 0.4em;
+    letter-spacing: 0;
+    font-stretch: 100%;
+    font-weight: 500;
+  }
+  .sc-price__old {
+    font-size: var(--fs-small);
+    color: var(--grafite);
+  }
+  .sc-price__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  /* ---------- Chiusura e domande ---------- */
+  .sc-end {
+    background:
+      radial-gradient(70% 60% at 15% 100%, rgba(255, 91, 34, 0.32), rgba(255, 178, 63, 0.16) 45%, rgba(255, 248, 242, 0) 75%),
+      var(--carta);
+  }
+  .sc-end__in {
+    display: grid;
+    gap: clamp(2rem, 5vh, 3.5rem);
+    width: 100%;
+  }
+  @media (min-width: 1000px) {
+    .sc-end__in {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(2rem, 5vw, 6rem);
+    }
+  }
+  .sc-end__cta {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+  .sc-end__cta h2 {
+    font-size: clamp(2.4rem, 1.2rem + 3.6vw, 5rem);
+    line-height: 1;
+    max-width: 12ch;
+  }
+  .sc-end__faq {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    background: var(--nebbia);
+    border-radius: 24px;
+    padding: clamp(1.25rem, 3vh, 2rem);
+  }
+  .sc-end__faq :global(.faq) {
+    width: 100%;
+  }
+  .sc-end__faq-t {
+    font-size: var(--fs-h3);
   }
 </style>

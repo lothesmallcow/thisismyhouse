@@ -53,37 +53,6 @@ export function initMagnetic() {
   });
 }
 
-/**
- * A round label that follows the pointer over elements marked [data-cursor="Label"].
- * The system cursor stays visible: this only adds a hint, it never replaces the pointer.
- */
-export function initCursor() {
-  if (!motionOk() || !finePointer()) return;
-  const targets = document.querySelectorAll<HTMLElement>("[data-cursor]");
-  if (!targets.length) return;
-  const dot = document.createElement("div");
-  dot.className = "cursor";
-  dot.setAttribute("aria-hidden", "true");
-  dot.innerHTML = "<span></span>";
-  document.body.append(dot);
-  const label = dot.firstElementChild as HTMLElement;
-  gsap.set(dot, { xPercent: -50, yPercent: -50, scale: 0 });
-  const xTo = gsap.quickTo(dot, "x", { duration: 0.35, ease: "power3.out" });
-  const yTo = gsap.quickTo(dot, "y", { duration: 0.35, ease: "power3.out" });
-  window.addEventListener("pointermove", (e) => {
-    xTo(e.clientX);
-    yTo(e.clientY);
-  });
-  targets.forEach((t) => {
-    t.addEventListener("pointerenter", (e) => {
-      label.textContent = t.dataset.cursor ?? "";
-      gsap.set(dot, { x: e.clientX, y: e.clientY });
-      gsap.to(dot, { scale: 1, duration: 0.4, ease: "back.out(1.7)" });
-    });
-    t.addEventListener("pointerleave", () => gsap.to(dot, { scale: 0, duration: 0.25, ease: "power2.in" }));
-  });
-}
-
 /** Big closing sun rises as the last section comes into view. */
 export function initSunrise() {
   if (!motionOk()) return;
@@ -100,7 +69,6 @@ export function initMotion() {
   initManifesto();
   initTiles();
   initMagnetic();
-  initCursor();
   initSunrise();
   // Pins are created at different moments (hero on load, reel and these when idle):
   // sort by position so each start accounts for the pin spacers above it.

@@ -1,6 +1,5 @@
 ---
 import Demo from "../../../layouts/Demo.astro";
-import ArcadiHero from "../../../components/demo/ArcadiHero.astro";
 import BeforeAfter from "../../../components/demo/BeforeAfter.astro";
 import { Image } from "astro:assets";
 import { site } from "../../../config/site";
@@ -40,7 +39,36 @@ const tel = telHref();
   fonts={["/fonts/archivo-latin.woff2"]}
 >
   <div class="ar">
-    <ArcadiHero eager headingTag="h1" callHref={tel} quoteHref="#preventivo" class="ar-hero" />
+    <header class="ar-top">
+      <div class="ar-wrap ar-top__in">
+        <span class="ar-logo">ARCADI<small>Ristrutturazioni</small></span>
+        <a class="ar-top__call" href={tel}>Chiama</a>
+      </div>
+    </header>
+
+    <section class="ar-hero2" aria-labelledby="ar-h1">
+      <div class="ar-hero2__media" aria-hidden="true">
+        <Image src={pic("bagno-prima")} alt="" widths={[800, 1400, 1800]} sizes="100vw" loading="eager" class="ar-hero2__img" />
+        <Image src={pic("bagno-dopo")} alt="" widths={[800, 1400, 1800]} sizes="100vw" loading="eager" fetchpriority="high" class="ar-hero2__img ar-hero2__after" />
+        <span class="ar-hero2__line"></span>
+        <span class="ar-hero2__tag ar-hero2__tag--prima">Prima</span>
+        <span class="ar-hero2__tag ar-hero2__tag--dopo">Dopo</span>
+      </div>
+      <div class="ar-wrap ar-hero2__text">
+        <p class="ar-hero2__kicker">Milano e prima cintura</p>
+        <h1 id="ar-h1">Ristrutturiamo case a Milano. Bene, e nei tempi detti.</h1>
+        <p class="ar-hero2__sub">Bagni, cucine e appartamenti completi. Sopralluogo e preventivo gratuiti entro 48 ore.</p>
+        <div class="ar-hero2__cta">
+          <a class="ar-hero2__btn" href="#preventivo">Chiedi un preventivo</a>
+          <a class="ar-hero2__btn ar-hero2__btn--ghost" href={tel}>Chiama ora</a>
+        </div>
+        <ul class="ar-hero2__chips">
+          <li>Preventivo scritto</li>
+          <li>Cantiere pulito</li>
+          <li>Due anni di garanzia</li>
+        </ul>
+      </div>
+    </section>
 
     <section class="ar-sec" id="servizi">
       <div class="ar-wrap">
@@ -183,36 +211,243 @@ const tel = telHref();
   .ar :global(.ar-hero) {
     min-height: auto;
   }
-  /* Demo page only (the hero is shared with the phone mockups): a bigger, bolder first screen. */
-  @container (min-width: 960px) {
-    .ar :global(.ar-hero .ah__photo) {
-      height: min(80vh, 780px);
-    }
-    .ar :global(.ar-hero .ah__photo img) {
-      aspect-ratio: auto;
-    }
-    .ar :global(.ar-hero .ah__h1) {
-      font-size: clamp(3rem, 1.6rem + 3vw, 5.2rem);
-      font-weight: 850;
-      font-stretch: 100%;
-    }
-    .ar :global(.ar-hero .ah__title) {
-      padding-top: clamp(2.5rem, 6vh, 5rem);
-    }
-    .ar :global(.ar-hero .ah__text) {
-      font-size: 1.2rem;
-      max-width: 34ch;
+  /* Header and hero: the bathroom renovates itself behind an orange line as the page opens. */
+  .ar-top {
+    background: #f2f2f0;
+    border-bottom: 1px solid #d9d9d4;
+  }
+  .ar-top__in {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 64px;
+  }
+  .ar-logo {
+    font-weight: 900;
+    font-stretch: 75%;
+    font-size: 1.5rem;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+  .ar-logo small {
+    display: block;
+    font-size: 0.55em;
+    font-weight: 700;
+    font-stretch: 100%;
+    letter-spacing: 0.04em;
+    color: #a8430b;
+  }
+  .ar-top__call {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 1.1rem;
+    border-radius: 999px;
+    background: var(--o);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .ar-hero2 {
+    position: relative;
+    display: grid;
+    overflow: hidden;
+    background: #2a2622;
+  }
+  .ar-hero2__media,
+  .ar-hero2__text {
+    grid-area: 1 / 1;
+  }
+  .ar-hero2__media {
+    position: relative;
+    height: min(86vh, 860px);
+    min-height: 520px;
+  }
+  .ar-hero2__media :global(.ar-hero2__img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 70% 50%;
+  }
+  .ar-hero2__media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(90deg, rgba(20, 18, 16, 0.86) 0%, rgba(20, 18, 16, 0.6) 38%, rgba(20, 18, 16, 0.05) 70%);
+  }
+  @media (max-width: 899px) {
+    .ar-hero2__media::after {
+      background: linear-gradient(0deg, rgba(20, 18, 16, 0.94) 0%, rgba(20, 18, 16, 0.7) 45%, rgba(20, 18, 16, 0) 78%);
     }
   }
+  .ar-hero2__line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    width: 4px;
+    margin-left: -2px;
+    background: #ff6a1f;
+    box-shadow: 0 0 30px 8px rgba(255, 106, 31, 0.55);
+    z-index: 1;
+    opacity: 0;
+  }
+  .ar-hero2__tag {
+    position: absolute;
+    top: 1.25rem;
+    z-index: 3;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    background: rgba(29, 31, 33, 0.85);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0;
+  }
+  .ar-hero2__tag--prima {
+    right: 1.25rem;
+  }
+  .ar-hero2__tag--dopo {
+    right: 1.25rem;
+    background: var(--o);
+  }
   @media (prefers-reduced-motion: no-preference) {
-    .ar :global(.ar-hero .ah__photo img) {
-      animation: ar-zoom 2.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    .ar-hero2__media :global(.ar-hero2__after) {
+      animation: ar-wipe 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.9s both;
     }
-    @keyframes ar-zoom {
-      from {
-        transform: scale(1.1);
-      }
+    .ar-hero2__line {
+      animation: ar-line 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.9s both;
     }
+    .ar-hero2__tag--prima {
+      animation: ar-tag-out 3.2s ease both;
+    }
+    .ar-hero2__tag--dopo {
+      animation: ar-tag-in 0.5s ease 3s both;
+    }
+    .ar-hero2__media :global(.ar-hero2__img:not(.ar-hero2__after)) {
+      animation: ar-zoom 6s ease-out both;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ar-hero2__tag--dopo {
+      opacity: 1;
+    }
+  }
+  @keyframes ar-wipe {
+    from {
+      clip-path: inset(0 0 0 100%);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes ar-line {
+    0% {
+      left: 100%;
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      left: 0%;
+      opacity: 0;
+    }
+  }
+  @keyframes ar-tag-out {
+    0%,
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes ar-tag-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes ar-zoom {
+    from {
+      transform: scale(1.08);
+    }
+  }
+  .ar-hero2__text {
+    position: relative;
+    z-index: 3;
+    align-self: center;
+    width: 100%;
+    color: #fff;
+    padding-block: 3rem;
+  }
+  @media (max-width: 899px) {
+    .ar-hero2__text {
+      align-self: end;
+    }
+  }
+  .ar-hero2__kicker {
+    color: #ffb27a;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+  }
+  .ar .ar-hero2__text h1 {
+    font-weight: 850;
+    font-stretch: 80%;
+    font-size: clamp(2.6rem, 1.4rem + 4.4vw, 5.6rem);
+    line-height: 0.95;
+    color: #fff;
+    max-width: 12ch;
+    margin: 0;
+  }
+  .ar-hero2__sub {
+    margin-top: 1.25rem;
+    font-size: 1.2rem;
+    max-width: 32ch;
+    color: #eceae6;
+  }
+  .ar-hero2__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+  }
+  .ar-hero2__btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 52px;
+    padding: 0 1.5rem;
+    border-radius: 4px;
+    background: var(--o);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .ar-hero2__btn--ghost {
+    background: transparent;
+    border: 2px solid #fff;
+  }
+  .ar-hero2__chips {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .ar-hero2__chips li {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: #fff;
   }
   .ar h2 {
     font-family: var(--font-head);

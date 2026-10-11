@@ -69,6 +69,12 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
     display: grid;
     gap: 2rem;
   }
+  /* Long one-word names ("Ristrutturazioni") must fit the narrow text column. */
+  .lv__text h2 {
+    font-size: clamp(1.8rem, 1.2rem + 1.6vw, 2.8rem);
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
   @media (min-width: 1000px) {
     .lv__item {
       grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -121,9 +127,6 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
     .lv__media:hover :global(.lv__phone) {
       transform: translateY(-14px);
     }
-  }
-  .lv__text h2 {
-    font-size: var(--fs-h2);
   }
   .lv__text > .muted:first-of-type {
     margin-top: 0.75rem;

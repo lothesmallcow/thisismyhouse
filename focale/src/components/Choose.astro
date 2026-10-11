@@ -1,0 +1,290 @@
+---
+/**
+ * Scene "Che attività hai?". Before a choice: four large picture cards. After a choice the cards
+ * shrink into a row of tabs and the chosen path opens below (illustration, the demo site on an
+ * iPhone, three lines, two buttons). Radios + CSS :has() do the switching, so it works without JS;
+ * scripts/paths.ts animates it (Flip), and remembers the choice.
+ */
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import IPhone from "./IPhone.astro";
+import imgArcadi from "../assets/demo/arcadi-ristrutturazioni/cucina-dopo.jpg";
+import imgCascina from "../assets/demo/cascina-rovere/hero.jpg";
+import imgVilla from "../assets/demo/villa-ortensia/terrazza.jpg";
+
+const settori = (await getCollection("settori")).sort((a, b) => a.data.order - b.data.order);
+const lavori = await getCollection("lavori");
+const look: Record<string, { img: ImageMetadata; chip: string; title: string; cta: string }> = {
+  "ristrutturazioni-e-serramenti": {
+    img: imgArcadi,
+    chip: "Ristrutturazioni e serramenti",
+    title: "Preventivi seri, non telefonate a vuoto.",
+    cta: "Anteprima per la mia impresa",
+  },
+  "b-and-b-e-agriturismi": {
+    img: imgCascina,
+    chip: "B&B e agriturismi",
+    title: "Prenotano da te, non dai portali.",
+    cta: "Anteprima per la mia struttura",
+  },
+  "location-per-matrimoni": {
+    img: imgVilla,
+    chip: "Location per eventi",
+    title: "Coppie che vogliono venire a vederla.",
+    cta: "Anteprima per la mia location",
+  },
+};
+const paths = settori.map((s) => ({ slug: s.id, data: s.data, demo: lavori.find((l) => l.id === s.data.demo)!, ...look[s.id] }));
+const rules = [...paths.map((p) => p.slug), "altro"]
+  .map((id) => `.choose:has(input[value="${id}"]:checked) .path[data-path="${id}"]{display:grid}`)
+  .join("");
+---
+<section class="scene choose" id="attivita" aria-labelledby="attivita-t" data-scene="Attività">
+  <div class="wrap choose__in">
+    <fieldset class="pick" data-pick>
+      <legend class="choose__t" id="attivita-t" data-in>Che attività hai?</legend>
+      <div class="pick__opts" data-in style="--d: 0.08s">
+        {
+          paths.map((p) => (
+            <label class="pick__opt" data-flip>
+              <input type="radio" name="percorso" value={p.slug} class="sr-only" data-path-input />
+              <Image src={p.img} alt="" widths={[360, 720, 1000]} sizes="(min-width: 900px) 24vw, 46vw" class="pick__img" />
+              <span class="pick__name">{p.chip}</span>
+            </label>
+          ))
+        }
+        <label class="pick__opt pick__opt--altro" data-flip>
+          <input type="radio" name="percorso" value="altro" class="sr-only" data-path-input />
+          <span class="pick__name">Un'altra attività</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <style is:inline set:html={rules}></style>
+    <div class="paths" data-paths aria-live="polite">
+      {
+        paths.map((p) => (
+          <article class="path" data-path={p.slug} aria-label={p.chip}>
+            <div class="path__media">
+              <Image src={p.img} alt="" widths={[640, 1000, 1400]} sizes="(min-width: 900px) 50vw, 92vw" class="path__img" data-path-img />
+              <div class="path__phone" data-path-phone>
+                <IPhone label={`Il sito dimostrativo di ${p.demo.data.name} visto dal telefono`}>
+                  <div class="path__site">
+                    <Image src={p.demo.data.shotPhone} alt="" widths={[300, 600]} sizes="200px" />
+                  </div>
+                </IPhone>
+              </div>
+            </div>
+            <div class="path__body">
+              <h3 class="path__title" data-path-item>{p.title}</h3>
+              <ul class="path__list" data-path-item>
+                {p.data.build.slice(0, 3).map((b) => <li>{b}</li>)}
+              </ul>
+              <div class="btn-row" data-path-item>
+                <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${p.slug}`}>{p.cta}</a>
+                <a class="btn btn--secondary" href={`/lavori/${p.demo.id}/demo/`}>Il sito demo</a>
+              </div>
+            </div>
+          </article>
+        ))
+      }
+      <article class="path path--altro" data-path="altro" aria-label="Un'altra attività">
+        <div class="path__body">
+          <h3 class="path__title" data-path-item>Fai un altro lavoro? Raccontacelo.</h3>
+          <p data-path-item>Il metodo è lo stesso per ogni piccola impresa che vive di richieste.</p>
+          <div class="btn-row" data-path-item>
+            <a class="btn btn--primary" href="/anteprima-gratuita">Voglio l'anteprima gratuita</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .choose__in {
+    display: grid;
+    gap: clamp(1rem, 2.5vh, 1.75rem);
+    width: 100%;
+  }
+  .pick {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+  .choose__t {
+    padding: 0;
+    font-size: var(--fs-display);
+    font-weight: 300;
+    font-stretch: 125%;
+    letter-spacing: -0.045em;
+    line-height: 1;
+    margin-bottom: clamp(1rem, 3vh, 2rem);
+  }
+  .pick__opts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  @media (min-width: 900px) {
+    .pick__opts {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+  }
+  .pick__opt {
+    position: relative;
+    display: grid;
+    align-items: end;
+    height: clamp(150px, 46vh, 520px);
+    border-radius: 22px;
+    overflow: hidden;
+    background: var(--nebbia);
+    cursor: pointer;
+    isolation: isolate;
+    transition: box-shadow 0.3s var(--ease-out);
+  }
+  @media (max-width: 899px) {
+    .pick__opt {
+      height: clamp(130px, 26vh, 240px);
+    }
+  }
+  .pick__opt :global(.pick__img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+    transition: transform 0.9s var(--ease-out);
+  }
+  .pick__opt:hover :global(.pick__img) {
+    transform: scale(1.05);
+  }
+  .pick__name {
+    justify-self: start;
+    margin: 0.7rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-ui);
+    background: rgba(255, 248, 242, 0.95);
+    font-weight: 500;
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+  .pick__opt--altro {
+    background:
+      radial-gradient(110% 110% at 100% 100%, rgba(255, 91, 34, 0.8), rgba(255, 178, 63, 0.45) 45%, rgba(252, 235, 220, 0) 80%),
+      var(--nebbia);
+  }
+  .pick__opt:has(input:checked) {
+    box-shadow:
+      0 0 0 3px var(--carta),
+      0 0 0 6px var(--mandarino);
+  }
+  .pick__opt:has(input:checked) .pick__name {
+    background: var(--mandarino);
+  }
+  .pick__opt:has(input:focus-visible) {
+    outline: 2px solid var(--inchiostro);
+    outline-offset: 8px;
+  }
+  /* After a choice the cards become a row of tabs. */
+  .choose:has(input:checked) .choose__t {
+    font-size: var(--fs-h3);
+    margin-bottom: 0.75rem;
+  }
+  .choose:has(input:checked) .pick__opt {
+    height: clamp(56px, 8vh, 84px);
+    border-radius: 16px;
+  }
+  .choose:has(input:checked) .pick__name {
+    margin: 0.45rem;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.7rem;
+  }
+
+  .path {
+    display: none;
+    background: var(--nebbia);
+    border-radius: clamp(20px, 1vw + 12px, 30px);
+    overflow: hidden;
+  }
+  @media (min-width: 900px) {
+    .path {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      height: clamp(380px, 56vh, 620px);
+    }
+  }
+  .path__media {
+    position: relative;
+    min-height: 240px;
+    overflow: hidden;
+  }
+  .path__media :global(.path__img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .path__phone {
+    position: absolute;
+    right: 8%;
+    top: 10%;
+    --w: clamp(120px, 15vh, 200px);
+  }
+  @media (max-width: 899px) {
+    .path__phone {
+      --w: 110px;
+      top: 12%;
+    }
+  }
+  .path__site {
+    position: absolute;
+    inset: 13.7cqw 0 0;
+    background: #fff;
+  }
+  .path__site :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .path__body {
+    padding: clamp(1.25rem, 1rem + 2vw, 2.75rem);
+    display: grid;
+    gap: 1.1rem;
+    align-content: center;
+    justify-items: start;
+  }
+  .path__title {
+    font-size: clamp(1.6rem, 1rem + 1.6vw, 2.5rem);
+    font-weight: 300;
+    font-stretch: 125%;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    max-width: 16ch;
+  }
+  .path__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    border-top: 1px solid var(--filo);
+  }
+  .path__list li {
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--filo);
+  }
+  .path--altro {
+    background:
+      radial-gradient(90% 140% at 100% 100%, rgba(255, 91, 34, 0.7), rgba(255, 178, 63, 0.35) 40%, rgba(252, 235, 220, 0) 72%),
+      var(--nebbia);
+  }
+  .path--altro {
+    height: auto;
+  }
+  .path--altro .path__body {
+    padding-block: clamp(2rem, 6vh, 4rem);
+  }
+</style>

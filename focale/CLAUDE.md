@@ -21,23 +21,24 @@ The project folder is still called `focale/` (the first working name).
 ## Design tokens
 Warm studio palette: latte #FFF8F2 (bg) · nebbia #FCEBDC (alt bg, stage) · cacao #24130C (text) · grafite #6B5248 (secondary text) ·
 mandarino #FF5B22 (primary buttons, orange sections, footer; cacao text on it, never white) · miele #FFB23F · pesca #FFD3BC ·
-marker #D7392B (renovation demo only). No black or near-black surfaces: the user asked for white and orange mixed.
+marker #D7392B (renovation demo only). No black or near-black surfaces (the iPhone bezel is the exception): the user asked for white and orange mixed.
 Orange light = soft radial gradients from mandarino through miele to transparent (hero stage, closing, OG images).
 Archivo variable: headings weight 300 at width 125% with negative tracking; UI 500. Literata for long body text.
 Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm run logo` regenerates the paths).
 
-## Home motion (scripts/hero.ts, scripts/motion.ts)
-- Hero: headline letters rise on load; on scroll the stage (white panel with a phone) pins, opens to full screen,
-  an orange light rises and three notifications arrive, one per caption. Phone width is set by viewport height
-  so the stage always fits; check with a fit test at 360-1920 px widths before changing it.
-- Hero sector chooser ("Che attività hai?"): radios + CSS `:has()` show the chosen path with no JS;
-  scripts/paths.ts adds the entrance, scrolls to it, remembers the choice (localStorage) and refreshes ScrollTrigger.
-  Each path links to the preview form with `?settore=` so the form arrives pre-filled.
-- The renovation scene (Renovation.astro) is no longer on the home: Lorenzo found it weak. Kept for reference.
-- Demo sites: full-bleed heroes with a shade for legible text; Demo layout reveals content softly on scroll.
-- Manifesto words light up on scroll (faded colour #A3897B keeps 3:1 for large text). Bento tiles rise in.
-- Reel pins and slides sideways with a slight 3D turn (desktop, fine pointer). Pointer label "Guarda" on reel cards.
-- Primary buttons are magnetic (fine pointer). Everything is skipped under reduced motion.
+## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
+- Full-screen scenes with CSS scroll snap (no wheel hijacking) and a side progress nav (scripts/scenes.ts).
+  Scenes: inizio, attività, problema, lavori, metodo, prezzi, domande. Content marked [data-in] plays in per scene.
+- Opening: ONE iPhone (IPhone.astro: titanium band, Dynamic Island, status bar; inner sizes in cqw so
+  nothing spills). scripts/hero.ts plays a film: site scrolls, a tap on "Chiama ora" rings the Dynamic Island,
+  a tap on "Chiedi un preventivo" drops iOS banners (WhatsApp, Mail). Sound (scripts/sound.ts, WebAudio,
+  synthesised) only after the visitor presses the speaker button.
+- Motion feels physical: spring easing (scripts/spring.ts), 3D tilt with glass reflection on fine pointers
+  (scripts/tilt.ts), contact shadows. Lenis is off on the home (it fights snapping).
+- Sector chooser (Choose.astro): radios + CSS :has(); paths.ts animates with Flip. Nothing stored.
+- Calculator lives on /prezzi. Renovation.astro, Manifesto, WorkReel are no longer on the home.
+- Section labels sit above content (no empty 3-column label gutter: Lorenzo called it dead space).
+- `node scripts/overflow-check.mjs` finds cut-off text and sideways scroll on every page at 6 widths.
 - Do not use the CSS `translate` property on elements GSAP transforms: GSAP folds it into its own transform.
 
 ## Scripts

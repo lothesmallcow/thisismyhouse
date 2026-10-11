@@ -1,0 +1,177 @@
+---
+/**
+ * A believable iPhone (Pro proportions: 393 x 852 pt screen). Titanium band, black bezel, side
+ * buttons, Dynamic Island, status bar, home indicator and a faint glass reflection.
+ * Everything inside the screen is sized in container units (1pt = 100cqw / 393), so the phone
+ * can be any width and its content scales with it: nothing can spill out of the screen.
+ * Set the width with --w on the element or a parent (default 300px).
+ */
+interface Props {
+  label?: string;
+  class?: string;
+  time?: string;
+  /** Status bar and home indicator in white, for dark or colourful screens. */
+  light?: boolean;
+}
+const { label, class: cls, time = "9:41", light = false } = Astro.props;
+---
+<div class:list={["iph", cls, { "iph--light": light }]} role={label ? "img" : undefined} aria-label={label}>
+  <span class="iph__b iph__b--action" aria-hidden="true"></span>
+  <span class="iph__b iph__b--up" aria-hidden="true"></span>
+  <span class="iph__b iph__b--down" aria-hidden="true"></span>
+  <span class="iph__b iph__b--power" aria-hidden="true"></span>
+  <div class="iph__band">
+    <div class="iph__bezel">
+      <div class="iph__screen" aria-hidden={label ? "true" : undefined}>
+        <slot />
+        <div class="iph__status">
+          <span class="iph__time">{time}</span>
+          <span class="iph__icons">
+            <svg viewBox="0 0 18 12" class="iph__sig"><rect x="0" y="8" width="3" height="4" rx="0.8"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="0.8"></rect><rect x="10" y="3" width="3" height="9" rx="0.8"></rect><rect x="15" y="0" width="3" height="12" rx="0.8"></rect></svg>
+            <svg viewBox="0 0 16 12" class="iph__wifi"><path d="M8 2.2c2.3 0 4.4.9 6 2.4l1.3-1.3A10.3 10.3 0 0 0 8 .4 10.3 10.3 0 0 0 .7 3.3L2 4.6a8.5 8.5 0 0 1 6-2.4Zm0 3.6c1.3 0 2.5.5 3.4 1.4l1.3-1.3A6.6 6.6 0 0 0 8 4a6.6 6.6 0 0 0-4.7 1.9l1.3 1.3c.9-.9 2.1-1.4 3.4-1.4Zm0 3.6c-.5 0-1 .2-1.3.5L8 11.2l1.3-1.3c-.3-.3-.8-.5-1.3-.5Z"></path></svg>
+            <svg viewBox="0 0 28 13" class="iph__bat"><rect x="0.5" y="0.5" width="24" height="12" rx="3.6" fill="none" stroke="currentColor" stroke-opacity="0.4"></rect><rect x="2.2" y="2.2" width="18.5" height="8.6" rx="2.2"></rect><path d="M26 4.3v4.4c.9-.3 1.5-1.2 1.5-2.2s-.6-1.9-1.5-2.2Z" fill-opacity="0.45"></path></svg>
+          </span>
+        </div>
+        <div class="iph__island" data-island><slot name="island" /></div>
+        <span class="iph__home" aria-hidden="true"></span>
+        <span class="iph__glare" aria-hidden="true" data-tilt-glare></span>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .iph {
+    /* --w comes from the parent; 300px if nobody sets it. */
+    --_w: var(--w, 300px);
+    position: relative;
+    width: var(--_w);
+    flex: none;
+  }
+  .iph__band {
+    padding: calc(var(--_w) * 0.011);
+    border-radius: calc(var(--_w) * 0.172);
+    /* Natural titanium: brushed metal with soft highlights on the edges. */
+    background: linear-gradient(135deg, #8e8c88 0%, #e6e3dd 16%, #7a7873 34%, #cfccc6 58%, #6f6d68 80%, #bdbab4 100%);
+    box-shadow:
+      0 calc(var(--_w) * 0.2) calc(var(--_w) * 0.32) calc(var(--_w) * -0.14) rgba(60, 25, 8, 0.5),
+      0 calc(var(--_w) * 0.04) calc(var(--_w) * 0.09) rgba(60, 25, 8, 0.18),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  }
+  .iph__bezel {
+    padding: calc(var(--_w) * 0.03);
+    border-radius: calc(var(--_w) * 0.162);
+    background: #0a0a0b;
+    box-shadow: inset 0 0 0 1px #1d1d1f;
+  }
+  .iph__screen {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 393 / 852;
+    border-radius: calc(var(--_w) * 0.13);
+    container-type: inline-size;
+    background: #fff;
+    isolation: isolate;
+    font-family: var(--font);
+    font-stretch: 100%;
+    color: #1d1d1f;
+  }
+  /* Side buttons */
+  .iph__b {
+    position: absolute;
+    width: calc(var(--_w) * 0.013);
+    border-radius: 2px;
+    background: linear-gradient(90deg, #6f6d68, #d6d3cd 55%, #8e8c88);
+  }
+  .iph__b--action {
+    left: calc(var(--_w) * -0.009);
+    top: 17%;
+    height: 5%;
+  }
+  .iph__b--up {
+    left: calc(var(--_w) * -0.009);
+    top: 25%;
+    height: 9%;
+  }
+  .iph__b--down {
+    left: calc(var(--_w) * -0.009);
+    top: 36%;
+    height: 9%;
+  }
+  .iph__b--power {
+    right: calc(var(--_w) * -0.009);
+    top: 28%;
+    height: 14%;
+  }
+  /* Status bar: 54 pt tall, time centred in the left "ear" */
+  .iph__status {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 13.7cqw;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1cqw 7.5cqw 0 10.5cqw;
+    font-size: 4.3cqw;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #1d1d1f;
+    pointer-events: none;
+  }
+  .iph__icons {
+    display: flex;
+    align-items: center;
+    gap: 1.5cqw;
+  }
+  .iph__icons svg {
+    display: block;
+    height: 3.1cqw;
+    width: auto;
+    fill: currentColor;
+  }
+  .iph__bat {
+    height: 3.3cqw !important;
+  }
+  .iph--light .iph__status {
+    color: #fff;
+  }
+  /* Dynamic Island: 126 x 37 pt, 11 pt from the top. Auto margins keep it centred while it grows. */
+  .iph__island {
+    position: absolute;
+    top: 2.8cqw;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: 32cqw;
+    height: 9.4cqw;
+    border-radius: 6cqw;
+    background: #000;
+    z-index: 6;
+    overflow: hidden;
+  }
+  .iph__home {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 2.2cqw;
+    margin-inline: auto;
+    width: 34cqw;
+    height: 1.35cqw;
+    border-radius: 1cqw;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 5;
+  }
+  .iph--light .iph__home {
+    background: rgba(255, 255, 255, 0.9);
+  }
+  .iph__glare {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -30%;
+    width: 160%;
+    z-index: 7;
+    pointer-events: none;
+    background: linear-gradient(118deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 26%, rgba(255, 255, 255, 0) 40%);
+  }
+</style>

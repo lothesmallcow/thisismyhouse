@@ -1,101 +1,163 @@
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import { Flip } from "gsap/Flip";
+import { enableSound, disableSound, soundOn, ring, chime } from "./sound";
+import { spring } from "./spring";
 
-gsap.registerPlugin(ScrollTrigger, SplitText);
+gsap.registerPlugin(SplitText, Flip);
+
+const motionOk = () => window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
+
+/** Position of el inside ancestor, ignoring transforms (the phones are slightly rotated). */
+function offsetWithin(el: HTMLElement, ancestor: HTMLElement) {
+  let x = 0;
+  let y = 0;
+  let n: HTMLElement | null = el;
+  while (n && n !== ancestor) {
+    x += n.offsetLeft;
+    y += n.offsetTop;
+    n = n.offsetParent as HTMLElement | null;
+  }
+  return { x, y };
+}
 
 /**
- * Home hero.
- * 1. Load: the two headline lines rise letter by letter, then the rest fades in.
- * 2. Scroll: the headline lines drift apart, the stage opens to the full screen, an orange
- *    light rises behind the phone and the requests arrive one per caption.
- * Everything is visible before this runs; reduced motion skips all of it.
+ * Opening scene: the headline rises, then the two-phone film plays (see HeroScene.astro).
+ * The film replays when the scene comes back into view or on "Rivedi". Sound is opt-in.
  */
 export function initHero() {
   const root = document.querySelector<HTMLElement>("[data-hero-anim]");
   if (!root) return;
-  const lines = root.querySelectorAll<HTMLElement>("[data-hero-line]");
+  const h1 = root.querySelector<HTMLElement>("[data-hero-h1]");
   const fades = root.querySelectorAll<HTMLElement>("[data-hero-fade]");
-  const lens = root.querySelector<HTMLElement>("[data-lens]");
+  const film = root.querySelector<HTMLElement>("[data-film]");
+  if (!motionOk()) return;
 
-  const run = () => {
-    const mm = gsap.matchMedia();
-    mm.add(
-      {
-        reduce: "(prefers-reduced-motion: reduce)",
-        motion: "(prefers-reduced-motion: no-preference)",
-        mobile: "(max-width: 899px)",
-      },
-      (ctx) => {
-        const c = ctx.conditions ?? {};
-        if (c.reduce) return;
-        const k = c.mobile ? 0.8 : 1;
+  const start = () => {
+    // 1. Headline. 0.01 rather than 0 keeps the text counted as painted for LCP.
+    if (h1) {
+      const split = SplitText.create(h1, { type: "lines", mask: "lines" });
+      gsap.from(split.lines, { yPercent: 110, duration: 1.1, stagger: 0.1, ease: "expo.out", delay: 0.05 });
+    }
+    gsap.from(fades, { opacity: 0.01, y: 14, duration: 0.9, stagger: 0.07, ease: "power3.out", delay: 0.35 });
+    if (film) initFilm(root, film);
+  };
+  if (document.fonts?.status === "loaded") start();
+  else document.fonts.ready.then(start);
+}
 
-        // 1. Load sequence. 0.01 rather than 0: the text still counts as painted for LCP.
-        // The h1 carries the full sentence for screen readers; the animated letters are hidden from them.
-        const h1 = root.querySelector<HTMLElement>("[data-hero-h1]");
-        if (h1) h1.setAttribute("aria-label", (h1.textContent ?? "").replace(/\s+/g, " ").trim());
-        const splits = Array.from(lines).map((l) => SplitText.create(l, { type: "words,chars", mask: "chars", aria: "hidden" }));
-        const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-        splits.forEach((s, i) => tl.from(s.chars, { yPercent: 115, duration: 1.15 * k, stagger: 0.022 }, 0.1 + i * 0.16));
-        tl.from(fades, { opacity: 0.01, y: 14, duration: 0.9 * k, stagger: 0.08, ease: "power3.out" }, 0.55 * k);
-        if (lens) tl.from(lens, { y: 60, duration: 1.2, ease: "power3.out" }, 0.7 * k);
+function initFilm(root: HTMLElement, film: HTMLElement) {
+  const phone = film.querySelector<HTMLElement>(".film__phone")!;
+  const site = film.querySelector<HTMLElement>("[data-site]")!;
+  const scroll = film.querySelector<HTMLElement>("[data-site-scroll]")!;
+  const tap = film.querySelector<HTMLElement>("[data-tap]")!;
+  const btnCall = scroll.querySelector<HTMLElement>(".ah__btn--ghost");
+  const btnQuote = scroll.querySelector<HTMLElement>(".ah__btn--main");
+  const island = film.querySelector<HTMLElement>("[data-island]")!;
+  const call = film.querySelector<HTMLElement>("[data-island-call]")!;
+  const bnMail = film.querySelector<HTMLElement>('[data-banner="mail"]')!;
+  const bnWa = film.querySelector<HTMLElement>('[data-banner="whatsapp"]')!;
+  const line = film.querySelector<HTMLElement>("[data-beat-line]")!;
+  const ctl = film.querySelector<HTMLElement>("[data-film-ctl]")!;
+  const soundBtn = film.querySelector<HTMLButtonElement>("[data-sound]")!;
+  const replay = film.querySelector<HTMLButtonElement>("[data-replay]")!;
+  const finalLine = line.textContent ?? "";
+  ctl.hidden = false;
 
-        // 2a. Headline lines drift apart as the hero scrolls away
-        if (!c.mobile && lines.length === 2) {
-          const st = { trigger: root, start: "top top", end: "bottom top", scrub: true };
-          gsap.to(lines[0], { xPercent: -6, ease: "none", scrollTrigger: st });
-          gsap.to(lines[1], { xPercent: 4, ease: "none", scrollTrigger: { ...st } });
-        }
+  const say = (text: string) =>
+    gsap
+      .timeline()
+      .to(line, { opacity: 0, y: -4, duration: 0.2 })
+      .call(() => {
+        line.textContent = text;
+      })
+      .fromTo(line, { opacity: 0, y: 4 }, { opacity: 1, y: 0, duration: 0.35 });
 
-        // 2b. The stage
-        if (lens) {
-          const glow = lens.querySelector<HTMLElement>("[data-lens-glow]");
-          const phone = lens.querySelector<HTMLElement>("[data-lens-phone]");
-          const steps = lens.querySelectorAll<HTMLElement>("[data-lens-step]");
-          const notifs = lens.querySelectorAll<HTMLElement>("[data-notif]");
-          const gutter = () => parseFloat(getComputedStyle(root.querySelector(".wrap")!).paddingLeft) || 20;
-
-          gsap.set(notifs, { opacity: 0, y: -18, scale: 0.94 });
-          gsap.set(steps, { opacity: 0, y: 20 });
-
-          const st = gsap.timeline({
-            defaults: { ease: "none" },
-            scrollTrigger: {
-              trigger: lens,
-              start: "top top",
-              end: () => `+=${window.innerHeight * (c.mobile ? 1.5 : 1.7)}`,
-              scrub: 0.9,
-              pin: true,
-              anticipatePin: 1,
-              invalidateOnRefresh: true,
-            },
-          });
-          st.fromTo(
-            lens,
-            { "--inset-x": () => `${gutter()}px`, "--inset-y": c.mobile ? "0px" : "44px", "--r": "30px" },
-            { "--inset-x": "0px", "--inset-y": "0px", "--r": "0px", duration: 1, ease: "power2.inOut", immediateRender: true },
-            0,
-          );
-          if (glow) st.fromTo(glow, { xPercent: -50, yPercent: -30, scale: 0.6, opacity: 0.6 }, { xPercent: -50, yPercent: -62, scale: 1, opacity: 1, duration: 3.4, ease: "power1.inOut" }, 0);
-          if (phone) st.fromTo(phone, { y: 60, scale: 0.94 }, { y: 0, scale: 1, duration: 1.2, ease: "power2.out" }, 0);
-          notifs.forEach((n, i) => {
-            const at = 1.1 + i * 0.9;
-            st.to(n, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.8)" }, at);
-            if (steps[i]) st.to(steps[i], { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at - 0.1);
-            if (i === 0 && phone) st.to(phone, { keyframes: { rotation: [0, -3, 3, -2, 2, 0] }, duration: 0.4 }, at);
-          });
-          // Hold the finished picture for a moment before the pin releases.
-          st.to({}, { duration: 0.8 });
-        }
-        return () => {
-          splits.forEach((s) => s.revert());
-          h1?.removeAttribute("aria-label");
-        };
-      },
-    );
+  const tapOn = (btn: HTMLElement | null) => {
+    if (!btn) return;
+    const p = offsetWithin(btn, site);
+    const y = site.offsetTop + p.y + btn.offsetHeight / 2 + (gsap.getProperty(scroll, "y") as number);
+    const x = site.offsetLeft + p.x + btn.offsetWidth / 2;
+    gsap.set(tap, { left: x, top: y });
+    // A fingertip presses, the button gives way, then springs back.
+    gsap.timeline()
+      .fromTo(tap, { scale: 1.3, opacity: 0 }, { scale: 0.9, opacity: 0.9, duration: 0.18, ease: "power2.out" })
+      .to(tap, { scale: 1.6, opacity: 0, duration: 0.5, ease: "power2.out" }, 0.22);
+    gsap.timeline()
+      .to(btn, { scale: 0.93, duration: 0.12, ease: "power2.out" }, 0.08)
+      .to(btn, { scale: 1, duration: 0.6, ease: spring(0.35) }, 0.22);
+  };
+  const drop = (bn: HTMLElement) => {
+    // The banner already on screen slides down to make room (Flip), the new one drops in from the top.
+    const others = [bnMail, bnWa].filter((b) => b !== bn && getComputedStyle(b).display !== "none");
+    const state = Flip.getState(others);
+    gsap.set(bn, { display: "grid" });
+    Flip.from(state, { duration: 0.6, ease: spring(0.2) });
+    gsap.fromTo(bn, { yPercent: -130, opacity: 0, scale: 0.96 }, { yPercent: 0, opacity: 1, scale: 1, duration: 0.75, ease: spring(0.25) });
   };
 
-  if (document.fonts?.status === "loaded") run();
-  else document.fonts.ready.then(run);
+  const tl = gsap.timeline({ paused: true });
+  tl.call(() => {
+    gsap.set(scroll, { y: 0 });
+    gsap.set([bnMail, bnWa], { display: "none", clearProps: "transform,opacity" });
+    gsap.set(island, { width: "32cqw", height: "9.4cqw", borderRadius: "6cqw" });
+    gsap.set(call, { autoAlpha: 0 });
+    line.textContent = "Un cliente apre il tuo sito dal telefono.";
+    gsap.set(line, { opacity: 1, y: 0 });
+  });
+  // The customer browses the site...
+  tl.to(scroll, { y: () => -site.offsetWidth * 0.2, duration: 1.2, ease: "power2.inOut" }, 0.8);
+  tl.to(scroll, { y: 0, duration: 0.9, ease: "power2.inOut" }, 2.2);
+  // ...taps "Chiama ora": the phone rings in the Dynamic Island.
+  tl.call(() => tapOn(btnCall), [], 3.2);
+  tl.call(() => {
+    say("Tocca Chiama ora: il telefono squilla.");
+    ring();
+  }, [], 3.4);
+  tl.to(island, { width: "94cqw", height: "21cqw", borderRadius: "11cqw", duration: 0.7, ease: spring(0.28) }, 3.4);
+  tl.to(call, { autoAlpha: 1, duration: 0.25 }, 3.65);
+  tl.to(phone, { keyframes: { rotation: [0, -1.5, 1.5, -1, 1, 0] }, duration: 0.6, ease: "none" }, 3.7);
+  tl.to(call, { autoAlpha: 0, duration: 0.2 }, 5.4);
+  tl.to(island, { width: "32cqw", height: "9.4cqw", borderRadius: "6cqw", duration: 0.6, ease: spring(0.12) }, 5.5);
+  // ...asks for a quote: the request arrives on WhatsApp, then a copy by email.
+  tl.call(() => tapOn(btnQuote), [], 6.3);
+  tl.call(() => say("Chiede un preventivo: arriva su WhatsApp."), [], 6.5);
+  tl.call(() => {
+    drop(bnWa);
+    chime(1);
+  }, [], 6.9);
+  tl.call(() => say("E ne ricevi una copia per email."), [], 8.4);
+  tl.call(() => {
+    drop(bnMail);
+    chime(1.06);
+  }, [], 8.6);
+  tl.call(() => say(finalLine), [], 10.4);
+
+  const play = () => tl.restart();
+  let seen = false;
+  new IntersectionObserver(
+    ([e]) => {
+      if (!e.isIntersecting) return;
+      if (!seen || !tl.isActive()) {
+        seen = true;
+        play();
+      }
+    },
+    { threshold: 0.5 },
+  ).observe(root);
+
+  replay.addEventListener("click", play);
+  soundBtn.addEventListener("click", async () => {
+    if (soundOn()) {
+      disableSound();
+      soundBtn.setAttribute("aria-pressed", "false");
+      soundBtn.setAttribute("aria-label", "Attiva il suono");
+      return;
+    }
+    if (await enableSound()) {
+      soundBtn.setAttribute("aria-pressed", "true");
+      soundBtn.setAttribute("aria-label", "Disattiva il suono");
+      play();
+    }
+  });
 }

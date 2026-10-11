@@ -7,7 +7,8 @@ gsap.registerPlugin(ScrollTrigger);
 /** Smooth scroll on fine pointers only, never with reduced motion. */
 export function initSmoothScroll() {
   const ok = window.matchMedia("(pointer: fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!ok) return;
+  // The home snaps scene by scene with native scrolling: smooth scrolling would fight it.
+  if (!ok || document.querySelector(".scenes")) return;
   const lenis = new Lenis({ autoRaf: false, anchors: false, lerp: 0.11 });
   (window as unknown as { __lenis: Lenis }).__lenis = lenis;
   lenis.on("scroll", ScrollTrigger.update);

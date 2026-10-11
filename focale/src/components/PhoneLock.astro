@@ -1,0 +1,267 @@
+---
+/**
+ * The owner's iPhone on the lock screen while the website works: a call rings in the
+ * Dynamic Island, then the requests land as iOS notifications. Static (all notifications
+ * visible) without JS or with reduced motion; scripts/scenes.ts plays it like a short video.
+ */
+import IPhone from "./IPhone.astro";
+
+// Newest on top, like iOS: the missed call arrives first, then WhatsApp, then Mail.
+const notes = [
+  { app: "mail", from: "Nuova richiesta dal sito", when: "ora", text: "Preventivo bagno: circa 6 mq, Città Studi, entro 3 mesi." },
+  {
+    app: "whatsapp",
+    from: "Giulia R.",
+    when: "ora",
+    text: "Ciao, vi scrivo dal sito. Bagno completo in zona Città Studi, vorremmo iniziare a marzo.",
+  },
+  { app: "phone", from: "Chiamata persa", when: "ora", text: "Giulia R., dal pulsante Chiama del sito" },
+];
+---
+<IPhone light label="Il telefono del titolare: arriva una chiamata dal sito, poi una richiesta su WhatsApp e una copia via email" class="lock">
+  <div class="lk">
+    <div class="lk__wall" aria-hidden="true"></div>
+    <p class="lk__date">martedì 14 ottobre</p>
+    <p class="lk__clock">9:41</p>
+    <ul class="lk__list" data-lock-list>
+      {
+        notes.map((n) => (
+          <li class="lk__n" data-lock-note>
+            <span class:list={["lk__icon", `lk__icon--${n.app}`]}>
+              {n.app === "whatsapp" && (
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3.2a8.7 8.7 0 0 0-7.5 13.1L3.3 20.7l4.5-1.2A8.7 8.7 0 1 0 12 3.2Zm0 1.6a7.1 7.1 0 1 1-3.6 13.2l-.3-.2-2.6.7.7-2.5-.2-.3A7.1 7.1 0 0 1 12 4.8Zm-3 3.3c-.2 0-.5 0-.7.3-.2.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.8 2.8 4.4 3.8 2.2.8 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3l-1.7-.8c-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a5.8 5.8 0 0 1-2.9-2.5c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4Z" />
+                </svg>
+              )}
+              {n.app === "mail" && (
+                <svg viewBox="0 0 24 24">
+                  <rect x="3.5" y="6" width="17" height="12.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.8" />
+                  <path d="m4.5 7.5 7.5 6 7.5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                </svg>
+              )}
+              {n.app === "phone" && (
+                <svg viewBox="0 0 24 24">
+                  <path d="M7.2 3.8h2.6l1.3 3.6-1.8 1.1a10 10 0 0 0 6.2 6.2l1.1-1.8 3.6 1.3v2.6c0 1-.8 1.8-1.8 1.8A15 15 0 0 1 5.4 5.6c0-1 .8-1.8 1.8-1.8Z" />
+                </svg>
+              )}
+            </span>
+            <span class="lk__body">
+              <span class="lk__top">
+                <strong>{n.from}</strong>
+                <span class="lk__when">{n.when}</span>
+              </span>
+              <span class="lk__text">{n.text}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+    <span class="lk__ctl lk__ctl--l" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M8 2h8v4l-2 3v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V9L8 6V2Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
+    </span>
+    <span class="lk__ctl lk__ctl--r" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-9Z" fill="none" stroke="currentColor" stroke-width="1.6" /><circle cx="12" cy="12.8" r="3.3" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+    </span>
+  </div>
+  <div slot="island" class="isl" data-island-call aria-hidden="true">
+    <span class="isl__avatar">GR</span>
+    <span class="isl__who">
+      <span class="isl__sub">Chiamata dal sito</span>
+      <span class="isl__name">Giulia R.</span>
+    </span>
+    <span class="isl__btn isl__btn--no"><svg viewBox="0 0 24 24"><path d="M3.5 13.5c4.7-4 12.3-4 17 0l-1.6 2.6-3.2-1.2v-2.4a12 12 0 0 0-7.4 0v2.4l-3.2 1.2-1.6-2.6Z" /></svg></span>
+    <span class="isl__btn isl__btn--yes"><svg viewBox="0 0 24 24"><path d="M7.2 3.8h2.6l1.3 3.6-1.8 1.1a10 10 0 0 0 6.2 6.2l1.1-1.8 3.6 1.3v2.6c0 1-.8 1.8-1.8 1.8A15 15 0 0 1 5.4 5.6c0-1 .8-1.8 1.8-1.8Z" /></svg></span>
+  </div>
+</IPhone>
+<style>
+  .lk {
+    position: absolute;
+    inset: 0;
+    color: #fff;
+  }
+  /* A warm wallpaper in the studio colours, like the gradient wallpapers iOS ships with. */
+  .lk__wall {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(90% 60% at 15% 8%, #ffd08a 0%, rgba(255, 208, 138, 0) 70%),
+      radial-gradient(110% 80% at 95% 95%, #e24a12 0%, rgba(226, 74, 18, 0) 65%),
+      linear-gradient(165deg, #ffb27a 0%, #ff7a3d 45%, #d4511c 100%);
+  }
+  .lk__date,
+  .lk__clock {
+    position: relative;
+    text-align: center;
+    margin: 0;
+  }
+  .lk__date {
+    padding-top: 17cqw;
+    font-size: 4.8cqw;
+    font-weight: 500;
+    opacity: 0.92;
+  }
+  .lk__clock {
+    font-size: 24cqw;
+    font-weight: 600;
+    font-stretch: 112%;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-top: -0.5cqw;
+  }
+  .lk__list {
+    position: absolute;
+    left: 2.6cqw;
+    right: 2.6cqw;
+    bottom: 27cqw;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2cqw;
+  }
+  /* iOS notification: frosted panel, 38 pt icon, title row with time, two lines of text. */
+  .lk__n {
+    display: grid;
+    grid-template-columns: 9.7cqw minmax(0, 1fr);
+    gap: 2.8cqw;
+    align-items: start;
+    padding: 3.2cqw 3.6cqw;
+    border-radius: 5.4cqw;
+    background: rgba(255, 246, 238, 0.62);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    backdrop-filter: blur(18px) saturate(170%);
+    color: #1d1d1f;
+    font-size: 3.65cqw;
+    line-height: 1.3;
+    box-shadow: 0 1cqw 4cqw rgba(120, 40, 5, 0.12);
+  }
+  .lk__icon {
+    width: 9.7cqw;
+    height: 9.7cqw;
+    border-radius: 2.2cqw;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    margin-top: 0.4cqw;
+  }
+  .lk__icon svg {
+    width: 64%;
+    height: 64%;
+    fill: currentColor;
+  }
+  .lk__icon--whatsapp {
+    background: linear-gradient(180deg, #5ff27a, #20b844);
+  }
+  .lk__icon--mail {
+    background: linear-gradient(180deg, #4fb4ff, #1677f2);
+  }
+  .lk__icon--phone {
+    background: linear-gradient(180deg, #6ef08a, #28c24e);
+  }
+  .lk__body {
+    display: grid;
+    gap: 0.3cqw;
+    min-width: 0;
+  }
+  .lk__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 2cqw;
+  }
+  .lk__top strong {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lk__when {
+    flex: none;
+    color: rgba(60, 50, 45, 0.6);
+    font-size: 3.3cqw;
+  }
+  .lk__text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .lk__ctl {
+    position: absolute;
+    bottom: 8.5cqw;
+    width: 12.7cqw;
+    height: 12.7cqw;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(40, 15, 5, 0.22);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #fff;
+  }
+  .lk__ctl svg {
+    width: 46%;
+    height: 46%;
+  }
+  .lk__ctl--l {
+    left: 11.5cqw;
+  }
+  .lk__ctl--r {
+    right: 11.5cqw;
+  }
+
+  /* Incoming call inside the Dynamic Island (hidden until the island grows). */
+  .isl {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 2.4cqw;
+    padding: 0 3cqw;
+    color: #fff;
+    opacity: 0;
+    visibility: hidden;
+  }
+  .isl__avatar {
+    width: 12cqw;
+    height: 12cqw;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(180deg, #a8a29c, #6e6862);
+    font-size: 4.4cqw;
+    font-weight: 600;
+  }
+  .isl__who {
+    display: grid;
+    line-height: 1.2;
+    min-width: 0;
+  }
+  .isl__sub {
+    font-size: 3.2cqw;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .isl__name {
+    font-size: 4.6cqw;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .isl__btn {
+    width: 11.5cqw;
+    height: 11.5cqw;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+  }
+  .isl__btn svg {
+    width: 56%;
+    height: 56%;
+    fill: #fff;
+  }
+  .isl__btn--no {
+    background: #ff3b30;
+  }
+  .isl__btn--yes {
+    background: #34c759;
+  }
+</style>

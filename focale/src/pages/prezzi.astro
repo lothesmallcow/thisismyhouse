@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import PageHead from "../components/PageHead.astro";
 import Faq from "../components/Faq.astro";
 import Closing from "../components/Closing.astro";
+import Calculator from "../components/Calculator.astro";
 import Icon from "../components/Icon.astro";
 import P from "../components/P.astro";
 import { getCollection } from "astro:content";
@@ -131,7 +132,9 @@ const service = {
     </div>
   </section>
 
-  <section class="section section--pietra" aria-labelledby="compreso">
+  <Calculator />
+
+  <section class="section" aria-labelledby="compreso">
     <div class="wrap sec">
       <p class="sec__label">Incluso</p>
       <div class="sec__body pz-two">
