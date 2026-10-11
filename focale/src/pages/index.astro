@@ -6,9 +6,9 @@
 import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
 import Choose from "../components/Choose.astro";
+import Makeover from "../components/Makeover.astro";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
-import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { site } from "../config/site";
 import { fill, euro, foundersOpen, whatsappHref } from "../lib/util";
@@ -17,28 +17,13 @@ import { faqPage, professionalService } from "../lib/schema";
 
 const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order).slice(0, 4);
 const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
-const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.data.order);
 const open = foundersOpen();
 
-const facts = [
-  { t: "Dal telefono non si legge.", d: "Torna indietro e chiama il prossimo." },
-  { t: "Il numero non si trova.", d: "Lascia perdere." },
-  { t: "In fondo c'è scritto 2014.", d: "Pensa che abbiate chiuso." },
-];
 const steps = [
   { t: "Ci racconti l'attività", d: "Dieci minuti, al telefono o su WhatsApp." },
   { t: "Vedi l'anteprima", d: `La homepage del tuo nuovo sito, entro ${site.previewHours} ore. Gratis.` },
   { t: "Se ti convince, partiamo", d: `Acconto del ${site.depositPercent}%, sito pronto in ${site.deliveryDays.professionale} giorni lavorativi.` },
   { t: "Approvi e va online", d: "Il saldo lo paghi solo a sito approvato." },
-];
-const scenes = [
-  { id: "inizio", label: "Inizio" },
-  { id: "attivita", label: "La tua attività" },
-  { id: "problema", label: "Il problema" },
-  { id: "lavori", label: "Lavori" },
-  { id: "metodo", label: "Metodo" },
-  { id: "prezzi", label: "Prezzi" },
-  { id: "domande", label: "Domande" },
 ];
 ---
 <Base
@@ -47,68 +32,14 @@ const scenes = [
   jsonLd={[professionalService(), faqPage(faqItems)]}
   bodyClass="home"
 >
-  <nav class="dots" aria-label="Sezioni della pagina" data-dots>
-    <ol>
-      {
-        scenes.map((s) => (
-          <li>
-            <a href={`#${s.id}`} data-dot={s.id}>
-              <span class="dots__label">{s.label}</span>
-            </a>
-          </li>
-        ))
-      }
-    </ol>
-  </nav>
-
   <div class="scenes">
     <HeroScene />
 
     <Choose />
 
-    <section class="scene sc-prob" id="problema" aria-labelledby="problema-t">
-      <div class="wrap sc-prob__in">
-        <h2 id="problema-t" class="sc-prob__t" data-in>Ogni giorno qualcuno cerca quello che fai e apre il tuo sito.</h2>
-        <p class="sc-prob__q" data-in style="--d: 0.15s">In pochi secondi decide se chiamarti.</p>
-        <ul class="sc-prob__facts">
-          {
-            facts.map((f, i) => (
-              <li data-in style={`--d: ${0.3 + i * 0.12}s`}>
-                <strong>{f.t}</strong>
-                <span>{f.d}</span>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-    </section>
+    <Makeover />
 
-    <section class="scene sc-work" id="lavori" aria-labelledby="lavori-t">
-      <div class="wrap sc-work__in">
-        <div class="sc-work__head">
-          <h2 id="lavori-t" data-in>Tre siti completi, per tre attività inventate.</h2>
-          <p class="muted" data-in style="--d: 0.1s">Progetti dimostrativi: i lavori dei primi clienti arriveranno qui.</p>
-          <a class="textlink" href="/lavori/" data-in style="--d: 0.15s">Tutti i lavori</a>
-        </div>
-        <ul class="sc-work__list">
-          {
-            lavori.map((l, i) => (
-              <li data-in style={`--d: ${0.15 + i * 0.12}s`}>
-                <a href={`/lavori/${l.id}/demo/`} class="sc-work__card">
-                  <span class="sc-work__shot" data-tilt="6">
-                    <Image src={l.data.shotDesktop} alt={`Il sito dimostrativo di ${l.data.name}`} widths={[480, 800, 1100]} sizes="(min-width: 900px) 30vw, 88vw" />
-                  </span>
-                  <span class="sc-work__name">{l.data.name}</span>
-                  <span class="sc-work__sector">{l.data.sector}</span>
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-    </section>
-
-    <section class="scene sc-how" id="metodo" aria-labelledby="metodo-t">
+    <section class="section sc-how" id="metodo" aria-labelledby="metodo-t">
       <div class="wrap sc-how__in">
         <h2 id="metodo-t" data-in>Quattro passi. Il primo è gratis.</h2>
         <ol class="sc-how__steps">
@@ -129,7 +60,7 @@ const scenes = [
       </div>
     </section>
 
-    <section class="scene sc-price" id="prezzi" aria-labelledby="prezzi-t">
+    <section class="section sc-price" id="prezzi" aria-labelledby="prezzi-t">
       <div class="wrap sc-price__in">
         <div class="sc-price__head">
           <h2 id="prezzi-t" data-in>Prezzi scritti qui, non "su richiesta".</h2>
@@ -168,7 +99,7 @@ const scenes = [
       </div>
     </section>
 
-    <section class="scene sc-end" id="domande" aria-labelledby="domande-t">
+    <section class="section sc-end" id="domande" aria-labelledby="domande-t">
       <div class="wrap sc-end__in">
         <div class="sc-end__cta">
           <h2 data-in>Guarda il tuo nuovo sito prima di decidere.</h2>
@@ -192,147 +123,15 @@ const scenes = [
 </Base>
 
 <script>
-  import { initScenes, initStepper } from "../scripts/scenes";
+  import { initScenes } from "../scripts/scenes";
   import { initPaths } from "../scripts/paths";
   import { initTilt } from "../scripts/tilt";
   initScenes();
-  initStepper();
   initPaths();
   initTilt();
 </script>
 
 <style>
-  /* ---------- Problema ---------- */
-  .sc-prob__in {
-    display: grid;
-    gap: clamp(1.25rem, 3vh, 2.25rem);
-    width: 100%;
-  }
-  .sc-prob__t {
-    font-size: clamp(2.2rem, 1rem + 4.2vw, 5.6rem);
-    line-height: 1;
-    max-width: 18ch;
-  }
-  .sc-prob__q {
-    font-weight: 300;
-    font-stretch: 125%;
-    font-size: clamp(1.6rem, 1rem + 2.4vw, 3.4rem);
-    letter-spacing: -0.04em;
-    line-height: 1.05;
-    color: var(--mandarino-scuro, #b8400f);
-  }
-  .sc-prob__facts {
-    list-style: none;
-    padding: 0;
-    margin: clamp(1.5rem, 7vh, 5rem) 0 0;
-    display: grid;
-    gap: 1.5rem;
-  }
-  @media (min-width: 900px) {
-    .sc-prob__facts {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: clamp(2rem, 4vw, 4rem);
-    }
-  }
-  .sc-prob__facts li {
-    display: grid;
-    gap: 0.6rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--inchiostro);
-  }
-  .sc-prob__facts strong {
-    font-weight: 300;
-    font-stretch: 125%;
-    font-size: clamp(1.4rem, 1rem + 1.2vw, 2.2rem);
-    letter-spacing: -0.02em;
-    line-height: 1.15;
-  }
-  .sc-prob__facts span {
-    color: var(--grafite);
-    font-size: var(--fs-lead);
-  }
-
-  /* ---------- Lavori ---------- */
-  .sc-work__in {
-    display: grid;
-    gap: clamp(2rem, 6vh, 4.5rem);
-    width: 100%;
-  }
-  .sc-work__head {
-    display: grid;
-    gap: 0.75rem;
-    justify-items: start;
-  }
-  @media (min-width: 900px) {
-    .sc-work__head {
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
-      align-items: end;
-      gap: 2rem;
-    }
-  }
-  .sc-work__head h2 {
-    max-width: 16ch;
-  }
-  .sc-work__list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: 1rem;
-  }
-  @media (min-width: 900px) {
-    .sc-work__list {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: clamp(1.25rem, 2.5vw, 2.5rem);
-    }
-  }
-  @media (max-width: 899px) {
-    .sc-work__list {
-      grid-auto-flow: column;
-      grid-auto-columns: 78%;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      padding-bottom: 0.5rem;
-    }
-    .sc-work__list li {
-      scroll-snap-align: start;
-    }
-  }
-  .sc-work__card {
-    display: grid;
-    gap: 0.3rem;
-    text-decoration: none;
-    color: inherit;
-  }
-  .sc-work__shot {
-    display: block;
-    border-radius: 16px;
-    overflow: hidden;
-    aspect-ratio: 16 / 11;
-    background: var(--nebbia);
-    box-shadow: 0 24px 50px -30px rgba(60, 25, 8, 0.5);
-    margin-bottom: 0.6rem;
-  }
-  .sc-work__shot :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top;
-    transition: transform 0.8s var(--ease-out);
-  }
-  .sc-work__card:hover .sc-work__shot :global(img) {
-    transform: scale(1.04);
-  }
-  .sc-work__name {
-    font-weight: 500;
-    font-size: var(--fs-h3);
-    letter-spacing: -0.02em;
-  }
-  .sc-work__sector {
-    color: var(--grafite);
-    font-size: var(--fs-small);
-  }
-
   /* ---------- Metodo ---------- */
   .sc-how__in {
     display: grid;

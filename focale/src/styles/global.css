@@ -631,15 +631,8 @@ html.lenis body {
   overflow: hidden;
 }
 
-/* ---------- Home scenes (pages/index.astro, scripts/scenes.ts) ---------- */
-html:has(.scenes) {
-  scroll-padding-top: 0;
-  scroll-snap-type: y proximity;
-}
-/* With the JS stepper active, it drives the scenes and CSS snapping stands aside. */
-html.stepper:has(.scenes) {
-  scroll-snap-type: none;
-}
+/* ---------- Home (pages/index.astro, scripts/scenes.ts) ---------- */
+/* Continuous scroll. Only the opening fills the screen; the rest flows at natural height. */
 .scene {
   position: relative;
   min-height: 100vh;
@@ -648,95 +641,17 @@ html.stepper:has(.scenes) {
   align-items: center;
   box-sizing: border-box;
   padding-block: calc(var(--header-h) + clamp(0.75rem, 3vh, 2.5rem)) clamp(1.25rem, 4vh, 3rem);
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
   overflow-x: clip;
 }
-@media (max-width: 719px) {
-  .scene {
-    padding-bottom: calc(var(--sticky-h) + 1rem);
-  }
-}
-.home .ftr {
-  scroll-snap-align: end;
-}
 @media (prefers-reduced-motion: no-preference) {
-  .scenes-live .scene [data-in] {
+  /* Content rises out of a mask (no fade: text keeps its full colour and contrast). */
+  .scenes-live .scenes > section [data-in] {
     transition:
-      opacity 0.8s var(--ease-out) var(--d, 0s),
+      clip-path 1s var(--ease-out) var(--d, 0s),
       transform 1s var(--ease-out) var(--d, 0s);
   }
-  .scenes-live .scene:not(.is-in) [data-in] {
-    opacity: 0;
-    transform: translateY(28px);
+  .scenes-live .scenes > section:not(.is-in) [data-in] {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(36px);
   }
-}
-/* Side nav: one short line per scene; the label shows on hover or focus. */
-.dots {
-  position: fixed;
-  right: clamp(8px, 1.2vw, 20px);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 40;
-  display: none;
-}
-@media (min-width: 1100px) and (min-height: 620px) {
-  .dots {
-    display: block;
-  }
-}
-.dots ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 2px;
-}
-.dots a {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 26px;
-  min-width: 36px;
-  color: var(--inchiostro);
-  text-decoration: none;
-}
-.dots a::after {
-  content: "";
-  width: 14px;
-  height: 2px;
-  border-radius: 2px;
-  background: currentColor;
-  opacity: 0.35;
-  transition:
-    width 0.4s var(--ease-out),
-    opacity 0.4s,
-    background-color 0.4s;
-}
-.dots a.is-active::after {
-  width: 30px;
-  opacity: 1;
-  background: var(--mandarino);
-}
-.dots__label {
-  position: absolute;
-  right: 44px;
-  white-space: nowrap;
-  font-size: 0.8rem;
-  font-weight: 500;
-  padding: 0.2rem 0.55rem;
-  border-radius: var(--radius-ui);
-  background: rgba(255, 248, 242, 0.95);
-  opacity: 0;
-  transform: translateX(6px);
-  transition:
-    opacity 0.25s,
-    transform 0.25s;
-  pointer-events: none;
-}
-.dots a:hover .dots__label,
-.dots a:focus-visible .dots__label {
-  opacity: 1;
-  transform: none;
 }

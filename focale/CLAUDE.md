@@ -27,17 +27,19 @@ Archivo variable: headings weight 300 at width 125% with negative tracking; UI 5
 Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm run logo` regenerates the paths).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
-- Full-screen scenes and a side progress nav (scripts/scenes.ts). Desktop (fine pointer): initStepper moves one
-  scene per wheel/trackpad gesture or key, ignoring trackpad momentum until a 220 ms silence; touch keeps
-  native scroll with CSS proximity snap. Test with real wheel events, not scrollIntoView.
-  Scenes: inizio, attività, problema, lavori, metodo, prezzi, domande. Content marked [data-in] plays in per scene.
+- Continuous scroll (Lorenzo: snapping scenes felt like Google Slides). Only the opening fills the screen;
+  other sections have natural height. [data-in] content rises out of a clip-path mask once (no opacity
+  fade: axe measures half-faded text). No side dots, no stepper, no CSS snap.
 - Opening: ONE iPhone (IPhone.astro: titanium band, Dynamic Island, status bar; inner sizes in cqw so
   nothing spills). scripts/hero.ts plays a film: site scrolls, a tap on "Chiama ora" rings the Dynamic Island,
   a tap on "Chiedi un preventivo" drops iOS banners (WhatsApp, Mail). Sound (scripts/sound.ts, WebAudio,
   synthesised) only after the visitor presses the speaker button.
 - Motion feels physical: spring easing (scripts/spring.ts), 3D tilt with glass reflection on fine pointers
-  (scripts/tilt.ts), contact shadows. Lenis is off on the home (it fights snapping).
+  (scripts/tilt.ts), contact shadows. Lenis smooth scroll on fine pointers.
 - Sector chooser (Choose.astro): radios + CSS :has(); paths.ts animates with Flip. Nothing stored.
+- Makeover (Makeover.astro, scripts/makeover.ts): pinned, scroll-scrubbed film on the same iPhone; the old
+  site is a desktop page squeezed onto the phone (non-responsive look), pinch, search for the number, orange
+  scan line rebuilds it into the new site, tap to call. Replaced the three works on the home (they live on /lavori).
 - Calculator lives on /prezzi. Renovation.astro, Manifesto, WorkReel are no longer on the home.
 - Section labels sit above content (no empty 3-column label gutter: Lorenzo called it dead space).
 - `node scripts/overflow-check.mjs` finds cut-off text and sideways scroll on every page at 6 widths.

@@ -1,0 +1,318 @@
+---
+/**
+ * The makeover, filmed like the opening: one iPhone with a real-looking old website (a desktop
+ * layout squeezed onto a phone, as non-responsive sites really look). Scrolling plays it like a
+ * video: a pinch to read, a search for the phone number, then the old site is rebuilt into the
+ * new one behind an orange line, and a tap calls. Tags sit outside the phone.
+ * Without JS or with reduced motion: the finished site and the steps as a list.
+ * Logic in scripts/makeover.ts.
+ */
+import IPhone from "./IPhone.astro";
+import OldSite from "./demo/OldSite.astro";
+import ArcadiHero from "./demo/ArcadiHero.astro";
+
+const steps = [
+  { t: "Il sito di oggi, aperto dal telefono.", d: "Fatto per il computer, nel 2011." },
+  { t: "Per leggere bisogna ingrandire.", d: "Chi ha fretta torna indietro." },
+  { t: "Il numero non si trova.", d: "E chi non lo trova chiama un altro." },
+  { t: "Il makeover.", d: "Stessa impresa, sito nuovo: in 10 giorni." },
+  { t: "Chi lo apre, ti chiama.", d: "Un tocco e il telefono squilla." },
+];
+const tags = [
+  { k: "zoom", t: "Testo illeggibile", bad: true },
+  { k: "num", t: "Nessun numero in vista", bad: true },
+  { k: "read", t: "Si legge senza zoom", bad: false },
+  { k: "call", t: "Chiama con un tocco", bad: false },
+];
+---
+<section class="mk" id="makeover" aria-labelledby="mk-t" data-makeover>
+  <div class="mk__pin" data-mk-pin>
+    <div class="wrap mk__in">
+      <div class="mk__text">
+        <h2 id="mk-t" class="mk__t">Prima e dopo, sullo schermo che conta.</h2>
+        <ol class="mk__steps" data-mk-steps>
+          {
+            steps.map((s, i) => (
+              <li data-mk-step={i}>
+                <span class="mk__st">{s.t}</span>
+                <span class="mk__sd">{s.d}</span>
+              </li>
+            ))
+          }
+        </ol>
+        <a class="textlink mk__more" href="/lavori/">I tre siti completi</a>
+      </div>
+
+      <figure class="mk__stage">
+        <div class="mk__phone" data-mk-phone>
+          <IPhone label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
+            <div class="mk__screen" data-mk-screen>
+              <div class="mk__old" data-mk-old>
+                <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
+              </div>
+              <div class="mk__new" data-mk-new><ArcadiHero /></div>
+              <span class="mk__scan" data-mk-scan aria-hidden="true"></span>
+            </div>
+            <span class="mk__finger mk__finger--a" data-mk-fa aria-hidden="true"></span>
+            <span class="mk__finger mk__finger--b" data-mk-fb aria-hidden="true"></span>
+          </IPhone>
+        </div>
+        <ul class="mk__tags" aria-hidden="true">
+          {
+            tags.map((t) => (
+              <li class:list={["mk__tag", `mk__tag--${t.k}`, { "is-bad": t.bad }]} data-mk-tag={t.k}>
+                <span class="mk__dot">{t.bad ? "×" : "✓"}</span>
+                {t.t}
+              </li>
+            ))
+          }
+        </ul>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<style>
+  .mk {
+    background: var(--nebbia);
+    overflow-x: clip;
+  }
+  .mk__pin {
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid;
+    align-items: center;
+    box-sizing: border-box;
+    padding-block: calc(var(--header-h) + 1.5rem) 2rem;
+  }
+  .mk__in {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+    width: 100%;
+  }
+  @media (min-width: 900px) {
+    .mk__in {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: clamp(2rem, 6vw, 7rem);
+    }
+  }
+  .mk__t {
+    font-size: clamp(2rem, 1rem + 3vw, 4rem);
+    line-height: 1;
+    max-width: 13ch;
+  }
+  .mk__steps {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.5rem, 4vh, 2.5rem) 0 1.5rem;
+    display: grid;
+    gap: 0.25rem;
+  }
+  .mk__steps li {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.6rem 0 0.6rem 1rem;
+    border-left: 2px solid var(--filo);
+    transition: border-color 0.4s;
+  }
+  .mk__st {
+    font-weight: 500;
+    font-size: 1.1rem;
+    color: var(--grafite);
+    transition: color 0.4s;
+  }
+  .mk__sd {
+    font-size: var(--fs-small);
+    color: var(--grafite);
+  }
+  /* The step being played */
+  .mk__steps li.is-on {
+    border-left-color: var(--mandarino);
+  }
+  .mk__steps li.is-on .mk__st {
+    color: var(--inchiostro);
+  }
+  /* While the film runs, only the current description shows: less to read. */
+  :global(.mk-live) .mk__steps li:not(.is-on) .mk__sd {
+    display: none;
+  }
+  @media (max-width: 899px) {
+    .mk__t {
+      font-size: clamp(1.8rem, 1rem + 4vw, 2.4rem);
+    }
+    :global(.mk-live) .mk__steps li:not(.is-on) {
+      display: none;
+    }
+    :global(.mk-live) .mk__steps {
+      margin-block: 1rem 0;
+      min-height: 4.5em;
+    }
+    :global(.mk-live) .mk__more {
+      display: none;
+    }
+    .mk__in {
+      gap: 1rem;
+    }
+    .mk__pin {
+      padding-bottom: calc(var(--sticky-h) + 1rem);
+    }
+  }
+
+  .mk__stage {
+    position: relative;
+    margin: 0;
+    display: grid;
+    justify-items: center;
+  }
+  .mk__phone {
+    position: relative;
+    --w: clamp(190px, 34vh, 310px);
+  }
+  @media (max-width: 899px) {
+    .mk__phone {
+      --w: clamp(170px, 30vh, 240px);
+    }
+  }
+  .mk__phone::after {
+    content: "";
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    bottom: calc(var(--w) * -0.07);
+    height: calc(var(--w) * 0.1);
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(60, 25, 8, 0.3), rgba(60, 25, 8, 0));
+    z-index: -1;
+  }
+  .mk__screen {
+    position: absolute;
+    inset: 13.7cqw 0 0;
+    overflow: hidden;
+    background: #fff;
+  }
+  .mk__old,
+  .mk__new {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  /* A desktop page squeezed onto the phone (180% wide, scaled to fit), like a real non-responsive
+     site: tiny text, and the page fills the whole screen. */
+  .mk__oldpage {
+    width: 180%;
+    height: 180%;
+    transform-origin: 0 0;
+    transform: scale(0.5556);
+    background: #fffbe6;
+  }
+  .mk__oldpage :global(.os-wrap),
+  .mk__oldpage :global(.os) {
+    height: 100%;
+  }
+  .mk__new {
+    background: #f2f2f0;
+  }
+  /* Final frame by default (no JS): the old page is hidden. */
+  .mk__old {
+    visibility: hidden;
+  }
+  :global(.mk-live) .mk__old {
+    visibility: visible;
+  }
+  .mk__scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    background: var(--mandarino);
+    box-shadow: 0 0 18px 5px rgba(255, 91, 34, 0.55);
+    opacity: 0;
+    z-index: 3;
+  }
+  .mk__finger {
+    position: absolute;
+    width: 11cqw;
+    height: 11cqw;
+    margin: -5.5cqw 0 0 -5.5cqw;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.65);
+    box-shadow:
+      0 0 0 1cqw rgba(29, 31, 33, 0.18),
+      0 1cqw 3cqw rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    z-index: 8;
+    pointer-events: none;
+  }
+
+  /* Tags outside the phone */
+  .mk__tags {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .mk__tag {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem 0.45rem 0.45rem;
+    border-radius: var(--radius-ui);
+    background: var(--carta);
+    box-shadow: 0 10px 24px -14px rgba(60, 25, 8, 0.5);
+    font-size: 0.88rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+  }
+  .mk__dot {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #1f7a4f;
+    color: #fff;
+    font-size: 0.8rem;
+  }
+  .mk__tag.is-bad .mk__dot {
+    background: #b3261a;
+  }
+  .mk__tag--zoom {
+    top: 30%;
+    left: 0;
+  }
+  .mk__tag--num {
+    top: 12%;
+    right: 0;
+  }
+  .mk__tag--read {
+    top: 44%;
+    left: 0;
+  }
+  .mk__tag--call {
+    top: 62%;
+    right: 0;
+  }
+  /* No JS: the two good tags are part of the final frame. */
+  .mk__tag:not(.is-bad) {
+    opacity: 1;
+    visibility: visible;
+  }
+  :global(.mk-live) .mk__tag {
+    opacity: 0;
+    visibility: hidden;
+  }
+  /* On phones the step line says it all: no tags around the phone. */
+  @media (max-width: 899px) {
+    .mk__tags {
+      display: none;
+    }
+  }
+</style>
+<script>
+  import { later } from "../scripts/later";
+  later(() => import("../scripts/makeover").then((m) => m.initMakeover()));
+</script>
