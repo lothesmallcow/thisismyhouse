@@ -13,7 +13,7 @@ import Icon from "../components/Icon.astro";
 import { getCollection } from "astro:content";
 import { site } from "../config/site";
 import { fill, euro, foundersOpen, whatsappHref } from "../lib/util";
-import { plans, cura } from "../lib/plans";
+import { plans } from "../lib/plans";
 import { faqPage, professionalService } from "../lib/schema";
 
 const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order).slice(0, 4);
@@ -106,7 +106,7 @@ const steps = [
         </ul>
         <div class="sc-price__foot" data-in style="--d: 0.5s">
           <p>
-            <strong>{cura.name}</strong>, {euro(cura.price)} al mese: sito sempre in ordine, disdici quando vuoi.
+            Paghi il {site.depositPercent}% quando partiamo e il saldo solo a sito approvato.
           </p>
           <a class="btn btn--secondary" href="/prezzi/">Confronta i pacchetti</a>
         </div>

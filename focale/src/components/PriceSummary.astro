@@ -1,5 +1,6 @@
 ---
-import { plans, cura } from "../lib/plans";
+import { plans } from "../lib/plans";
+import { site } from "../config/site";
 import { euro, foundersOpen } from "../lib/util";
 const open = foundersOpen();
 ---
@@ -42,8 +43,7 @@ const open = foundersOpen();
       </div>
       <div class="ps__foot">
         <p>
-          <strong>{cura.name}, {euro(cura.price)} al mese.</strong>{" "}
-          {cura.forWhom} Dominio, hosting, modifiche e controlli, disdici quando vuoi.
+          Paghi il {site.depositPercent}% quando partiamo e il saldo solo a sito approvato.
         </p>
         <a href="/prezzi" class="btn btn--secondary">Confronta tutto nella pagina prezzi</a>
       </div>

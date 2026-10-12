@@ -12,6 +12,7 @@ The project folder is still called `focale/` (the first working name).
 - Studio voice: first person plural ("noi") on Focus Design pages. Never claim a big team, offices or invented staff.
 - No fake proof: no testimonials, stars, client logos/counts, countdowns, invented stats. `Reviews` renders nothing while `site.reviews` is empty.
 - Founders counter is static text from config, never animated.
+- No monthly plan (the old "Cura") anywhere: Lorenzo can't guarantee ongoing maintenance yet. Don't promise it, not even as a bonus.
 - No dark patterns, no popups, nothing pre-ticked.
 - Personal/contact data lives only in `src/config/site.ts` as `[DA COMPILARE: ...]` placeholders. Prices, days, percentages are always read from config.
 - Privacy: no cookies or storage, self-hosted fonts, third parties only Web3Forms, optional Apps Script, optional Cloudflare beacon.

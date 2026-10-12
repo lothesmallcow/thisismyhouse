@@ -59,19 +59,13 @@ export const condizioni: LegalDoc = {
       p: ["Ci assicuri di avere il diritto di usare le foto, i testi e i marchi che ci mandi. Se un contenuto che ci hai dato viola diritti altrui, la responsabilità è tua."],
     },
     {
-      h: "10. Piano Cura",
-      p: [
-        "Il piano Cura costa {prices.cura} € al mese e comprende la gestione di dominio e hosting, fino a 2 modifiche al mese entro {careResponseHours} ore lavorative, un controllo mensile e le copie di sicurezza. Si paga mese per mese e si disdice quando vuoi con un messaggio: la disdetta vale dalla fine del mese già pagato. Le modifiche non usate non si accumulano.",
-      ],
-    },
-    {
-      h: "11. Cosa non possiamo garantire",
+      h: "10. Cosa non possiamo garantire",
       p: [
         "Garantiamo un sito fatto bene, veloce e in regola. Non possiamo garantire un numero di richieste, di clienti o una posizione su Google: dipendono anche dal mercato, dalla concorrenza e da come rispondi alle richieste. La nostra responsabilità è limitata all'importo che ci hai pagato per il lavoro, salvo dolo o colpa grave.",
       ],
     },
-    { h: "12. Legge e foro", p: ["Valgono la legge italiana e, per qualsiasi controversia tra professionisti, il foro di {jurisdiction}."] },
-    { h: "13. Contatti", p: ["Per qualsiasi domanda su queste condizioni: {email}."] },
+    { h: "11. Legge e foro", p: ["Valgono la legge italiana e, per qualsiasi controversia tra professionisti, il foro di {jurisdiction}."] },
+    { h: "12. Contatti", p: ["Per qualsiasi domanda su queste condizioni: {email}."] },
   ],
 };
 

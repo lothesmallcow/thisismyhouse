@@ -10,11 +10,11 @@ import Receipt from "../components/visual/Receipt.astro";
 import { getCollection } from "astro:content";
 import { site } from "../config/site";
 import { euro, fill, foundersOpen, absUrl } from "../lib/util";
-import { plans, cura } from "../lib/plans";
+import { plans } from "../lib/plans";
 import { breadcrumbs } from "../lib/schema";
 
 const open = foundersOpen();
-const faqs = (await getCollection("faq")).filter((f) => [10, 11, 15, 16].includes(f.data.order)).sort((a, b) => a.data.order - b.data.order);
+const faqs = (await getCollection("faq")).filter((f) => [1, 10, 11, 15].includes(f.data.order)).sort((a, b) => a.data.order - b.data.order);
 const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
 const included = [
   "Testi scritti da noi",
@@ -38,20 +38,12 @@ const service = {
       priceCurrency: "EUR",
       description: p.forWhom,
     })),
-    {
-      "@type": "Offer",
-      name: cura.name,
-      price: cura.price,
-      priceCurrency: "EUR",
-      description: cura.forWhom,
-      priceSpecification: { "@type": "UnitPriceSpecification", price: cura.price, priceCurrency: "EUR", unitCode: "MON" },
-    },
   ],
 };
 ---
 <Base
   title={`Prezzi dei siti web per piccole imprese | ${site.brand}`}
-  description={`Prezzi chiari e scritti: Essenziale, Professionale, Su misura e il piano Cura mensile. Prezzo fondatori per i primi ${site.foundersSpotsTotal} clienti.`}
+  description={`Prezzi chiari e scritti: Essenziale, Professionale e Su misura. Prezzo fondatori per i primi ${site.foundersSpotsTotal} clienti.`}
   jsonLd={[breadcrumbs([{ name: "Prezzi", path: "/prezzi/" }]), service]}
 >
   <PageHead
@@ -118,27 +110,6 @@ const service = {
     </div>
   </section>
 
-  <section class="section section--sole pz-cura" data-tone="sole" aria-labelledby="piano-cura">
-    <div class="wrap pz-cura__grid">
-      <div class="pz-cura__head">
-        <p class="sec__label">Dopo la consegna</p>
-        <h2 id="piano-cura" class="pz-cura__name" data-focus>{cura.name}</h2>
-        <p class="lead pz-cura__for">{cura.forWhom}</p>
-      </div>
-      <p class="pz-cura__price">{euro(cura.price)} <span>al mese</span></p>
-      <ul class="pz-cura__list">
-        {
-          cura.features.map((f) => (
-            <li>
-              <Icon name="check" size={20} />
-              {f}
-            </li>
-          ))
-        }
-      </ul>
-    </div>
-  </section>
-
   <Calculator />
 
   <section class="section pz-inc" aria-labelledby="compreso">
@@ -159,7 +130,7 @@ const service = {
       </ul>
       <div class="pz-extra">
         <h2 class="pz-extra__t">Costi a parte</h2>
-        <p class="pz-extra__p">Il dominio, {site.domainCostRange}, intestato a te. Con il piano Cura è compreso. Nient'altro.</p>
+        <p class="pz-extra__p">Il dominio, {site.domainCostRange}, intestato a te. Nient'altro.</p>
         <p class="small pz-vat"><P value={site.vatNote} /></p>
       </div>
     </div>
@@ -292,71 +263,8 @@ const service = {
   .pz__btn {
     margin-top: auto;
   }
-  /* Cura: name and promise, the price, what it covers: three full columns, nothing empty. */
-  .pz-cura__grid {
-    display: grid;
-    gap: 2.5rem;
-  }
-  @media (min-width: 1000px) {
-    .pz-cura__grid {
-      grid-template-columns: minmax(0, 4fr) minmax(0, 4fr) minmax(0, 4fr);
-      column-gap: clamp(1.5rem, 1rem + 2vw, 3rem);
-      align-items: start;
-    }
-  }
-  /* The plans sit right above (and with motion share its orange): no tall gap between them. */
-  .pz-cura {
-    padding-block: clamp(2.5rem, 1.5rem + 2.5vw, 4rem) clamp(3rem, 2rem + 3vw, 5rem);
-  }
   .pz {
-    padding-bottom: clamp(1rem, 0.5rem + 1vw, 1.5rem);
-  }
-  .pz-cura__name {
-    margin-top: 1rem;
-    font-size: var(--fs-display);
-    line-height: 0.9;
-  }
-  @media (min-width: 1000px) {
-    .pz-cura__price {
-      margin-top: 2rem;
-    }
-  }
-  .pz-cura__for {
-    margin-top: 1rem;
-    max-width: 22ch;
-  }
-  .pz-cura__price {
-    font-weight: 300;
-    font-stretch: 125%;
-    font-size: clamp(4.5rem, 2rem + 7vw, 9rem);
-    letter-spacing: -0.06em;
-    line-height: 0.85;
-    white-space: nowrap;
-  }
-  .pz-cura__price span {
-    display: block;
-    margin-top: 0.8rem;
-    font-size: var(--fs-body);
-    letter-spacing: 0;
-    font-stretch: 100%;
-    font-weight: 500;
-  }
-  .pz-cura__list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    border-top: 1px solid var(--inchiostro);
-  }
-  .pz-cura__list li {
-    display: grid;
-    grid-template-columns: 20px 1fr;
-    gap: 0.6rem;
-    padding: 0.8rem 0;
-    border-bottom: 1px solid rgba(36, 19, 12, 0.25);
-    font-weight: 500;
-  }
-  .pz-cura__list :global(.icon) {
-    margin-top: 0.2rem;
+    padding-bottom: var(--space-section);
   }
   /* Included: six tiles, then the one extra cost as a band. */
   .pz-inc__head {

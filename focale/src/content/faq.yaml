@@ -3,7 +3,7 @@
   order: 1
   home: true
   q: Ci sono costi nascosti?
-  a: No. Il prezzo è quello scritto. A parte c'è solo il dominio, {domainCostRange}, intestato a te. Con il piano Cura è compreso.
+  a: No. Il prezzo è quello scritto. A parte c'è solo il dominio, {domainCostRange}, intestato a te.
 - id: sito-mio
   order: 2
   home: true
@@ -28,11 +28,11 @@
   order: 6
   home: true
   q: Come si paga?
-  a: "Con bonifico: {depositPercent}% quando partiamo, il saldo dopo l'approvazione. Il piano Cura si paga ogni mese e si disdice quando vuoi."
+  a: "Con bonifico: {depositPercent}% quando partiamo, il saldo dopo l'approvazione."
 - id: modificarlo
   order: 7
   q: Posso modificarlo da solo?
-  a: Con il piano Cura le modifiche le facciamo noi entro {careResponseHours} ore lavorative. Se vuoi cambiare testi e foto in autonomia, il pacchetto Su misura include un pannello semplice per farlo.
+  a: "Se vuoi cambiare testi e foto in autonomia, il pacchetto Su misura include un pannello semplice per farlo. Per il resto scrivici: ti diciamo prima quanto costa, e decidi tu."
 - id: fuori-milano
   order: 8
   q: Lavorate anche fuori Milano?
@@ -65,7 +65,3 @@
   order: 15
   q: Posso passare da Essenziale a Professionale più avanti?
   a: "Sì: paghi solo la differenza, ai prezzi in vigore in quel momento."
-- id: cura-obbligatorio
-  order: 16
-  q: Il piano Cura è obbligatorio?
-  a: No. Se non lo prendi, il sito è tuo e lo gestisci come vuoi. Te lo consigliamo se non vuoi pensare a rinnovi, modifiche e controlli.

@@ -75,19 +75,6 @@ export const plans: Plan[] = [
   },
 ];
 
-export const cura = {
-  name: "Cura",
-  forWhom: "Il sito sempre in ordine, senza pensarci.",
-  price: site.prices.cura,
-  features: [
-    "Dominio e hosting gestiti da noi",
-    `Fino a 2 modifiche al mese entro ${site.careResponseHours} ore lavorative`,
-    "Un controllo ogni mese che tutto funzioni",
-    "Copie di sicurezza",
-    "Disdici quando vuoi, con un messaggio",
-  ],
-};
-
 export const planLabel: Record<string, string> = {
   essenziale: "Essenziale",
   professionale: "Professionale",
