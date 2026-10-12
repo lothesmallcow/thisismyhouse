@@ -64,6 +64,29 @@ const showSticky = sticky && !minimal;
     {!minimal && <Footer />}
     {minimal && <slot name="footer" />}
     {showSticky && <StickyBar />}
+    <script is:inline>
+      /* Every page opens at the top. A link to the page you are on scrolls back up instead of reloading
+         (a reload would keep you at the bottom). Inside a frame (the preview link) the frame is brought to
+         the top too. Back and forward keep the browser's own scroll memory. */
+      (function () {
+        var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+        if (window.top !== window && !location.hash && !(nav && nav.type === "back_forward")) {
+          try {
+            document.documentElement.scrollIntoView({ block: "start" });
+          } catch (e) {}
+        }
+        document.addEventListener("click", function (e) {
+          var a = e.target && e.target.closest && e.target.closest("a[href]");
+          if (!a || a.target === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          var url = new URL(a.href, location.href);
+          var here = function (p) { return p.replace(/(index\.html)?$/, "").replace(/\/$/, ""); };
+          if (url.origin !== location.origin || here(url.pathname) !== here(location.pathname) || url.hash) return;
+          e.preventDefault();
+          var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+          window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+        });
+      })();
+    </script>
     <script>
       import { initFocusMotif } from "../scripts/focus";
       import { later } from "../scripts/later";
