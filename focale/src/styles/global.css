@@ -1,64 +1,65 @@
 @import "tailwindcss";
 
 /*
-  Focus Design: design system.
-  Layout concept: an editorial 12-column page on paper white, huge light wide type,
-  one red focus point. Content sits left; a narrow label column names each section.
+  Focus Design: design system "Insegna".
+  Bright white paper and deep navy ink for trust; one hot orange reserved for actions only, so every
+  button stands out from everything around it (isolation effect). Bold, warm grotesque type.
 */
 
-/* ---------- Font: Archivo variable (wght 100-900, wdth 62-125), self-hosted ---------- */
+/* ---------- Font: Bricolage Grotesque variable (wght 200-800, opsz 12-96), self-hosted ---------- */
 @font-face {
-  font-family: "Archivo";
+  font-family: "Bricolage";
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  font-stretch: 62% 125%;
-  src: url("/fonts/archivo-latin.woff2") format("woff2-variations"), url("/fonts/archivo-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2018-201E, U+2022, U+2026, U+20AC, U+2122;
+  font-weight: 200 800;
+  src: url("/fonts/bricolage-latin.woff2") format("woff2-variations"), url("/fonts/bricolage-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2013-2014, U+2018-201E, U+2022, U+2026, U+20AC, U+2122;
 }
 @font-face {
-  font-family: "Archivo";
+  font-family: "Bricolage";
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  font-stretch: 62% 125%;
-  src: url("/fonts/archivo-latin-ext.woff2") format("woff2-variations"), url("/fonts/archivo-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  font-weight: 200 800;
+  src: url("/fonts/bricolage-latin-ext.woff2") format("woff2-variations"), url("/fonts/bricolage-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-017F, U+0218-021B, U+1E00-1EFF;
 }
 @font-face {
-  font-family: "Archivo Fallback";
+  font-family: "Bricolage Fallback";
   src: local("Arial"), local("Helvetica Neue"), local("Liberation Sans");
-  size-adjust: 104%;
-  ascent-override: 86%;
-  descent-override: 21%;
+  size-adjust: 102%;
+  ascent-override: 92%;
+  descent-override: 25%;
   line-gap-override: 0%;
 }
 
 @theme {
-  --color-carta: #fff8f2;
-  --color-inchiostro: #24130c;
-  --color-grafite: #6b5248;
-  --color-nebbia: #fcebdc;
-  --color-filo: #ecd7c7;
-  --color-mandarino: #ff5b22;
-  --font-sans: "Archivo", "Archivo Fallback", sans-serif;
+  --color-carta: #ffffff;
+  --color-inchiostro: #0b1b3f;
+  --color-grafite: #4a5572;
+  --color-nebbia: #f1f4fa;
+  --color-filo: #dde3ef;
+  --color-mandarino: #13307a;
+  --font-sans: "Bricolage", "Bricolage Fallback", sans-serif;
 }
 
 :root {
-
-  /* Warm studio palette: milk paper, cocoa ink, one vivid tangerine, honey for glow. */
-  --carta: #fff8f2; /* latte */
-  --inchiostro: #24130c; /* cacao */
-  --grafite: #6b5248; /* warm secondary text, 6.6:1 on latte */
-  --nebbia: #fcebdc; /* peach mist surfaces */
-  --filo: #ecd7c7; /* hairlines */
-  --mandarino: #ff5b22; /* brand: backgrounds and large display only, cacao text on it */
-  --miele: #ffb23f;
-  --pesca: #ffd3bc;
-  --punto: #ff5b22;
+  /* Insegna palette. Navy carries trust (surfaces, accents, links); orange is only ever a button. */
+  --carta: #ffffff; /* paper */
+  --inchiostro: #0b1b3f; /* navy ink, 16.9:1 on paper */
+  --notte: #0b1b3f; /* fixed ink: text on orange buttons, never overridden by sections */
+  --grafite: #4a5572; /* secondary text, 7.4:1 on paper */
+  --nebbia: #f1f4fa; /* alternate sections */
+  --filo: #dde3ef; /* hairlines */
+  --mandarino: #13307a; /* brand navy (name kept from the old palette): surfaces and accents, white text on it */
+  --blu: #13307a;
+  --fuoco: #ff6a1f; /* actions only: buttons, navy text on it 5.9:1 */
+  --fuoco-hover: #ff8547;
+  --miele: #ffd23f; /* small highlights only */
+  --pesca: #e3e9f7; /* soft navy tint */
+  --punto: #13307a;
   --punto-testo: #b3261a; /* error text only */
   --rosso-marker: #d7392b; /* renovation demo annotations only */
-  --on-dark-muted: #d9bfaf;
+  --on-dark-muted: #c7d0e8;
 
   /* legacy aliases used by demo and form components */
   --calce: var(--carta);
@@ -71,14 +72,14 @@
   --ottone: var(--punto);
   --marker: var(--rosso-marker);
 
-  --font: "Archivo", "Archivo Fallback", sans-serif;
+  --font: "Bricolage", "Bricolage Fallback", sans-serif;
   --font-head: var(--font);
   --font-body: var(--font);
 
   /* Type scale: light and wide for display, regular width for reading. */
-  --fs-mega: clamp(3rem, 0.9rem + 8.6vw, 10.5rem);
-  --fs-display: clamp(2.5rem, 1.2rem + 5.2vw, 7rem);
-  --fs-h2: clamp(2rem, 1.2rem + 3.1vw, 4.25rem);
+  --fs-mega: clamp(2.8rem, 0.9rem + 7.6vw, 9rem);
+  --fs-display: clamp(2.4rem, 1.2rem + 4.4vw, 5.75rem);
+  --fs-h2: clamp(1.9rem, 1.1rem + 2.7vw, 3.75rem);
   --fs-h3: clamp(1.3rem, 1.1rem + 0.8vw, 1.85rem);
   --fs-lead: clamp(1.2rem, 1.02rem + 0.75vw, 1.65rem);
   --fs-body: clamp(1.0625rem, 1rem + 0.22vw, 1.1875rem);
@@ -128,38 +129,12 @@ body {
   padding-bottom: var(--sticky-h);
   overflow-x: clip;
 }
-/* Colour play (scripts/inner.ts): while a [data-tone] section fills the middle of the screen the
-   whole page floods with its colour. Muted text darkens so it keeps AA on every tone. */
-body {
-  transition: background-color 0.8s ease;
-}
-.tone-live main [data-tone] {
-  background: transparent;
-}
-body[data-tone="sole"] {
-  background: var(--mandarino);
-  --grafite: #3a1a0b;
-  --filo: rgba(36, 19, 12, 0.22);
-}
-body[data-tone="pesca"] {
-  background: var(--pesca);
-  --grafite: #4a2a1c;
-  --filo: rgba(36, 19, 12, 0.18);
-}
-body[data-tone="sole"] main .pz__plan--rec {
-  box-shadow: inset 0 0 0 2px var(--inchiostro);
-}
-body[data-tone="sole"] main .btn--primary {
-  background: var(--inchiostro);
-  color: var(--carta);
-  border-color: var(--inchiostro);
-}
 body.menu-open {
   overflow: hidden;
 }
 ::selection {
-  background: var(--mandarino);
-  color: var(--inchiostro);
+  background: var(--fuoco);
+  color: var(--notte);
 }
 h1,
 h2,
@@ -171,26 +146,24 @@ h4,
   margin: 0;
   text-wrap: balance;
 }
+/* Bold, warm grotesque: confident headlines that read at a glance. */
 h1,
 .display {
   font-size: var(--fs-display);
-  font-weight: 300;
-  font-stretch: 125%;
-  line-height: 0.98;
-  letter-spacing: -0.04em;
+  font-weight: 760;
+  line-height: 0.96;
+  letter-spacing: -0.02em;
 }
 h2 {
   font-size: var(--fs-h2);
-  font-weight: 300;
-  font-stretch: 125%;
-  line-height: 1.02;
-  letter-spacing: -0.035em;
+  font-weight: 720;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 h3 {
   font-size: var(--fs-h3);
-  font-weight: 500;
-  font-stretch: 112%;
-  line-height: 1.18;
+  font-weight: 650;
+  line-height: 1.15;
   letter-spacing: -0.015em;
 }
 p {
@@ -212,7 +185,7 @@ a {
   color: inherit;
 }
 strong {
-  font-weight: 600;
+  font-weight: 650;
 }
 .prose a,
 a.link {
@@ -272,41 +245,26 @@ a.link:hover {
 .section {
   padding-block: var(--space-section);
 }
-.section:not(.section--dark):not(.section--pietra) + .section:not(.section--dark):not(.section--pietra) {
+.section:not(.section--dark):not(.section--pietra):not(.section--sole) + .section:not(.section--dark):not(.section--pietra):not(.section--sole) {
   padding-top: 0;
 }
 .section--pietra {
   background: var(--nebbia);
 }
-.section--dark {
-  background: var(--inchiostro);
-  color: var(--carta);
-}
-.section--sole {
-  background: var(--mandarino);
-  color: var(--inchiostro);
-}
-.section--sole .muted,
-.section--sole .sec__label {
-  color: #3a1a0b;
-}
-.section--sole .btn--secondary {
-  color: var(--inchiostro);
-  border-color: var(--inchiostro);
-}
-.section--sole .btn--secondary:hover {
-  background: var(--inchiostro);
-  color: var(--carta);
-}
-.section--sole .btn--primary {
-  background: var(--inchiostro);
-  color: var(--carta);
-  border-color: var(--inchiostro);
-}
-.section--sole .btn--primary:hover {
-  background: var(--carta);
-  color: var(--inchiostro);
-  border-color: var(--carta);
+/* Navy bands (the old orange "sole" sections and dark sections): the colour tokens flip inside, so
+   every component placed in them reads white on navy without its own rules. Buttons stay orange. */
+.section--sole,
+.section--dark,
+.on-navy {
+  background: var(--blu);
+  color: #fff;
+  --carta: var(--blu);
+  --inchiostro: #ffffff;
+  --grafite: var(--on-dark-muted);
+  --filo: rgba(255, 255, 255, 0.22);
+  --nebbia: rgba(255, 255, 255, 0.08);
+  --mandarino: #8ea4ff;
+  --pesca: rgba(255, 255, 255, 0.12);
 }
 .section--dark .muted,
 .on-dark .muted {
@@ -372,8 +330,7 @@ a.link:hover {
   padding: 0 1.75rem;
   border-radius: var(--radius-ui);
   font-family: var(--font);
-  font-weight: 500;
-  font-stretch: 108%;
+  font-weight: 600;
   font-size: 1rem;
   letter-spacing: -0.005em;
   line-height: 1.1;
@@ -396,42 +353,34 @@ a.link:hover {
   height: 1.2rem;
   flex: none;
 }
+/* The one hot colour on the page: only buttons that move the visitor forward. */
 .btn--primary {
-  background: var(--mandarino);
-  color: var(--inchiostro);
-  border-color: var(--mandarino);
-  font-weight: 600;
+  background: var(--fuoco);
+  color: var(--notte);
+  border-color: var(--fuoco);
+  font-weight: 680;
+  box-shadow: 0 10px 24px -12px rgba(255, 106, 31, 0.75);
 }
 .btn--primary:hover {
-  background: var(--inchiostro);
-  color: var(--carta);
-  border-color: var(--inchiostro);
+  background: var(--fuoco-hover);
+  border-color: var(--fuoco-hover);
+  color: var(--notte);
+}
+.btn--big {
+  --h: 60px;
+  padding-inline: 2rem;
+  font-size: 1.0625rem;
 }
 .btn--secondary {
   background: transparent;
   color: var(--inchiostro);
-  border-color: var(--inchiostro);
+  border-color: currentColor;
+  font-weight: 600;
 }
 .btn--secondary:hover {
   background: var(--inchiostro);
   color: var(--carta);
-}
-.on-dark .btn--primary:hover,
-.section--dark .btn--primary:hover {
-  background: var(--carta);
-  color: var(--inchiostro);
-  border-color: var(--carta);
-}
-.on-dark .btn--secondary,
-.section--dark .btn--secondary {
-  color: var(--carta);
-  border-color: rgba(255, 248, 242, 0.5);
-}
-.on-dark .btn--secondary:hover,
-.section--dark .btn--secondary:hover {
-  background: var(--carta);
-  color: var(--inchiostro);
-  border-color: var(--carta);
+  border-color: var(--inchiostro);
 }
 .btn[disabled],
 .btn[aria-disabled="true"] {
@@ -505,7 +454,7 @@ a.link:hover {
 .field textarea:focus-visible {
   outline: none;
   border-color: var(--inchiostro);
-  box-shadow: 0 0 0 3px rgba(255, 91, 34, 0.25);
+  box-shadow: 0 0 0 3px rgba(19, 48, 122, 0.25);
 }
 .field [aria-invalid="true"] {
   border-color: var(--punto-testo);
@@ -658,11 +607,7 @@ html.lenis body {
 }
 
 /* ---------- Home (pages/index.astro, scripts/scenes.ts) ---------- */
-/* A website over one living background (LiveBackground.astro): only the opening fills the screen
-   and nothing pins; every other section has its natural height and its own layout. */
-body.home {
-  background: transparent;
-}
+/* Only the opening fills the screen and nothing pins; every other section has its natural height. */
 .home .scenes > section:not(.scene) {
   box-sizing: border-box;
   /* By width, not height: tall phones made this 100 px+ on each side (Lorenzo: dead space). */
@@ -713,7 +658,7 @@ body.home {
   top: 0;
   z-index: 0;
   pointer-events: none;
-  filter: drop-shadow(0 28px 34px rgba(60, 25, 8, 0.28));
+  filter: drop-shadow(0 28px 34px rgba(11, 27, 63, 0.28));
 }
 @media (pointer: coarse) {
   /* A filter on a canvas that redraws every frame is expensive on phones: the contact shadow suffices. */

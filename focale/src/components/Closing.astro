@@ -15,7 +15,7 @@ const {
   ctaHref = "/anteprima-gratuita",
 } = Astro.props;
 ---
-<section class="closing section--sole" data-tone="sole">
+<section class="closing section--sole">
   <div class="wrap closing__in">
     <h2 class="closing__title" data-focus>{title}</h2>
     <div class="closing__row">
@@ -31,15 +31,14 @@ const {
   </div>
 </section>
 <style>
-  /* The last word before the footer: orange like the footer, the title as wide as the page.
-     With motion the whole page floods orange as it arrives (data-tone, scripts/inner.ts). */
+  /* The last word before the footer: a navy band, the title as wide as the page. */
   .closing {
     padding-block: var(--space-section) clamp(3rem, 2rem + 3vw, 5rem);
   }
   .closing__title {
-    font-size: clamp(2.75rem, 0.6rem + 8.4vw, 10rem);
+    font-size: clamp(2.6rem, 0.8rem + 6vw, 7rem);
     line-height: 0.95;
-    letter-spacing: -0.055em;
+    letter-spacing: -0.02em;
     max-width: 15ch;
   }
   .closing__row {

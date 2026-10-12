@@ -177,10 +177,17 @@ const service = {
     flex-direction: column;
     gap: 1.1rem;
   }
+  /* The recommended package is the one navy card; its button is the only orange in the row. */
   .pz__plan--rec {
-    background: var(--mandarino);
-    border-color: var(--mandarino);
-    color: var(--inchiostro);
+    background: var(--blu);
+    border-color: var(--blu);
+    color: #fff;
+    --carta: var(--blu);
+    --inchiostro: #ffffff;
+    --grafite: var(--on-dark-muted);
+    --filo: rgba(255, 255, 255, 0.22);
+    --mandarino: #8ea4ff;
+    box-shadow: 0 30px 60px -30px rgba(11, 27, 63, 0.55);
   }
   .pz__top {
     display: flex;
@@ -205,7 +212,7 @@ const service = {
     color: var(--grafite);
   }
   .pz__plan--rec .pz__for {
-    color: #3a1a0b;
+    color: var(--on-dark-muted);
   }
   .pz__prices {
     margin: 1rem 0;
@@ -215,7 +222,7 @@ const service = {
     border-block: 1px solid var(--filo);
   }
   .pz__plan--rec .pz__prices {
-    border-color: rgba(36, 19, 12, 0.25);
+    border-color: rgba(11, 27, 63, 0.25);
   }
   .pz__price dt {
     font-size: var(--fs-micro);
@@ -229,10 +236,10 @@ const service = {
     font-variant-numeric: tabular-nums;
   }
   .pz__price--main dd {
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
     font-size: clamp(2.6rem, 1.8rem + 2.2vw, 3.75rem);
-    letter-spacing: -0.045em;
+    letter-spacing: -0.02em;
     line-height: 1;
   }
   .pz__from {
@@ -318,7 +325,8 @@ const service = {
     border-radius: 50%;
     display: grid;
     place-items: center;
-    background: var(--mandarino);
+    background: var(--blu);
+    color: #fff;
   }
   .pz-extra {
     margin-top: 0.75rem;

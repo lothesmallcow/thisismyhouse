@@ -21,12 +21,20 @@ const banners = [
 <section class="scene hero" id="inizio" aria-labelledby="hero-t" data-hero-anim>
   <div class="wrap hero__in">
     <div class="hero__text">
+      <p class="hero__for" data-hero-fade>Per imprese edili, serramentisti, B&amp;B, agriturismi e location per eventi</p>
       <h1 class="hero__title" id="hero-t" data-hero-h1>Siti che fanno squillare il telefono.</h1>
-      <p class="lead hero__lead" data-hero-fade>Rifacciamo i siti delle piccole imprese perché portino richieste vere.</p>
+      <p class="lead hero__lead" data-hero-fade>
+        Rifacciamo il tuo sito perché dal telefono si legga bene e porti richieste vere. Prezzo scritto, nessuna sorpresa.
+      </p>
       <div class="hero__cta" data-hero-fade>
-        <a href="/anteprima-gratuita" class="btn btn--primary" data-magnetic>Voglio l'anteprima gratuita</a>
-        <span class="small muted">Pronta in {site.previewHours} ore, senza impegno.</span>
+        <a href="/anteprima-gratuita" class="btn btn--primary btn--big" data-magnetic>Voglio l'anteprima gratuita</a>
+        <a href="#makeover" class="btn btn--secondary">Guarda il prima e dopo</a>
       </div>
+      <ul class="hero__proof" data-hero-fade>
+        <li>Anteprima gratis in {site.previewHours} ore</li>
+        <li>Saldo solo a sito approvato</li>
+        <li>Dominio e accessi intestati a te</li>
+      </ul>
     </div>
 
     <figure class="film" data-film data-tilt-area data-phone3d>
@@ -102,15 +110,54 @@ const banners = [
       column-gap: clamp(2rem, 4vw, 5rem);
     }
   }
+  /* Who it is for, before anything else: the visitor recognises their trade in the first second. */
+  .hero__for {
+    display: inline-block;
+    margin-bottom: clamp(1rem, 2.5vh, 1.5rem) !important;
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    background: var(--nebbia);
+    color: var(--blu);
+    font-size: var(--fs-small);
+    font-weight: 600;
+    line-height: 1.35;
+  }
   .hero__title {
-    font-size: clamp(2.8rem, 1rem + 5.6vw, 7.2rem);
-    line-height: 0.94;
-    max-width: 10ch;
+    font-size: clamp(2.7rem, 1rem + 5vw, 6.4rem);
+    line-height: 0.92;
+    max-width: 11ch;
   }
   .hero__lead {
-    margin-top: clamp(1.25rem, 3.5vh, 2.25rem);
-    max-width: 26ch;
+    margin-top: clamp(1.1rem, 3vh, 1.75rem);
+    max-width: 34ch;
     color: var(--grafite);
+  }
+  .hero__proof {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.25rem, 3vh, 2rem) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-size: var(--fs-small);
+    font-weight: 600;
+  }
+  .hero__proof li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  /* A small navy tick: a promise kept, not decoration. */
+  .hero__proof li::before {
+    content: "";
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: none;
+    border-radius: 50%;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.6 6.3 5 8.6 9.4 3.6' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+        center / 70% no-repeat,
+      var(--blu);
   }
   .hero__cta {
     display: flex;
@@ -129,17 +176,13 @@ const banners = [
     position: relative;
     isolation: isolate;
   }
-  /* The one warm light of the page, behind the phone. */
+  /* A quiet stage behind the phone: a soft navy-tinted panel, no glow. */
   .film::before {
     content: "";
     position: absolute;
-    left: 50%;
-    top: 46%;
-    width: 210%;
-    aspect-ratio: 1;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(255, 91, 34, 0.42), rgba(255, 178, 63, 0.2) 45%, rgba(255, 248, 242, 0) 72%);
+    inset: 6% -4% 14%;
+    border-radius: 32px;
+    background: var(--nebbia);
     z-index: -1;
     pointer-events: none;
   }
@@ -184,7 +227,7 @@ const banners = [
     bottom: calc(var(--w) * -0.07);
     height: calc(var(--w) * 0.1);
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(60, 25, 8, 0.32), rgba(60, 25, 8, 0));
+    background: radial-gradient(closest-side, rgba(11, 27, 63, 0.32), rgba(11, 27, 63, 0));
     z-index: -1;
   }
   .film__site {
@@ -377,8 +420,9 @@ const banners = [
     opacity: 0.25;
   }
   .film__btn[aria-pressed="true"] {
-    background: var(--mandarino);
-    border-color: var(--mandarino);
+    background: var(--blu);
+    border-color: var(--blu);
+    color: #fff;
   }
 </style>
 <script>

@@ -74,9 +74,15 @@ const open = foundersOpen();
     align-content: start;
   }
   .ps__plan--rec {
-    background: var(--mandarino);
-    border-color: var(--mandarino);
-    color: var(--inchiostro);
+    background: var(--blu);
+    border-color: var(--blu);
+    color: #fff;
+    --carta: var(--blu);
+    --inchiostro: #ffffff;
+    --grafite: var(--on-dark-muted);
+    --filo: rgba(255, 255, 255, 0.22);
+    --mandarino: #8ea4ff;
+    box-shadow: 0 30px 60px -30px rgba(11, 27, 63, 0.55);
   }
   .ps__name {
     display: flex;
@@ -97,7 +103,7 @@ const open = foundersOpen();
     min-height: 3em;
   }
   .ps__plan--rec .ps__for {
-    color: #3a1a0b;
+    color: var(--on-dark-muted);
   }
   .ps__prices {
     margin: 1.5rem 0 0;
@@ -118,11 +124,11 @@ const open = foundersOpen();
     white-space: nowrap;
   }
   .ps__prices dd.ps__main {
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
     font-size: clamp(2.4rem, 1.6rem + 2vw, 3.4rem);
     line-height: 1;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.02em;
   }
   .ps__from {
     font-size: 0.4em;

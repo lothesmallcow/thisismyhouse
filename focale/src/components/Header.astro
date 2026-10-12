@@ -84,20 +84,20 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
     position: fixed;
     inset: 0 0 auto 0;
     z-index: 50;
-    background: rgba(255, 248, 242, 0);
+    background: rgba(255, 255, 255, 0);
     transition:
       transform 0.45s var(--ease-out),
       background-color 0.3s ease,
       box-shadow 0.3s ease;
   }
   :global(.is-compact) .hdr {
-    background: rgba(255, 248, 242, 0.97);
+    background: rgba(255, 255, 255, 0.97);
     box-shadow: 0 1px 0 var(--filo);
   }
   /* Glass blur only with a mouse: on phones it re-blurs the moving background every frame (jank). */
   @media (hover: hover) and (pointer: fine) {
     :global(.is-compact) .hdr {
-      background: rgba(255, 248, 242, 0.94);
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: saturate(140%) blur(10px);
       -webkit-backdrop-filter: saturate(140%) blur(10px);
     }
@@ -212,8 +212,14 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
     position: fixed;
     inset: 0;
     z-index: 60;
-    background: var(--mandarino);
-    color: var(--inchiostro);
+    background: var(--blu);
+    color: #fff;
+    --carta: var(--blu);
+    --inchiostro: #ffffff;
+    --grafite: var(--on-dark-muted);
+    --filo: rgba(255, 255, 255, 0.22);
+    --nebbia: rgba(255, 255, 255, 0.08);
+    --mandarino: #8ea4ff;
     overflow-y: auto;
     padding-bottom: calc(2rem + env(safe-area-inset-bottom));
   }
@@ -234,16 +240,16 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
   .mm__nav a:not(.btn) {
     display: block;
     padding: 0.55rem 0;
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.02em;
     font-size: clamp(2.4rem, 1.5rem + 5vw, 3.5rem);
     line-height: 1.05;
     color: var(--inchiostro);
     text-decoration: none;
   }
   .mm__nav a[aria-current="page"] {
-    color: #3a1a0b;
+    color: var(--on-dark-muted);
   }
   .mm__cta {
     width: 100%;

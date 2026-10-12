@@ -14,7 +14,6 @@ const { title, lead, label, class: cls } = Astro.props;
 const hasVisual = Astro.slots.has("visual");
 ---
 <section class:list={["ph", cls, { "ph--visual": hasVisual }]} data-hero>
-  <div class="ph__glow" aria-hidden="true"></div>
   <div class="wrap ph__in">
     <div class="ph__text">
       {label && <p class="ph__label">{label}</p>}
@@ -43,33 +42,20 @@ const hasVisual = Astro.slots.has("visual");
     overflow: hidden;
     padding-block: clamp(2.5rem, 1rem + 5vw, 6rem) clamp(3rem, 2rem + 3.5vw, 5.5rem);
   }
-  /* The warm light of the home stage, rising from the top right corner. */
-  .ph__glow {
-    position: absolute;
-    right: -18vw;
-    top: -30vw;
-    width: max(620px, 62vw);
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: radial-gradient(
-      closest-side,
-      rgba(255, 91, 34, 0.55) 0%,
-      rgba(255, 140, 50, 0.38) 30%,
-      rgba(255, 178, 63, 0.2) 55%,
-      rgba(255, 248, 242, 0) 100%
-    );
-    pointer-events: none;
-  }
   .ph__in {
     position: relative;
     display: grid;
     gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
   }
   .ph__label {
+    display: inline-block;
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    background: var(--nebbia);
+    color: var(--blu);
     font-size: var(--fs-small);
-    font-weight: 500;
-    color: var(--grafite);
-    margin-bottom: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
+    font-weight: 600;
+    margin-bottom: clamp(1rem, 0.8rem + 1vw, 1.75rem);
   }
   .ph__title {
     max-width: 15ch;
@@ -92,7 +78,7 @@ const hasVisual = Astro.slots.has("visual");
       column-gap: clamp(2rem, 1rem + 3vw, 5rem);
     }
     .ph--visual .ph__title {
-      font-size: clamp(2.5rem, 1rem + 4.4vw, 5.75rem);
+      font-size: clamp(2.4rem, 1rem + 3.8vw, 5rem);
       max-width: 13ch;
     }
   }

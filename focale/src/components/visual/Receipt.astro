@@ -67,8 +67,8 @@ const rows: [string, number][] = [
     border-radius: 22px 22px 14px 14px;
     background: var(--mandarino);
     box-shadow:
-      inset 0 -10px 0 rgba(36, 19, 12, 0.14),
-      0 24px 40px -24px rgba(60, 25, 8, 0.55);
+      inset 0 -10px 0 rgba(11, 27, 63, 0.14),
+      0 24px 40px -24px rgba(11, 27, 63, 0.55);
     display: flex;
     align-items: center;
     gap: 0.6rem;
@@ -79,15 +79,15 @@ const rows: [string, number][] = [
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: #2a1d17;
-    box-shadow: 0 0 0 3px rgba(36, 19, 12, 0.12);
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
   }
   .rc__name {
     font-size: 0.95rem;
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
     letter-spacing: -0.02em;
-    color: var(--inchiostro);
+    color: #fff;
   }
   .rc__name b {
     font-weight: 500;
@@ -99,7 +99,7 @@ const rows: [string, number][] = [
     bottom: 9px;
     height: 6px;
     border-radius: 999px;
-    background: #2a1d17;
+    background: #050b1c;
   }
   .rc__clip {
     width: 86%;
@@ -112,11 +112,11 @@ const rows: [string, number][] = [
   }
   .rc__sheet {
     position: relative;
-    background: linear-gradient(#f3eee8, #fff 28px);
+    background: linear-gradient(#eef1f6, #fff 28px);
     color: var(--inchiostro);
     padding: 1.75rem 1.5rem 2.6rem;
     font-variant-numeric: tabular-nums;
-    filter: drop-shadow(0 22px 26px rgba(60, 25, 8, 0.28));
+    filter: drop-shadow(0 22px 26px rgba(11, 27, 63, 0.28));
     transform-origin: 50% 0;
     /* Torn bottom edge. */
     --tooth: 12px;
@@ -129,7 +129,7 @@ const rows: [string, number][] = [
     font-weight: 500;
     color: var(--grafite);
     padding-bottom: 0.9rem;
-    border-bottom: 1px dashed #d8c2b2;
+    border-bottom: 1px dashed #c9d2e3;
   }
   .rc__plan {
     margin-top: 0.9rem !important;
@@ -157,13 +157,13 @@ const rows: [string, number][] = [
   .rc__total {
     margin-top: 1.1rem !important;
     padding-top: 0.9rem;
-    border-top: 1px dashed #d8c2b2;
+    border-top: 1px dashed #c9d2e3;
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.02em;
     font-size: clamp(2.2rem, 1.6rem + 1.8vw, 3rem);
     line-height: 1;
   }
@@ -200,8 +200,8 @@ const rows: [string, number][] = [
     right: 0.9rem;
     top: 0.9rem;
     transform: rotate(-8deg);
-    border: 2px solid #b8400f;
-    color: #b8400f;
+    border: 2px solid var(--blu);
+    color: var(--blu);
     border-radius: 8px;
     padding: 0.3rem 0.6rem;
     font-size: var(--fs-micro);

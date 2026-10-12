@@ -90,7 +90,7 @@ const loading = eager ? "eager" : "lazy";
   }
   .dv__phone {
     --w: var(--dv-phone, clamp(200px, 30vh, 290px));
-    filter: drop-shadow(0 30px 40px rgba(60, 25, 8, 0.28));
+    filter: drop-shadow(0 30px 40px rgba(11, 27, 63, 0.28));
   }
   @media (pointer: coarse) {
     /* The framed site scrolls inside: a filter would repaint it on every frame. */
@@ -111,8 +111,8 @@ const loading = eager ? "eager" : "lazy";
     overflow: hidden;
     background: #fff;
     box-shadow:
-      0 50px 90px -45px rgba(60, 25, 8, 0.6),
-      0 0 0 1px rgba(36, 19, 12, 0.1);
+      0 50px 90px -45px rgba(11, 27, 63, 0.6),
+      0 0 0 1px rgba(11, 27, 63, 0.1);
   }
   .dv__chrome {
     display: flex;
@@ -205,10 +205,10 @@ const loading = eager ? "eager" : "lazy";
   .dv__wake-in {
     padding: 0.7rem 1.1rem;
     border-radius: 999px;
-    background: rgba(36, 19, 12, 0.82);
+    background: rgba(11, 27, 63, 0.82);
     color: #fff;
     font: 500 0.92rem/1.2 var(--font);
-    box-shadow: 0 10px 24px -10px rgba(36, 19, 12, 0.6);
+    box-shadow: 0 10px 24px -10px rgba(11, 27, 63, 0.6);
   }
   .dv__bar {
     display: flex;
@@ -221,8 +221,8 @@ const loading = eager ? "eager" : "lazy";
     display: inline-flex;
     padding: 4px;
     border-radius: 999px;
-    background: rgba(255, 248, 242, 0.92);
-    box-shadow: 0 0 0 1px rgba(36, 19, 12, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 0 0 1px rgba(11, 27, 63, 0.08);
   }
   .dv__switch[hidden],
   .dv__done[hidden] {
@@ -240,8 +240,8 @@ const loading = eager ? "eager" : "lazy";
     cursor: pointer;
   }
   .dv__switch button[aria-pressed="true"] {
-    background: var(--mandarino);
-    color: var(--inchiostro);
+    background: var(--blu);
+    color: #fff;
   }
   .dv__done {
     background: var(--inchiostro);

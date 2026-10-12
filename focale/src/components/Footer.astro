@@ -63,9 +63,17 @@ const year = new Date().getFullYear();
   </div>
 </footer>
 <style>
+  /* Deep navy footer: the tokens flip so everything inside reads white. */
   .ftr {
-    background: var(--mandarino);
-    color: var(--inchiostro);
+    background: var(--notte);
+    color: #fff;
+    --carta: var(--notte);
+    --inchiostro: #ffffff;
+    --grafite: var(--on-dark-muted);
+    --filo: rgba(255, 255, 255, 0.22);
+    --nebbia: rgba(255, 255, 255, 0.08);
+    --mandarino: #8ea4ff;
+
     padding: clamp(3rem, 2rem + 3vw, 5rem) 0 1.5rem;
   }
   .ftr a:not(.btn) {
@@ -82,16 +90,16 @@ const year = new Date().getFullYear();
     }
   }
   .ftr__claim {
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
     font-size: var(--fs-h3);
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     line-height: 1.15;
     max-width: 18ch;
   }
   .ftr__where {
     margin: 1rem 0 2rem !important;
-    color: #3a1a0b;
+    color: var(--on-dark-muted);
   }
   .ftr__cols {
     display: grid;
@@ -113,7 +121,7 @@ const year = new Date().getFullYear();
     font-weight: 500;
     font-stretch: 100%;
     letter-spacing: 0;
-    color: #3a1a0b;
+    color: var(--on-dark-muted);
     margin-bottom: 1rem;
   }
   .ftr ul {
@@ -145,9 +153,9 @@ const year = new Date().getFullYear();
   }
   .ftr__legal {
     padding-top: 1.5rem;
-    border-top: 1px solid rgba(36, 19, 12, 0.22);
+    border-top: 1px solid rgba(11, 27, 63, 0.22);
     font-size: var(--fs-micro);
-    color: #3a1a0b;
+    color: var(--on-dark-muted);
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;

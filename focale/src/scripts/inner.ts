@@ -8,8 +8,6 @@ gsap.registerPlugin(ScrollTrigger);
  * Each part looks for its own data attribute; with reduced motion nothing runs and every
  * picture stays in its final, readable state.
  *
- *   [data-tone="sole|pesca"]  while this section fills the middle of the screen the whole page takes
- *                             its colour (the section itself goes transparent), a slow flood
  *   [data-sector-focus]       Lo studio: the sector rolls inside the orange pill
  *   [data-lens]               Il nome: a photo is taken, then only the middle stays sharp
  *   [data-fan]                the mouse spreads the fanned phone screens (they deal in with CSS)
@@ -17,29 +15,10 @@ gsap.registerPlugin(ScrollTrigger);
  */
 export function initInner() {
   if (!window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
-  tones();
   sectorFocus();
   lens();
   fan();
   floats();
-}
-
-function tones() {
-  const secs = Array.from(document.querySelectorAll<HTMLElement>("[data-tone]"));
-  if (!secs.length) return;
-  document.documentElement.classList.add("tone-live");
-  const body = document.body;
-  secs.forEach((s) => {
-    ScrollTrigger.create({
-      trigger: s,
-      start: "top 60%",
-      end: "bottom 40%",
-      onToggle: (self) => {
-        if (self.isActive) body.dataset.tone = s.dataset.tone;
-        else if (body.dataset.tone === s.dataset.tone) delete body.dataset.tone;
-      },
-    });
-  });
 }
 
 function sectorFocus() {

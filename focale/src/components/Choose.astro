@@ -112,9 +112,9 @@ const rules = [...paths.map((p) => p.slug), "altro"]
   .choose__t {
     padding: 0;
     font-size: var(--fs-display);
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.02em;
     line-height: 1;
     margin-bottom: clamp(1rem, 3vh, 2rem);
   }
@@ -163,14 +163,14 @@ const rules = [...paths.map((p) => p.slug), "altro"]
     margin: 0.7rem;
     padding: 0.5rem 0.9rem;
     border-radius: var(--radius-ui);
-    background: rgba(255, 248, 242, 0.95);
+    background: rgba(255, 255, 255, 0.95);
     font-weight: 500;
     font-size: 0.95rem;
     line-height: 1.2;
   }
   .pick__opt--altro {
     background:
-      radial-gradient(110% 110% at 100% 100%, rgba(255, 91, 34, 0.8), rgba(255, 178, 63, 0.45) 45%, rgba(252, 235, 220, 0) 80%),
+      radial-gradient(110% 110% at 100% 100%, rgba(19, 48, 122, 0.8), rgba(255, 178, 63, 0.45) 45%, rgba(252, 235, 220, 0) 80%),
       var(--nebbia);
   }
   .pick__opt:has(input:checked) {
@@ -179,7 +179,8 @@ const rules = [...paths.map((p) => p.slug), "altro"]
       0 0 0 6px var(--mandarino);
   }
   .pick__opt:has(input:checked) .pick__name {
-    background: var(--mandarino);
+    background: var(--blu);
+    color: #fff;
   }
   .pick__opt:has(input:focus-visible) {
     outline: 2px solid var(--inchiostro);
@@ -202,7 +203,7 @@ const rules = [...paths.map((p) => p.slug), "altro"]
 
   .path {
     display: none;
-    background: rgba(255, 248, 242, 0.6);
+    background: rgba(255, 255, 255, 0.6);
     border-radius: clamp(20px, 1vw + 12px, 30px);
     overflow: hidden;
   }
@@ -230,7 +231,7 @@ const rules = [...paths.map((p) => p.slug), "altro"]
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(255, 248, 242, 0) 40%, rgba(255, 248, 242, 0.75));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.75));
     pointer-events: none;
   }
   .path__demo {
@@ -248,9 +249,9 @@ const rules = [...paths.map((p) => p.slug), "altro"]
   }
   .path__title {
     font-size: clamp(1.6rem, 1rem + 1.6vw, 2.5rem);
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
     line-height: 1.05;
     max-width: 16ch;
   }
@@ -267,7 +268,7 @@ const rules = [...paths.map((p) => p.slug), "altro"]
   }
   .path--altro {
     background:
-      radial-gradient(90% 140% at 100% 100%, rgba(255, 91, 34, 0.7), rgba(255, 178, 63, 0.35) 40%, rgba(252, 235, 220, 0) 72%),
+      radial-gradient(90% 140% at 100% 100%, rgba(19, 48, 122, 0.7), rgba(255, 178, 63, 0.35) 40%, rgba(252, 235, 220, 0) 72%),
       var(--nebbia);
   }
   .path--altro {

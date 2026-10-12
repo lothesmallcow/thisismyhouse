@@ -1,13 +1,12 @@
 ---
 /**
- * Home: a full-screen opening with the iPhone film, then a normal website flow over the living
- * background (natural heights, varied layouts); nothing pins (the makeover plays like a video). See docs/RICERCA-DESIGN.md.
+ * Home: the opening with the iPhone film, then the makeover on a navy band (the proof, high up), the
+ * sector chooser, method, prices and the close. Natural heights, nothing pins, no ambient motion. See docs/RICERCA-DESIGN.md.
  */
 import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
 import Choose from "../components/Choose.astro";
 import Makeover from "../components/Makeover.astro";
-import LiveBackground from "../components/LiveBackground.astro";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
 import { getCollection } from "astro:content";
@@ -20,7 +19,6 @@ const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b)
 const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
 const open = foundersOpen();
 
-const who = ["Imprese di ristrutturazione", "Serramentisti", "B&B", "Agriturismi", "Location per matrimoni", "Ville per eventi", "Piccole imprese che vivono di richieste"];
 const steps = [
   { t: "Ci racconti l'attività", d: "Dieci minuti, al telefono o su WhatsApp." },
   { t: "Vedi l'anteprima", d: `La homepage del tuo nuovo sito, entro ${site.previewHours} ore. Gratis.` },
@@ -34,22 +32,12 @@ const steps = [
   jsonLd={[professionalService(), faqPage(faqItems)]}
   bodyClass="home"
 >
-  <LiveBackground />
   <div class="scenes">
     <HeroScene />
 
-    <div class="ticker" data-ticker>
-      <ul class="ticker__row" aria-label="Per chi lavoriamo">
-        {who.map((w) => <li>{w}</li>)}
-      </ul>
-      <ul class="ticker__row" aria-hidden="true">
-        {who.map((w) => <li>{w}</li>)}
-      </ul>
-    </div>
+    <Makeover />
 
     <Choose />
-
-    <Makeover />
 
     <section class="section sc-how" id="metodo" aria-labelledby="metodo-t">
       <div class="wrap sc-how__in">
@@ -155,71 +143,6 @@ const steps = [
 </script>
 
 <style>
-  /* ---------- Per chi (ticker) ---------- */
-  .ticker {
-    display: flex;
-    overflow: hidden;
-    padding-block: clamp(1rem, 2.5vh, 1.6rem);
-    border-block: 1px solid rgba(36, 19, 12, 0.14);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  }
-  .ticker__row {
-    display: flex;
-    flex: none;
-    gap: 0;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    animation: ticker 48s linear infinite;
-  }
-  .ticker__row li {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    font-weight: 300;
-    font-stretch: 125%;
-    letter-spacing: -0.03em;
-    font-size: clamp(1.4rem, 1rem + 1.6vw, 2.6rem);
-  }
-  .ticker__row li::after {
-    content: "";
-    width: 0.32em;
-    height: 0.32em;
-    margin-inline: 0.9em;
-    border-radius: 50%;
-    background: var(--mandarino);
-  }
-  @keyframes ticker {
-    to {
-      transform: translateX(-100%);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .ticker {
-      flex-wrap: wrap;
-    }
-    .ticker__row {
-      flex: 1 1 100%;
-      flex-wrap: wrap;
-      justify-content: center;
-      row-gap: 0.4rem;
-      padding-inline: var(--gutter);
-      animation: none;
-    }
-    .ticker__row[aria-hidden] {
-      display: none;
-    }
-    .ticker {
-      -webkit-mask-image: none;
-      mask-image: none;
-    }
-    .ticker__row li {
-      white-space: normal;
-      font-size: clamp(1.2rem, 1rem + 1vw, 2rem);
-    }
-  }
-
   /* ---------- Metodo: the heading stays while the steps scroll past, a line fills as you read ---------- */
   .sc-how__in {
     display: grid;
@@ -246,10 +169,10 @@ const steps = [
     max-width: 12ch;
   }
   .sc-how__promise {
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
     font-size: clamp(1.15rem, 1rem + 0.7vw, 1.6rem);
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     line-height: 1.2;
     max-width: 26ch;
     color: var(--grafite);
@@ -272,7 +195,7 @@ const steps = [
     top: 0.5rem;
     bottom: 0.5rem;
     width: 2px;
-    background: rgba(36, 19, 12, 0.14);
+    background: rgba(11, 27, 63, 0.14);
   }
   .sc-how__steps::after {
     background: var(--mandarino);
@@ -294,17 +217,17 @@ const steps = [
     border-radius: 50%;
     background: var(--carta);
     box-shadow: 0 0 0 2px var(--mandarino);
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
     font-size: clamp(1.2rem, 1rem + 0.8vw, 1.8rem);
     line-height: 1;
-    color: #b8400f;
+    color: var(--blu);
   }
   .sc-how__steps h3 {
     font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2.2rem);
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.02em;
     line-height: 1.1;
     margin-bottom: 0.5rem;
   }
@@ -358,7 +281,7 @@ const steps = [
     padding-top: calc(1.25rem - 2px);
   }
   .sc-price__plan.is-rec .sc-price__num {
-    color: #b8400f;
+    color: var(--blu);
   }
   .sc-price__name {
     display: flex;
@@ -380,10 +303,10 @@ const steps = [
 
   .sc-price__num {
     margin-top: 0.75rem;
-    font-weight: 300;
+    font-weight: 700;
     font-stretch: 125%;
     font-size: clamp(2.6rem, 1.8rem + 2.4vw, 4.4rem);
-    letter-spacing: -0.045em;
+    letter-spacing: -0.02em;
     line-height: 1;
     white-space: nowrap;
   }
