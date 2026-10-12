@@ -1,7 +1,6 @@
 ---
 /**
- * The three demo sites as phone screens fanned out like cards (Lavori header, sector pages);
- * each one opens its project page.
+ * The three demo sites as phone screens fanned out like cards (Lavori header, sector pages).
  * `only` puts one demo in front. They deal in at first paint (CSS); the mouse spreads them (inner.ts).
  */
 import { Image } from "astro:assets";
@@ -17,22 +16,17 @@ if (only) {
   lavori = [rest[0], ...lavori.filter((l) => l.id === only), ...rest.slice(1)];
 }
 ---
-<ul class="pfan" data-fan aria-label="I tre siti dimostrativi">
+<div class="pfan" data-fan aria-hidden="true">
   {
     lavori.map((l, i) => (
-      <li class="pfan__card" style={`--i:${i - (lavori.length - 1) / 2};z-index:${i === 1 ? 2 : 1}`} data-fan-card>
-        <a href={`/lavori/${l.id}/`} aria-label={`${l.data.name}, guarda il progetto`} data-cursor="Guarda">
-          <Image src={l.data.shotPhone} alt="" widths={[260, 520]} sizes="(min-width: 960px) 220px, 34vw" loading="eager" />
-        </a>
-      </li>
+      <div class="pfan__card" style={`--i:${i - (lavori.length - 1) / 2};z-index:${i === 1 ? 2 : 1}`} data-fan-card>
+        <Image src={l.data.shotPhone} alt="" widths={[260, 520]} sizes="(min-width: 960px) 220px, 34vw" loading="eager" />
+      </div>
     ))
   }
-</ul>
+</div>
 <style>
   .pfan {
-    list-style: none;
-    margin: 0;
-    padding: 0;
     position: relative;
     width: min(100%, 30rem);
     aspect-ratio: 1.15;
@@ -63,25 +57,6 @@ if (only) {
     from {
       transform: translateY(70px);
       opacity: 0;
-    }
-  }
-  .pfan__card a {
-    display: block;
-    height: 100%;
-    border-radius: 21px;
-    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-  .pfan__card a:focus-visible {
-    outline: 3px solid var(--mandarino);
-    outline-offset: 4px;
-  }
-  .pfan__card:hover,
-  .pfan__card:focus-within {
-    z-index: 3 !important;
-  }
-  @media (hover: hover) {
-    .pfan__card a:hover {
-      transform: translateY(-14px) scale(1.03);
     }
   }
   .pfan__card :global(img) {
