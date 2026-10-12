@@ -248,7 +248,10 @@ a.link:hover {
 .section {
   padding-block: var(--space-section);
 }
-.section:not(.section--dark):not(.section--pietra):not(.section--sole) + .section:not(.section--dark):not(.section--pietra):not(.section--sole) {
+/* Two plain white sections in a row share one gap. Any section with its own background (a band)
+   keeps its full padding, and so does the section after it: a heading never touches a band's edge. */
+.section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price)
+  + .section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price) {
   padding-top: 0;
 }
 .section--pietra {
