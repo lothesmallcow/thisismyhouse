@@ -1,11 +1,13 @@
 import { gsap } from "gsap";
 import { spring } from "./spring";
+import { bindSoundButton, scanSweep, buzz, whoosh, fixed, ring } from "./sound";
 
 
 /**
- * The makeover film. It plays by itself like a video (no pinning, the scroll stays free) the first
- * time the phone is well in view, pauses when it leaves, and has its own controls: play/pause,
- * replay at the end, and a progress bar you can click to jump.
+ * The makeover film, played like the opening one: it starts by itself when the phone is well in
+ * view (no pinning, the scroll stays free), pauses when it leaves and goes on when it comes back.
+ * Under the phone a line says what is happening, with a sound switch (off until pressed) and
+ * "Rivedi".
  * 1. the diagnosis: a band of light runs down the old site and boxes its five problems as it
  *    passes them, each with a numbered label beside the phone;
  * 2. the phone lifts and turns all the way round (back and cameras); facing away, the old site is
@@ -33,10 +35,18 @@ export function initMakeover() {
   const goods = qa("[data-mk-good]");
   const tags = qa("[data-mk-tag]");
   const steps = qa("[data-mk-step]");
+  const beats = qa("[data-mk-beat]");
   const callBtn = newSite.querySelector<HTMLElement>(".ah__btn--ghost");
 
   root.classList.add("mk-live");
-  const setStep = (i: number) => steps.forEach((s, j) => s.classList.toggle("is-on", j === i));
+  // The caption lines crossfade in CSS; the chapter list (computers) lights the current step.
+  let shown = -1;
+  const setStep = (i: number) => {
+    if (i === shown) return;
+    shown = i;
+    steps.forEach((s, j) => s.classList.toggle("is-on", j === i));
+    beats.forEach((b, j) => b.classList.toggle("is-on", j === i));
+  };
   setStep(0);
   // Hidden by opacity, not visibility: the new site is painted (and its images decoded) from the
   // start, so the swap mid-turn costs nothing.
@@ -78,20 +88,16 @@ export function initMakeover() {
       : Math.max(-60, s.x - gap - tags[i].offsetWidth);
   };
 
-  const playBtn = q<HTMLButtonElement>("[data-mk-play]");
-  const playLabel = q("[data-mk-play-label]");
-  const bar = q("[data-mk-bar]");
-  const barFill = q("[data-mk-fill]");
   const tl = gsap.timeline({
     paused: true,
     defaults: { ease: "power2.inOut" },
     onUpdate: () => {
       const p = tl.progress();
       setStep(p < 0.06 ? 0 : p < 0.34 ? 1 : p < 0.72 ? 2 : p < 0.88 ? 3 : 4);
-      barFill.style.transform = `scaleX(${p})`;
     },
-    onComplete: () => setState("ended"),
   });
+  // Sounds ride the timeline as callbacks (silent unless the visitor turned sound on).
+  const cue = (fn: () => void, at: number) => tl.call(fn, [], at);
 
   // 1. The diagnosis, in one pass.
   const S0 = 0.07;
@@ -100,12 +106,14 @@ export function initMakeover() {
   goods.forEach((g, i) => tl.set(g, place(() => newBox(i)), 0));
   tags.forEach((t, i) => tl.set(t, { left: () => tagLeft(i), top: () => tagTop(i, oldBox(i)) }, 0));
   tl.set(scan, { autoAlpha: 1, top: "-25%" }, S0);
+  cue(() => scanSweep(SD * 14), S0);
   tl.to(scan, { top: "105%", duration: SD, ease: "none" }, S0);
   tl.set(scan, { autoAlpha: 0 }, S0 + SD);
   marks.forEach((m, i) => {
     // Each box appears as the light reaches it.
     const b = oldBox(i);
     const at = S0 + SD * Math.min(1, (b.y + b.h * 0.6) / screen.offsetHeight + 0.12);
+    cue(buzz, at);
     tl.fromTo(m, { autoAlpha: 0, scale: 1.18 }, { autoAlpha: 1, scale: 1, duration: 0.025, ease: spring(0.3) }, at);
     tl.fromTo(tags[i], { autoAlpha: 0, x: i % 2 ? -12 : 12 }, { autoAlpha: 1, x: 0, duration: 0.025, ease: spring(0.3) }, at + 0.006);
   });
@@ -117,6 +125,7 @@ export function initMakeover() {
   tl.to(tags, { opacity: 0.35, duration: 0.03 }, 0.37);
   tl.to(obj, { y: -20, scale: 1.04, rotationX: 8, duration: 0.05, ease: "power2.out" }, 0.37);
   tl.to(obj, { rotationY: 360, duration: 0.3, ease: "power2.inOut" }, 0.4);
+  cue(() => whoosh(0.3 * 14 * 0.8), 0.42);
   tl.set(oldWrap, { autoAlpha: 0 }, 0.55);
   tl.set(newSite, { opacity: 1 }, 0.55);
   tl.to(obj, { y: 0, scale: 1, rotationX: 0, duration: 0.08, ease: spring(0.25) }, 0.68);
@@ -133,6 +142,7 @@ export function initMakeover() {
     tl.to(t.querySelector(".mk__dot"), { backgroundColor: "#1f8a4c", duration: 0.012 }, at + 0.012);
     tl.to(t.querySelector(".mk__dot-bad"), { opacity: 0, duration: 0.01 }, at + 0.012);
     tl.to(t.querySelector(".mk__dot-good"), { opacity: 1, duration: 0.01 }, at + 0.016);
+    cue(() => fixed(i), at + 0.014);
     tl.fromTo(goods[i], { autoAlpha: 0, scale: 1.15 }, { autoAlpha: 1, scale: 1, duration: 0.025, ease: spring(0.3) }, at + 0.014);
   });
 
@@ -142,6 +152,7 @@ export function initMakeover() {
     tl.set(fa, { left: () => screen.offsetLeft + pos().x + callBtn.offsetWidth / 2, top: () => screen.offsetTop + pos().y + callBtn.offsetHeight / 2, x: 0, y: 0, scale: 1.3 }, 0.88);
     tl.to(fa, { opacity: 0.95, scale: 0.9, duration: 0.02 }, 0.89);
     tl.to(callBtn, { scale: 0.93, duration: 0.015 }, 0.9);
+    cue(ring, 0.905);
     tl.to(callBtn, { scale: 1, duration: 0.04, ease: spring(0.35) }, 0.915);
     tl.to(fa, { opacity: 0, scale: 1.5, duration: 0.03 }, 0.93);
   }
@@ -149,44 +160,20 @@ export function initMakeover() {
   // The timeline is laid out on 0..1; this many seconds of film.
   tl.timeScale(1 / 14);
 
-  // Controls.
-  type State = "playing" | "paused" | "ended";
-  const labels: Record<State, string> = { playing: "Pausa", paused: "Riproduci", ended: "Guarda di nuovo" };
-  function setState(st: State) {
-    root.dataset.mkState = st;
-    playLabel.textContent = labels[st];
-    playBtn.setAttribute("aria-label", `${labels[st]} il prima e dopo`);
-  }
-  const play = () => {
-    if (tl.progress() >= 1) tl.restart();
-    else tl.play();
-    setState("playing");
-  };
-  const pause = () => {
-    tl.pause();
-    setState("paused");
-  };
-  playBtn.hidden = false;
-  bar.hidden = false;
-  setState("paused");
-  let chose = false;
-  playBtn.addEventListener("click", () => {
-    chose = true;
-    if (root.dataset.mkState === "playing") pause();
-    else play();
-  });
-  bar.addEventListener("click", (e) => {
-    chose = true;
-    const r = bar.getBoundingClientRect();
-    tl.progress(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
-    if (root.dataset.mkState === "ended" && tl.progress() < 1) setState("paused");
-  });
-  // Starts by itself the first time the phone is well in view; pauses when it leaves (unless the
-  // visitor already took control: then it waits for them).
+  // Controls: sound and replay. Plays when in view, pauses when it leaves, goes on when it comes
+  // back; once finished, it plays again from the start the next time it comes into view.
+  const ctl = q("[data-mk-ctl]");
+  const replay = q<HTMLButtonElement>("[data-mk-replay]");
+  ctl.hidden = false;
+  const restart = () => tl.restart();
+  replay.addEventListener("click", restart);
+  bindSoundButton(q<HTMLButtonElement>("[data-mk-sound]"), restart);
   new IntersectionObserver(
     ([e]) => {
-      if (e.isIntersecting && !chose && root.dataset.mkState === "paused") play();
-      else if (!e.isIntersecting && root.dataset.mkState === "playing") pause();
+      if (e.isIntersecting) {
+        if (tl.progress() >= 1) tl.restart();
+        else tl.play();
+      } else tl.pause();
     },
     { threshold: 0.6 },
   ).observe(stage);
@@ -197,7 +184,7 @@ export function initMakeover() {
     rt = window.setTimeout(() => {
       const p = tl.progress();
       tl.invalidate();
-      tl.progress(p);
+      tl.progress(p, true);
     }, 200);
   });
 }

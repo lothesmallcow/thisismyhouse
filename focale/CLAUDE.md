@@ -47,9 +47,16 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   The 3D canvas is sized to the phone only and moved with transform (no layout shift).
 - Opening film (scripts/hero.ts): tap on "Chiama ora" rings the Dynamic Island, iOS banners drop in.
   Sound (scripts/sound.ts) only after the visitor presses the speaker button.
-- Makeover (Makeover.astro, scripts/makeover.ts): a video, not scroll-driven (Lorenzo: the visitor must keep
-  the choice). It plays by itself when the phone is in view, pauses when it leaves, has play/pause/replay and a
-  clickable progress bar; no pin. A scan runs down the old non-responsive
+- Makeover (Makeover.astro, scripts/makeover.ts): a film like the opening one, not scroll-driven. It plays by
+  itself when the phone is in view, pauses when it leaves, goes on when it comes back (restarts if finished).
+  Under the phone, like the hero: a caption (all five lines stacked in one cell, so nothing moves), a sound
+  switch and "Rivedi"; no play/pause, no progress bar (Lorenzo). On computers the step list stays as the
+  film's chapters (current one lit); on phones the caption alone tells it and the button comes after the
+  film. Sound cues (scripts/sound.ts: scan glide, knock per problem, whoosh on the turn, rising note per
+  fix, ringtone on the tap) are timeline callbacks; one page-wide switch (bindSoundButton) keeps every
+  speaker button in sync. Keep GSAP lag smoothing on (smooth.ts): with it off a hitch or a tab switch
+  sent the films straight to their end.
+  A scan runs down the old non-responsive
   site and boxes its five problems in one pass (numbered red boxes on the screen, labels beside the phone on
   wide screens), the phone lifts and turns 360 degrees (back and cameras visible), the site is swapped while
   it faces away (the new site is painted under the old one by opacity, so nothing decodes mid-turn), then each
@@ -77,7 +84,8 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   100lvh and pauses while scrolling on touch, the 3D phone draws at 1x while moving. Animate transform, never
   left/top (layout shift).
 - Inner pages (PageHead.astro): text on the left, the page's own picture on the right (slot "visual",
-  components/visual/*): thermal-printer receipt on Prezzi, WhatsApp chat on Come funziona, "Siti per [sector] che lavorano bene"
+  components/visual/*): thermal-printer receipt on Prezzi, WhatsApp chat on Come funziona (seen from the customer's phone: it plays
+  when in view, "sta scrivendo…" with typing dots before each Focus reply, a soft pop if sound is on, "Rivedi"), "Siti per [sector] che lavorano bene"
   rolling pill and a camera shot (all sharp, flash, only the middle stays sharp) on Lo studio, contact card on
   Contatti, phone fan on Lavori and sector pages, a huge "0 €" on La garanzia (no circles, no emoji-prone glyphs like ✳: iPhone draws them as emoji).
   Entrances are CSS (play at first paint, no opacity on text: axe measures mid-animation); hover/scroll parts

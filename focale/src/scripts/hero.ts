@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { Flip } from "gsap/Flip";
-import { enableSound, disableSound, soundOn, ring, chime } from "./sound";
+import { bindSoundButton, ring, chime } from "./sound";
 import { spring } from "./spring";
 
 gsap.registerPlugin(SplitText, Flip);
@@ -147,17 +147,5 @@ function initFilm(root: HTMLElement, film: HTMLElement) {
   ).observe(root);
 
   replay.addEventListener("click", play);
-  soundBtn.addEventListener("click", async () => {
-    if (soundOn()) {
-      disableSound();
-      soundBtn.setAttribute("aria-pressed", "false");
-      soundBtn.setAttribute("aria-label", "Attiva il suono");
-      return;
-    }
-    if (await enableSound()) {
-      soundBtn.setAttribute("aria-pressed", "true");
-      soundBtn.setAttribute("aria-label", "Disattiva il suono");
-      play();
-    }
-  });
+  bindSoundButton(soundBtn, play);
 }

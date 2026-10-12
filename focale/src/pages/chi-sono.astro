@@ -122,6 +122,26 @@ const cols = [
     border-radius: 20px;
     border: 1px solid var(--filo);
   }
+  /* On phones the icon sits beside the title: six cards, half the height. */
+  @media (max-width: 699px) {
+    .st-cols li {
+      grid-template-columns: auto 1fr;
+      column-gap: 0.85rem;
+      align-items: center;
+      padding: 1.1rem 1.25rem;
+    }
+    .st-cols li p {
+      grid-column: 1 / -1;
+    }
+    .st-cols .hs-get__icon {
+      margin: 0;
+      grid-row: auto;
+    }
+    .st-cols h3 {
+      margin: 0;
+      align-self: center;
+    }
+  }
   .st-cols p {
     color: var(--grafite);
   }

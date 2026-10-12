@@ -34,8 +34,10 @@ const fixes = [
   <div class="mk__pin" data-mk-pin>
     <div class="wrap mk__in">
       <div class="mk__text">
-        <p class="eyebrow mk__kicker">Progetto dimostrativo: un'impresa edile inventata</p>
-        <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
+        <div class="mk__head">
+          <p class="eyebrow mk__kicker">Progetto dimostrativo: un'impresa edile inventata</p>
+          <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
+        </div>
         <ol class="mk__steps" data-mk-steps>
           {
             steps.map((s, i) => (
@@ -46,13 +48,6 @@ const fixes = [
             ))
           }
         </ol>
-        <div class="mk__ctl">
-          <button type="button" class="mk__play" data-mk-play hidden>
-            <span class="mk__icon" aria-hidden="true"></span>
-            <span data-mk-play-label>Riproduci</span>
-          </button>
-          <span class="mk__bar" data-mk-bar aria-hidden="true" hidden><span data-mk-fill></span></span>
-        </div>
         <div class="mk__ask">
           <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
           <p class="mk__micro">Gratis e senza impegno. Il tuo sito, rifatto così, in {site.previewHours} ore.</p>
@@ -93,6 +88,26 @@ const fixes = [
         </div>
         </div>
         </div>
+        <figcaption class="mk__cap">
+          <span class="mk__beat" aria-live="off">
+            {
+              steps.map((s, i) => (
+                <span class="mk__b" data-mk-beat={i}>
+                  <b>{s.t}</b>
+                  <span>{s.d}</span>
+                </span>
+              ))
+            }
+          </span>
+          <span class="mk__ctl" data-mk-ctl hidden>
+            <button type="button" class="mk__btn" data-mk-sound aria-pressed="false" aria-label="Attiva il suono">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" /><path class="mk__wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+            </button>
+            <button type="button" class="mk__btn" data-mk-replay aria-label="Rivedi il prima e dopo">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><path d="M6 3.5v4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+          </span>
+        </figcaption>
         <ul class="mk__tags" aria-hidden="true" data-mk-tags>
           {
             fixes.map((f, i) => (
@@ -121,88 +136,82 @@ const fixes = [
   .mk__pin {
     padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
   }
-  /* Video controls: play/pause (replay at the end) and a progress bar you can click to jump. */
-  .mk__ctl {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-  .mk__play {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    min-height: 44px;
-    padding: 0 1.1rem 0 0.6rem;
-    border-radius: 999px;
-    border: 1px solid var(--inchiostro);
-    background: var(--carta);
-    color: var(--inchiostro);
-    font: inherit;
-    font-weight: 500;
-    font-size: var(--fs-small);
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .mk__play:hover {
-    background: #fff;
-    color: var(--notte);
-  }
-  .mk__play[hidden],
-  .mk__bar[hidden] {
+  /* Under the phone, like the opening film: what is happening now, sound and replay. */
+  .mk__cap {
     display: none;
   }
-  .mk__icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--fuoco);
-    position: relative;
+  :global(.mk-live) .mk__cap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: min(100%, 26rem);
+    margin-top: 1.4rem;
+    min-height: 44px;
+  }
+  /* All five lines share one cell: the caption is as tall as the longest, so nothing below moves. */
+  .mk__beat {
+    display: grid;
+    font-size: var(--fs-small);
+    color: var(--on-dark-muted);
+  }
+  .mk__b {
+    grid-area: 1 / 1;
+    display: grid;
+    gap: 0.1rem;
+    align-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition:
+      opacity 0.25s ease,
+      transform 0.25s ease,
+      visibility 0s 0.25s;
+  }
+  .mk__b:global(.is-on) {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition-delay: 0.15s, 0.15s, 0s;
+  }
+  .mk__b b {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+  }
+  .mk__ctl {
+    display: flex;
+    gap: 0.4rem;
     flex: none;
   }
-  /* Play triangle by default, two bars while playing, a circular arrow at the end. */
-  .mk__icon::before {
-    content: "";
-    position: absolute;
-    left: 11px;
-    top: 9px;
-    border-left: 10px solid var(--notte);
-    border-block: 6px solid transparent;
+  .mk__ctl[hidden] {
+    display: none;
   }
-  :global([data-mk-state="playing"]) .mk__icon::before {
-    left: 10px;
-    top: 9px;
-    width: 4px;
-    height: 12px;
-    border: 0;
-    border-inline: 3px solid var(--notte);
-    box-sizing: content-box;
-  }
-  :global([data-mk-state="ended"]) .mk__icon::before {
-    left: 8px;
-    top: 8px;
-    width: 10px;
-    height: 10px;
-    border: 2px solid var(--notte);
-    border-right-color: transparent;
+  .mk__btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 50%;
-  }
-  .mk__bar {
-    flex: 1;
-    max-width: 16rem;
-    height: 6px;
-    border-radius: 3px;
-    background: rgba(255, 255, 255, 0.2);
-    overflow: hidden;
+    background: transparent;
+    color: #fff;
     cursor: pointer;
-    padding-block: 0;
   }
-  .mk__bar span {
-    display: block;
-    height: 100%;
-    background: var(--mandarino);
-    transform: scaleX(0);
-    transform-origin: 0 50%;
+  .mk__btn:hover {
+    border-color: #fff;
+  }
+  .mk__btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .mk__btn[aria-pressed="false"] .mk__wave {
+    opacity: 0.3;
+  }
+  .mk__btn[aria-pressed="true"] {
+    background: #fff;
+    border-color: #fff;
+    color: var(--notte);
   }
   .mk__in {
     display: grid;
@@ -260,29 +269,52 @@ const fixes = [
   }
   /* The step being played */
   .mk__steps li.is-on {
-    border-left-color: var(--mandarino);
+    border-left-color: #fff;
   }
   .mk__steps li.is-on .mk__st {
-    color: var(--inchiostro);
+    color: #fff;
+    font-weight: 700;
   }
-  /* While the film runs, only the current description shows: less to read. */
-  :global(.mk-live) .mk__steps li:not(.is-on) .mk__sd {
+  /* While the film runs: on computers the list becomes the film's chapters (titles only, the one
+     playing lit) and the caption under the phone gives its detail; on phones the caption alone
+     tells the story. */
+  :global(.mk-live) .mk__steps li .mk__sd {
     display: none;
   }
-  @media (max-width: 899px) {
-    :global(.mk-live) .mk__steps li:not(.is-on) {
+  @media (min-width: 900px) {
+    :global(.mk-live) .mk__b b {
       display: none;
     }
+  }
+  @media (max-width: 899px) {
     :global(.mk-live) .mk__steps {
-      margin-block: 1rem 0;
-      min-height: 4.5em;
+      display: none;
     }
-
+  }
+  @media (max-width: 899px) {
     .mk__in {
-      gap: 1rem;
+      gap: 1.25rem;
     }
-    .mk__ctl {
-      margin-top: 0.75rem;
+    /* On phones: title, the film, then the button (you see the proof before being asked). */
+    :global(.mk-live) .mk__text {
+      display: contents;
+    }
+    :global(.mk-live) .mk__text > * {
+      position: relative;
+      z-index: 2;
+    }
+    :global(.mk-live) .mk__stage {
+      order: 1;
+    }
+    :global(.mk-live) .mk__ask {
+      order: 2;
+      margin-top: 0.25rem;
+    }
+    :global(.mk-live) .mk__more {
+      order: 3;
+    }
+    .mk__cap {
+      margin-top: 1rem;
     }
   }
 

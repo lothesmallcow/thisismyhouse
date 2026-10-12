@@ -298,12 +298,13 @@ const service = {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
+  /* One row each: tick beside the words, no empty box above them. */
   .pz-inc__grid li {
     display: grid;
-    gap: 1.5rem;
-    align-content: space-between;
-    min-height: 9.5rem;
-    padding: 1.4rem 1.5rem;
+    grid-template-columns: auto 1fr;
+    gap: 0.9rem;
+    align-items: center;
+    padding: 1.1rem 1.25rem;
     border-radius: 20px;
     background: var(--nebbia);
     font-size: var(--fs-lead);
@@ -320,6 +321,7 @@ const service = {
     }
   }
   .pz-inc__n {
+    flex: none;
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 50%;

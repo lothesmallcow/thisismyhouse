@@ -52,13 +52,14 @@ import { whatsappHref } from "../lib/util";
   }
 </style>
 <script>
-  /* Shows once the opening's button has scrolled away; hides again over the closing band or any form
-     (the visitor is already where the bar would take them) and while typing (keyboard open). */
+  /* Shows once the opening's button has scrolled away; hides again over the closing band, any form
+     and the makeover's caption (the visitor is already where the bar would take them, or the
+     makeover's own button sits right under it) and while typing (keyboard open). */
   const bar = document.querySelector<HTMLElement>("[data-sticky]");
   if (bar) {
     const root = document.documentElement;
     const hero = document.querySelector(".hero__cta, [data-hero]");
-    const quiet = Array.from(document.querySelectorAll<HTMLElement>(".closing, .hs-end, form"));
+    const quiet = Array.from(document.querySelectorAll<HTMLElement>(".closing, .hs-end, form, .mk__cap"));
     let pastHero = false;
     const inQuiet = new Set<Element>();
     let typing = false;

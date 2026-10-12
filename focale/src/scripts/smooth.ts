@@ -12,7 +12,9 @@ export function initSmoothScroll() {
   (window as unknown as { __lenis: Lenis }).__lenis = lenis;
   lenis.on("scroll", ScrollTrigger.update);
   gsap.ticker.add((time) => lenis.raf(time * 1000));
-  gsap.ticker.lagSmoothing(0);
+  // Keep GSAP's lag smoothing: with it off, any hitch (or coming back to the tab) made the films
+  // jump to their end. Lenis just carries on after a hitch.
+  gsap.ticker.lagSmoothing(500, 33);
   document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) =>
     a.addEventListener("click", (e) => {
       const id = a.getAttribute("href")!;

@@ -1,7 +1,9 @@
 ---
 /**
- * Come funziona: the four steps as the WhatsApp chat they really are. An example, labelled as
- * such. The bubbles arrive one by one at first paint (CSS); static with reduced motion.
+ * Come funziona: the four steps as the WhatsApp chat they really are, seen from the customer's
+ * phone. An example, labelled as such. When it comes into view the conversation plays: Focus
+ * Design "sta scrivendo…" with the typing dots, then each bubble pops in; "Rivedi" plays it again.
+ * Without JS or with reduced motion: the whole chat, static.
  */
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
@@ -9,8 +11,8 @@ import { site } from "../../config/site";
 
 const demo = (await getEntry("lavori", "arcadi-ristrutturazioni"))!;
 const msgs: { me: boolean; text: string }[] = [
-  { me: false, text: "Ciao, abbiamo un'impresa di ristrutturazioni. Il sito ha dieci anni e dal telefono non si legge." },
-  { me: true, text: `Raccontaci cosa fate e in che zona. Entro ${site.previewHours} ore ti mandiamo l'anteprima, gratis.` },
+  { me: true, text: "Ciao, abbiamo un'impresa di ristrutturazioni. Il sito ha dieci anni e dal telefono non si legge." },
+  { me: false, text: `Raccontaci cosa fate e in che zona. Entro ${site.previewHours} ore ti mandiamo l'anteprima, gratis.` },
 ];
 ---
 <figure class="cs" data-chat>
@@ -18,7 +20,7 @@ const msgs: { me: boolean; text: string }[] = [
     <span class="cs__avatar">f</span>
     <span class="cs__who">
       <b>Focus Design</b>
-      <span>online</span>
+      <span data-chat-status>online</span>
     </span>
   </div>
   <ol class="cs__list">
@@ -29,19 +31,26 @@ const msgs: { me: boolean; text: string }[] = [
         </li>
       ))
     }
-    <li class="cs__msg cs__msg--me cs__card" data-chat-msg>
+    <li class="cs__msg cs__card" data-chat-msg>
       <Image src={demo.data.shotPhone} alt="" widths={[240, 480]} sizes="120px" class="cs__thumb" loading="eager" />
       <span>
         <b>L'anteprima del tuo nuovo sito</b>
         <span class="cs__sub">Link privato: la vedi solo tu.</span>
       </span>
     </li>
-    <li class="cs__msg" data-chat-msg>Ci piace. Come si parte?</li>
-    <li class="cs__msg cs__msg--me" data-chat-msg>
+    <li class="cs__msg cs__msg--me" data-chat-msg>Ci piace. Come si parte?</li>
+    <li class="cs__msg" data-chat-msg>
       Acconto del {site.depositPercent}% e in {site.deliveryDays.professionale} giorni lavorativi è online. Il saldo solo quando lo approvi.
     </li>
+    <li class="cs__typing" aria-hidden="true" data-chat-typing><i></i><i></i><i></i></li>
   </ol>
-  <figcaption class="small muted cs__cap">Esempio di conversazione.</figcaption>
+  <figcaption class="small muted cs__cap">
+    <span>Esempio di conversazione.</span>
+    <button type="button" class="cs__replay" data-chat-replay hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><path d="M6 3.5v4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      Rivedi
+    </button>
+  </figcaption>
 </figure>
 <style>
   .cs {
@@ -132,32 +141,143 @@ const msgs: { me: boolean; text: string }[] = [
     font-size: var(--fs-micro);
     color: var(--grafite);
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .cs__msg {
-      animation: cs-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) backwards;
-    }
-    .cs__msg:nth-child(1) {
-      animation-delay: 0.4s;
-    }
-    .cs__msg:nth-child(2) {
-      animation-delay: 1.3s;
-    }
-    .cs__msg:nth-child(3) {
-      animation-delay: 2.1s;
-    }
-    .cs__msg:nth-child(4) {
-      animation-delay: 3.1s;
-    }
-    .cs__msg:nth-child(5) {
-      animation-delay: 4s;
-    }
+  .cs__list {
+    position: relative;
+  }
+  /* Live: bubbles wait for their turn, in place (no layout jump). */
+  .cs--live .cs__msg {
+    visibility: hidden;
+  }
+  .cs--live .cs__msg.is-in {
+    visibility: visible;
+    animation: cs-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1);
   }
   @keyframes cs-pop {
     from {
-      transform: translateY(10px) scale(0);
+      transform: translateY(10px) scale(0.2);
     }
   }
+  .cs__typing {
+    position: absolute;
+    left: 0.9rem;
+    top: 0;
+    display: none;
+    gap: 4px;
+    padding: 0.75rem 0.85rem;
+    background: #fff;
+    border-radius: 4px 16px 16px 16px;
+    box-shadow: 0 1px 0 rgba(11, 27, 63, 0.08);
+  }
+  .cs__typing.is-on {
+    display: inline-flex;
+    animation: cs-pop 0.3s ease-out;
+  }
+  .cs__typing i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--grafite);
+    opacity: 0.4;
+    animation: cs-dot 1s infinite ease-in-out;
+  }
+  .cs__typing i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .cs__typing i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  @keyframes cs-dot {
+    30% {
+      transform: translateY(-4px);
+      opacity: 1;
+    }
+  }
+  .cs__who [data-chat-status].is-typing {
+    color: #17703d;
+  }
   .cs__cap {
-    padding: 0.2rem 1rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.2rem 0.6rem 0.6rem 1rem;
+    min-height: 44px;
+  }
+  .cs__replay {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 44px;
+    padding: 0 0.6rem;
+    border: 0;
+    background: none;
+    color: var(--blu);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .cs__replay[hidden] {
+    display: none;
+  }
+  .cs__replay svg {
+    width: 16px;
+    height: 16px;
   }
 </style>
+<script>
+  import { pop } from "../../scripts/sound";
+
+  // Plays the conversation when it comes into view; again on "Rivedi" or when it comes back.
+  const root = document.querySelector<HTMLElement>("[data-chat]");
+  if (root && matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    const msgs = Array.from(root.querySelectorAll<HTMLElement>("[data-chat-msg]"));
+    const typing = root.querySelector<HTMLElement>("[data-chat-typing]")!;
+    const status = root.querySelector<HTMLElement>("[data-chat-status]")!;
+    const replay = root.querySelector<HTMLButtonElement>("[data-chat-replay]")!;
+    root.classList.add("cs--live");
+    replay.hidden = false;
+    let run = 0;
+    let done = false;
+    const wait = (ms: number, id: number) =>
+      new Promise<boolean>((r) => setTimeout(() => r(id === run), ms));
+    const reset = () => {
+      msgs.forEach((m) => m.classList.remove("is-in"));
+      typing.classList.remove("is-on");
+      status.textContent = "online";
+      status.classList.remove("is-typing");
+    };
+    const play = async () => {
+      const id = ++run;
+      done = false;
+      reset();
+      if (!(await wait(500, id))) return;
+      for (const [i, m] of msgs.entries()) {
+        const mine = m.classList.contains("cs__msg--me");
+        if (mine) {
+          if (!(await wait(i ? 1100 : 200, id))) return;
+        } else {
+          // Focus Design is typing: dots in the bubble's place, "sta scrivendo…" in the bar.
+          if (!(await wait(500, id))) return;
+          typing.style.top = `${m.offsetTop}px`;
+          typing.classList.add("is-on");
+          status.textContent = "sta scrivendo…";
+          status.classList.add("is-typing");
+          if (!(await wait(Math.min(1900, 700 + (m.textContent?.length ?? 0) * 9), id))) return;
+          typing.classList.remove("is-on");
+          status.textContent = "online";
+          status.classList.remove("is-typing");
+        }
+        m.classList.add("is-in");
+        pop(mine ? 1.2 : 1);
+      }
+      done = true;
+    };
+    replay.addEventListener("click", play);
+    new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting && (run === 0 || done)) play();
+      },
+      { threshold: 0.5 },
+    ).observe(root);
+  }
+</script>
