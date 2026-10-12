@@ -1,34 +1,36 @@
 @import "tailwindcss";
 
 /*
-  Focus Design: design system "Insegna".
-  Bright white paper and deep navy ink for trust; one hot orange reserved for actions only, so every
-  button stands out from everything around it (isolation effect). Bold, warm grotesque type.
+  Focus Design: design system "Officina".
+  White paper and deep navy ink for trust; one hot orange reserved for the action, so every button
+  stands out (isolation effect). One family, Schibsted Grotesk: a news-media grotesque built for
+  reading on screens, large x-height, nothing lighter than 400. See reports/Layout e call to action.md.
 */
 
-/* ---------- Font: Bricolage Grotesque variable (wght 200-800, opsz 12-96), self-hosted ---------- */
+/* ---------- Font: Schibsted Grotesk variable (wght 400-900), self-hosted ---------- */
 @font-face {
-  font-family: "Bricolage";
+  font-family: "Schibsted";
   font-style: normal;
   font-display: swap;
-  font-weight: 200 800;
-  src: url("/fonts/bricolage-latin.woff2") format("woff2-variations"), url("/fonts/bricolage-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2013-2014, U+2018-201E, U+2022, U+2026, U+20AC, U+2122;
+  font-weight: 400 900;
+  src: url("/fonts/schibsted-latin.woff2") format("woff2-variations"), url("/fonts/schibsted-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: "Bricolage";
+  font-family: "Schibsted";
   font-style: normal;
   font-display: swap;
-  font-weight: 200 800;
-  src: url("/fonts/bricolage-latin-ext.woff2") format("woff2-variations"), url("/fonts/bricolage-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-017F, U+0218-021B, U+1E00-1EFF;
+  font-weight: 400 900;
+  src: url("/fonts/schibsted-latin-ext.woff2") format("woff2-variations"), url("/fonts/schibsted-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+/* Metric-matched fallback: no layout shift while the font loads. */
 @font-face {
-  font-family: "Bricolage Fallback";
+  font-family: "Schibsted Fallback";
   src: local("Arial"), local("Helvetica Neue"), local("Liberation Sans");
-  size-adjust: 102%;
-  ascent-override: 92%;
-  descent-override: 25%;
+  size-adjust: 101%;
+  ascent-override: 98%;
+  descent-override: 26%;
   line-gap-override: 0%;
 }
 
@@ -39,7 +41,7 @@
   --color-nebbia: #f1f4fa;
   --color-filo: #dde3ef;
   --color-mandarino: #13307a;
-  --font-sans: "Bricolage", "Bricolage Fallback", sans-serif;
+  --font-sans: "Schibsted", "Schibsted Fallback", sans-serif;
 }
 
 :root {
@@ -72,17 +74,18 @@
   --ottone: var(--punto);
   --marker: var(--rosso-marker);
 
-  --font: "Bricolage", "Bricolage Fallback", sans-serif;
+  --font: "Schibsted", "Schibsted Fallback", sans-serif;
   --font-head: var(--font);
   --font-body: var(--font);
 
   /* Type scale: light and wide for display, regular width for reading. */
-  --fs-mega: clamp(2.8rem, 0.9rem + 7.6vw, 9rem);
-  --fs-display: clamp(2.4rem, 1.2rem + 4.4vw, 5.75rem);
-  --fs-h2: clamp(1.9rem, 1.1rem + 2.7vw, 3.75rem);
-  --fs-h3: clamp(1.3rem, 1.1rem + 0.8vw, 1.85rem);
-  --fs-lead: clamp(1.2rem, 1.02rem + 0.75vw, 1.65rem);
-  --fs-body: clamp(1.0625rem, 1rem + 0.22vw, 1.1875rem);
+  /* Type scale (reports/Layout e call to action.md, typography table). */
+  --fs-mega: clamp(2.375rem, 1.6rem + 3.6vw, 4.5rem);
+  --fs-display: clamp(2.375rem, 1.6rem + 3.6vw, 4.5rem);
+  --fs-h2: clamp(1.75rem, 1.2rem + 2.2vw, 3rem);
+  --fs-h3: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --fs-lead: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem);
+  --fs-body: clamp(1.0625rem, 1.03rem + 0.15vw, 1.125rem);
   --fs-small: 0.9375rem;
   --fs-micro: 0.8125rem;
 
@@ -94,15 +97,15 @@
   --step-4: var(--fs-display);
 
   --gutter: clamp(1.25rem, 0.6rem + 2.8vw, 3.5rem);
-  --max: 90rem;
+  --max: 77.5rem;
   --measure: 62ch;
-  --space-section: clamp(3rem, 1.5rem + 5.5vw, 8.5rem);
+  --space-section: clamp(3.5rem, 2rem + 5vw, 7.5rem);
   --space-block: clamp(2.25rem, 1.5rem + 2vw, 4rem);
   --radius-ui: 999px;
   --radius-field: 10px;
   --radius-phone: 22px;
   --bar: 1px;
-  --header-h: 4.75rem;
+  --header-h: 4.5rem;
   --sticky-h: 0px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -122,8 +125,8 @@ body {
   font-size: var(--fs-body);
   font-weight: 400;
   font-stretch: 100%;
-  line-height: 1.55;
-  letter-spacing: -0.003em;
+  line-height: 1.6;
+  letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   padding-bottom: var(--sticky-h);
@@ -199,8 +202,8 @@ a.link:hover {
   text-decoration-thickness: 2px;
 }
 :focus-visible {
-  outline: 2px solid var(--inchiostro);
-  outline-offset: 3px;
+  outline: 3px solid var(--inchiostro);
+  outline-offset: 2px;
   border-radius: 4px;
 }
 .on-dark :focus-visible,
@@ -281,10 +284,12 @@ a.link:hover {
   display: grid;
   gap: 1rem;
 }
-.sec__label {
+/* Eyebrow: a short label in brand blue, sentence case (the brief rules out all-caps eyebrows). */
+.sec__label,
+.eyebrow {
   font-size: var(--fs-small);
-  font-weight: 500;
-  color: var(--grafite);
+  font-weight: 700;
+  color: var(--blu);
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -298,8 +303,7 @@ a.link:hover {
 }
 .lead {
   font-size: var(--fs-lead);
-  line-height: 1.42;
-  letter-spacing: -0.012em;
+  line-height: 1.5;
   font-weight: 400;
 }
 .small {
@@ -320,7 +324,7 @@ a.link:hover {
 
 /* ---------- Buttons ---------- */
 .btn {
-  --h: 54px;
+  --h: 52px;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -331,8 +335,8 @@ a.link:hover {
   border-radius: var(--radius-ui);
   font-family: var(--font);
   font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: -0.005em;
+  font-size: 1.0625rem;
+  letter-spacing: 0;
   line-height: 1.1;
   text-decoration: none;
   border: 1px solid transparent;
@@ -367,14 +371,19 @@ a.link:hover {
   color: var(--notte);
 }
 .btn--big {
-  --h: 60px;
+  --h: 56px;
   padding-inline: 2rem;
-  font-size: 1.0625rem;
+}
+@media (max-width: 480px) {
+  .btn--big {
+    width: 100%;
+  }
 }
 .btn--secondary {
+  --h: 48px;
   background: transparent;
   color: var(--inchiostro);
-  border-color: currentColor;
+  border: 2px solid currentColor;
   font-weight: 600;
 }
 .btn--secondary:hover {
@@ -664,5 +673,439 @@ html.lenis body {
   /* A filter on a canvas that redraws every frame is expensive on phones: the contact shadow suffices. */
   .phone3d {
     filter: none;
+  }
+}
+
+/* ---------- Page kit "Officina" (home and inner pages share these blocks) ---------- */
+/* ---------- Home "Officina": one idea per section, headings say the takeaway ---------- */
+.hs-head {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  margin-bottom: clamp(1.75rem, 1rem + 2vw, 3rem);
+}
+.hs-head h2 {
+  max-width: 24ch;
+}
+@media (min-width: 900px) {
+  .hs-head--row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 2rem;
+  }
+  .hs-head--row > div {
+    display: grid;
+    gap: 0.75rem;
+  }
+}
+
+/* Per chi lavoriamo: three sector cards, each with its demo site. */
+.hs-sec__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 900px) {
+  .hs-sec__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+.hs-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid var(--filo);
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+  transition:
+    transform 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
+}
+@media (hover: hover) {
+  .hs-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 40px -28px rgba(11, 27, 63, 0.45);
+  }
+}
+.hs-card__media {
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--nebbia);
+}
+.hs-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+.hs-card__body {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  padding: 1.25rem 1.4rem 1.4rem;
+}
+.hs-card__problem {
+  color: var(--grafite);
+}
+.hs-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-top: 0.25rem;
+}
+
+/* Cosa ricevi: a bento, the promise large, five concrete benefits around it. */
+.hs-get {
+  background: var(--nebbia);
+}
+.hs-get__in {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 700px) {
+  .hs-get__in {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hs-get__big {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1000px) {
+  .hs-get__in {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .hs-get__big {
+    grid-column: 1 / span 2;
+    grid-row: 1 / span 2;
+  }
+}
+.hs-get__big,
+.hs-get__tile {
+  border-radius: 20px;
+  background: #fff;
+  padding: clamp(1.4rem, 1rem + 1.2vw, 2.25rem);
+}
+.hs-get__big {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 1rem;
+  background: var(--blu);
+  color: #fff;
+  --inchiostro: #fff;
+  --grafite: var(--on-dark-muted);
+}
+.hs-get__big .eyebrow {
+  color: var(--on-dark-muted);
+}
+.hs-get__big h2 {
+  max-width: 16ch;
+}
+.hs-get__big .lead {
+  max-width: 40ch;
+  color: var(--on-dark-muted);
+}
+.hs-get__tile {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+}
+.hs-get__tile p {
+  color: var(--grafite);
+}
+.hs-get__icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 12px;
+  background: var(--nebbia);
+  color: var(--blu);
+  margin-bottom: 0.35rem;
+}
+
+/* Come funziona: four steps on one line, each with when it happens. */
+.hs-how__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  counter-reset: step;
+}
+@media (min-width: 700px) {
+  .hs-how__steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1100px) {
+  .hs-how__steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.hs-how__steps li {
+  counter-increment: step;
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 3px solid var(--blu);
+}
+.hs-how__steps li::before {
+  content: counter(step);
+  font-weight: 800;
+  font-size: 2.25rem;
+  line-height: 1;
+  color: var(--blu);
+}
+.hs-how__when {
+  justify-self: start;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  background: var(--nebbia);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--blu);
+}
+.hs-how__steps p {
+  color: var(--grafite);
+}
+
+/* Prezzi: three cards, the recommended one in navy; every card has its own button. */
+.hs-price {
+  background: var(--nebbia);
+}
+.hs-price__founders {
+  font-weight: 600;
+  color: var(--blu);
+}
+.hs-price__plans {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  align-items: stretch;
+}
+@media (min-width: 900px) {
+  .hs-price__plans {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+.hs-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.75rem;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid var(--filo);
+}
+.hs-plan--rec {
+  background: var(--blu);
+  border-color: var(--blu);
+  color: #fff;
+  --inchiostro: #fff;
+  --grafite: var(--on-dark-muted);
+  box-shadow: 0 30px 60px -30px rgba(11, 27, 63, 0.6);
+}
+@media (min-width: 900px) {
+  .hs-plan--rec {
+    transform: translateY(-12px);
+  }
+}
+.hs-plan__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.hs-plan__tag {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--blu);
+}
+.hs-plan__for {
+  color: var(--grafite);
+  min-height: 3.2em;
+}
+.hs-plan__num {
+  margin-top: 0.5rem !important;
+  font-weight: 800;
+  font-size: clamp(2.5rem, 2rem + 1.5vw, 3.5rem);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.hs-plan__num small {
+  font-size: 0.4em;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.hs-plan__old {
+  font-size: var(--fs-small);
+  color: var(--grafite);
+}
+.hs-plan__btn {
+  margin-top: auto;
+  align-self: stretch;
+}
+.hs-plan > :nth-last-child(2) {
+  margin-bottom: 1.25rem;
+}
+.hs-price__micro {
+  margin-top: 1.5rem !important;
+  color: var(--grafite);
+}
+
+/* Lo studio */
+.hs-studio__in {
+  display: grid;
+  gap: 1.5rem;
+}
+@media (min-width: 900px) {
+  .hs-studio__in {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: start;
+  }
+}
+.hs-studio__in h2 {
+  margin-top: 0.75rem;
+  max-width: 16ch;
+}
+.hs-studio__body {
+  display: grid;
+  gap: 1.25rem;
+  justify-items: start;
+}
+.hs-studio__facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+  font-weight: 600;
+}
+.hs-studio__facts li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.hs-studio__facts .icon {
+  color: var(--blu);
+}
+
+/* FAQ */
+.hs-faq {
+  padding-top: 0;
+}
+.hs-faq__in {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 900px) {
+  .hs-faq__in {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: start;
+  }
+}
+
+/* Chiusura: the form itself, on navy; WhatsApp and phone for who prefers them. */
+.hs-end__in {
+  display: grid;
+  gap: 2rem;
+}
+@media (min-width: 1000px) {
+  .hs-end__in {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: start;
+  }
+  .hs-end__text {
+    position: sticky;
+    top: calc(var(--header-h) + 2rem);
+  }
+}
+.hs-end__text {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+.hs-end__text .eyebrow {
+  color: var(--on-dark-muted);
+}
+.hs-end__text .lead {
+  color: var(--on-dark-muted);
+  max-width: 38ch;
+}
+.hs-end__direct {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+}
+.hs-end__tel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+/* The form sits on a white card: light tokens again inside it. */
+.hs-end__form {
+  border-radius: 24px;
+  padding: clamp(1.25rem, 0.8rem + 2vw, 2.5rem);
+  background: #fff;
+  color: var(--notte);
+  --carta: #fff;
+  --inchiostro: #0b1b3f;
+  --grafite: #4a5572;
+  --filo: #dde3ef;
+  --nebbia: #f1f4fa;
+  --mandarino: #13307a;
+  box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.5);
+}
+
+/* Phones: benefit tiles and steps read as compact rows (icon or number beside the text). */
+@media (max-width: 699px) {
+  .hs-get__tile {
+    grid-template-columns: 2.75rem 1fr;
+    column-gap: 0.9rem;
+    row-gap: 0.2rem;
+    padding: 1.1rem 1.1rem 1.2rem;
+  }
+  .hs-get__icon {
+    grid-row: span 2;
+    margin-bottom: 0;
+  }
+  .hs-how__steps li {
+    grid-template-columns: auto 1fr;
+    column-gap: 0.75rem;
+    align-items: center;
+  }
+  .hs-how__steps li::before {
+    font-size: 1.75rem;
+  }
+  .hs-how__steps li > h3,
+  .hs-how__steps li > p {
+    grid-column: 1 / -1;
+  }
+  .hs-how__when {
+    justify-self: start;
   }
 }

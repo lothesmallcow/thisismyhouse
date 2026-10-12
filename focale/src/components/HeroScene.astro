@@ -7,7 +7,10 @@
  */
 import IPhone from "./IPhone.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
+import Icon from "./Icon.astro";
 import { site } from "../config/site";
+import { euro, foundersOpen, whatsappHref } from "../lib/util";
+const price = foundersOpen() ? site.prices.essenziale.founders : site.prices.essenziale.standard;
 
 const banners = [
   { app: "mail", from: "Nuova richiesta dal sito", text: "Preventivo bagno: circa 6 mq, Città Studi, entro 3 mesi." },
@@ -21,20 +24,21 @@ const banners = [
 <section class="scene hero" id="inizio" aria-labelledby="hero-t" data-hero-anim>
   <div class="wrap hero__in">
     <div class="hero__text">
-      <p class="hero__for" data-hero-fade>Per imprese edili, serramentisti, B&amp;B, agriturismi e location per eventi</p>
-      <h1 class="hero__title" id="hero-t" data-hero-h1>Siti che fanno squillare il telefono.</h1>
+      <p class="eyebrow hero__for" data-hero-fade>Siti per imprese edili, serramentisti, B&amp;B, agriturismi e location per eventi</p>
+      <h1 class="hero__title" id="hero-t" data-hero-h1>Il nuovo sito della tua attività. Lo vedi prima di pagarlo.</h1>
       <p class="lead hero__lead" data-hero-fade>
-        Rifacciamo il tuo sito perché dal telefono si legga bene e porti richieste vere. Prezzo scritto, nessuna sorpresa.
+        Ti prepariamo la nuova homepage in {site.previewHours} ore, gratis. Se ti convince, da {euro(price)}: acconto del {site.depositPercent}%
+        e saldo solo a sito approvato.
       </p>
       <div class="hero__cta" data-hero-fade>
         <a href="/anteprima-gratuita" class="btn btn--primary btn--big" data-magnetic>Voglio l'anteprima gratuita</a>
-        <a href="#makeover" class="btn btn--secondary">Guarda il prima e dopo</a>
+        <a href={whatsappHref(`Ciao, vorrei l'anteprima gratuita del nuovo sito per la mia attività.`)} class="btn btn--secondary btn--wa" target="_blank" rel="noopener">
+          <Icon name="whatsapp" />
+          WhatsApp
+        </a>
       </div>
-      <ul class="hero__proof" data-hero-fade>
-        <li>Anteprima gratis in {site.previewHours} ore</li>
-        <li>Saldo solo a sito approvato</li>
-        <li>Dominio e accessi intestati a te</li>
-      </ul>
+      <p class="hero__micro" data-hero-fade>Gratis e senza impegno. Rispondiamo in giornata.</p>
+      <a class="textlink hero__more" href="#makeover" data-hero-fade>Guarda il prima e dopo</a>
     </div>
 
     <figure class="film" data-film data-tilt-area data-phone3d>
@@ -98,73 +102,56 @@ const banners = [
 </section>
 
 <style>
+  /* Split hero: the offer on the left (7 of 12 columns), the phone on the right. Capped below the
+     full screen so the makeover band peeks in at the fold (no false floor). */
+  .hero {
+    min-height: 0 !important;
+    padding-block: clamp(1rem, 4vh, 3rem) clamp(2rem, 5vh, 3.5rem) !important;
+  }
   .hero__in {
     display: grid;
-    gap: clamp(2rem, 5vh, 3.5rem);
+    gap: 2rem;
     align-items: center;
     width: 100%;
   }
   @media (min-width: 900px) {
     .hero__in {
-      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-      column-gap: clamp(2rem, 4vw, 5rem);
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      column-gap: clamp(2rem, 4vw, 4rem);
     }
   }
-  /* Who it is for, before anything else: the visitor recognises their trade in the first second. */
   .hero__for {
-    display: inline-block;
-    margin-bottom: clamp(1rem, 2.5vh, 1.5rem) !important;
-    padding: 0.4rem 0.85rem;
-    border-radius: 8px;
-    background: var(--nebbia);
-    color: var(--blu);
-    font-size: var(--fs-small);
-    font-weight: 600;
-    line-height: 1.35;
+    margin-bottom: 1rem !important;
+    max-width: 44ch;
   }
   .hero__title {
-    font-size: clamp(2.7rem, 1rem + 5vw, 6.4rem);
-    line-height: 0.92;
-    max-width: 11ch;
+    font-size: var(--fs-display);
+    max-width: 17ch;
   }
   .hero__lead {
-    margin-top: clamp(1.1rem, 3vh, 1.75rem);
-    max-width: 34ch;
+    margin-top: 1.25rem;
+    max-width: 44ch;
     color: var(--grafite);
-  }
-  .hero__proof {
-    list-style: none;
-    padding: 0;
-    margin: clamp(1.25rem, 3vh, 2rem) 0 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
-    font-size: var(--fs-small);
-    font-weight: 600;
-  }
-  .hero__proof li {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-  }
-  /* A small navy tick: a promise kept, not decoration. */
-  .hero__proof li::before {
-    content: "";
-    width: 1.1rem;
-    height: 1.1rem;
-    flex: none;
-    border-radius: 50%;
-    background:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.6 6.3 5 8.6 9.4 3.6' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
-        center / 70% no-repeat,
-      var(--blu);
   }
   .hero__cta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 1rem 1.5rem;
-    margin-top: clamp(1.5rem, 4vh, 2.5rem);
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+  }
+  .hero__micro {
+    margin-top: 0.85rem !important;
+    font-size: var(--fs-small);
+    color: var(--grafite);
+  }
+  .hero__more {
+    margin-top: 0.5rem;
+  }
+  @media (max-width: 480px) {
+    .hero__cta .btn--wa {
+      flex: 1;
+    }
   }
 
   .film {
@@ -189,30 +176,24 @@ const banners = [
   .film__phone {
     position: relative;
     transform-style: preserve-3d;
-    --w: clamp(200px, 33vh, 320px);
+    --w: clamp(220px, 30vh, 300px);
   }
   @media (max-width: 899px) {
     .film__phone {
-      --w: clamp(100px, min(48vw, calc((100svh - 440px) / 2.35)), 250px);
+      --w: min(64vw, 260px);
     }
   }
   /* Phones: text tight enough that the whole iPhone sits in the first screen. */
+  /* Phones: offer, button and microcopy first; the phone follows and is cut by the fold (scroll cue). */
   @media (max-width: 699px) {
     .hero__in {
-      gap: 1.25rem;
-    }
-    .hero__title {
-      font-size: clamp(2.1rem, 0.6rem + 7.4vw, 2.8rem);
+      gap: 1.5rem;
     }
     .hero__lead {
-      margin-top: 0.75rem;
-      font-size: 1rem;
+      margin-top: 0.85rem;
     }
     .hero__cta {
-      margin-top: 1rem;
-    }
-    .hero__cta .small {
-      display: none;
+      margin-top: 1.25rem;
     }
     .film__cap {
       font-size: 0.85rem;

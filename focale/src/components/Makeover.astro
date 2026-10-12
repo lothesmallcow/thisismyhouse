@@ -9,6 +9,7 @@
  * Logic in scripts/makeover.ts.
  */
 import IPhone from "./IPhone.astro";
+import { site } from "../config/site";
 import OldSite from "./demo/OldSite.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
 
@@ -33,7 +34,8 @@ const fixes = [
   <div class="mk__pin" data-mk-pin>
     <div class="wrap mk__in">
       <div class="mk__text">
-        <h2 id="mk-t" class="mk__t">Prima e dopo, sullo schermo che conta.</h2>
+        <p class="eyebrow mk__kicker">Progetto dimostrativo: un'impresa edile inventata</p>
+        <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
         <ol class="mk__steps" data-mk-steps>
           {
             steps.map((s, i) => (
@@ -51,7 +53,11 @@ const fixes = [
           </button>
           <span class="mk__bar" data-mk-bar aria-hidden="true" hidden><span data-mk-fill></span></span>
         </div>
-        <a class="textlink mk__more" href="/lavori/">I tre siti completi</a>
+        <div class="mk__ask">
+          <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
+          <p class="mk__micro">Gratis e senza impegno. Il tuo sito, rifatto così, in {site.previewHours} ore.</p>
+        </div>
+        <a class="textlink mk__more" href="/lavori/">Vedi i tre siti completi</a>
       </div>
 
       <figure class="mk__stage">
@@ -113,7 +119,7 @@ const fixes = [
     overflow-x: clip;
   }
   .mk__pin {
-    padding-block: clamp(3rem, 2rem + 4vw, 6rem);
+    padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
   }
   /* Video controls: play/pause (replay at the end) and a progress bar you can click to jump. */
   .mk__ctl {
@@ -210,10 +216,23 @@ const fixes = [
       column-gap: clamp(2rem, 6vw, 7rem);
     }
   }
+  .mk__kicker {
+    margin-bottom: 0.85rem !important;
+    color: var(--on-dark-muted);
+  }
+  .mk__ask {
+    display: grid;
+    gap: 0.6rem;
+    justify-items: start;
+    margin-top: 1.75rem;
+  }
+  .mk__micro {
+    font-size: var(--fs-small);
+    color: var(--on-dark-muted);
+  }
   .mk__t {
-    font-size: clamp(2rem, 1rem + 3vw, 4rem);
-    line-height: 1;
-    max-width: 13ch;
+    font-size: var(--fs-h2);
+    max-width: 18ch;
   }
   .mk__steps {
     list-style: none;
@@ -251,9 +270,6 @@ const fixes = [
     display: none;
   }
   @media (max-width: 899px) {
-    .mk__t {
-      font-size: clamp(1.8rem, 1rem + 4vw, 2.4rem);
-    }
     :global(.mk-live) .mk__steps li:not(.is-on) {
       display: none;
     }
@@ -261,9 +277,7 @@ const fixes = [
       margin-block: 1rem 0;
       min-height: 4.5em;
     }
-    :global(.mk-live) .mk__more {
-      display: none;
-    }
+
     .mk__in {
       gap: 1rem;
     }

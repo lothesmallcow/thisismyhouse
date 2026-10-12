@@ -26,7 +26,7 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
     <div class="wrap">
       <ol class="lv__list">
         {
-          lavori.map((l, i) => (
+          lavori.map((l) => (
             <li class:list={["lv__item", `lv__item--${l.id}`]}>
               <a class="lv__media" href={`/lavori/${l.id}/`} aria-label={`${l.data.name}, leggi il progetto`}>
                 <Image

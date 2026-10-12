@@ -19,21 +19,25 @@ The project folder is still called `focale/` (the first working name).
 - WCAG 2.2 AA, 44px targets, reduced motion respected, content readable before JS.
 - Avoid the generic AI look (see brief section 1): no gradients/blobs/glass, no identical card grids, no all-caps eyebrows, no middle-dot strings, no emoji icons, no Inter/Roboto.
 
-## Design tokens
-Warm studio palette: latte #FFF8F2 (bg) · nebbia #FCEBDC (alt bg, stage) · cacao #24130C (text) · grafite #6B5248 (secondary text) ·
-mandarino #FF5B22 (primary buttons, orange sections, footer; cacao text on it, never white) · miele #FFB23F · pesca #FFD3BC ·
-marker #D7392B (renovation demo only). No black or near-black surfaces (the iPhone bezel is the exception): the user asked for white and orange mixed.
-Orange light = soft radial gradients from mandarino through miele to transparent (hero stage, closing, OG images).
-Archivo variable: headings weight 300 at width 125% with negative tracking; UI 500. Literata for long body text.
-Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm run logo` regenerates the paths).
+## Design tokens ("Officina", from reports/Layout e call to action.md)
+White paper #FFFFFF · navy ink #0B1B3F · brand blue #13307A (bands, recommended plan, icons, eyebrows) ·
+secondary text #4A5572 · alt surface #F1F4FA · hairlines #DDE3EF · orange #FF6A1F ONLY for primary buttons
+(navy text on it, never white: 2.86:1). Old token names are kept as aliases (--mandarino now = brand blue).
+Navy bands (.section--sole / .on-navy) flip the colour tokens so components inside read white.
+Type: Schibsted Grotesk variable (400-900) only, self-hosted. H1 800, H2/H3 700, body 400 at 17-18 px,
+buttons 600 at 17 px; nothing below 400; no global tabular-nums (it widens punctuation in this font).
+Eyebrows: short, brand blue, sentence case (no all-caps). Buttons: pill, 52-56 px primary, 48 px outline.
+One action everywhere: "Voglio l'anteprima gratuita" (sticky bar: "Anteprima gratuita").
+Logo: "focus" 800 + "design" 400 in Bricolage outlines (npm run logo); favicon navy with orange point.
+The Arcadi demo has its own Archivo @font-face (it's a different business).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
-- A website, not slides: only the opening fills the screen and nothing pins; every other section
-  has its natural height and its own layout, over one living WebGL background (LiveBackground.astro,
-  scripts/live.ts). No exit fades. Content enters with a clip-path mask ([data-in], no opacity: axe measures
-  half-faded text). A ResizeObserver refreshes ScrollTrigger when the page height changes.
-- Order: opening film, sector ticker (CSS marquee, wraps with reduced motion), "Che attività hai?" chooser,
-  makeover, Metodo (heading sticky on the left, steps on a rail that fills in orange), Prezzi, CTA + FAQ.
+- Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right) capped so the navy
+  makeover band peeks at the fold; then makeover (with the primary CTA under it), "Per chi lavoriamo" (3 sector
+  cards with demo screenshots), "Cosa ricevi" bento, 4 steps with timings, prices (per-plan CTA, recommended plan
+  navy), Lo studio, FAQ, closing band on navy with the 3-step PreviewForm embedded. Nothing pins, no ambient
+  motion (living background, ticker and colour floods were removed). Section blocks (.hs-*) live in global.css
+  and are reused by inner pages. Sticky mobile bar appears after the hero CTA leaves and hides over forms.
 - The phone: IPhone.astro is the HTML phone (live screen in cqw units, Dynamic Island, status bar). In the hero
   and the makeover a real 3D model (scripts/phone3d.ts, public/models/iphone.glb, credits in docs/CREDITI.md)
   is drawn with WebGL under it and copies its CSS 3D pose every frame (CSS transform chain up to the

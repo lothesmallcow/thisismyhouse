@@ -3,6 +3,13 @@ import Base from "../layouts/Base.astro";
 import PreviewForm from "../components/PreviewForm.astro";
 import { site } from "../config/site";
 import { breadcrumbs } from "../lib/schema";
+import P from "../components/P.astro";
+import { whatsappHref, telHref } from "../lib/util";
+const next = [
+  `Rispondiamo entro la giornata lavorativa, dove preferisci.`,
+  `Entro ${site.previewHours} ore ti mandiamo la homepage del tuo nuovo sito, su un link privato.`,
+  `Se ti convince, partiamo con un acconto del ${site.depositPercent}%. Se no, finisce lì.`,
+];
 ---
 <Base
   title={`Anteprima gratuita del tuo nuovo sito | ${site.brand}`}
@@ -13,9 +20,16 @@ import { breadcrumbs } from "../lib/schema";
   <section class="ag" data-hero>
     <div class="wrap ag-grid">
       <div class="ag-head">
-        <p class="ag-label">Anteprima gratuita</p>
+        <p class="eyebrow ag-label">Anteprima gratuita</p>
         <h1>Ricevi l'anteprima del tuo nuovo sito. Gratis, in {site.previewHours} ore.</h1>
         <p class="lead ag-lead">Tre domande veloci. Poi ti scriviamo noi.</p>
+        <h2 class="ag-next-t">Cosa succede dopo</h2>
+        <ol class="ag-next">{next.map((n) => <li>{n}</li>)}</ol>
+        <p class="ag-alt">
+          Preferisci scrivere?
+          <a class="link" href={whatsappHref("Ciao, vorrei l'anteprima gratuita del nuovo sito per la mia attività.")} target="_blank" rel="noopener">WhatsApp</a>
+          oppure <a class="link" href={telHref()}><P value={site.phoneDisplay} /></a>
+        </p>
       </div>
       <PreviewForm />
     </div>
@@ -41,13 +55,46 @@ import { breadcrumbs } from "../lib/schema";
     }
   }
   .ag-label {
+    margin-bottom: 1rem;
+  }
+  .ag-next-t {
+    margin-top: 2rem;
+    font-size: var(--fs-h3);
+  }
+  .ag-next {
+    list-style: none;
+    counter-reset: n;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .ag-next li {
+    counter-increment: n;
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 0.75rem;
+    align-items: start;
+  }
+  .ag-next li::before {
+    content: counter(n);
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--blu);
+    color: #fff;
+    font-weight: 700;
     font-size: var(--fs-small);
-    font-weight: 500;
+  }
+  .ag-alt {
+    margin-top: 1.5rem !important;
     color: var(--grafite);
-    margin-bottom: 1.75rem;
   }
   .ag h1 {
     font-size: var(--fs-h2);
+    max-width: 18ch;
   }
   .ag-lead {
     margin-top: 1.25rem;

@@ -5,30 +5,46 @@
  */
 import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
-import Choose from "../components/Choose.astro";
+import PreviewForm from "../components/PreviewForm.astro";
+import { Image } from "astro:assets";
 import Makeover from "../components/Makeover.astro";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
 import { getCollection } from "astro:content";
 import { site } from "../config/site";
-import { fill, euro, foundersOpen, whatsappHref } from "../lib/util";
+import { fill, euro, foundersOpen, whatsappHref, telHref } from "../lib/util";
+import P from "../components/P.astro";
 import { plans } from "../lib/plans";
 import { faqPage, professionalService } from "../lib/schema";
 
-const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order).slice(0, 4);
+const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order).slice(0, 6);
 const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
 const open = foundersOpen();
 
+const settori = (await getCollection("settori")).sort((a, b) => a.id.localeCompare(b.id));
+const lavori = await getCollection("lavori");
+const sectors = ["ristrutturazioni-e-serramenti", "b-and-b-e-agriturismi", "location-per-matrimoni"].map((id) => {
+  const s = settori.find((x) => x.id === id)!;
+  const demo = lavori.find((l) => l.id === s.data.demo)!;
+  return { id, name: s.data.short, problem: s.data.problems[0], demo };
+});
+const gets = [
+  { icon: "phone", t: "Ti chiamano con un tocco", d: "Pulsanti per chiamarti e scriverti su WhatsApp sempre a portata di pollice." },
+  { icon: "search", t: "Ti trovano su Google", d: "Pagine scritte per le ricerche della tua zona, collegate alla scheda Google." },
+  { icon: "list", t: "Richieste già complete", d: "Un modulo in poche domande: sai subito cosa vuole chi ti scrive." },
+  { icon: "bolt", t: "Veloce anche in campagna", d: "Si apre in un attimo anche con poco segnale. Punteggio Google sopra 90." },
+  { icon: "key", t: "Tutto intestato a te", d: "Dominio, sito e accessi sono tuoi. Se un giorno cambi fornitore, te li porti via." },
+];
 const steps = [
-  { t: "Ci racconti l'attività", d: "Dieci minuti, al telefono o su WhatsApp." },
-  { t: "Vedi l'anteprima", d: `La homepage del tuo nuovo sito, entro ${site.previewHours} ore. Gratis.` },
-  { t: "Se ti convince, partiamo", d: `Acconto del ${site.depositPercent}%, sito pronto in ${site.deliveryDays.professionale} giorni lavorativi.` },
-  { t: "Approvi e va online", d: "Il saldo lo paghi solo a sito approvato." },
+  { when: "Oggi", t: "Ci racconti l'attività", d: "Dieci minuti al telefono o su WhatsApp: cosa fai, dove, per chi." },
+  { when: `Entro ${site.previewHours} ore`, t: "Vedi l'anteprima", d: "La homepage del tuo nuovo sito, con il tuo nome e i tuoi servizi. Gratis." },
+  { when: `${site.deliveryDays.essenziale}-${site.deliveryDays.professionale} giorni`, t: "Se ti convince, partiamo", d: `Acconto del ${site.depositPercent}%. Ci mandi le foto, noi costruiamo il sito.` },
+  { when: "Alla fine", t: "Approvi e va online", d: "Lo provi dal telefono. Il saldo lo paghi solo quando lo approvi." },
 ];
 ---
 <Base
-  title={`${site.brand} | Siti web che portano richieste, per piccole imprese`}
-  description={`Rifacciamo il sito della tua attività perché si legga bene dal telefono e porti più richieste. Anteprima gratuita in ${site.previewHours} ore, saldo solo a sito approvato.`}
+  title={`${site.brand} | Il nuovo sito della tua attività, lo vedi prima di pagarlo`}
+  description={`Rifacciamo il sito di imprese edili, serramentisti, B&B, agriturismi e location. Anteprima gratuita in ${site.previewHours} ore, prezzi scritti, saldo solo a sito approvato.`}
   jsonLd={[professionalService(), faqPage(faqItems)]}
   bodyClass="home"
 >
@@ -37,24 +53,70 @@ const steps = [
 
     <Makeover />
 
-    <Choose />
-
-    <section class="section sc-how" id="metodo" aria-labelledby="metodo-t">
-      <div class="wrap sc-how__in">
-        <div class="sc-how__side">
-          <h2 id="metodo-t" data-in>Quattro passi. Il primo è gratis.</h2>
-          <p class="sc-how__promise" data-in style="--d: 0.1s">Il rischio ce lo prendiamo noi: se l'anteprima non ti piace, finisce lì.</p>
-          <a class="textlink" href="/condizioni/" data-in style="--d: 0.15s">Le condizioni</a>
+    <section class="section hs-sec" id="settori" aria-labelledby="settori-t">
+      <div class="wrap">
+        <div class="hs-head" data-in>
+          <p class="eyebrow">Per chi lavoriamo</p>
+          <h2 id="settori-t">Tre mestieri diversi, lo stesso problema: il sito non ti fa chiamare.</h2>
         </div>
-        <ol class="sc-how__steps" data-how>
+        <ul class="hs-sec__grid">
           {
-            steps.map((s, i) => (
-              <li data-in style={`--d: ${0.1 + i * 0.08}s`}>
-                <span class="sc-how__n" aria-hidden="true">{i + 1}</span>
-                <div>
-                  <h3>{s.t}</h3>
-                  <p>{s.d}</p>
+            sectors.map((x, i) => (
+              <li class="hs-card" data-in style={`--d: ${0.08 * i}s`}>
+                <a class="hs-card__media" href={`/per/${x.id}/`} tabindex="-1" aria-hidden="true">
+                  <Image src={x.demo.data.shotDesktop} alt="" widths={[480, 800]} sizes="(min-width: 900px) 30vw, 92vw" />
+                </a>
+                <div class="hs-card__body">
+                  <h3>{x.name}</h3>
+                  <p class="hs-card__problem">{x.problem}</p>
+                  <div class="hs-card__links">
+                    <a class="textlink" href={`/per/${x.id}/`}>Cosa facciamo per te</a>
+                    <a class="textlink" href={`/lavori/${x.demo.id}/`}>Guarda il sito demo</a>
+                  </div>
                 </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="section hs-get" aria-labelledby="get-t">
+      <div class="wrap hs-get__in">
+        <div class="hs-get__big" data-in>
+          <p class="eyebrow">Cosa ricevi</p>
+          <h2 id="get-t">Un sito che si legge dal telefono e ti fa chiamare.</h2>
+          <p class="lead">Testi scritti da noi, foto dei tuoi lavori in primo piano, il numero sempre a un tocco. Niente da imparare: lo usi come usi WhatsApp.</p>
+          <a class="textlink" href="/come-funziona/">Tutto quello che è compreso</a>
+        </div>
+        {
+          gets.map((g, i) => (
+            <div class="hs-get__tile" data-in style={`--d: ${0.06 * i}s`}>
+              <span class="hs-get__icon"><Icon name={g.icon as never} /></span>
+              <h3>{g.t}</h3>
+              <p>{g.d}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section hs-how" id="metodo" aria-labelledby="metodo-t">
+      <div class="wrap">
+        <div class="hs-head hs-head--row" data-in>
+          <div>
+            <p class="eyebrow">Come funziona</p>
+            <h2 id="metodo-t">Quattro passi. Il primo è gratis.</h2>
+          </div>
+          <a class="textlink" href="/condizioni/">Le condizioni, scritte</a>
+        </div>
+        <ol class="hs-how__steps">
+          {
+            steps.map((st, i) => (
+              <li data-in style={`--d: ${0.08 * i}s`}>
+                <span class="hs-how__when">{st.when}</span>
+                <h3>{st.t}</h3>
+                <p>{st.d}</p>
               </li>
             ))
           }
@@ -62,62 +124,90 @@ const steps = [
       </div>
     </section>
 
-    <section class="section sc-price" id="prezzi" aria-labelledby="prezzi-t">
-      <div class="wrap sc-price__in">
-        <div class="sc-price__head">
-          <h2 id="prezzi-t" data-in>Prezzi scritti qui, non "su richiesta".</h2>
-          {
-            open && (
-              <p class="sc-price__founders" data-in style="--d: 0.1s">
-                Prezzo fondatori per i primi {site.foundersSpotsTotal} clienti. Posti liberi: {site.foundersSpotsLeft} su {site.foundersSpotsTotal}.
-              </p>
-            )
-          }
+    <section class="section hs-price" id="prezzi" aria-labelledby="prezzi-t">
+      <div class="wrap">
+        <div class="hs-head hs-head--row" data-in>
+          <div>
+            <p class="eyebrow">Prezzi</p>
+            <h2 id="prezzi-t">Prezzi scritti qui, non "su richiesta".</h2>
+          </div>
+          {open && <p class="hs-price__founders">Prezzo fondatori per i primi {site.foundersSpotsTotal} clienti.</p>}
         </div>
-        <ul class="sc-price__plans">
+        <ul class="hs-price__plans">
           {
             plans.map((p, i) => (
-              <li class:list={["sc-price__plan", { "is-rec": p.recommended }]} data-in style={`--d: ${0.15 + i * 0.1}s`}>
-                <span class="sc-price__name">
-                  {p.name}
-                  {p.recommended && <span class="sc-price__tag">Consigliato</span>}
-                </span>
-                <span class="sc-price__for">{p.forWhom}</span>
-                <span class="sc-price__num">
+              <li class:list={["hs-plan", { "hs-plan--rec": p.recommended }]} data-in style={`--d: ${0.08 * i}s`}>
+                <div class="hs-plan__top">
+                  <h3>{p.name}</h3>
+                  {p.recommended && <span class="hs-plan__tag">Consigliato</span>}
+                </div>
+                <p class="hs-plan__for">{p.forWhom}</p>
+                <p class="hs-plan__num">
                   {p.from && <small>da </small>}
                   {euro(open ? p.founders : p.standard)}
-                </span>
-                {open && <span class="sc-price__old">poi {euro(p.standard)}</span>}
+                </p>
+                {open && <p class="hs-plan__old">poi {euro(p.standard)}</p>}
+                <a href={`/anteprima-gratuita?pacchetto=${p.slug}`} class:list={["btn", p.recommended ? "btn--primary" : "btn--secondary", "hs-plan__btn"]}>
+                  Anteprima gratuita
+                </a>
               </li>
             ))
           }
         </ul>
-        <div class="sc-price__foot" data-in style="--d: 0.5s">
-          <p>
-            Paghi il {site.depositPercent}% quando partiamo e il saldo solo a sito approvato.
-          </p>
-          <a class="btn btn--secondary" href="/prezzi/">Confronta i pacchetti</a>
+        <p class="hs-price__micro" data-in>
+          L'anteprima è gratis. Se ti convince: acconto del {site.depositPercent}%, saldo solo a sito approvato. <a class="link" href="/prezzi/">Confronta i pacchetti</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="section hs-studio" aria-labelledby="studio-t">
+      <div class="wrap hs-studio__in">
+        <div data-in>
+          <p class="eyebrow">Lo studio</p>
+          <h2 id="studio-t">Uno studio piccolo, a Milano, che ti risponde.</h2>
+        </div>
+        <div class="hs-studio__body" data-in style="--d: 0.1s">
+          <p class="lead">Facciamo una cosa sola: siti per piccole imprese che vivono di richieste. Niente pubblicità, niente social, niente gergo.</p>
+          <ul class="hs-studio__facts">
+            <li><Icon name="pin" /> Milano, di persona in tutta la Lombardia</li>
+            <li><Icon name="clock" /> Rispondiamo entro la giornata lavorativa</li>
+            <li><Icon name="shield" /> P.IVA <P value={site.vatNumber} /></li>
+          </ul>
+          <a class="textlink" href="/chi-sono/">Chi siamo</a>
         </div>
       </div>
     </section>
 
-    <section class="section sc-end" id="domande" aria-labelledby="domande-t">
-      <div class="wrap sc-end__in">
-        <div class="sc-end__cta">
-          <h2 data-in>Guarda il tuo nuovo sito prima di decidere.</h2>
-          <p class="lead" data-in style="--d: 0.1s">Anteprima in {site.previewHours} ore. Se non ti convince, non ci devi niente.</p>
-          <div class="btn-row" data-in style="--d: 0.2s">
-            <a href="/anteprima-gratuita" class="btn btn--primary" data-magnetic>Voglio l'anteprima gratuita</a>
-            <a href={whatsappHref(`Ciao, ho visto il sito di ${site.brand} e vorrei l'anteprima gratuita per la mia attività.`)} class="btn btn--secondary" target="_blank" rel="noopener">
-              <Icon name="whatsapp" />
-              WhatsApp
-            </a>
-          </div>
-        </div>
-        <div class="sc-end__faq" data-in style="--d: 0.25s">
-          <h2 id="domande-t" class="sc-end__faq-t">Domande frequenti</h2>
-          <Faq items={faqItems} compact />
+    <section class="section hs-faq" id="domande" aria-labelledby="domande-t">
+      <div class="wrap hs-faq__in">
+        <div class="hs-head" data-in>
+          <p class="eyebrow">Domande</p>
+          <h2 id="domande-t">Le domande che ci fanno tutti.</h2>
           <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
+        </div>
+        <div data-in style="--d: 0.1s"><Faq items={faqItems} compact /></div>
+      </div>
+    </section>
+
+    <section class="section hs-end on-navy" id="anteprima" aria-labelledby="end-t">
+      <div class="wrap hs-end__in">
+        <div class="hs-end__text">
+          <p class="eyebrow">Anteprima gratuita</p>
+          <h2 id="end-t">Guarda il tuo nuovo sito prima di decidere.</h2>
+          <p class="lead">Tre domande. Entro {site.previewHours} ore ti mandiamo la homepage del tuo nuovo sito. Se non ti convince, finisce lì.</p>
+          <ul class="hs-end__direct">
+            <li>
+              <a class="btn btn--secondary" href={whatsappHref(`Ciao, vorrei l'anteprima gratuita del nuovo sito per la mia attività.`)} target="_blank" rel="noopener">
+                <Icon name="whatsapp" /> Scrivici su WhatsApp
+              </a>
+            </li>
+            <li>
+              <a class="hs-end__tel" href={telHref()}><Icon name="phone" /> <P value={site.phoneDisplay} /></a>
+            </li>
+          </ul>
+        </div>
+        <div class="hs-end__form">
+          <PreviewForm />
         </div>
       </div>
     </section>
@@ -126,11 +216,10 @@ const steps = [
 
 <script>
   import { initScenes } from "../scripts/scenes";
-  import { initPaths } from "../scripts/paths";
   import { initTilt } from "../scripts/tilt";
   import { later } from "../scripts/later";
   initScenes();
-  initPaths();
+  import("../scripts/forms").then((m) => m.initPreviewForm());
   initTilt();
   // The real 3D phone (three.js and the model, about 1 MB) loads at the visitor's first gesture,
   // so it never weighs on the first load; until then the CSS phone stands in, almost identical.
@@ -142,225 +231,3 @@ const steps = [
   wake.forEach((e) => addEventListener(e, go, { passive: true }));
 </script>
 
-<style>
-  /* ---------- Metodo: the heading stays while the steps scroll past, a line fills as you read ---------- */
-  .sc-how__in {
-    display: grid;
-    gap: clamp(2rem, 5vh, 3.5rem);
-    width: 100%;
-  }
-  @media (min-width: 900px) {
-    .sc-how__in {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-      gap: clamp(2rem, 6vw, 7rem);
-      align-items: start;
-    }
-    .sc-how__side {
-      position: sticky;
-      top: calc(var(--header-h) + 2.5rem);
-    }
-  }
-  .sc-how__side {
-    display: grid;
-    gap: 1.25rem;
-    justify-items: start;
-  }
-  .sc-how__side h2 {
-    max-width: 12ch;
-  }
-  .sc-how__promise {
-    font-weight: 700;
-    font-stretch: 125%;
-    font-size: clamp(1.15rem, 1rem + 0.7vw, 1.6rem);
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    max-width: 26ch;
-    color: var(--grafite);
-  }
-  .sc-how__steps {
-    --p: 0;
-    position: relative;
-    list-style: none;
-    padding: 0 0 0 clamp(4rem, 3rem + 3vw, 6rem);
-    margin: 0;
-    display: grid;
-    gap: clamp(2rem, 6vh, 4.5rem);
-  }
-  /* The rail and its orange fill (scripts/scenes.ts sets --p while the list scrolls past). */
-  .sc-how__steps::before,
-  .sc-how__steps::after {
-    content: "";
-    position: absolute;
-    left: calc(clamp(1.4rem, 1rem + 1vw, 2rem));
-    top: 0.5rem;
-    bottom: 0.5rem;
-    width: 2px;
-    background: rgba(11, 27, 63, 0.14);
-  }
-  .sc-how__steps::after {
-    background: var(--mandarino);
-    transform-origin: top;
-    transform: scaleY(var(--p));
-  }
-  .sc-how__steps li {
-    position: relative;
-  }
-  .sc-how__n {
-    position: absolute;
-    left: calc(-1 * clamp(4rem, 3rem + 3vw, 6rem));
-    top: 0;
-    z-index: 1;
-    display: grid;
-    place-items: center;
-    width: clamp(2.8rem, 2rem + 2vw, 4rem);
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: var(--carta);
-    box-shadow: 0 0 0 2px var(--mandarino);
-    font-weight: 700;
-    font-stretch: 125%;
-    font-size: clamp(1.2rem, 1rem + 0.8vw, 1.8rem);
-    line-height: 1;
-    color: var(--blu);
-  }
-  .sc-how__steps h3 {
-    font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2.2rem);
-    font-weight: 700;
-    font-stretch: 125%;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    margin-bottom: 0.5rem;
-  }
-  .sc-how__steps p {
-    color: var(--grafite);
-    max-width: 40ch;
-  }
-
-  /* ---------- Prezzi ---------- */
-  .sc-price__in {
-    display: grid;
-    gap: clamp(2rem, 5vh, 3.5rem);
-    width: 100%;
-  }
-  .sc-price__head {
-    display: grid;
-    gap: 0.75rem;
-  }
-  @media (min-width: 900px) {
-    .sc-price__head {
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-      align-items: end;
-      gap: 2rem;
-    }
-  }
-  .sc-price__founders {
-    color: var(--grafite);
-  }
-  .sc-price__plans {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: clamp(0.75rem, 1.5vw, 1.5rem);
-  }
-  @media (min-width: 900px) {
-    .sc-price__plans {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-  /* Columns, not boxes: a rule on top, the recommended one in tangerine. */
-  .sc-price__plan {
-    display: grid;
-    gap: 0.75rem;
-    align-content: start;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--inchiostro);
-  }
-  .sc-price__plan.is-rec {
-    border-top: 3px solid var(--mandarino);
-    padding-top: calc(1.25rem - 2px);
-  }
-  .sc-price__plan.is-rec .sc-price__num {
-    color: var(--blu);
-  }
-  .sc-price__name {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 500;
-    font-size: var(--fs-h3);
-  }
-  .sc-price__tag {
-    font-size: var(--fs-micro);
-    padding: 0.25rem 0.6rem;
-    border: 1px solid currentColor;
-    border-radius: var(--radius-ui);
-  }
-  .sc-price__for {
-    color: var(--grafite);
-  }
-
-  .sc-price__num {
-    margin-top: 0.75rem;
-    font-weight: 700;
-    font-stretch: 125%;
-    font-size: clamp(2.6rem, 1.8rem + 2.4vw, 4.4rem);
-    letter-spacing: -0.02em;
-    line-height: 1;
-    white-space: nowrap;
-  }
-  .sc-price__num small {
-    font-size: 0.4em;
-    letter-spacing: 0;
-    font-stretch: 100%;
-    font-weight: 500;
-  }
-  .sc-price__old {
-    font-size: var(--fs-small);
-    color: var(--grafite);
-  }
-  .sc-price__foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-  }
-
-  /* ---------- Chiusura e domande ---------- */
-
-  .sc-end__in {
-    display: grid;
-    gap: clamp(2rem, 5vh, 3.5rem);
-    width: 100%;
-  }
-  @media (min-width: 1000px) {
-    .sc-end__in {
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-      align-items: center;
-      gap: clamp(2rem, 5vw, 6rem);
-    }
-  }
-  .sc-end__cta {
-    display: grid;
-    gap: 1.25rem;
-    justify-items: start;
-  }
-  .sc-end__cta h2 {
-    font-size: clamp(2.4rem, 1.2rem + 3.6vw, 5rem);
-    line-height: 1;
-    max-width: 12ch;
-  }
-  .sc-end__faq {
-    display: grid;
-    gap: 1rem;
-    justify-items: start;
-  }
-  .sc-end__faq :global(.faq) {
-    width: 100%;
-  }
-  .sc-end__faq-t {
-    font-size: var(--fs-h3);
-  }
-</style>

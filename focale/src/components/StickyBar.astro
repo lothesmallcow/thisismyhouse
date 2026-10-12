@@ -52,21 +52,40 @@ import { whatsappHref } from "../lib/util";
   }
 </style>
 <script>
+  /* Shows once the opening's button has scrolled away; hides again over the closing band or any form
+     (the visitor is already where the bar would take them) and while typing (keyboard open). */
   const bar = document.querySelector<HTMLElement>("[data-sticky]");
   if (bar) {
     const root = document.documentElement;
-    const hero = document.querySelector("[data-hero]");
-    const setVisible = (on: boolean) => {
+    const hero = document.querySelector(".hero__cta, [data-hero]");
+    const quiet = Array.from(document.querySelectorAll<HTMLElement>(".closing, .hs-end, form"));
+    let pastHero = false;
+    const inQuiet = new Set<Element>();
+    let typing = false;
+    const update = () => {
+      const on = pastHero && inQuiet.size === 0 && !typing;
       root.classList.toggle("sticky-on", on);
       bar.inert = !on;
     };
-    setVisible(false);
-    if (hero && "IntersectionObserver" in window) {
-      new IntersectionObserver(([entry]) => setVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0)).observe(hero);
+    update();
+    if ("IntersectionObserver" in window) {
+      if (hero) new IntersectionObserver(([e]) => ((pastHero = !e.isIntersecting && e.boundingClientRect.top < 0), update())).observe(hero);
+      else pastHero = true;
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => (e.isIntersecting ? inQuiet.add(e.target) : inQuiet.delete(e.target)));
+        update();
+      });
+      quiet.forEach((q) => io.observe(q));
     } else {
-      const onScroll = () => setVisible(window.scrollY > 400);
+      const onScroll = () => ((pastHero = scrollY > 400), update());
       onScroll();
-      window.addEventListener("scroll", onScroll, { passive: true });
+      addEventListener("scroll", onScroll, { passive: true });
     }
+    document.addEventListener("focusin", (e) => {
+      const t = e.target as HTMLElement;
+      typing = t.matches("input:not([type=radio]):not([type=checkbox]), textarea, select");
+      update();
+    });
+    document.addEventListener("focusout", () => ((typing = false), update()));
   }
 </script>

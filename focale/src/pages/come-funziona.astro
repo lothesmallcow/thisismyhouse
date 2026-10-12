@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHead from "../components/PageHead.astro";
-import Steps from "../components/Steps.astro";
+import Icon from "../components/Icon.astro";
 import Faq from "../components/Faq.astro";
 import Closing from "../components/Closing.astro";
 import ChatSteps from "../components/visual/ChatSteps.astro";
@@ -31,6 +31,7 @@ const steps = [
     text: `Lo provi dal tuo telefono e chiedi le modifiche: ${site.revisionRounds} giri sono inclusi. Quando lo approvi, paghi il saldo e lo mettiamo online sul tuo dominio.`,
   },
 ];
+const whens = ["Oggi", `Entro ${site.previewHours} ore`, `${site.deliveryDays.essenziale}-${site.deliveryDays.professionale} giorni lavorativi`, "Alla fine"];
 const need = [
   "Il nome dell'attività e cosa fai, in parole tue",
   "La zona in cui lavori",
@@ -53,30 +54,51 @@ const get = [
   jsonLd={[breadcrumbs([{ name: "Come funziona", path: "/come-funziona/" }]), faqPage(faqItems)]}
 >
   <PageHead
-    label="Metodo"
-    title="Come funziona"
+    label="Come funziona"
+    title="Come funziona, dal primo messaggio al sito online."
     lead="Dal primo messaggio al sito online in quattro passi. Il primo è gratis, e il saldo lo paghi solo quando il sito ti convince."
   >
     <ChatSteps slot="visual" />
   </PageHead>
 
-  <section class="section cf-steps" aria-label="I quattro passi">
+  <section class="section" aria-labelledby="passi-t">
     <div class="wrap">
-      <Steps steps={steps} level="h2" />
+      <div class="hs-head">
+        <p class="eyebrow">I passi</p>
+        <h2 id="passi-t">Dal primo messaggio al sito online.</h2>
+      </div>
+      <ol class="hs-how__steps cf-steps">
+        {
+          steps.map((st, i) => (
+            <li>
+              <span class="hs-how__when">{whens[i]}</span>
+              <h3>{st.title}</h3>
+              <p>{st.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="cf-ask">
+        <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
+        <p class="muted small">Gratis e senza impegno. Rispondiamo in giornata.</p>
+      </div>
     </div>
   </section>
 
   <section class="section section--pietra" aria-labelledby="serve">
-    <div class="wrap sec">
-      <p class="sec__label">Da te e per te</p>
-      <div class="sec__body cf-two">
-        <div>
-          <h2 id="serve" data-focus>Cosa ci serve da te</h2>
-          <ul class="cf-list">{need.map((n) => <li>{n}</li>)}</ul>
+    <div class="wrap">
+      <div class="hs-head">
+        <p class="eyebrow">Da te e per te</p>
+        <h2 id="serve">Cosa ci serve da te, cosa ricevi.</h2>
+      </div>
+      <div class="cf-two">
+        <div class="cf-card">
+          <h3>Cosa ci serve da te</h3>
+          <ul class="cf-list">{need.map((n) => <li><Icon name="list" size={18} />{n}</li>)}</ul>
         </div>
-        <div>
-          <h2 data-focus>Cosa ricevi</h2>
-          <ul class="cf-list">{get.map((n) => <li>{n}</li>)}</ul>
+        <div class="cf-card cf-card--get">
+          <h3>Cosa ricevi</h3>
+          <ul class="cf-list">{get.map((n) => <li><Icon name="check" size={18} />{n}</li>)}</ul>
         </div>
       </div>
     </div>
@@ -85,7 +107,7 @@ const get = [
   <section class="section section--sole" aria-labelledby="garanzia">
     <div class="wrap cf-g-grid">
       <div>
-        <p class="sec__label">Garanzia</p>
+        <p class="eyebrow">Garanzia</p>
         <h2 id="garanzia" class="cf-g-title" data-focus>La garanzia</h2>
         <p class="lead cf-g">
           L'anteprima è gratuita. Se non ti piace, finisce lì: non ci devi niente e non ti richiamiamo dieci volte. Se ti piace e partiamo, il
@@ -98,44 +120,63 @@ const get = [
   </section>
 
   <section class="section section--pietra" id="domande" aria-labelledby="domande-t">
-    <div class="wrap sec">
-      <p class="sec__label">Domande</p>
-      <div class="sec__body">
-        <h2 id="domande-t" class="cf-h2" data-focus>Tutte le domande</h2>
-        <Faq items={faqItems} cols />
+    <div class="wrap">
+      <div class="hs-head">
+        <p class="eyebrow">Domande</p>
+        <h2 id="domande-t">Tutte le domande.</h2>
       </div>
+      <Faq items={faqItems} cols />
     </div>
   </section>
 
   <Closing />
 </Base>
 <style>
-  .cf-steps {
-    padding-top: 0;
+  .cf-ask {
+    display: grid;
+    gap: 0.6rem;
+    justify-items: start;
+    margin-top: 2.5rem;
   }
   .cf-two {
     display: grid;
-    gap: 4rem;
+    gap: 1rem;
   }
-  @media (min-width: 1000px) {
+  @media (min-width: 900px) {
     .cf-two {
       grid-template-columns: 1fr 1fr;
-      gap: 3rem;
+      gap: 1.5rem;
     }
   }
-  .cf-two h2 {
-    font-size: var(--fs-h2);
-    max-width: 10ch;
+  .cf-card {
+    padding: clamp(1.4rem, 1rem + 1.2vw, 2.25rem);
+    border-radius: 20px;
+    background: #fff;
+  }
+  .cf-card--get {
+    background: var(--blu);
+    color: #fff;
+    --inchiostro: #fff;
+    --filo: rgba(255, 255, 255, 0.2);
   }
   .cf-list {
     list-style: none;
     padding: 0;
-    margin: 2.5rem 0 0;
-    border-top: 1px solid var(--inchiostro);
+    margin: 1rem 0 0;
   }
   .cf-list li {
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--filo);
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 0.75rem;
+    padding: 0.8rem 0;
+    border-top: 1px solid var(--filo);
+  }
+  .cf-list :global(.icon) {
+    margin-top: 0.25rem;
+    color: var(--blu);
+  }
+  .cf-card--get .cf-list :global(.icon) {
+    color: #fff;
   }
   .cf-g-grid {
     display: grid;
@@ -152,14 +193,10 @@ const get = [
     }
   }
   .cf-g-title {
-    margin-top: 1rem;
-    font-size: var(--fs-display);
+    margin-top: 0.75rem;
   }
   .cf-g {
-    margin: 2.5rem 0 2.5rem;
+    margin: 1.5rem 0 2rem;
     max-width: 40ch;
-  }
-  .cf-h2 {
-    margin-bottom: var(--space-block);
   }
 </style>

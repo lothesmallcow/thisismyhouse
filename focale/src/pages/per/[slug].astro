@@ -27,38 +27,46 @@ const demo = await getEntry("lavori", d.demo);
 >
   <PageHead label={d.short} title={d.h1} lead={d.lead} class="st-head">
     <div class="btn-row st-cta">
-      <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${s.id}`}>Voglio l'anteprima gratuita</a>
+      <a class="btn btn--primary btn--big" href={`/anteprima-gratuita?settore=${s.id}`}>Voglio l'anteprima gratuita</a>
     </div>
+    <p class="muted small st-micro">Gratis e senza impegno. Rispondiamo in giornata.</p>
     <PhoneFan slot="visual" only={d.demo} />
   </PageHead>
 
   <section class="section section--pietra" aria-labelledby="problemi">
-    <div class="wrap sec">
-      <p class="sec__label">Il problema</p>
-      <div class="sec__body">
-        <h2 id="problemi" data-focus>I problemi che vediamo più spesso</h2>
-        <ul class="st-problems">
-          {d.problems.map((p) => <li><p>{p}</p></li>)}
-        </ul>
+    <div class="wrap">
+      <div class="hs-head">
+        <p class="eyebrow">Il problema</p>
+        <h2 id="problemi">Quello che vediamo più spesso nei siti come il tuo.</h2>
       </div>
+      <ul class="st-problems">
+        {
+          d.problems.map((p) => (
+            <li>
+              <span class="st-problems__icon"><Icon name="alert" /></span>
+              <p>{p}</p>
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </section>
 
   <section class="section" aria-labelledby="costruisco">
-    <div class="wrap sec">
-      <p class="sec__label">La soluzione</p>
-      <div class="sec__body st-two">
-        <div>
-          <h2 id="costruisco" data-focus>Cosa costruiamo per te</h2>
-          <ul class="st-build">
-            {d.build.map((b) => <li>{b}</li>)}
-          </ul>
+    <div class="wrap st-two">
+      <div>
+        <div class="hs-head">
+          <p class="eyebrow">La soluzione</p>
+          <h2 id="costruisco">Cosa costruiamo per te.</h2>
         </div>
-        <div>
-          <h2 data-focus>Come ti arrivano le richieste</h2>
-          <p class="lead st-req">{d.requests}</p>
-          <WhatsAppMock heading={d.mock.heading} lines={d.mock.lines} />
-        </div>
+        <ul class="st-build">
+          {d.build.map((b) => <li><Icon name="check" size={18} />{b}</li>)}
+        </ul>
+      </div>
+      <div class="st-req-card">
+        <h3>Come ti arrivano le richieste</h3>
+        <p class="st-req">{d.requests}</p>
+        <WhatsAppMock heading={d.mock.heading} lines={d.mock.lines} />
       </div>
     </div>
   </section>
@@ -66,14 +74,16 @@ const demo = await getEntry("lavori", d.demo);
   {
     demo && (
       <section class="section section--pietra" aria-labelledby="esempio">
-        <div class="wrap sec">
-          <p class="sec__label">Un esempio</p>
-          <div class="sec__body st-demo">
+        <div class="wrap">
+          <div class="hs-head">
+            <p class="eyebrow">Un esempio</p>
+            <h2 id="esempio">{demo.data.name}: com'è fatto un sito così.</h2>
+          </div>
+          <div class="st-demo">
             <a class="st-demo__media" href={`/lavori/${demo.id}/`}>
               <Image src={demo.data.shotDesktop} alt={`Il sito dimostrativo di ${demo.data.name}`} widths={[600, 1000]} sizes="(min-width: 1000px) 50vw, 92vw" />
             </a>
             <div>
-              <h2 id="esempio" class="st-demo__t">{demo.data.name}</h2>
               <p class="muted">Progetto dimostrativo per un'attività inventata</p>
               <p class="st-demo__goal">{demo.data.goal}</p>
               <div class="st-links">
@@ -88,12 +98,12 @@ const demo = await getEntry("lavori", d.demo);
   }
 
   <section class="section section--pietra" aria-labelledby="dom-settore">
-    <div class="wrap sec">
-      <p class="sec__label">Domande</p>
-      <div class="sec__body">
-        <h2 id="dom-settore" class="st-h2" data-focus>Domande</h2>
-        <Faq items={d.faq} cols />
+    <div class="wrap">
+      <div class="hs-head">
+        <p class="eyebrow">Domande</p>
+        <h2 id="dom-settore">Le domande del tuo settore.</h2>
       </div>
+      <Faq items={d.faq} cols />
     </div>
   </section>
 
@@ -104,65 +114,84 @@ const demo = await getEntry("lavori", d.demo);
     max-width: 17ch;
   }
   .st-cta {
-    margin-top: 2.25rem;
+    margin-top: 1.75rem;
+  }
+  .st-micro {
+    margin-top: 0.6rem !important;
   }
   .st-problems {
     list-style: none;
     padding: 0;
-    margin: var(--space-block) 0 0;
+    margin: 0;
     display: grid;
-    gap: 0;
-    border-top: 1px solid var(--inchiostro);
+    gap: 1rem;
   }
-  @media (min-width: 1000px) {
+  @media (min-width: 900px) {
     .st-problems {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      column-gap: 2rem;
+      gap: 1.5rem;
     }
   }
   .st-problems li {
-    padding: 1.5rem 0;
-    border-bottom: 1px solid var(--filo);
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+    padding: 1.5rem;
+    border-radius: 20px;
+    background: #fff;
     font-size: var(--fs-lead);
     line-height: 1.4;
   }
-  @media (min-width: 1000px) {
-    .st-problems li {
-      border-bottom: 0;
-    }
+  .st-problems__icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 12px;
+    background: #fde8e6;
+    color: #b3261a;
   }
   .st-two {
     display: grid;
-    gap: 4rem;
+    gap: 2.5rem;
   }
   @media (min-width: 1000px) {
     .st-two {
-      grid-template-columns: 1fr 1fr;
-      gap: 3rem;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(2rem, 5vw, 5rem);
+      align-items: start;
     }
-  }
-  .st-two h2 {
-    font-size: var(--fs-h2);
-    max-width: 12ch;
   }
   .st-build {
     list-style: none;
     padding: 0;
-    margin: 2.5rem 0 0;
-    border-top: 1px solid var(--inchiostro);
+    margin: 0;
   }
   .st-build li {
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--filo);
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 0.75rem;
+    padding: 0.9rem 0;
+    border-top: 1px solid var(--filo);
+  }
+  .st-build :global(.icon) {
+    margin-top: 0.3rem;
+    color: var(--blu);
+  }
+  .st-req-card {
+    padding: clamp(1.4rem, 1rem + 1.2vw, 2.25rem);
+    border-radius: 24px;
+    background: var(--nebbia);
   }
   .st-req {
-    margin: 2rem 0 2.5rem;
-    max-width: 32ch;
+    margin: 0.75rem 0 1.5rem !important;
+    color: var(--grafite);
+    max-width: 40ch;
   }
   .st-demo {
     display: grid;
-    gap: 2.5rem;
-    align-items: end;
+    gap: 2rem;
+    align-items: center;
   }
   @media (min-width: 1000px) {
     .st-demo {
@@ -172,8 +201,9 @@ const demo = await getEntry("lavori", d.demo);
   }
   .st-demo__media {
     display: block;
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
+    box-shadow: 0 30px 60px -30px rgba(11, 27, 63, 0.45);
   }
   .st-demo__media :global(img) {
     width: 100%;
@@ -184,21 +214,15 @@ const demo = await getEntry("lavori", d.demo);
       transform: scale(1.02);
     }
   }
-  .st-demo__t {
-    font-size: var(--fs-h2);
-    margin-bottom: 0.75rem;
-  }
   .st-demo__goal {
-    margin: 1.5rem 0 !important;
+    margin: 1rem 0 1.5rem !important;
     font-size: var(--fs-lead);
     line-height: 1.4;
     max-width: 28ch;
   }
   .st-links {
     display: flex;
-    gap: 1.5rem;
-  }
-  .st-h2 {
-    margin-bottom: var(--space-block);
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
   }
 </style>

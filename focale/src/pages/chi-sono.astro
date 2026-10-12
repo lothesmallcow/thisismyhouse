@@ -3,16 +3,19 @@ import Base from "../layouts/Base.astro";
 import PageHead from "../components/PageHead.astro";
 import Closing from "../components/Closing.astro";
 import P from "../components/P.astro";
-import OwnerPhoto from "../components/OwnerPhoto.astro";
+import Icon from "../components/Icon.astro";
 import SectorFocus from "../components/visual/SectorFocus.astro";
 import FocusLens from "../components/visual/FocusLens.astro";
 import { site } from "../config/site";
 import { breadcrumbs } from "../lib/schema";
 
 const cols = [
-  { t: "Come lavoriamo", d: "Prezzi scritti, tempi scritti, niente gergo. Rispondiamo entro la giornata lavorativa." },
-  { t: "Cosa non facciamo", d: "Pubblicità, social, negozi online. Se ti servono, ti diciamo a chi rivolgerti." },
-  { t: "Dove siamo", d: "A Milano. Di persona in tutta la Lombardia, online ovunque." },
+  { icon: "euro", t: "Prezzi e tempi scritti", d: "Sai quanto spendi e quando è pronto prima di cominciare. Niente sorprese, niente gergo." },
+  { icon: "clock", t: "Rispondiamo in giornata", d: "Entro la giornata lavorativa, dal lunedì al venerdì, dove preferisci: telefono, WhatsApp o email." },
+  { icon: "key", t: "Tutto intestato a te", d: "Dominio, sito e accessi sono tuoi. Se un giorno cambi fornitore, te li porti via." },
+  { icon: "focus", t: "Una cosa sola", d: "Niente pubblicità, social o negozi online. Se ti servono, ti diciamo a chi rivolgerti." },
+  { icon: "pin", t: "A Milano", d: "Di persona in tutta la Lombardia, online ovunque." },
+  { icon: "shield", t: "Dati in chiaro", d: "" },
 ];
 ---
 <Base
@@ -22,7 +25,7 @@ const cols = [
 >
   <PageHead
     label="Lo studio"
-    title="Uno studio piccolo, che fa una cosa sola."
+    title="Uno studio piccolo, a Milano, che fa una cosa sola."
     lead="Costruiamo siti per piccole imprese che lavorano bene: imprese di ristrutturazione, serramentisti, B&B, agriturismi e location per eventi."
   >
     <SectorFocus slot="visual" />
@@ -31,7 +34,7 @@ const cols = [
   <section class="section section--pietra st-name" style="overflow: clip" aria-labelledby="nome">
     <div class="wrap st-name__grid">
       <div>
-        <p class="sec__label">Il nome</p>
+        <p class="eyebrow">Il nome</p>
         <h2 id="nome" class="st-name__t" data-focus>Focus vuol dire mettere a fuoco.</h2>
         <p class="lead st-name__p">
           Chi apre il tuo sito guarda poche cose: chi sei, cosa fai, come contattarti. Noi mettiamo a fuoco quelle e togliamo tutto il resto.
@@ -41,26 +44,25 @@ const cols = [
     </div>
   </section>
 
-  <section class="section st-who" aria-labelledby="fondatore">
-    <div class="wrap st-who__grid">
-      <div class="st-founder">
-        <OwnerPhoto size="sm" />
-        <div class="st-founder__body">
-          <p class="sec__label">Chi l'ha fondato</p>
-          {/* DA CONFERMARE: Lorenzo può modificare o togliere questo paragrafo */}
-          <h2 id="fondatore" class="st-founder__t"><P value={site.ownerFirstName} />, fondatore.</h2>
-          <p>
-            Studia International Economics and Finance all'Università Bocconi. Prima di {site.brand} ha costruito da zero un videogioco su
-            Roblox con il suo studio, Damalis. Allena una squadra di ragazzi a calcio da quattro stagioni.
-          </p>
-        </div>
+  <section class="section" aria-labelledby="come-t">
+    <div class="wrap">
+      <div class="hs-head">
+        <p class="eyebrow">Come lavoriamo</p>
+        <h2 id="come-t">Quello che puoi aspettarti da noi.</h2>
       </div>
       <ul class="st-cols">
         {
           cols.map((c) => (
             <li>
-              <h2>{c.t}</h2>
-              <p>{c.d}</p>
+              <span class="hs-get__icon"><Icon name={c.icon as never} /></span>
+              <h3>{c.t}</h3>
+              {c.d ? (
+                <p>{c.d}</p>
+              ) : (
+                <p>
+                  {site.brand}, P.IVA <P value={site.vatNumber} />. Sede: <P value={site.registeredAddress} />.
+                </p>
+              )}
             </li>
           ))
         }
@@ -94,66 +96,33 @@ const cols = [
     max-width: 36ch;
     color: var(--grafite);
   }
-  .st-who__grid {
-    display: grid;
-    gap: 3rem;
-  }
-  @media (min-width: 1000px) {
-    .st-who__grid {
-      grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
-      column-gap: clamp(2rem, 1rem + 3vw, 5rem);
-      align-items: start;
-    }
-  }
-  .st-founder {
-    display: grid;
-    gap: 1.75rem;
-    padding: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
-    border-radius: 28px;
-    background: var(--nebbia);
-  }
-  @media (min-width: 600px) {
-    .st-founder {
-      grid-template-columns: 11rem minmax(0, 1fr);
-      align-items: end;
-    }
-  }
-  .st-founder__body {
-    display: grid;
-    gap: 0.9rem;
-  }
-  .st-founder__t {
-    font-size: var(--fs-h3);
-  }
-  .st-founder__body p:not(.sec__label) {
-    color: var(--grafite);
-  }
   .st-cols {
     list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
-  }
-  .st-cols li {
-    border-top: 1px solid var(--inchiostro);
-    padding: 1.4rem 0 1.6rem;
-    display: grid;
-    gap: 0.5rem;
+    gap: 1rem;
   }
   @media (min-width: 700px) {
-    .st-cols li {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      column-gap: 1.5rem;
+    .st-cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
-  .st-cols h2 {
-    font-size: var(--fs-h3);
-    font-weight: 500;
-    font-stretch: 112%;
-    letter-spacing: -0.015em;
+  @media (min-width: 1000px) {
+    .st-cols {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+  .st-cols li {
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    border-radius: 20px;
+    border: 1px solid var(--filo);
   }
   .st-cols p {
     color: var(--grafite);
-    max-width: 34ch;
   }
 </style>

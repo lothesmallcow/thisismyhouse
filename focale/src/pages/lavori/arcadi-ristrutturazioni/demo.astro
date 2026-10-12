@@ -280,6 +280,21 @@ const tel = telHref();
   </div>
 </Demo>
 
+<style is:global>
+  /* Arcadi's own typeface (the demo is a different business from Focus Design). */
+  @font-face {
+    font-family: "Archivo";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    src: url("/fonts/archivo-latin.woff2") format("woff2-variations"), url("/fonts/archivo-latin.woff2") format("woff2");
+  }
+  body.demo {
+    --font-head: "Archivo", "Archivo Fallback", Arial, sans-serif;
+    --font: var(--font-head);
+  }
+</style>
 <style>
   .ar {
     --o: #c4510e;

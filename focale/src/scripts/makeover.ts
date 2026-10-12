@@ -15,8 +15,9 @@ import { spring } from "./spring";
  * See Makeover.astro for the markup and the no-JS final frame.
  */
 export function initMakeover() {
-  const root = document.querySelector<HTMLElement>("[data-makeover]");
-  if (!root || !window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
+  const found = document.querySelector<HTMLElement>("[data-makeover]");
+  if (!found || !window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
+  const root: HTMLElement = found;
   const q = <T extends HTMLElement = HTMLElement>(s: string) => root.querySelector<T>(s)!;
   const qa = (s: string) => Array.from(root.querySelectorAll<HTMLElement>(s));
   const stage = q(".mk__stage");
