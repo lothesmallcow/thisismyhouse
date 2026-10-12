@@ -8,8 +8,8 @@ import logo from "../../assets/logo/logo.json";
 import { ogPages, type OgPage } from "../../lib/og";
 
 const fontDir = join(process.cwd(), "scripts/fonts-build");
-const regular = readFileSync(join(fontDir, "bricolage-400-96.ttf"));
-const heavy = readFileSync(join(fontDir, "bricolage-800-96.ttf"));
+const regular = readFileSync(join(fontDir, "schibsted-400.ttf"));
+const heavy = readFileSync(join(fontDir, "schibsted-800.ttf"));
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const pages = await ogPages();
@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ props }) => {
       justifyContent: "space-between",
       backgroundColor: "#13307A",
       padding: "64px 72px",
-      fontFamily: "Bricolage",
+      fontFamily: "Schibsted",
       color: "#FFFFFF",
     },
     [
@@ -54,8 +54,8 @@ export const GET: APIRoute = async ({ props }) => {
     width: 1200,
     height: 630,
     fonts: [
-      { name: "Bricolage", data: regular, weight: 400, style: "normal" },
-      { name: "Bricolage", data: heavy, weight: 800, style: "normal" },
+      { name: "Schibsted", data: regular, weight: 400, style: "normal" },
+      { name: "Schibsted", data: heavy, weight: 800, style: "normal" },
     ],
   });
   const png = new Resvg(svg, { fitTo: { mode: "width", value: 1200 } }).render().asPng();

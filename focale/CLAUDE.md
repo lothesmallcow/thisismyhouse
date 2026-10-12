@@ -28,7 +28,7 @@ Type: Schibsted Grotesk variable (400-900) only, self-hosted. H1 800, H2/H3 700,
 buttons 600 at 17 px; nothing below 400; no global tabular-nums (it widens punctuation in this font).
 Eyebrows: short, brand blue, sentence case (no all-caps). Buttons: pill, 52-56 px primary, 48 px outline.
 One action everywhere: "Voglio l'anteprima gratuita" (sticky bar: "Anteprima gratuita").
-Logo: "focus" 800 + "design" 400 in Bricolage outlines (npm run logo); favicon navy with orange point.
+Logo: "focus" 800 + "design" 400 in Schibsted outlines (npm run logo); favicon navy with orange point.
 The Arcadi demo has its own Archivo @font-face (it's a different business).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md

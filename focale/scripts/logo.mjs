@@ -1,4 +1,4 @@
-// Generates the Focus Design wordmark and favicons from Bricolage Grotesque (opsz 96).
+// Generates the Focus Design wordmark and favicons from Schibsted Grotesk.
 // "focus" in 800 and "design" in 400, navy, no symbol. Run: npm run logo
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import sharp from "sharp";
@@ -10,8 +10,8 @@ const py = new URL("./fonts-build/glyphs.py", import.meta.url).pathname;
 // Glyph outlines come from fontTools (opentype.js mangles some instanced glyphs).
 const word = (font, text, x0, tracking = -1.5) =>
   JSON.parse(execFileSync("python3", [py, ttf(font), text, String(SIZE), String(x0), String(BASE), String(tracking)], { encoding: "utf8" }));
-const bold = "bricolage-800-96";
-const light = "bricolage-400-96";
+const bold = "schibsted-800";
+const light = "schibsted-400";
 
 const a = word(bold, "focus", 0, -0.5);
 const b = word(light, "design", a.x + 22, 0);
