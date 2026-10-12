@@ -3,6 +3,9 @@ import Base from "../layouts/Base.astro";
 import PageHead from "../components/PageHead.astro";
 import Closing from "../components/Closing.astro";
 import P from "../components/P.astro";
+import OwnerPhoto from "../components/OwnerPhoto.astro";
+import SectorFocus from "../components/visual/SectorFocus.astro";
+import FocusLens from "../components/visual/FocusLens.astro";
 import { site } from "../config/site";
 import { breadcrumbs } from "../lib/schema";
 
@@ -21,22 +24,37 @@ const cols = [
     label="Lo studio"
     title="Uno studio piccolo, che fa una cosa sola."
     lead="Costruiamo siti per piccole imprese che lavorano bene: imprese di ristrutturazione, serramentisti, B&B, agriturismi e location per eventi."
-  />
+  >
+    <SectorFocus slot="visual" />
+  </PageHead>
 
-  <section class="section section--pietra st-name" aria-labelledby="nome">
-    <div class="wrap sec">
-      <p class="sec__label">Il nome</p>
-      <div class="sec__body">
+  <section class="section section--pietra st-name" data-tone="pesca" style="overflow: clip" aria-labelledby="nome">
+    <div class="wrap st-name__grid">
+      <div>
+        <p class="sec__label">Il nome</p>
         <h2 id="nome" class="st-name__t" data-focus>Focus vuol dire mettere a fuoco.</h2>
         <p class="lead st-name__p">
           Chi apre il tuo sito guarda poche cose: chi sei, cosa fai, come contattarti. Noi mettiamo a fuoco quelle e togliamo tutto il resto.
         </p>
       </div>
+      <FocusLens />
     </div>
   </section>
 
-  <section class="section" aria-label="Come lavoriamo">
-    <div class="wrap">
+  <section class="section st-who" aria-labelledby="fondatore">
+    <div class="wrap st-who__grid">
+      <div class="st-founder">
+        <OwnerPhoto size="sm" />
+        <div class="st-founder__body">
+          <p class="sec__label">Chi l'ha fondato</p>
+          {/* DA CONFERMARE: Lorenzo può modificare o togliere questo paragrafo */}
+          <h2 id="fondatore" class="st-founder__t"><P value={site.ownerFirstName} />, fondatore.</h2>
+          <p>
+            Studia International Economics and Finance all'Università Bocconi. Prima di {site.brand} ha costruito da zero un videogioco su
+            Roblox con il suo studio, Damalis. Allena una squadra di ragazzi a calcio da quattro stagioni.
+          </p>
+        </div>
+      </div>
       <ul class="st-cols">
         {
           cols.map((c) => (
@@ -50,29 +68,64 @@ const cols = [
     </div>
   </section>
 
-  <section class="section st-founder" aria-labelledby="fondatore">
-    <div class="wrap sec">
-      <p class="sec__label">Chi l'ha fondato</p>
-      <div class="sec__body st-founder__body">
-        {/* DA CONFERMARE: Lorenzo può modificare o togliere questo paragrafo */}
-        <h2 id="fondatore" class="st-founder__t"><P value={site.ownerFirstName} />, fondatore.</h2>
-        <p>
-          Studia International Economics and Finance all'Università Bocconi. Prima di {site.brand} ha costruito da zero un videogioco su
-          Roblox con il suo studio, Damalis. Allena una squadra di ragazzi a calcio da quattro stagioni.
-        </p>
-      </div>
-    </div>
-  </section>
-
   <Closing />
 </Base>
 <style>
+  .st-name__grid {
+    display: grid;
+    gap: 3rem;
+    justify-items: center;
+  }
+  .st-name__grid > div {
+    justify-self: stretch;
+  }
+  @media (min-width: 1000px) {
+    .st-name__grid {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+      align-items: center;
+    }
+  }
   .st-name__t {
+    margin-top: 1rem;
     max-width: 16ch;
   }
   .st-name__p {
     margin-top: 1.5rem;
-    max-width: 40ch;
+    max-width: 36ch;
+    color: var(--grafite);
+  }
+  .st-who__grid {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 1000px) {
+    .st-who__grid {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+      column-gap: clamp(2rem, 1rem + 3vw, 5rem);
+      align-items: start;
+    }
+  }
+  .st-founder {
+    display: grid;
+    gap: 1.75rem;
+    padding: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
+    border-radius: 28px;
+    background: var(--nebbia);
+  }
+  @media (min-width: 600px) {
+    .st-founder {
+      grid-template-columns: 11rem minmax(0, 1fr);
+      align-items: end;
+    }
+  }
+  .st-founder__body {
+    display: grid;
+    gap: 0.9rem;
+  }
+  .st-founder__t {
+    font-size: var(--fs-h3);
+  }
+  .st-founder__body p:not(.sec__label) {
     color: var(--grafite);
   }
   .st-cols {
@@ -80,41 +133,27 @@ const cols = [
     padding: 0;
     margin: 0;
     display: grid;
-    gap: 2.5rem;
-  }
-  @media (min-width: 1000px) {
-    .st-cols {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 2rem;
-    }
   }
   .st-cols li {
     border-top: 1px solid var(--inchiostro);
-    padding-top: 1.5rem;
+    padding: 1.4rem 0 1.6rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+  @media (min-width: 700px) {
+    .st-cols li {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: 1.5rem;
+    }
   }
   .st-cols h2 {
     font-size: var(--fs-h3);
     font-weight: 500;
     font-stretch: 112%;
     letter-spacing: -0.015em;
-    margin-bottom: 0.75rem;
   }
   .st-cols p {
     color: var(--grafite);
     max-width: 34ch;
-  }
-  .st-founder {
-    padding-top: 0;
-  }
-  .st-founder__body {
-    display: grid;
-    gap: 1rem;
-    max-width: 44rem;
-  }
-  .st-founder__t {
-    font-size: var(--fs-h3);
-  }
-  .st-founder__body p {
-    color: var(--grafite);
   }
 </style>

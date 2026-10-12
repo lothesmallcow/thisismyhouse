@@ -1,0 +1,194 @@
+---
+/**
+ * Prezzi: the Professionale package written out as a receipt (deposit, balance, nothing hidden).
+ * Every figure comes from config. It prints out of the slot at first paint (CSS, no script needed);
+ * with reduced motion it is simply there.
+ */
+import { site } from "../../config/site";
+import { euro, foundersOpen } from "../../lib/util";
+import { plans } from "../../lib/plans";
+
+const plan = plans.find((p) => p.recommended)!;
+const total = foundersOpen() ? plan.founders : plan.standard;
+const deposit = Math.round((total * site.depositPercent) / 100);
+const rows: [string, number][] = [
+  [`Acconto quando partiamo, ${site.depositPercent}%`, deposit],
+  ["Saldo, solo a sito approvato", total - deposit],
+  ["Costi nascosti", 0],
+];
+---
+<figure class="rc" data-receipt>
+  <div class="rc__slot" aria-hidden="true"></div>
+  <div class="rc__clip">
+    <div class="rc__paper" data-rc-paper>
+      <p class="rc__brand"><span>focus</span> design</p>
+      <p class="rc__plan" data-rc-line>Pacchetto {plan.name}</p>
+      <dl class="rc__rows">
+        {
+          rows.map(([k, v]) => (
+            <div data-rc-line>
+              <dt>{k}</dt>
+              <dd data-rc-n={v}>{euro(v)}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="rc__total" data-rc-line>
+        <span>Totale</span>
+        <span data-rc-n={total}>{euro(total)}</span>
+      </p>
+      <p class="rc__stamp" data-rc-stamp>Prezzo finale</p>
+    </div>
+  </div>
+  <figcaption class="small muted rc__cap">Esempio con il pacchetto {plan.name}{foundersOpen() ? ", prezzo fondatori" : ""}.</figcaption>
+</figure>
+<style>
+  .rc {
+    margin: 0;
+    width: min(100%, 27rem);
+    display: grid;
+    justify-items: center;
+  }
+  .rc__slot {
+    width: 108%;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--mandarino);
+    box-shadow: inset 0 -5px 0 rgba(36, 19, 12, 0.35);
+    position: relative;
+    z-index: 2;
+  }
+  .rc__clip {
+    width: 100%;
+    margin-top: -7px;
+    padding: 0 6% 2.5rem;
+    overflow: hidden;
+  }
+  .rc__paper {
+    position: relative;
+    background: #fff;
+    color: var(--inchiostro);
+    padding: 2rem 1.6rem 2.6rem;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 30px 50px -30px rgba(60, 25, 8, 0.45);
+    transform-origin: 50% 0;
+    /* Torn bottom edge. */
+    --tooth: 14px;
+    mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--tooth) * 2) var(--tooth) repeat-x;
+  }
+  .rc__brand {
+    font-size: 1.05rem;
+    font-weight: 300;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed #d8c2b2;
+  }
+  .rc__brand span {
+    font-weight: 500;
+  }
+  .rc__plan {
+    margin-top: 1rem;
+    font-weight: 500;
+    font-stretch: 112%;
+    font-size: 1.25rem;
+    letter-spacing: -0.015em;
+  }
+  .rc__rows {
+    margin: 1rem 0 0;
+    display: grid;
+    gap: 0.7rem;
+    font-size: var(--fs-small);
+  }
+  .rc__rows div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .rc__rows dd {
+    margin: 0;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .rc__total {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #d8c2b2;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-weight: 300;
+    font-stretch: 125%;
+    letter-spacing: -0.04em;
+    font-size: clamp(2rem, 1.5rem + 1.5vw, 2.6rem);
+    line-height: 1;
+  }
+  .rc__total span:first-child {
+    font-size: 0.45em;
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: 0;
+  }
+  .rc__stamp {
+    position: absolute;
+    right: 1rem;
+    top: 1.3rem;
+    transform: rotate(-12deg);
+    border: 2px solid #b8400f;
+    color: #b8400f;
+    border-radius: 8px;
+    padding: 0.3rem 0.6rem;
+    font-size: var(--fs-micro);
+    font-weight: 600;
+    font-stretch: 112%;
+    background: #fff;
+  }
+  .rc__cap {
+    margin-top: -1rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .rc__paper {
+      animation: rc-print 1.5s steps(12) 0.3s backwards;
+    }
+    [data-rc-line] {
+      animation: rc-line 0.25s ease backwards;
+    }
+    .rc__plan {
+      animation-delay: 0.7s;
+    }
+    .rc__rows div:nth-child(1) {
+      animation-delay: 0.95s;
+    }
+    .rc__rows div:nth-child(2) {
+      animation-delay: 1.2s;
+    }
+    .rc__rows div:nth-child(3) {
+      animation-delay: 1.45s;
+    }
+    .rc__total {
+      animation-delay: 1.7s;
+    }
+    .rc__stamp {
+      animation: rc-stamp 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) 2.1s backwards;
+    }
+  }
+  @keyframes rc-print {
+    from {
+      transform: translateY(-100%);
+    }
+  }
+  /* Lines appear as if typed by the printer: wiped in, never transparent. */
+  @keyframes rc-line {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+  }
+  @keyframes rc-stamp {
+    from {
+      transform: rotate(-40deg) scale(2.4);
+      opacity: 0;
+    }
+  }
+</style>

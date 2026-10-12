@@ -8,12 +8,12 @@ const annuo = Math.round((defaults.richieste * 12 * (defaults.tasso / 10) * defa
 const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(price / defaults.valore)} lavori`;
 ---
 <section class="section section--pietra calc" id="calcolatore" aria-labelledby="calc-t">
-  <div class="wrap sec">
-    <p class="sec__label">Calcolatore</p>
-    <div class="sec__body">
-      <h2 id="calc-t" data-focus>Quanto vale una richiesta in più al mese?</h2>
-      <p class="lead calc__intro">Metti i tuoi numeri. Il calcolo lo fai tu.</p>
-      <div class="calc__grid">
+  <div class="wrap">
+    <div class="calc__grid">
+      <div class="calc__left">
+        <p class="sec__label">Calcolatore</p>
+        <h2 id="calc-t" data-focus>Quanto vale una richiesta in più al mese?</h2>
+        <p class="lead calc__intro">Metti i tuoi numeri. Il calcolo lo fai tu.</p>
         <form class="calc__form" data-calc data-price={price} onsubmit="return false" aria-label="Calcolatore">
           <div class="field">
             <label for="calc-valore">Quanto vale in media un tuo lavoro?</label>
@@ -38,7 +38,8 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
             </div>
           </div>
         </form>
-        <div class="calc__result" aria-live="polite" aria-atomic="true">
+      </div>
+      <div class="calc__result" aria-live="polite" aria-atomic="true">
           <p class="calc__big">
             In un anno sono circa <strong><span data-annuo>{num(annuo)}</span> €</strong> di lavori in più.
           </p>
@@ -49,7 +50,6 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
             È una stima fatta con i tuoi numeri, non una promessa. Nessuno può garantirti quante richieste arriveranno. Noi possiamo garantirti un
             sito fatto per non perderle.
           </p>
-        </div>
       </div>
     </div>
   </div>
@@ -57,10 +57,11 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
 
 <style>
   .calc h2 {
+    margin-top: 1rem;
     max-width: 16ch;
   }
   .calc__intro {
-    margin: 1.5rem 0 var(--space-block);
+    margin: 1.5rem 0 clamp(2rem, 1rem + 2vw, 3rem);
   }
   .calc__grid {
     display: grid;
@@ -68,9 +69,9 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
   }
   @media (min-width: 1100px) {
     .calc__grid {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 4rem;
-      align-items: start;
+      align-items: stretch;
     }
   }
   .calc__form {
@@ -154,10 +155,17 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
     outline: 2px solid var(--inchiostro);
     outline-offset: 4px;
   }
+  /* The answer, as big and as warm as the question: an orange panel the height of the form. */
   .calc__result {
-    background: var(--carta);
-    border-radius: 18px;
-    padding: clamp(1.75rem, 1.2rem + 2vw, 3rem);
+    background: var(--mandarino);
+    color: var(--inchiostro);
+    border-radius: 28px;
+    padding: clamp(1.75rem, 1.2rem + 2vw, 3.25rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    --grafite: #3a1a0b;
+    --filo: rgba(36, 19, 12, 0.25);
   }
   .calc__big {
     font-size: var(--fs-lead);
@@ -167,7 +175,7 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
     display: block;
     font-weight: 300;
     font-stretch: 125%;
-    font-size: clamp(2.8rem, 1.8rem + 3vw, 4.75rem);
+    font-size: clamp(3rem, 1.5rem + 4vw, 6rem);
     white-space: nowrap;
     line-height: 1;
     letter-spacing: -0.05em;

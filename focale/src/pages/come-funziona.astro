@@ -4,6 +4,8 @@ import PageHead from "../components/PageHead.astro";
 import Steps from "../components/Steps.astro";
 import Faq from "../components/Faq.astro";
 import Closing from "../components/Closing.astro";
+import ChatSteps from "../components/visual/ChatSteps.astro";
+import Seal from "../components/visual/Seal.astro";
 import { getCollection } from "astro:content";
 import { site } from "../config/site";
 import { fill } from "../lib/util";
@@ -54,7 +56,9 @@ const get = [
     label="Metodo"
     title="Come funziona"
     lead="Dal primo messaggio al sito online in quattro passi. Il primo è gratis, e il saldo lo paghi solo quando il sito ti convince."
-  />
+  >
+    <ChatSteps slot="visual" />
+  </PageHead>
 
   <section class="section cf-steps" aria-label="I quattro passi">
     <div class="wrap">
@@ -78,10 +82,10 @@ const get = [
     </div>
   </section>
 
-  <section class="section section--sole" aria-labelledby="garanzia">
-    <div class="wrap sec">
-      <p class="sec__label">Garanzia</p>
-      <div class="sec__body">
+  <section class="section section--sole" data-tone="sole" aria-labelledby="garanzia">
+    <div class="wrap cf-g-grid">
+      <div>
+        <p class="sec__label">Garanzia</p>
         <h2 id="garanzia" class="cf-g-title" data-focus>La garanzia</h2>
         <p class="lead cf-g">
           L'anteprima è gratuita. Se non ti piace, finisce lì: non ci devi niente e non ti richiamiamo dieci volte. Se ti piace e partiamo, il
@@ -89,6 +93,7 @@ const get = [
         </p>
         <a class="btn btn--secondary" href="/condizioni">Leggi le condizioni complete</a>
       </div>
+      <Seal />
     </div>
   </section>
 
@@ -132,7 +137,22 @@ const get = [
     padding: 1rem 0;
     border-bottom: 1px solid var(--filo);
   }
+  .cf-g-grid {
+    display: grid;
+    gap: 3rem;
+    justify-items: center;
+  }
+  .cf-g-grid > div {
+    justify-self: stretch;
+  }
+  @media (min-width: 1000px) {
+    .cf-g-grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      align-items: center;
+    }
+  }
   .cf-g-title {
+    margin-top: 1rem;
     font-size: var(--fs-display);
   }
   .cf-g {

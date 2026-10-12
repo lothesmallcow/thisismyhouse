@@ -1,0 +1,68 @@
+---
+/**
+ * The three demo sites as phone screens fanned out like cards (Lavori header, sector pages).
+ * `only` puts one demo in front. They deal in at first paint (CSS); the mouse spreads them (inner.ts).
+ */
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+interface Props {
+  only?: string;
+}
+const { only } = Astro.props;
+let lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.data.order);
+// The chosen demo (or the middle one) sits in the centre, in front.
+if (only) {
+  const rest = lavori.filter((l) => l.id !== only);
+  lavori = [rest[0], ...lavori.filter((l) => l.id === only), ...rest.slice(1)];
+}
+---
+<div class="pfan" data-fan aria-hidden="true">
+  {
+    lavori.map((l, i) => (
+      <div class="pfan__card" style={`--i:${i - (lavori.length - 1) / 2};z-index:${i === 1 ? 2 : 1}`} data-fan-card>
+        <Image src={l.data.shotPhone} alt="" widths={[260, 520]} sizes="(min-width: 960px) 220px, 34vw" loading="eager" />
+      </div>
+    ))
+  }
+</div>
+<style>
+  .pfan {
+    position: relative;
+    width: min(100%, 30rem);
+    aspect-ratio: 1.15;
+    display: grid;
+    place-items: center;
+  }
+  .pfan__card {
+    --w: clamp(120px, 7rem + 6vw, 200px);
+    grid-area: 1 / 1;
+    width: var(--w);
+    aspect-ratio: 390 / 760;
+    padding: 6px;
+    border-radius: 26px;
+    background: #2a1d17;
+    box-shadow: 0 40px 60px -35px rgba(60, 25, 8, 0.6);
+    transform: translateX(calc(var(--i) * var(--w) * 0.55)) translateY(calc(var(--i) * var(--i) * 12px)) rotate(calc(var(--i) * 9deg));
+    transform-origin: 50% 100%;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .pfan__card {
+      animation: pfan-deal 1.2s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+      animation-delay: calc(0.25s + (var(--i) + 1) * 0.12s);
+    }
+  }
+  @keyframes pfan-deal {
+    from {
+      transform: translateY(70px);
+      opacity: 0;
+    }
+  }
+  .pfan__card :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    border-radius: 21px;
+    display: block;
+  }
+</style>

@@ -70,6 +70,7 @@ const showSticky = sticky && !minimal;
       initFocusMotif();
       later(() => import("../scripts/smooth").then((m) => m.initSmoothScroll()));
       later(() => import("../scripts/motion").then((m) => m.initMotion()));
+      later(() => import("../scripts/inner").then((m) => m.initInner()));
     </script>
     {
       site.cfBeaconToken && (

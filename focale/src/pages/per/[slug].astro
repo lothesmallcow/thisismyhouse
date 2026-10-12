@@ -5,6 +5,7 @@ import Closing from "../../components/Closing.astro";
 import Faq from "../../components/Faq.astro";
 import Icon from "../../components/Icon.astro";
 import WhatsAppMock from "../../components/WhatsAppMock.astro";
+import PhoneFan from "../../components/visual/PhoneFan.astro";
 import { Image } from "astro:assets";
 import { getCollection, getEntry, type CollectionEntry } from "astro:content";
 import { site } from "../../config/site";
@@ -28,6 +29,7 @@ const demo = await getEntry("lavori", d.demo);
     <div class="btn-row st-cta">
       <a class="btn btn--primary" href={`/anteprima-gratuita?settore=${s.id}`}>Voglio l'anteprima gratuita</a>
     </div>
+    <PhoneFan slot="visual" only={d.demo} />
   </PageHead>
 
   <section class="section section--pietra" aria-labelledby="problemi">

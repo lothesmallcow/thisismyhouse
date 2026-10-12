@@ -1,0 +1,80 @@
+---
+/**
+ * Lo studio: the sectors we work for, one in focus at a time (the others soft, like a lens
+ * pulling focus). Decorative copy of the lead's list, so it is hidden from screen readers.
+ * scripts/inner.ts cycles the focus; static and all sharp without JS or with reduced motion.
+ */
+const sectors = ["Imprese di ristrutturazione", "Serramentisti", "B&B", "Agriturismi", "Location per eventi"];
+---
+<div class="sf" data-sector-focus aria-hidden="true">
+  <p class="sf__lead">Siti per</p>
+  <ul class="sf__list">
+    {sectors.map((s, i) => <li class:list={{ "is-on": i === 0 }}>{s}</li>)}
+  </ul>
+  <span class="sf__ring"></span>
+</div>
+<style>
+  .sf {
+    position: relative;
+    width: min(100%, 30rem);
+    padding: 2.25rem 2rem;
+    border-radius: 28px;
+    background: var(--pesca);
+    overflow: hidden;
+  }
+  .sf__lead {
+    font-size: var(--fs-small);
+    font-weight: 500;
+    color: #4a2a1c;
+    margin-bottom: 1rem;
+  }
+  .sf__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.35rem;
+    position: relative;
+    z-index: 1;
+  }
+  .sf__list li {
+    font-size: clamp(1.6rem, 1.1rem + 1.5vw, 2.35rem);
+    font-weight: 300;
+    font-stretch: 125%;
+    letter-spacing: -0.035em;
+    line-height: 1.12;
+    transition:
+      filter 0.6s ease,
+      color 0.6s ease,
+      transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform-origin: 0 50%;
+  }
+  /* Out of focus: soft and lighter, but no transparency (large text, still 3:1). */
+  .sf.is-live li {
+    filter: blur(2.5px);
+    color: #7a5446;
+  }
+  .sf.is-live li.is-on {
+    filter: none;
+    color: var(--inchiostro);
+    transform: translateX(0.6rem) scale(1.04);
+  }
+  /* The focus ring of a viewfinder, sliding to the sharp line. */
+  .sf__ring {
+    position: absolute;
+    left: 1.2rem;
+    right: 1.2rem;
+    height: 3.2rem;
+    top: 0;
+    border-radius: 14px;
+    border: 2px solid var(--mandarino);
+    background: rgba(255, 248, 242, 0.55);
+    opacity: 0;
+    transition:
+      transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 0.4s;
+  }
+  .sf.is-live .sf__ring {
+    opacity: 1;
+  }
+</style>

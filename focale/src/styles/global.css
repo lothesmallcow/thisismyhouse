@@ -128,6 +128,32 @@ body {
   padding-bottom: var(--sticky-h);
   overflow-x: clip;
 }
+/* Colour play (scripts/inner.ts): while a [data-tone] section fills the middle of the screen the
+   whole page floods with its colour. Muted text darkens so it keeps AA on every tone. */
+body {
+  transition: background-color 0.8s ease;
+}
+.tone-live main [data-tone] {
+  background: transparent;
+}
+body[data-tone="sole"] {
+  background: var(--mandarino);
+  --grafite: #3a1a0b;
+  --filo: rgba(36, 19, 12, 0.22);
+}
+body[data-tone="pesca"] {
+  background: var(--pesca);
+  --grafite: #4a2a1c;
+  --filo: rgba(36, 19, 12, 0.18);
+}
+body[data-tone="sole"] main .pz__plan--rec {
+  box-shadow: inset 0 0 0 2px var(--inchiostro);
+}
+body[data-tone="sole"] main .btn--primary {
+  background: var(--inchiostro);
+  color: var(--carta);
+  border-color: var(--inchiostro);
+}
 body.menu-open {
   overflow: hidden;
 }

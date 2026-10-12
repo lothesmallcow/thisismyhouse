@@ -6,6 +6,7 @@ import Closing from "../components/Closing.astro";
 import Calculator from "../components/Calculator.astro";
 import Icon from "../components/Icon.astro";
 import P from "../components/P.astro";
+import Receipt from "../components/visual/Receipt.astro";
 import { getCollection } from "astro:content";
 import { site } from "../config/site";
 import { euro, fill, foundersOpen, absUrl } from "../lib/util";
@@ -66,6 +67,7 @@ const service = {
         </p>
       )
     }
+    <Receipt slot="visual" />
   </PageHead>
 
   <section class="pz" aria-label="Pacchetti">
@@ -116,39 +118,49 @@ const service = {
     </div>
   </section>
 
-  <section class="section pz-cura" aria-labelledby="piano-cura">
-    <div class="wrap sec">
-      <p class="sec__label">Dopo la consegna</p>
-      <div class="sec__body pz-cura__grid">
-        <div>
-          <h2 id="piano-cura" data-focus>{cura.name}</h2>
-          <p class="lead pz-cura__for">{cura.forWhom}</p>
-          <p class="pz-cura__price">{euro(cura.price)} <span>al mese</span></p>
-        </div>
-        <ul class="pz-list">
-          {cura.features.map((f) => <li>{f}</li>)}
-        </ul>
+  <section class="section section--sole pz-cura" data-tone="sole" aria-labelledby="piano-cura">
+    <div class="wrap pz-cura__grid">
+      <div class="pz-cura__head">
+        <p class="sec__label">Dopo la consegna</p>
+        <h2 id="piano-cura" class="pz-cura__name" data-focus>{cura.name}</h2>
+        <p class="lead pz-cura__for">{cura.forWhom}</p>
       </div>
+      <p class="pz-cura__price">{euro(cura.price)} <span>al mese</span></p>
+      <ul class="pz-cura__list">
+        {
+          cura.features.map((f) => (
+            <li>
+              <Icon name="check" size={20} />
+              {f}
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </section>
 
   <Calculator />
 
-  <section class="section" aria-labelledby="compreso">
-    <div class="wrap sec">
-      <p class="sec__label">Incluso</p>
-      <div class="sec__body pz-two">
-        <div>
-          <h2 id="compreso" data-focus>Compreso in tutti i pacchetti</h2>
-          <ul class="pz-list">
-            {included.map((i) => <li>{i}</li>)}
-          </ul>
-        </div>
-        <div>
-          <h2 data-focus>Costi a parte</h2>
-          <p class="lead pz-extra">Il dominio, {site.domainCostRange}, intestato a te. Con il piano Cura è compreso. Nient'altro.</p>
-          <p class="small muted pz-vat"><P value={site.vatNote} /></p>
-        </div>
+  <section class="section pz-inc" aria-labelledby="compreso">
+    <div class="wrap">
+      <div class="pz-inc__head">
+        <p class="sec__label">Incluso</p>
+        <h2 id="compreso" data-focus>Compreso in tutti i pacchetti</h2>
+      </div>
+      <ul class="pz-inc__grid">
+        {
+          included.map((i) => (
+            <li>
+              <span class="pz-inc__n" aria-hidden="true"><Icon name="check" size={18} /></span>
+              {i}
+            </li>
+          ))
+        }
+      </ul>
+      <div class="pz-extra">
+        <h2 class="pz-extra__t">Costi a parte</h2>
+        <p class="pz-extra__p">Il dominio, {site.domainCostRange}, intestato a te. Con il piano Cura è compreso. Nient'altro.</p>
+        <p class="small pz-vat"><P value={site.vatNote} /></p>
       </div>
     </div>
   </section>
@@ -280,60 +292,151 @@ const service = {
   .pz__btn {
     margin-top: auto;
   }
-  .pz-cura__grid,
-  .pz-two {
+  /* Cura: name and promise, the price, what it covers: three full columns, nothing empty. */
+  .pz-cura__grid {
     display: grid;
-    gap: 3rem;
+    gap: 2.5rem;
   }
   @media (min-width: 1000px) {
-    .pz-cura__grid,
-    .pz-two {
-      grid-template-columns: 1fr 1fr;
-      gap: 3rem;
+    .pz-cura__grid {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 4fr) minmax(0, 4fr);
+      column-gap: clamp(1.5rem, 1rem + 2vw, 3rem);
+      align-items: start;
+    }
+  }
+  /* The plans sit right above (and with motion share its orange): no tall gap between them. */
+  .pz-cura {
+    padding-block: clamp(2.5rem, 1.5rem + 2.5vw, 4rem) clamp(3rem, 2rem + 3vw, 5rem);
+  }
+  .pz {
+    padding-bottom: clamp(1rem, 0.5rem + 1vw, 1.5rem);
+  }
+  .pz-cura__name {
+    margin-top: 1rem;
+    font-size: var(--fs-display);
+    line-height: 0.9;
+  }
+  @media (min-width: 1000px) {
+    .pz-cura__price {
+      margin-top: 2rem;
     }
   }
   .pz-cura__for {
-    margin-top: 1.5rem;
-    color: var(--grafite);
-    max-width: 24ch;
+    margin-top: 1rem;
+    max-width: 22ch;
   }
   .pz-cura__price {
-    margin-top: 2rem !important;
     font-weight: 300;
     font-stretch: 125%;
-    font-size: clamp(3rem, 2rem + 3vw, 5rem);
-    letter-spacing: -0.05em;
-    line-height: 1;
+    font-size: clamp(4.5rem, 2rem + 7vw, 9rem);
+    letter-spacing: -0.06em;
+    line-height: 0.85;
+    white-space: nowrap;
   }
   .pz-cura__price span {
-    font-size: 0.3em;
+    display: block;
+    margin-top: 0.8rem;
+    font-size: var(--fs-body);
     letter-spacing: 0;
     font-stretch: 100%;
     font-weight: 500;
   }
-  .pz-two h2 {
-    font-size: var(--fs-h2);
-    max-width: 12ch;
-  }
-  .pz-list {
+  .pz-cura__list {
     list-style: none;
     padding: 0;
-    margin: 2.5rem 0 0;
+    margin: 0;
     border-top: 1px solid var(--inchiostro);
   }
-  .pz-cura__grid .pz-list {
-    margin-top: 0.5rem;
+  .pz-cura__list li {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 0.6rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(36, 19, 12, 0.25);
+    font-weight: 500;
   }
-  .pz-list li {
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--filo);
+  .pz-cura__list :global(.icon) {
+    margin-top: 0.2rem;
+  }
+  /* Included: six tiles, then the one extra cost as a band. */
+  .pz-inc__head {
+    display: grid;
+    gap: 1rem;
+  }
+  .pz-inc__head h2 {
+    max-width: 14ch;
+  }
+  .pz-inc__grid {
+    list-style: none;
+    padding: 0;
+    margin: clamp(2rem, 1rem + 2vw, 3rem) 0 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (min-width: 640px) {
+    .pz-inc__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1000px) {
+    .pz-inc__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .pz-inc__grid li {
+    display: grid;
+    gap: 1.5rem;
+    align-content: space-between;
+    min-height: 9.5rem;
+    padding: 1.4rem 1.5rem;
+    border-radius: 20px;
+    background: var(--nebbia);
+    font-size: var(--fs-lead);
+    line-height: 1.3;
+    letter-spacing: -0.012em;
+    transition:
+      background-color 0.35s ease,
+      transform 0.35s ease;
+  }
+  @media (hover: hover) {
+    .pz-inc__grid li:hover {
+      background: var(--pesca);
+      transform: translateY(-4px);
+    }
+  }
+  .pz-inc__n {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--mandarino);
   }
   .pz-extra {
-    margin-top: 2.5rem;
-    max-width: 30ch;
+    margin-top: 0.75rem;
+    display: grid;
+    gap: 0.75rem 2rem;
+    padding: 1.6rem 1.5rem;
+    border-radius: 20px;
+    border: 1px solid var(--inchiostro);
+    align-items: baseline;
+  }
+  @media (min-width: 1000px) {
+    .pz-extra {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 3fr);
+    }
+  }
+  .pz-extra__t {
+    font-size: var(--fs-h3);
+    font-weight: 500;
+    font-stretch: 112%;
+    letter-spacing: -0.015em;
+  }
+  .pz-extra__p {
+    max-width: 40ch;
   }
   .pz-vat {
-    margin-top: 1.25rem !important;
+    color: var(--grafite);
   }
   .pz-h2 {
     margin-bottom: var(--space-block);

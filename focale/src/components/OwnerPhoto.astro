@@ -35,6 +35,14 @@ const initial = isPlaceholder(site.ownerFirstName) ? "?" : site.ownerFirstName.c
   .op--sm {
     max-width: 14rem;
   }
+  @media (max-width: 599px) {
+    .op--sm {
+      max-width: 9rem;
+    }
+    .op--sm .op__initial {
+      font-size: 5rem;
+    }
+  }
   .op img {
     width: 100%;
     height: 100%;

@@ -1,0 +1,163 @@
+---
+/**
+ * Come funziona: the four steps as the WhatsApp chat they really are. An example, labelled as
+ * such. The bubbles arrive one by one at first paint (CSS); static with reduced motion.
+ */
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
+import { site } from "../../config/site";
+
+const demo = (await getEntry("lavori", "arcadi-ristrutturazioni"))!;
+const msgs: { me: boolean; text: string }[] = [
+  { me: false, text: "Ciao, abbiamo un'impresa di ristrutturazioni. Il sito ha dieci anni e dal telefono non si legge." },
+  { me: true, text: `Raccontaci cosa fate e in che zona. Entro ${site.previewHours} ore ti mandiamo l'anteprima, gratis.` },
+];
+---
+<figure class="cs" data-chat>
+  <div class="cs__bar" aria-hidden="true">
+    <span class="cs__avatar">f</span>
+    <span class="cs__who">
+      <b>Focus Design</b>
+      <span>online</span>
+    </span>
+  </div>
+  <ol class="cs__list">
+    {
+      msgs.map((m) => (
+        <li class:list={["cs__msg", { "cs__msg--me": m.me }]} data-chat-msg>
+          {m.text}
+        </li>
+      ))
+    }
+    <li class="cs__msg cs__msg--me cs__card" data-chat-msg>
+      <Image src={demo.data.shotPhone} alt="" widths={[240, 480]} sizes="120px" class="cs__thumb" loading="eager" />
+      <span>
+        <b>L'anteprima del tuo nuovo sito</b>
+        <span class="cs__sub">Link privato: la vedi solo tu.</span>
+      </span>
+    </li>
+    <li class="cs__msg" data-chat-msg>Ci piace. Come si parte?</li>
+    <li class="cs__msg cs__msg--me" data-chat-msg>
+      Acconto del {site.depositPercent}% e in {site.deliveryDays.professionale} giorni lavorativi è online. Il saldo solo quando lo approvi.
+    </li>
+  </ol>
+  <figcaption class="small muted cs__cap">Esempio di conversazione.</figcaption>
+</figure>
+<style>
+  .cs {
+    margin: 0;
+    width: min(100%, 25rem);
+    border-radius: 26px;
+    background: #efe6da;
+    box-shadow:
+      0 40px 70px -40px rgba(60, 25, 8, 0.45),
+      0 0 0 1px rgba(36, 19, 12, 0.06);
+    overflow: hidden;
+    position: relative;
+  }
+  .cs__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.9rem 1rem;
+    background: #fff8f2;
+    border-bottom: 1px solid var(--filo);
+  }
+  .cs__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--mandarino);
+    color: var(--inchiostro);
+    font-weight: 500;
+    font-stretch: 125%;
+  }
+  .cs__who {
+    display: grid;
+    line-height: 1.2;
+    font-size: var(--fs-small);
+  }
+  .cs__who b {
+    font-weight: 500;
+  }
+  .cs__who span {
+    font-size: var(--fs-micro);
+    color: var(--grafite);
+  }
+  .cs__list {
+    list-style: none;
+    margin: 0;
+    padding: 1rem 0.9rem 0.6rem;
+    display: grid;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+  .cs__msg {
+    max-width: 84%;
+    justify-self: start;
+    background: #fff;
+    padding: 0.55rem 0.8rem;
+    border-radius: 4px 16px 16px 16px;
+    box-shadow: 0 1px 0 rgba(36, 19, 12, 0.08);
+    transform-origin: 0 0;
+  }
+  .cs__msg--me {
+    justify-self: end;
+    background: #ffd9c4;
+    border-radius: 16px 4px 16px 16px;
+    transform-origin: 100% 0;
+  }
+  .cs__card {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 0.7rem;
+    align-items: center;
+    padding: 0.45rem;
+  }
+  .cs__thumb {
+    width: 56px;
+    height: 84px;
+    object-fit: cover;
+    object-position: top;
+    border-radius: 8px;
+  }
+  .cs__card b {
+    display: block;
+    font-weight: 500;
+  }
+  .cs__sub {
+    font-size: var(--fs-micro);
+    color: var(--grafite);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cs__msg {
+      animation: cs-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) backwards;
+    }
+    .cs__msg:nth-child(1) {
+      animation-delay: 0.4s;
+    }
+    .cs__msg:nth-child(2) {
+      animation-delay: 1.3s;
+    }
+    .cs__msg:nth-child(3) {
+      animation-delay: 2.1s;
+    }
+    .cs__msg:nth-child(4) {
+      animation-delay: 3.1s;
+    }
+    .cs__msg:nth-child(5) {
+      animation-delay: 4s;
+    }
+  }
+  @keyframes cs-pop {
+    from {
+      transform: translateY(10px) scale(0);
+    }
+  }
+  .cs__cap {
+    padding: 0.2rem 1rem 1rem;
+  }
+</style>

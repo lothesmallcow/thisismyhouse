@@ -2,6 +2,7 @@
 import Base from "../../layouts/Base.astro";
 import PageHead from "../../components/PageHead.astro";
 import Closing from "../../components/Closing.astro";
+import PhoneFan from "../../components/visual/PhoneFan.astro";
 import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { site } from "../../config/site";
@@ -18,13 +19,15 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
     label="Lavori"
     title="Tre siti completi, per tre attività inventate."
     lead={`${site.brand} è appena nato. Per farti vedere come lavoriamo, abbiamo costruito tre siti completi per attività inventate, nei settori dove il sito conta di più. Appena i primi clienti ci danno il permesso, i loro lavori veri compaiono qui.`}
-  />
+  >
+    <PhoneFan slot="visual" />
+  </PageHead>
   <section class="lv" aria-label="Progetti">
     <div class="wrap">
       <ol class="lv__list">
         {
           lavori.map((l, i) => (
-            <li class="lv__item">
+            <li class:list={["lv__item", `lv__item--${l.id}`]}>
               <a class="lv__media" href={`/lavori/${l.id}/`} aria-label={`${l.data.name}, leggi il progetto`}>
                 <Image
                   src={l.data.shotDesktop}
@@ -32,9 +35,9 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
                   widths={[640, 1000, 1400]}
                   sizes="(min-width: 1000px) 66vw, 92vw"
                   class="lv__desk"
-                  loading={i === 0 ? "eager" : "lazy"}
+                  loading="eager"
                 />
-                <Image src={l.data.shotPhone} alt="" widths={[200, 400]} sizes="200px" class="lv__phone" />
+                <Image src={l.data.shotPhone} alt="" widths={[200, 400]} sizes="200px" class="lv__phone" loading="eager" />
               </a>
               <div class="lv__text">
                 <h2>{l.data.name}</h2>
@@ -63,11 +66,38 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
     padding: 0;
     margin: 0;
     display: grid;
-    gap: clamp(5rem, 3rem + 6vw, 10rem);
+    gap: 1rem;
   }
+  /* Each project is one card in its own colour: text and pictures share it, so nothing floats
+     in empty space. Text runs top to bottom (name above, links at the foot). */
   .lv__item {
     display: grid;
     gap: 2rem;
+    padding: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
+    border-radius: clamp(18px, 1vw + 12px, 32px);
+    background: var(--nebbia);
+    overflow: hidden;
+  }
+  .lv__item--arcadi-ristrutturazioni {
+    background: #ecebe6;
+  }
+  .lv__item--cascina-rovere {
+    background: #f4e2c8;
+  }
+  .lv__item--villa-ortensia {
+    background: #e2e8dd;
+  }
+  .lv__text {
+    display: flex;
+    flex-direction: column;
+  }
+  /* Name on top, the goal and links at the foot of the card. */
+  .lv__text .lv__goal {
+    margin-top: auto !important;
+    padding-top: 1.5rem;
+  }
+  .lv__links {
+    padding-top: 1.75rem;
   }
   /* Long one-word names ("Ristrutturazioni") must fit the narrow text column. */
   .lv__text h2 {
@@ -77,32 +107,21 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
   }
   @media (min-width: 1000px) {
     .lv__item {
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      column-gap: clamp(1rem, 0.5rem + 1.5vw, 2rem);
-      align-items: end;
+      grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+      column-gap: clamp(1.5rem, 1rem + 2vw, 3rem);
+      align-items: stretch;
     }
-    .lv__media {
-      grid-column: 1 / span 8;
-    }
-    .lv__text {
-      grid-column: 9 / -1;
-    }
-    .lv__item:nth-child(even) .lv__media {
-      grid-column: 5 / -1;
-      grid-row: 1;
+    .lv__item:nth-child(even) {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
     }
     .lv__item:nth-child(even) .lv__text {
-      grid-column: 1 / span 4;
-      grid-row: 1;
+      order: -1;
     }
   }
   .lv__media {
     position: relative;
     display: block;
-    padding: clamp(1rem, 0.5rem + 2.5vw, 3rem) clamp(1rem, 0.5rem + 2.5vw, 3rem) clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
-    background: var(--nebbia);
-    border-radius: clamp(14px, 1vw + 8px, 24px);
-    overflow: hidden;
+    padding-bottom: clamp(1.5rem, 1rem + 2vw, 3rem);
   }
   .lv__media :global(.lv__desk) {
     width: 86%;
@@ -143,6 +162,5 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
   .lv__links {
     display: flex;
     gap: 1.5rem;
-    margin-top: 1.75rem;
   }
 </style>

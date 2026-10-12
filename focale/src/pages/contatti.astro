@@ -16,10 +16,8 @@ import { breadcrumbs } from "../lib/schema";
     label="Contatti"
     title="Scrivici. Ti rispondiamo in giornata."
     lead="Rispondiamo entro la giornata lavorativa, dal lunedì al venerdì. Lavoriamo da Milano, in tutta la Lombardia di persona e ovunque online."
-  />
-
-  <section class="ct">
-    <div class="wrap">
+  >
+    <div slot="visual" class="ct-card">
       <ul class="ct-rows">
         <li>
           <Icon name="whatsapp" size={32} />
@@ -44,7 +42,7 @@ import { breadcrumbs } from "../lib/schema";
         </li>
       </ul>
     </div>
-  </section>
+  </PageHead>
 
   <section class="section section--pietra">
     <div class="wrap ct-form-grid">
@@ -53,6 +51,12 @@ import { breadcrumbs } from "../lib/schema";
         <p class="ct-note">
           Se vuoi l'anteprima gratuita, fai prima da qui: <a class="link" href="/anteprima-gratuita">Voglio l'anteprima gratuita</a>
         </p>
+        <h3 class="ct-next__t">Cosa succede dopo</h3>
+        <ol class="ct-next">
+          <li>Il messaggio lo leggiamo noi, non un sistema automatico.</li>
+          <li>Ti rispondiamo entro la giornata lavorativa, dove preferisci: telefono, WhatsApp o email.</li>
+          <li>Se ti serve un sito, ti proponiamo l'anteprima gratuita. Se non ti interessa, finisce lì.</li>
+        </ol>
       </div>
       <form
         class="ct-form"
@@ -103,33 +107,31 @@ import { breadcrumbs } from "../lib/schema";
   </section>
 </Base>
 <style>
-  .ct {
-    padding-bottom: var(--space-section);
+  /* The three ways to reach us, as a card in the page header. */
+  .ct-card {
+    width: min(100%, 30rem);
+    padding: 0.5rem 1.75rem;
+    border-radius: 26px;
+    background: var(--carta);
+    box-shadow:
+      0 40px 70px -40px rgba(60, 25, 8, 0.45),
+      0 0 0 1px var(--filo);
   }
   .ct-rows {
     list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
-    border-top: 1px solid var(--inchiostro);
-  }
-  @media (min-width: 1000px) {
-    .ct-rows {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      column-gap: 2rem;
-    }
   }
   .ct-rows li {
     display: grid;
-    grid-template-columns: 28px 1fr;
+    grid-template-columns: 32px 1fr;
     gap: 1rem;
-    padding: 2rem 0;
+    padding: 1.4rem 0;
     border-bottom: 1px solid var(--filo);
   }
-  @media (min-width: 1000px) {
-    .ct-rows li {
-      border-bottom: 0;
-    }
+  .ct-rows li:last-child {
+    border-bottom: 0;
   }
   .ct-rows h2 {
     font-size: var(--fs-small);
@@ -137,7 +139,7 @@ import { breadcrumbs } from "../lib/schema";
     font-stretch: 100%;
     letter-spacing: 0;
     color: var(--grafite);
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.6rem;
   }
   .ct-big {
     font-weight: 600;
@@ -170,6 +172,42 @@ import { breadcrumbs } from "../lib/schema";
     margin-top: 1.5rem;
     color: var(--grafite);
     max-width: 34ch;
+  }
+  .ct-next__t {
+    margin-top: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+    font-size: var(--fs-h3);
+    font-weight: 500;
+    font-stretch: 112%;
+    letter-spacing: -0.015em;
+  }
+  .ct-next {
+    list-style: none;
+    counter-reset: next;
+    padding: 0;
+    margin: 1.25rem 0 0;
+    display: grid;
+    gap: 0.75rem;
+    max-width: 30rem;
+  }
+  .ct-next li {
+    counter-increment: next;
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem 1.1rem;
+    border-radius: 18px;
+    background: var(--carta);
+  }
+  .ct-next li::before {
+    content: counter(next);
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--mandarino);
+    font-weight: 500;
   }
   .ct-form {
     display: grid;
