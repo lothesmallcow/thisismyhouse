@@ -95,7 +95,7 @@
   --gutter: clamp(1.25rem, 0.6rem + 2.8vw, 3.5rem);
   --max: 90rem;
   --measure: 62ch;
-  --space-section: clamp(4.5rem, 2.5rem + 5.5vw, 8.5rem);
+  --space-section: clamp(3rem, 1.5rem + 5.5vw, 8.5rem);
   --space-block: clamp(2.25rem, 1.5rem + 2vw, 4rem);
   --radius-ui: 999px;
   --radius-field: 10px;
@@ -659,26 +659,36 @@ html.lenis body {
 
 /* ---------- Home (pages/index.astro, scripts/scenes.ts) ---------- */
 /* A website over one living background (LiveBackground.astro): only the opening fills the screen
-   and only the makeover pins; every other section has its natural height and its own layout. */
+   and nothing pins; every other section has its natural height and its own layout. */
 body.home {
   background: transparent;
 }
 .home .scenes > section:not(.scene) {
   box-sizing: border-box;
-  padding-block: clamp(4.5rem, 3rem + 7vh, 8.5rem);
+  /* By width, not height: tall phones made this 100 px+ on each side (Lorenzo: dead space). */
+  padding-block: clamp(2.75rem, 1rem + 5vw, 8rem);
 }
 .home .scenes > section.mk {
   padding: 0;
 }
+/* The header is fixed but has a spacer in the flow (Header.astro): the opening only needs the
+   rest of the first screen, without counting the header twice. */
 .scene {
   position: relative;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: calc(100vh - var(--header-h));
+  min-height: calc(100svh - var(--header-h));
   display: grid;
   align-items: center;
   box-sizing: border-box;
-  padding-block: calc(var(--header-h) + clamp(0.75rem, 3vh, 2.5rem)) clamp(1.25rem, 4vh, 3rem);
+  padding-block: clamp(0.75rem, 3vh, 2.5rem) clamp(1.25rem, 4vh, 3rem);
   overflow-x: clip;
+}
+/* Phones: start right under the header, no centering gap above the title. */
+@media (max-width: 699px) {
+  .scene {
+    align-items: start;
+    padding-top: 1rem;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
   /* Content rises out of a mask (no fade: text keeps its full colour and contrast). */

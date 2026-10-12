@@ -28,7 +28,7 @@ Archivo variable: headings weight 300 at width 125% with negative tracking; UI 5
 Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm run logo` regenerates the paths).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
-- A website, not slides: only the opening fills the screen and only the makeover pins; every other section
+- A website, not slides: only the opening fills the screen and nothing pins; every other section
   has its natural height and its own layout, over one living WebGL background (LiveBackground.astro,
   scripts/live.ts). No exit fades. Content enters with a clip-path mask ([data-in], no opacity: axe measures
   half-faded text). A ResizeObserver refreshes ScrollTrigger when the page height changes.
@@ -43,7 +43,9 @@ Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm 
   The 3D canvas is sized to the phone only and moved with transform (no layout shift).
 - Opening film (scripts/hero.ts): tap on "Chiama ora" rings the Dynamic Island, iOS banners drop in.
   Sound (scripts/sound.ts) only after the visitor presses the speaker button.
-- Makeover (Makeover.astro, scripts/makeover.ts): pinned, scrubbed. A scan runs down the old non-responsive
+- Makeover (Makeover.astro, scripts/makeover.ts): a video, not scroll-driven (Lorenzo: the visitor must keep
+  the choice). It plays by itself when the phone is in view, pauses when it leaves, has play/pause/replay and a
+  clickable progress bar; no pin. A scan runs down the old non-responsive
   site and boxes its five problems in one pass (numbered red boxes on the screen, labels beside the phone on
   wide screens), the phone lifts and turns 360 degrees (back and cameras visible), the site is swapped while
   it faces away (the new site is painted under the old one by opacity, so nothing decodes mid-turn), then each
@@ -73,7 +75,7 @@ Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm 
 - Inner pages (PageHead.astro): text on the left, the page's own picture on the right (slot "visual",
   components/visual/*): thermal-printer receipt on Prezzi, WhatsApp chat on Come funziona, "Siti per [sector] che lavorano bene"
   rolling pill and a camera shot (all sharp, flash, only the middle stays sharp) on Lo studio, contact card on
-  Contatti, phone fan on Lavori and sector pages, rotating seal on La garanzia.
+  Contatti, phone fan on Lavori and sector pages, a huge "0 €" on La garanzia (no circles, no emoji-prone glyphs like ✳: iPhone draws them as emoji).
   Entrances are CSS (play at first paint, no opacity on text: axe measures mid-animation); hover/scroll parts
   are scripts/inner.ts. Never leave a half-empty row: Lorenzo checks for dead space first.
 - Colour play: a section with [data-tone="sole|pesca"] floods the whole page with its colour while it holds

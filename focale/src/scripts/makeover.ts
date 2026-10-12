@@ -1,11 +1,11 @@
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { spring } from "./spring";
 
-gsap.registerPlugin(ScrollTrigger);
 
 /**
- * The makeover film, scrubbed by the scroll (the section pins; scrolling plays it forward or back):
+ * The makeover film. It plays by itself like a video (no pinning, the scroll stays free) the first
+ * time the phone is well in view, pauses when it leaves, and has its own controls: play/pause,
+ * replay at the end, and a progress bar you can click to jump.
  * 1. the diagnosis: a band of light runs down the old site and boxes its five problems as it
  *    passes them, each with a numbered label beside the phone;
  * 2. the phone lifts and turns all the way round (back and cameras); facing away, the old site is
@@ -77,21 +77,19 @@ export function initMakeover() {
       : Math.max(-60, s.x - gap - tags[i].offsetWidth);
   };
 
+  const playBtn = q<HTMLButtonElement>("[data-mk-play]");
+  const playLabel = q("[data-mk-play-label]");
+  const bar = q("[data-mk-bar]");
+  const barFill = q("[data-mk-fill]");
   const tl = gsap.timeline({
+    paused: true,
     defaults: { ease: "power2.inOut" },
-    scrollTrigger: {
-      trigger: root,
-      start: "top top",
-      end: () => `+=${window.innerHeight * 3}`,
-      pin: q("[data-mk-pin]"),
-      scrub: 1,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        const p = self.progress;
-        setStep(p < 0.06 ? 0 : p < 0.34 ? 1 : p < 0.72 ? 2 : p < 0.88 ? 3 : 4);
-      },
+    onUpdate: () => {
+      const p = tl.progress();
+      setStep(p < 0.06 ? 0 : p < 0.34 ? 1 : p < 0.72 ? 2 : p < 0.88 ? 3 : 4);
+      barFill.style.transform = `scaleX(${p})`;
     },
+    onComplete: () => setState("ended"),
   });
 
   // 1. The diagnosis, in one pass.
@@ -147,9 +145,60 @@ export function initMakeover() {
     tl.to(fa, { opacity: 0, scale: 1.5, duration: 0.03 }, 0.93);
   }
   tl.to({}, { duration: 0.04 }, 0.96);
-  // This pin adds three screens of scroll: every trigger below it must be measured again.
-  ScrollTrigger.sort();
-  ScrollTrigger.refresh();
+  // The timeline is laid out on 0..1; this many seconds of film.
+  tl.timeScale(1 / 14);
+
+  // Controls.
+  type State = "playing" | "paused" | "ended";
+  const labels: Record<State, string> = { playing: "Pausa", paused: "Riproduci", ended: "Guarda di nuovo" };
+  function setState(st: State) {
+    root.dataset.mkState = st;
+    playLabel.textContent = labels[st];
+    playBtn.setAttribute("aria-label", `${labels[st]} il prima e dopo`);
+  }
+  const play = () => {
+    if (tl.progress() >= 1) tl.restart();
+    else tl.play();
+    setState("playing");
+  };
+  const pause = () => {
+    tl.pause();
+    setState("paused");
+  };
+  playBtn.hidden = false;
+  bar.hidden = false;
+  setState("paused");
+  let chose = false;
+  playBtn.addEventListener("click", () => {
+    chose = true;
+    if (root.dataset.mkState === "playing") pause();
+    else play();
+  });
+  bar.addEventListener("click", (e) => {
+    chose = true;
+    const r = bar.getBoundingClientRect();
+    tl.progress(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
+    if (root.dataset.mkState === "ended" && tl.progress() < 1) setState("paused");
+  });
+  // Starts by itself the first time the phone is well in view; pauses when it leaves (unless the
+  // visitor already took control: then it waits for them).
+  new IntersectionObserver(
+    ([e]) => {
+      if (e.isIntersecting && !chose && root.dataset.mkState === "paused") play();
+      else if (!e.isIntersecting && root.dataset.mkState === "playing") pause();
+    },
+    { threshold: 0.6 },
+  ).observe(stage);
+  // Positions are measured on layout boxes: measure again when the layout changes.
+  let rt = 0;
+  addEventListener("resize", () => {
+    clearTimeout(rt);
+    rt = window.setTimeout(() => {
+      const p = tl.progress();
+      tl.invalidate();
+      tl.progress(p);
+    }, 200);
+  });
 }
 
 function offsetIn(el: HTMLElement, ancestor: HTMLElement) {

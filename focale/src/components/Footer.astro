@@ -73,7 +73,7 @@ const year = new Date().getFullYear();
   }
   .ftr__top {
     display: grid;
-    gap: 4rem;
+    gap: 2rem;
   }
   @media (min-width: 1000px) {
     .ftr__top {
@@ -97,6 +97,16 @@ const year = new Date().getFullYear();
     display: grid;
     gap: 2.5rem 2rem;
     grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+  /* Phones: two columns of links, not one long list with gaps between groups. */
+  @media (max-width: 599px) {
+    .ftr__cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.75rem 1rem;
+    }
+    .ftr__where {
+      margin-bottom: 0.5rem !important;
+    }
   }
   .ftr h2 {
     font-size: var(--fs-micro);

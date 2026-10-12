@@ -1,8 +1,8 @@
 ---
 /**
  * The makeover, filmed like the opening: one iPhone with a real-looking old website (a desktop
- * layout squeezed onto a phone, as non-responsive sites really look). Scrolling plays it like a
- * video: a scan finds the five problems in one pass (numbered boxes on the screen, labels beside
+ * layout squeezed onto a phone, as non-responsive sites really look). It plays by itself like a
+ * video, with play/pause, replay and a progress bar (the page never pins): a scan finds the five problems in one pass (numbered boxes on the screen, labels beside
  * the phone), the phone turns around in 3D and comes back with the new site, then each label turns
  * green on the part of the new site that fixes it, and a tap calls.
  * Without JS or with reduced motion: the finished site and the steps as a list.
@@ -44,6 +44,13 @@ const fixes = [
             ))
           }
         </ol>
+        <div class="mk__ctl">
+          <button type="button" class="mk__play" data-mk-play hidden>
+            <span class="mk__icon" aria-hidden="true"></span>
+            <span data-mk-play-label>Riproduci</span>
+          </button>
+          <span class="mk__bar" data-mk-bar aria-hidden="true" hidden><span data-mk-fill></span></span>
+        </div>
         <a class="textlink mk__more" href="/lavori/">I tre siti completi</a>
       </div>
 
@@ -86,7 +93,7 @@ const fixes = [
               <li class:list={["mk__tag", i % 2 ? "mk__tag--r" : "mk__tag--l"]} data-mk-tag={i}>
                 <span class="mk__dot">
                   <span class="mk__dot-bad">{i + 1}</span>
-                  <span class="mk__dot-good">✓</span>
+                  <span class="mk__dot-good"><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2 6.4 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
                 </span>
                 <span class="mk__tx">
                   <span class="mk__bad">{f.bad}</span>
@@ -106,12 +113,90 @@ const fixes = [
     overflow-x: clip;
   }
   .mk__pin {
-    min-height: 100vh;
-    min-height: 100svh;
-    display: grid;
+    padding-block: clamp(3rem, 2rem + 4vw, 6rem);
+  }
+  /* Video controls: play/pause (replay at the end) and a progress bar you can click to jump. */
+  .mk__ctl {
+    display: flex;
     align-items: center;
-    box-sizing: border-box;
-    padding-block: calc(var(--header-h) + 1.5rem) 2rem;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .mk__play {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    padding: 0 1.1rem 0 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--inchiostro);
+    background: var(--carta);
+    color: var(--inchiostro);
+    font: inherit;
+    font-weight: 500;
+    font-size: var(--fs-small);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .mk__play:hover {
+    background: var(--inchiostro);
+    color: var(--carta);
+  }
+  .mk__play[hidden],
+  .mk__bar[hidden] {
+    display: none;
+  }
+  .mk__icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--mandarino);
+    position: relative;
+    flex: none;
+  }
+  /* Play triangle by default, two bars while playing, a circular arrow at the end. */
+  .mk__icon::before {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 9px;
+    border-left: 10px solid var(--inchiostro);
+    border-block: 6px solid transparent;
+  }
+  :global([data-mk-state="playing"]) .mk__icon::before {
+    left: 10px;
+    top: 9px;
+    width: 4px;
+    height: 12px;
+    border: 0;
+    border-inline: 3px solid var(--inchiostro);
+    box-sizing: content-box;
+  }
+  :global([data-mk-state="ended"]) .mk__icon::before {
+    left: 8px;
+    top: 8px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--inchiostro);
+    border-right-color: transparent;
+    border-radius: 50%;
+  }
+  .mk__bar {
+    flex: 1;
+    max-width: 16rem;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(36, 19, 12, 0.14);
+    overflow: hidden;
+    cursor: pointer;
+    padding-block: 0;
+  }
+  .mk__bar span {
+    display: block;
+    height: 100%;
+    background: var(--mandarino);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
   }
   .mk__in {
     display: grid;
@@ -182,8 +267,8 @@ const fixes = [
     .mk__in {
       gap: 1rem;
     }
-    .mk__pin {
-      padding-bottom: calc(var(--sticky-h) + 1rem);
+    .mk__ctl {
+      margin-top: 0.75rem;
     }
   }
 
