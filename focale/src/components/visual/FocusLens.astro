@@ -1,9 +1,10 @@
 ---
 /**
- * "Focus vuol dire mettere a fuoco", shown: a viewfinder. Inside, sharp, the three things a
- * visitor looks for; around it, going soft and drifting away with the scroll, everything else
- * old sites are full of. Decorative (the paragraph next to it says the same): hidden from
- * screen readers. scripts/inner.ts scrubs it; static without JS or with reduced motion.
+ * "Focus vuol dire mettere a fuoco", shown as a photo being taken. At first everything is sharp:
+ * the three things a visitor looks for in the middle, and all the clutter old sites are full of
+ * around them. The focus hunts, the shutter fires (flash), and from then on only the middle is
+ * sharp. Decorative (the paragraph next to it says the same): hidden from screen readers.
+ * scripts/inner.ts sets .is-hunting then .is-shot; static and all sharp with reduced motion.
  */
 const keep = ["Chi sei", "Cosa fai", "Come contattarti"];
 // Positions round the viewfinder, in the corners and on the sides (never over it).
@@ -20,7 +21,7 @@ const noise = [
   {
     noise.map((n) => (
       <span class="fl__noise" style={n.pos} data-lens-noise>
-        {n.t}
+        <span class="fl__chip">{n.t}</span>
       </span>
     ))
   }
@@ -33,6 +34,7 @@ const noise = [
       {keep.map((k) => <li>{k}</li>)}
     </ul>
   </div>
+  <span class="fl__flash"></span>
 </div>
 <style>
   .fl {
@@ -47,12 +49,118 @@ const noise = [
     white-space: nowrap;
     font-size: var(--fs-small);
     font-weight: 500;
+  }
+  .fl__chip {
+    display: block;
     padding: 0.35rem 0.75rem;
     border-radius: 999px;
-    border: 1px dashed rgba(36, 19, 12, 0.35);
+    border: 1px dashed rgba(36, 19, 12, 0.4);
+    background: rgba(255, 248, 242, 0.55);
     color: #4a2a1c;
-    filter: blur(1.5px);
-    opacity: 0.7;
+    transition:
+      filter 0.25s ease,
+      color 0.25s ease;
+  }
+  .fl__keep {
+    transition: filter 0.2s ease;
+  }
+  .fl__flash {
+    position: absolute;
+    inset: -8%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, #fff, rgba(255, 255, 255, 0.85) 60%, rgba(255, 255, 255, 0));
+    opacity: 0;
+    pointer-events: none;
+    z-index: 3;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    /* The clutter floats about the whole time. */
+    .fl__chip {
+      animation: fl-float 6s ease-in-out infinite alternate;
+    }
+    .fl__noise:nth-child(2) .fl__chip {
+      animation-duration: 7s;
+      animation-delay: -2s;
+    }
+    .fl__noise:nth-child(3) .fl__chip {
+      animation-duration: 5.4s;
+      animation-delay: -1s;
+    }
+    .fl__noise:nth-child(4) .fl__chip {
+      animation-duration: 6.6s;
+      animation-delay: -3s;
+    }
+    .fl__noise:nth-child(5) .fl__chip {
+      animation-duration: 5.8s;
+      animation-delay: -4s;
+    }
+    .fl__noise:nth-child(6) .fl__chip {
+      animation-duration: 7.4s;
+      animation-delay: -2.5s;
+    }
+    /* 1. Hunting: the brackets breathe, the middle slips in and out of focus. */
+    .fl.is-hunting .fl__c {
+      animation: fl-breathe 0.55s ease-in-out infinite alternate;
+    }
+    .fl.is-hunting .fl__keep {
+      animation: fl-hunt 0.85s ease-in-out infinite;
+    }
+    /* 2. Shot: flash, the brackets lock, everything but the middle falls out of focus. */
+    .fl.is-shot .fl__flash {
+      animation: fl-flash 0.6s ease-out;
+    }
+    .fl.is-shot .fl__view {
+      animation: fl-click 0.35s ease-out;
+    }
+    .fl.is-shot .fl__c {
+      border-color: var(--inchiostro);
+      transition: border-color 0.2s;
+    }
+    .fl.is-shot .fl__chip {
+      filter: blur(4px);
+      color: #8c6656;
+      transition:
+        filter 0.5s ease 0.15s,
+        color 0.5s ease 0.15s;
+    }
+  }
+  @keyframes fl-float {
+    from {
+      transform: translate(-6px, -5px) rotate(-2deg);
+    }
+    to {
+      transform: translate(6px, 5px) rotate(2deg);
+    }
+  }
+  @keyframes fl-breathe {
+    to {
+      transform: scale(1.18);
+    }
+  }
+  @keyframes fl-hunt {
+    0%,
+    100% {
+      filter: blur(0px);
+    }
+    50% {
+      filter: blur(3px);
+    }
+  }
+  @keyframes fl-flash {
+    0% {
+      opacity: 0;
+    }
+    12% {
+      opacity: 0.95;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes fl-click {
+    40% {
+      transform: scale(0.96);
+    }
   }
   .fl__view {
     position: relative;

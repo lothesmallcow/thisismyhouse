@@ -71,8 +71,9 @@ Logo: lowercase "focus" (500) + "design" (300) in Archivo wide, no symbol (`npm 
   100lvh and pauses while scrolling on touch, the 3D phone draws at 1x while moving. Animate transform, never
   left/top (layout shift).
 - Inner pages (PageHead.astro): text on the left, the page's own picture on the right (slot "visual",
-  components/visual/*): receipt on Prezzi, WhatsApp chat on Come funziona, sector focus list and viewfinder
-  on Lo studio, contact card on Contatti, phone fan on Lavori and sector pages, rotating seal on La garanzia.
+  components/visual/*): thermal-printer receipt on Prezzi, WhatsApp chat on Come funziona, "Siti per [sector] che lavorano bene"
+  rolling pill and a camera shot (all sharp, flash, only the middle stays sharp) on Lo studio, contact card on
+  Contatti, phone fan on Lavori and sector pages (each phone links to its project), rotating seal on La garanzia.
   Entrances are CSS (play at first paint, no opacity on text: axe measures mid-animation); hover/scroll parts
   are scripts/inner.ts. Never leave a half-empty row: Lorenzo checks for dead space first.
 - Colour play: a section with [data-tone="sole|pesca"] floods the whole page with its colour while it holds

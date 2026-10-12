@@ -1,8 +1,9 @@
 ---
 /**
- * Prezzi: the Professionale package written out as a receipt (deposit, balance, nothing hidden).
- * Every figure comes from config. It prints out of the slot at first paint (CSS, no script needed);
- * with reduced motion it is simply there.
+ * Prezzi: the Professionale package printed by a little thermal printer: deposit, balance,
+ * nothing hidden, a barcode and a "Prezzo finale" stamp. Every figure comes from config.
+ * Pure CSS: it prints at first paint (step by step, like thermal paper), then hangs and sways.
+ * With reduced motion it is simply there.
  */
 import { site } from "../../config/site";
 import { euro, foundersOpen } from "../../lib/util";
@@ -18,26 +19,34 @@ const rows: [string, number][] = [
 ];
 ---
 <figure class="rc" data-receipt>
-  <div class="rc__slot" aria-hidden="true"></div>
+  <div class="rc__printer" aria-hidden="true">
+    <span class="rc__led"></span>
+    <span class="rc__name"><b>focus</b> design</span>
+    <span class="rc__mouth"></span>
+  </div>
   <div class="rc__clip">
-    <div class="rc__paper" data-rc-paper>
-      <p class="rc__brand"><span>focus</span> design</p>
-      <p class="rc__plan" data-rc-line>Pacchetto {plan.name}</p>
-      <dl class="rc__rows">
-        {
-          rows.map(([k, v]) => (
-            <div data-rc-line>
-              <dt>{k}</dt>
-              <dd data-rc-n={v}>{euro(v)}</dd>
-            </div>
-          ))
-        }
-      </dl>
-      <p class="rc__total" data-rc-line>
-        <span>Totale</span>
-        <span data-rc-n={total}>{euro(total)}</span>
-      </p>
-      <p class="rc__stamp" data-rc-stamp>Prezzo finale</p>
+    <div class="rc__paper">
+      <div class="rc__sheet">
+        <p class="rc__head" data-rc-line>Esempio di preventivo</p>
+        <p class="rc__plan" data-rc-line>Pacchetto {plan.name}</p>
+        <dl class="rc__rows">
+          {
+            rows.map(([k, v]) => (
+              <div data-rc-line>
+                <dt>{k}</dt>
+                <dd>{euro(v)}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p class="rc__total" data-rc-line>
+          <span>Totale</span>
+          <span>{euro(total)}</span>
+        </p>
+        <p class="rc__note" data-rc-line>Il prezzo resta questo. Niente da aggiungere dopo.</p>
+        <span class="rc__bars" aria-hidden="true" data-rc-line></span>
+        <p class="rc__stamp">Prezzo finale</p>
+      </div>
     </div>
   </div>
   <figcaption class="small muted rc__cap">Esempio con il pacchetto {plan.name}{foundersOpen() ? ", prezzo fondatori" : ""}.</figcaption>
@@ -45,61 +54,94 @@ const rows: [string, number][] = [
 <style>
   .rc {
     margin: 0;
-    width: min(100%, 27rem);
+    width: min(100%, 26rem);
     display: grid;
     justify-items: center;
   }
-  .rc__slot {
-    width: 108%;
-    height: 14px;
-    border-radius: 999px;
-    background: var(--mandarino);
-    box-shadow: inset 0 -5px 0 rgba(36, 19, 12, 0.35);
+  /* The printer: an orange block with a status light and the paper mouth underneath. */
+  .rc__printer {
     position: relative;
     z-index: 2;
+    width: 100%;
+    height: 4.25rem;
+    border-radius: 22px 22px 14px 14px;
+    background: var(--mandarino);
+    box-shadow:
+      inset 0 -10px 0 rgba(36, 19, 12, 0.14),
+      0 24px 40px -24px rgba(60, 25, 8, 0.55);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0 1.25rem 0.5rem;
+    box-sizing: border-box;
+  }
+  .rc__led {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #2a1d17;
+    box-shadow: 0 0 0 3px rgba(36, 19, 12, 0.12);
+  }
+  .rc__name {
+    font-size: 0.95rem;
+    font-weight: 300;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    color: var(--inchiostro);
+  }
+  .rc__name b {
+    font-weight: 500;
+  }
+  .rc__mouth {
+    position: absolute;
+    left: 7%;
+    right: 7%;
+    bottom: 9px;
+    height: 6px;
+    border-radius: 999px;
+    background: #2a1d17;
   }
   .rc__clip {
-    width: 100%;
-    margin-top: -7px;
-    padding: 0 6% 2.5rem;
+    width: 86%;
+    margin-top: -12px;
+    padding: 0 3% 3rem;
     overflow: hidden;
   }
   .rc__paper {
+    transform-origin: 50% 0;
+  }
+  .rc__sheet {
     position: relative;
-    background: #fff;
+    background: linear-gradient(#f3eee8, #fff 28px);
     color: var(--inchiostro);
-    padding: 2rem 1.6rem 2.6rem;
+    padding: 1.75rem 1.5rem 2.6rem;
     font-variant-numeric: tabular-nums;
-    box-shadow: 0 30px 50px -30px rgba(60, 25, 8, 0.45);
+    filter: drop-shadow(0 22px 26px rgba(60, 25, 8, 0.28));
     transform-origin: 50% 0;
     /* Torn bottom edge. */
-    --tooth: 14px;
+    --tooth: 12px;
     mask:
       linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat,
       conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--tooth) * 2) var(--tooth) repeat-x;
   }
-  .rc__brand {
-    font-size: 1.05rem;
-    font-weight: 300;
-    font-stretch: 125%;
-    letter-spacing: -0.02em;
-    padding-bottom: 1rem;
+  .rc__head {
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    color: var(--grafite);
+    padding-bottom: 0.9rem;
     border-bottom: 1px dashed #d8c2b2;
   }
-  .rc__brand span {
-    font-weight: 500;
-  }
   .rc__plan {
-    margin-top: 1rem;
+    margin-top: 0.9rem !important;
     font-weight: 500;
     font-stretch: 112%;
     font-size: 1.25rem;
     letter-spacing: -0.015em;
   }
   .rc__rows {
-    margin: 1rem 0 0;
+    margin: 0.9rem 0 0;
     display: grid;
-    gap: 0.7rem;
+    gap: 0.6rem;
     font-size: var(--fs-small);
   }
   .rc__rows div {
@@ -113,29 +155,51 @@ const rows: [string, number][] = [
     white-space: nowrap;
   }
   .rc__total {
-    margin-top: 1.25rem;
-    padding-top: 1rem;
+    margin-top: 1.1rem !important;
+    padding-top: 0.9rem;
     border-top: 1px dashed #d8c2b2;
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     font-weight: 300;
     font-stretch: 125%;
-    letter-spacing: -0.04em;
-    font-size: clamp(2rem, 1.5rem + 1.5vw, 2.6rem);
+    letter-spacing: -0.045em;
+    font-size: clamp(2.2rem, 1.6rem + 1.8vw, 3rem);
     line-height: 1;
   }
   .rc__total span:first-child {
-    font-size: 0.45em;
+    font-size: 0.4em;
     font-weight: 500;
     font-stretch: 100%;
     letter-spacing: 0;
   }
+  .rc__note {
+    margin-top: 1rem !important;
+    font-size: var(--fs-micro);
+    color: var(--grafite);
+  }
+  .rc__bars {
+    display: block;
+    margin-top: 1rem;
+    height: 34px;
+    background: repeating-linear-gradient(
+      90deg,
+      #24130c 0 2px,
+      transparent 2px 4px,
+      #24130c 4px 5px,
+      transparent 5px 8px,
+      #24130c 8px 11px,
+      transparent 11px 12px,
+      #24130c 12px 13px,
+      transparent 13px 16px
+    );
+    opacity: 0.85;
+  }
   .rc__stamp {
     position: absolute;
-    right: 1rem;
-    top: 1.3rem;
-    transform: rotate(-12deg);
+    right: 0.9rem;
+    top: 0.9rem;
+    transform: rotate(-8deg);
     border: 2px solid #b8400f;
     color: #b8400f;
     border-radius: 8px;
@@ -146,32 +210,49 @@ const rows: [string, number][] = [
     background: #fff;
   }
   .rc__cap {
-    margin-top: -1rem;
+    margin-top: -1.5rem;
   }
   @media (prefers-reduced-motion: no-preference) {
+    /* Thermal printing: the paper comes out in small steps while the light blinks green. */
     .rc__paper {
-      animation: rc-print 1.5s steps(12) 0.3s backwards;
+      animation: rc-print 2.2s steps(18) 0.3s backwards;
+    }
+    .rc__led {
+      animation: rc-led 0.18s steps(2) 0.3s 12;
     }
     [data-rc-line] {
-      animation: rc-line 0.25s ease backwards;
+      animation: rc-line 0.3s ease backwards;
+    }
+    .rc__head {
+      animation-delay: 0.5s;
     }
     .rc__plan {
-      animation-delay: 0.7s;
+      animation-delay: 0.75s;
     }
     .rc__rows div:nth-child(1) {
-      animation-delay: 0.95s;
+      animation-delay: 1s;
     }
     .rc__rows div:nth-child(2) {
-      animation-delay: 1.2s;
+      animation-delay: 1.25s;
     }
     .rc__rows div:nth-child(3) {
-      animation-delay: 1.45s;
+      animation-delay: 1.5s;
     }
     .rc__total {
-      animation-delay: 1.7s;
+      animation-delay: 1.8s;
+    }
+    .rc__note {
+      animation-delay: 2.05s;
+    }
+    .rc__bars {
+      animation-delay: 2.25s;
     }
     .rc__stamp {
-      animation: rc-stamp 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) 2.1s backwards;
+      animation: rc-stamp 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) 2.7s backwards;
+    }
+    /* Then it hangs from the printer and sways a little. */
+    .rc__sheet {
+      animation: rc-swing 3.2s ease-in-out 2.6s infinite alternate;
     }
   }
   @keyframes rc-print {
@@ -179,7 +260,12 @@ const rows: [string, number][] = [
       transform: translateY(-100%);
     }
   }
-  /* Lines appear as if typed by the printer: wiped in, never transparent. */
+  @keyframes rc-led {
+    to {
+      background: #3ccf6e;
+    }
+  }
+  /* Lines appear as if burnt in by the print head: wiped in, never transparent. */
   @keyframes rc-line {
     from {
       clip-path: inset(0 100% 0 0);
@@ -189,6 +275,14 @@ const rows: [string, number][] = [
     from {
       transform: rotate(-40deg) scale(2.4);
       opacity: 0;
+    }
+  }
+  @keyframes rc-swing {
+    from {
+      transform: rotate(-1.4deg);
+    }
+    to {
+      transform: rotate(1.4deg);
     }
   }
 </style>

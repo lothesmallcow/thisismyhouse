@@ -10,16 +10,14 @@ gsap.registerPlugin(ScrollTrigger);
  *
  *   [data-tone="sole|pesca"]  while this section fills the middle of the screen the whole page takes
  *                             its colour (the section itself goes transparent), a slow flood
- *   [data-receipt]            Prezzi receipt sways with the mouse (it prints itself in CSS)
- *   [data-sector-focus]       Lo studio: focus moves from sector to sector
- *   [data-lens]               Il nome: the noise around the viewfinder blurs and drifts away on scroll
+ *   [data-sector-focus]       Lo studio: the sector rolls inside the orange pill
+ *   [data-lens]               Il nome: a photo is taken, then only the middle stays sharp
  *   [data-fan]                the mouse spreads the fanned phone screens (they deal in with CSS)
  *   [data-float="n"]          floats n% against the scroll (closing screens)
  */
 export function initInner() {
   if (!window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
   tones();
-  receipt();
   sectorFocus();
   lens();
   fan();
@@ -44,68 +42,81 @@ function tones() {
   });
 }
 
-function receipt() {
-  // The print-out itself is CSS (Receipt.astro: it plays at first paint, before any script).
-  // Here only a gentle sway with the mouse.
-  const root = document.querySelector<HTMLElement>("[data-receipt]");
-  if (!root || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-  const paper = root.querySelector<HTMLElement>("[data-rc-paper]")!;
-  const rot = gsap.quickTo(paper, "rotation", { duration: 0.8, ease: "power3.out" });
-  root.addEventListener("pointermove", (e) => {
-    const r = root.getBoundingClientRect();
-    rot(((e.clientX - r.left) / r.width - 0.5) * 6);
-  });
-  root.addEventListener("pointerleave", () => rot(0));
-}
-
 function sectorFocus() {
   const root = document.querySelector<HTMLElement>("[data-sector-focus]");
   if (!root) return;
-  const items = Array.from(root.querySelectorAll<HTMLElement>("li"));
-  const ring = root.querySelector<HTMLElement>(".sf__ring");
+  const pill = root.querySelector<HTMLElement>("[data-sk-pill]")!;
+  const words = Array.from(root.querySelectorAll<HTMLElement>("[data-sk-word]"));
+  const ticks = Array.from(root.querySelectorAll<HTMLElement>(".sk__ticks i"));
   root.classList.add("is-live");
   let i = 0;
-  const show = () => {
-    items.forEach((it, j) => it.classList.toggle("is-on", j === i));
-    const it = items[i];
-    if (ring) {
-      ring.style.height = `${it.offsetHeight + 14}px`;
-      ring.style.transform = `translateY(${it.offsetTop - 7}px)`;
-    }
+  const fit = () => {
+    const pad = parseFloat(getComputedStyle(pill).paddingLeft);
+    pill.style.width = `${words[i].scrollWidth + pad * 2}px`;
   };
-  show();
-  let timer = window.setInterval(() => {
-    i = (i + 1) % items.length;
-    show();
-  }, 1700);
-  // Only while it is on screen.
-  new IntersectionObserver(([e]) => {
+  const show = (next: number) => {
+    const prev = i;
+    i = next;
+    words.forEach((w, j) => {
+      w.classList.toggle("is-on", j === i);
+      w.classList.toggle("is-out", j === prev && prev !== i);
+    });
+    ticks.forEach((t, j) => t.classList.toggle("is-on", j === i));
+    fit();
+    // The word that left upwards goes back below without being seen.
+    window.setTimeout(() => {
+      const w = words[prev];
+      if (prev === i) return;
+      w.style.transition = "none";
+      w.classList.remove("is-out");
+      void w.offsetWidth;
+      w.style.transition = "";
+    }, 750);
+  };
+  show(0);
+  let timer = 0;
+  const run = (on: boolean) => {
     clearInterval(timer);
-    if (e.isIntersecting)
-      timer = window.setInterval(() => {
-        i = (i + 1) % items.length;
-        show();
-      }, 1700);
-  }).observe(root);
-  addEventListener("resize", show);
+    if (on) timer = window.setInterval(() => show((i + 1) % words.length), 1900);
+  };
+  // Only while it is on screen.
+  new IntersectionObserver(([e]) => run(e.isIntersecting)).observe(root);
+  addEventListener("resize", fit);
+  document.fonts?.ready.then(fit);
 }
 
+/**
+ * Il nome, as a photo being taken: at first everything on the screen is sharp (all the clutter of
+ * an old site), the focus hunts for the middle, then the shutter fires (flash) and from that
+ * moment only the middle is sharp, the rest falls out of focus. It shoots again each time the
+ * viewfinder comes back into view.
+ */
 function lens() {
   const root = document.querySelector<HTMLElement>("[data-lens]");
   if (!root) return;
-  const noise = Array.from(root.querySelectorAll<HTMLElement>("[data-lens-noise]"));
-  const keep = root.querySelector<HTMLElement>("[data-lens-keep]");
-  const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top 85%", end: "bottom 35%", scrub: 0.6 } });
-  noise.forEach((n) => {
-    const left = n.style.left !== "";
-    tl.fromTo(
-      n,
-      { x: 0, y: 0, filter: "blur(0px)", opacity: 0.9 },
-      { x: left ? -40 : 40, y: n.style.bottom ? 24 : parseFloat(n.style.top) < 30 ? -24 : 0, filter: "blur(5px)", opacity: 0.55, ease: "none" },
-      0,
-    );
-  });
-  if (keep) tl.fromTo(keep, { filter: "blur(8px)", scale: 0.9 }, { filter: "blur(0px)", scale: 1, ease: "power2.out", duration: 0.5 }, 0);
+  let timers: number[] = [];
+  const shoot = () => {
+    timers.forEach(clearTimeout);
+    root.classList.remove("is-shot");
+    root.classList.add("is-hunting");
+    timers = [
+      window.setTimeout(() => {
+        root.classList.remove("is-hunting");
+        root.classList.add("is-shot");
+      }, 1700),
+    ];
+  };
+  new IntersectionObserver(
+    ([e]) => {
+      if (e.isIntersecting) shoot();
+      else {
+        timers.forEach(clearTimeout);
+        root.classList.remove("is-shot", "is-hunting");
+      }
+    },
+    { threshold: 0.6 },
+  ).observe(root);
+  root.classList.add("is-live");
 }
 
 function fan() {
