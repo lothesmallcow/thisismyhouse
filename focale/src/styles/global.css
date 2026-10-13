@@ -80,15 +80,14 @@
 
   /* Type scale: light and wide for display, regular width for reading. */
   /* Type scale (reports/Layout e call to action.md, typography table). */
-  --fs-mega: clamp(2.125rem, 1.25rem + 3.6vw, 4.5rem);
-  /* Phones: 34 px at the smallest, like iOS large titles (more words per line, fewer breaks). */
-  --fs-display: clamp(2.125rem, 1.25rem + 3.6vw, 4.5rem);
+  --fs-mega: clamp(2.375rem, 1.6rem + 3.6vw, 4.5rem);
+  --fs-display: clamp(2.375rem, 1.6rem + 3.6vw, 4.5rem);
   --fs-h2: clamp(1.75rem, 1.2rem + 2.2vw, 3rem);
   --fs-h3: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
   --fs-lead: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem);
   --fs-body: clamp(1.0625rem, 1.03rem + 0.15vw, 1.125rem);
   --fs-small: 0.9375rem;
-  --fs-micro: 0.875rem;
+  --fs-micro: 0.8125rem;
 
   --step--1: var(--fs-small);
   --step-0: var(--fs-body);
@@ -109,6 +108,16 @@
   --header-h: 4.5rem;
   --sticky-h: 0px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Phones only (computers stay exactly as designed): titles at about 34 px like iOS large titles, so more
+   words fit per line; small labels at 14 px. */
+@media (max-width: 599px) {
+  :root {
+    --fs-mega: clamp(2.125rem, 1.25rem + 3.6vw, 4.5rem);
+    --fs-display: clamp(2.125rem, 1.25rem + 3.6vw, 4.5rem);
+    --fs-micro: 0.875rem;
+  }
 }
 
 /* ---------- Base ---------- */
@@ -139,7 +148,7 @@ body.menu-open {
 /* Phones and tablets (from reports/Sito desktop su iPhone e mobile.md):
    - hover styles live under (hover: hover) and (pointer: fine): on touch a tap would leave them stuck;
    - touch gets its own quick feedback instead: a press that dips a little, no grey tap flash;
-   - no double-tap zoom delay on controls; no faux bold if a weight is missing. */
+   - no double-tap zoom delay on controls; no faux bold if a weight is missing (italic synthesis kept). */
 :root {
   color-scheme: light only;
 }
@@ -154,7 +163,7 @@ textarea {
   touch-action: manipulation;
 }
 body {
-  font-synthesis: none;
+  font-synthesis-weight: none;
 }
 @media (hover: none), (pointer: coarse) {
   .btn,

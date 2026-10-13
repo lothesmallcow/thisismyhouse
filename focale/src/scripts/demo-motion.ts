@@ -121,6 +121,8 @@ function splits() {
       mask: "lines",
       autoSplit: true,
       onSplit: (self) => {
+        // Room for descenders under each masked line (tight line-heights clip g, p, q).
+        gsap.set(self.masks, { paddingBottom: "0.16em", marginBottom: "-0.16em" });
         // Only the first split animates in; re-splits (resize, language) just lay the lines out.
         if (!first) return;
         first = false;

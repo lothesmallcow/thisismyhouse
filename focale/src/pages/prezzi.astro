@@ -155,10 +155,15 @@ const service = {
 </Base>
 
 <style>
-  /* Phones: the recommended package first. */
+  /* Phones: the recommended package first; "da" stays readable next to the price. */
   @media (max-width: 899px) {
     .pz__plan--rec {
       order: -1;
+    }
+  }
+  @media (max-width: 599px) {
+    .pz__from {
+      font-size: max(0.4em, 1rem);
     }
   }
   .pz-banner {
@@ -254,7 +259,7 @@ const service = {
     line-height: 1;
   }
   .pz__from {
-    font-size: max(0.4em, 1rem);
+    font-size: 0.4em;
     font-weight: 500;
     font-stretch: 100%;
     letter-spacing: 0;

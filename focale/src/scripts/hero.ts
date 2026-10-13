@@ -37,7 +37,17 @@ export function initHero() {
     // 1. Headline. 0.01 rather than 0 keeps the text counted as painted for LCP.
     if (h1) {
       const split = SplitText.create(h1, { type: "lines", mask: "lines" });
-      gsap.from(split.lines, { yPercent: 110, duration: 1.1, stagger: 0.1, ease: "expo.out", delay: 0.05 });
+      // The masks clip at the line box: with a tight line-height that cuts the descenders (g, p).
+      // Room below each line while it rises, then the split is undone so nothing is masked at rest.
+      gsap.set(split.masks, { paddingBottom: "0.16em", marginBottom: "-0.16em" });
+      gsap.from(split.lines, {
+        yPercent: 110,
+        duration: 1.1,
+        stagger: 0.1,
+        ease: "expo.out",
+        delay: 0.05,
+        onComplete: () => split.revert(),
+      });
     }
     gsap.from(fades, { opacity: 0.01, y: 14, duration: 0.9, stagger: 0.07, ease: "power3.out", delay: 0.35 });
     if (film) initFilm(root, film);
