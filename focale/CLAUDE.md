@@ -50,8 +50,8 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
 - Makeover (Makeover.astro, scripts/makeover.ts): a film like the opening one, not scroll-driven, about 30 s,
   ONE THING AT A TIME (Lorenzo found the all-at-once version confusing). Script in seconds at the top of
   makeover.ts: the old site (a desktop page at 220% scaled down, so it stays in its two-column layout); its five
-  problems one by one (a gentle zoom, 1.25x-1.5x: Lorenzo liked the zoom but 2.4x was too much; a red box
-  lights the problem and dims the rest; a floating label, beside the phone with a dashed line on computers,
+  problems one by one (a lens: only that piece grows in place, 1.3x-1.8x, over its neighbours, nothing else
+  moves; a page-wide zoom hid what it zoomed on and 2.4x was too much; a red box lights it and dims the rest; a floating label, beside the phone with a dashed line on computers,
   over the phone under the box on phones); the phone lifts and turns, the new site is swapped while it faces
   away; the five fixes one by one (green box, label turns green); a tap on "Chiama ora" rings. The `fixes` list
   in Makeover.astro pairs each OldSite piece with its fix in ArcadiHero (`extra={false}`: no promise chips).
@@ -61,7 +61,10 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   hides over .mk__bar. Sound cues are timeline callbacks; one page-wide switch (bindSoundButton). Keep GSAP
   lag smoothing on (smooth.ts): with it off a hitch or a tab switch sent the films straight to their end.
   The section's padding is set in global.css (`.home .scenes > section.mk`): it once was 0 and the phone
-  touched the band's edge. The old site has a tiny phone number in its header (problem 1).
+  touched the band's edge. The old site (demo/OldSite.astro) is NOT a joke site: a decent WordPress-style
+  theme made for computers (top bar with a tiny number, menu, slider, services, small work photos, quote
+  behind "Contatti", news stopped in 2019). Lorenzo: if it looks ridiculous, a prospect says "mine is better";
+  when it looks like theirs, they see the real problem. It fills the whole phone screen.
 - Header (Header.astro): on touch screens it never hides on scroll (hiding glitched on iPhone with momentum
   and rubber-band scrolling); with a mouse it hides after 60 px of steady scrolling down, back after 24 px up.
 - "Calcola una stima del tuo preventivo" (Estimator.astro on /prezzi/#stima, logic in lib/estimate.ts, numbers in
@@ -70,8 +73,12 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   big site); "vuoi aggiungere da solo..." (panel that makes new pages); the key mechanism for the business
   (trades: guided form included, or an automatic indicative price; hospitality: request or link included, or
   booking inside the site; venues: form included, or a visit calendar, plus brochure); languages; photos;
-  extras. Live result: range, working days, breakdown, costs paid to others kept apart, "stima, non
+  extras. ONE QUESTION PER SCREEN ("Domanda N di 7", Indietro/Avanti) and the estimate only at the end, never
+  live (Lorenzo: a price that moves while you answer invites answering for the lowest number); "Rifai le
+  domande" resets. Result: range, working days, breakdown, costs paid to others kept apart, "stima, non
   preventivo". No email, nothing sent or stored. Prices from reports/Stima preventivo siti web.md.
+- Home prices: each package card lists what is included (from lib/plans.ts). Under the packages (home and
+  /prezzi/) PlanHelp.astro: "Nessun pacchetto fa per te?" (estimator) and "Non sai cosa scegliere?" (WhatsApp).
 - Sector chooser (Choose.astro, scripts/paths.ts): radios + CSS :has(), Flip. Each path shows the live demo.
 - Live demos (DemoViewer.astro, scripts/demo-viewer.ts): a real iframe of /lavori/<slug>/demo/, phone frame
   (390 px wide, scaled) on phones, browser window (1280 px, scaled) on computers, a switch between them.

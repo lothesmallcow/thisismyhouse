@@ -10,6 +10,7 @@ import { Image } from "astro:assets";
 import Makeover from "../components/Makeover.astro";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
+import PlanHelp from "../components/PlanHelp.astro";
 import { getCollection } from "astro:content";
 import { site } from "../config/site";
 import { fill, euro, foundersOpen, whatsappHref, telHref } from "../lib/util";
@@ -147,6 +148,15 @@ const steps = [
                   {euro(open ? p.founders : p.standard)}
                 </p>
                 {open && <p class="hs-plan__old">poi {euro(p.standard)}</p>}
+                {p.intro && <p class="hs-plan__intro">{p.intro}</p>}
+                <ul class="hs-plan__feat">
+                  {p.features.map((f) => (
+                    <li>
+                      <Icon name="check" size={16} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
                 <a href={`/anteprima-gratuita?pacchetto=${p.slug}`} class:list={["btn", p.recommended ? "btn--primary" : "btn--secondary", "hs-plan__btn"]}>
                   Anteprima gratuita
                 </a>
@@ -154,8 +164,9 @@ const steps = [
             ))
           }
         </ul>
+        <div data-in><PlanHelp /></div>
         <p class="hs-price__micro" data-in>
-          L'anteprima è gratis. Se ti convince: acconto del {site.depositPercent}%, saldo solo a sito approvato. <a class="link" href="/prezzi/#stima">Calcola una stima del tuo preventivo</a>
+          L'anteprima è gratis. Se ti convince: acconto del {site.depositPercent}%, saldo solo a sito approvato.
         </p>
       </div>
     </section>

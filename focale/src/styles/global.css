@@ -958,12 +958,45 @@ html.lenis body {
   font-size: var(--fs-small);
   color: var(--grafite);
 }
+.hs-plan__intro {
+  margin-top: 1rem !important;
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+.hs-plan__feat {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--filo);
+  display: grid;
+  gap: 0.45rem;
+  font-size: var(--fs-small);
+  line-height: 1.35;
+}
+.hs-plan__intro + .hs-plan__feat {
+  margin-top: 0.4rem;
+  padding-top: 0;
+  border-top: 0;
+}
+.hs-plan__feat li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 0.55rem;
+  align-items: start;
+}
+.hs-plan__feat .icon {
+  margin-top: 0.15rem;
+  color: var(--blu);
+}
+.hs-plan--rec .hs-plan__feat {
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+.hs-plan--rec .hs-plan__feat .icon {
+  color: #8fe0ad;
+}
 .hs-plan__btn {
   margin-top: auto;
   align-self: stretch;
-}
-.hs-plan > :nth-last-child(2) {
-  margin-bottom: 1.25rem;
 }
 .hs-price__micro {
   margin-top: 1.5rem !important;

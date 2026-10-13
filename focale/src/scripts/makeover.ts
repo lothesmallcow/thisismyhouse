@@ -6,8 +6,9 @@ import { bindSoundButton, buzz, whoosh, fixed, ring } from "./sound";
  * The makeover film, played like the opening one: it starts by itself when the phone is well in
  * view (no pinning, the scroll stays free), pauses when it leaves and goes on when it comes back.
  * One thing at a time, slow enough to read (about 30 s):
- * 1. the old site; then its five problems one by one: a gentle zoom (1.25x-1.5x: Lorenzo liked it but
- *    found 2.4x too much), a red box lights the problem, the rest of the
+ * 1. the old site; then its five problems one by one: a lens on that piece only (it grows in place,
+ *    1.3x-1.8x, over its neighbours; the rest of the page does not move: Lorenzo found a zoom of the
+ *    whole page hid what it zoomed on), a red box lights the problem, the rest of the
  *    screen dims, a floating label says what is wrong (beside the phone on computers, with a dashed
  *    line to the box; over the phone, under the box, on phones);
  * 2. the phone lifts and turns all the way round; facing away, the old site becomes the new one;
@@ -37,7 +38,6 @@ export function initMakeover() {
   const stage = q(".mk__stage");
   const screen = q("[data-mk-screen]");
   const oldWrap = q("[data-mk-old]");
-  const zoom = q("[data-mk-zoom]");
   const oldPage = q("[data-mk-oldpage]");
   const newSite = q("[data-mk-new]");
   const fa = q("[data-mk-fa]");
@@ -66,13 +66,12 @@ export function initMakeover() {
     }
   };
   sync(0);
-  gsap.set(zoom, { transformOrigin: "0 0" });
 
   // Where things sit on the screen (px, layout boxes: transforms ignored, so the phone's 3D turn
-  // and the zoom do not matter). The old page is drawn at 220% and scaled down to fit.
+  // and the lens do not matter). The old page is drawn at 220% and scaled down to fit.
   const oldScale = () => (oldPage.offsetWidth ? screen.offsetWidth / oldPage.offsetWidth : 0.4545);
   const oldBox = (i: number) => {
-    const el = oldPage.querySelector<HTMLElement>(`[data-old="${marks[i].dataset.oldPiece}"]`)!;
+    const el = oldPage.querySelector<HTMLElement>(marks[i].dataset.oldPiece!)!;
     const o = offsetIn(el, oldPage);
     const k = oldScale();
     return { x: o.x * k, y: o.y * k, w: el.offsetWidth * k, h: el.offsetHeight * k };
@@ -89,16 +88,28 @@ export function initMakeover() {
     width: () => Math.max(18, box().w + 2 * pad),
     height: () => Math.max(16, box().h + 2 * pad),
   });
-  // The gentle zoom on problem i: 1.25x-1.5x, centred on it as far as the page's edges allow.
-  const zoomTo = (i: number) => {
+  // The lens on problem i: only that piece of the old page grows, in place, kept inside the screen
+  // when it fits (wide pieces such as the header are allowed to crop at the sides).
+  const piece = (i: number) => oldPage.querySelector<HTMLElement>(marks[i].dataset.oldPiece!)!;
+  const lens = (i: number) => {
     const W = screen.offsetWidth;
     const H = screen.offsetHeight;
     const b = oldBox(i);
-    const z = Math.min(1.5, Math.max(1.25, (0.35 * H) / b.h));
-    const clamp = (v: number, min: number) => Math.min(0, Math.max(min, v));
-    const x = clamp(W / 2 - (b.x + b.w / 2) * z, W * (1 - z));
-    const y = clamp(H / 2 - (b.y + b.h / 2) * z, H * (1 - z));
-    return { z, x, y, box: { x: x + b.x * z, y: y + b.y * z, w: b.w * z, h: b.h * z } };
+    const k = oldScale();
+    const z = Math.max(1.3, Math.min(1.8, (0.94 * W) / b.w, (0.4 * H) / b.h));
+    const fit = (c: number, size: number, room: number) => (size * z <= room - 8 ? Math.min(Math.max(c, (size * z) / 2 + 4), room - (size * z) / 2 - 4) : c);
+    const cx = b.x + b.w / 2;
+    const cy = b.y + b.h / 2;
+    const tx = fit(cx, b.w, W);
+    const ty = fit(cy, b.h, H);
+    // The transform origin that scales the box around its centre and lands it on (tx, ty).
+    const ox = (tx - cx * z) / (1 - z);
+    const oy = (ty - cy * z) / (1 - z);
+    return {
+      z,
+      origin: `${(ox - b.x) / k}px ${(oy - b.y) / k}px`,
+      box: { x: tx - (b.w * z) / 2, y: ty - (b.h * z) / 2, w: b.w * z, h: b.h * z },
+    };
   };
 
   // Floating labels. Computers: left of the phone, level with the box, a dashed line reaching it.
@@ -134,8 +145,13 @@ export function initMakeover() {
   marks.forEach((m, i) => {
     const at = P0 + i * PSTEP;
     const t = tags[i];
-    tl.to(zoom, { scale: () => zoomTo(i).z, x: () => zoomTo(i).x, y: () => zoomTo(i).y, duration: 0.7 }, at);
-    tl.set(t, { ...tagAt(i, () => zoomTo(i).box), "--tone": "#d92d20" }, at);
+    const el = piece(i);
+    tl.set(el, { transformOrigin: () => lens(i).origin, zIndex: 5 }, at);
+    tl.to(el, { scale: () => lens(i).z, backgroundColor: "#fffbe6", boxShadow: "0 18px 40px rgba(0, 0, 0, 0.35)", duration: 0.6, ease: "power3.out" }, at);
+    tl.set(m, place(() => lens(i).box), at);
+    tl.set(t, { ...tagAt(i, () => lens(i).box), "--tone": "#d92d20" }, at);
+    tl.to(el, { scale: 1, boxShadow: "0 0 0 rgba(0, 0, 0, 0)", duration: 0.35 }, at + PSTEP - 0.35);
+    tl.set(el, { zIndex: "auto", backgroundColor: "transparent" }, at + PSTEP);
     tl.fromTo(
       m,
       { autoAlpha: 0, scale: 1.25, boxShadow: "0 0 0 2000px rgba(11, 27, 63, 0)" },
@@ -146,8 +162,6 @@ export function initMakeover() {
     cue(buzz, at + 0.2);
     tl.to([m, t], { autoAlpha: 0, duration: 0.25 }, at + PSTEP - 0.3);
   });
-
-  tl.to(zoom, { scale: 1, x: 0, y: 0, duration: 0.6 }, TURN - 0.4);
 
   // 2. The makeover: the phone lifts and turns all the way round (titanium back, cameras);
   //    when it faces away the old site is swapped for the new one, then light crosses the glass.
@@ -167,8 +181,8 @@ export function initMakeover() {
     const t = tags[i];
     const dot = t.querySelector(".mk__tdot")!;
     tl.set(t, { ...tagAt(i, () => newBox(i)), "--tone": "#1f8a4c" }, at);
-    tl.set(t.querySelector(".mk__tbad"), { opacity: 0 }, at);
-    tl.set(t.querySelector(".mk__tgood"), { opacity: 1 }, at);
+    tl.set(t.querySelector(".mk__tbad"), { display: "none" }, at);
+    tl.set(t.querySelector(".mk__tgood"), { display: "block" }, at);
     tl.set(dot, { backgroundColor: "#1f8a4c" }, at);
     tl.set(dot.querySelector(".mk__tn"), { opacity: 0 }, at);
     tl.set(dot.querySelector("svg"), { opacity: 1 }, at);
@@ -196,10 +210,14 @@ export function initMakeover() {
   const replay = q<HTMLButtonElement>("[data-mk-replay]");
   ctl.hidden = false;
   const restart = () => {
-    tl.restart();
+    tl.pause(0);
     sync(0);
+    tl.play();
   };
-  replay.addEventListener("click", restart);
+  replay.addEventListener("click", () => {
+    restart();
+    gsap.fromTo(replay.querySelector("svg"), { rotation: 0 }, { rotation: -360, duration: 0.6, ease: "power2.out" });
+  });
   bindSoundButton(q<HTMLButtonElement>("[data-mk-sound]"), restart);
   new IntersectionObserver(
     ([e]) => {
@@ -208,7 +226,8 @@ export function initMakeover() {
         else tl.play();
       } else tl.pause();
     },
-    { threshold: 0.6 },
+    // Low enough that looking at the bar under the phone does not pause the film.
+    { threshold: 0.35 },
   ).observe(stage);
   // Positions are measured on layout boxes: measure again when the layout changes.
   let rt = 0;

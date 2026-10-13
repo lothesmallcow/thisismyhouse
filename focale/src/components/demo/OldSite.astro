@@ -1,173 +1,333 @@
 ---
 /**
- * The deliberately bad 2011 website of "Impresa Edile Arcadi", used by the renovation demo.
- * Grid areas match ArcadiHero. Annotations (numbered, a real sequence) sit inside each piece.
+ * The "before" website of the invented Impresa Edile Arcadi, used by the makeover film.
+ * Not a joke site: a decent-looking WordPress theme from a few years ago, the kind most firms
+ * really have (Lorenzo: if the old site looks ridiculous, a prospect says "mine is better than that";
+ * when it looks like theirs, they see the real problem). It is laid out for a computer screen only,
+ * so on a phone everything shrinks: the number in the top bar, the text, the small work photos,
+ * the quote hidden behind "Contatti", news stopped in 2019.
+ * The makeover zooms on the pieces marked [data-old]. `annotations` is kept for old callers.
  */
 import { getImage } from "astro:assets";
-import photo from "../../assets/demo/arcadi-ristrutturazioni/bagno-dopo.jpg";
-import Note from "./MarkerNote.astro";
+import hero from "../../assets/demo/arcadi-ristrutturazioni/hero.jpg";
+import t1 from "../../assets/demo/arcadi-ristrutturazioni/cucina-dopo.jpg";
+import t2 from "../../assets/demo/arcadi-ristrutturazioni/soggiorno-dopo.jpg";
+import t3 from "../../assets/demo/arcadi-ristrutturazioni/infissi-dopo.jpg";
+import t4 from "../../assets/demo/arcadi-ristrutturazioni/camera-dopo.jpg";
 interface Props {
   annotations?: boolean;
 }
-const { annotations = true } = Astro.props;
-const tiny = await getImage({ src: photo, width: 48, format: "png" });
-const notes = [
-  { n: 1, text: "Dal telefono non si legge", area: "text" },
-  { n: 2, text: "Nessun numero in vista", area: "header" },
-  { n: 3, text: "Foto sgranate, nessun lavoro vero", area: "photo" },
-  { n: 4, text: "© 2011: sembra un'attività chiusa", area: "foot" },
-  { n: 5, text: "\"Leader nel settore\" non dice niente", area: "cta" },
+const big = await getImage({ src: hero, width: 640, format: "webp", quality: 55 });
+const thumbs = await Promise.all([t1, t2, t3, t4].map((src) => getImage({ src, width: 120, format: "webp", quality: 45 })));
+const services = [
+  { t: "Ristrutturazioni", d: "Ristrutturazioni complete di appartamenti e uffici, chiavi in mano." },
+  { t: "Bagni e cucine", d: "Rifacimento bagni e cucine con materiali di prima qualità." },
+  { t: "Facciate e tetti", d: "Rifacimento facciate, cappotti termici e coperture." },
 ];
-const note = (area: string) => notes.find((n) => n.area === area);
 ---
 <div class="os-wrap">
   <div class="os">
-    <div class="os__header os__piece" data-old="header">
-      <span class="os__brand">IMPRESA EDILE ARCADI s.n.c.</span>
-      <span class="os__tel">per informazioni tel. 02 1234 5678 (orario ufficio)</span>
-      {annotations && <Note {...note("header")!} />}
+    <div class="os__top" data-old="header">
+      <span>Tel. 02 1234 5678 &nbsp;|&nbsp; info@arcadi-edilizia.it</span>
+      <span class="os__social" aria-hidden="true"><i>f</i><i>in</i><i>yt</i></span>
     </div>
-    <div class="os__title os__piece" data-old="title">
-      <p class="os__h">Benvenuti nel nostro sito!!!</p>
+    <div class="os__bar">
+      <span class="os__logo">ARCADI<small>Impresa Edile dal 1987</small></span>
+      <nav class="os__nav" aria-hidden="true">
+        <span class="is-on">Home</span><span>Chi siamo</span><span>Servizi</span><span>Lavori</span><span>News</span><span>Contatti</span>
+      </nav>
     </div>
-    <div class="os__photo os__piece" data-old="photo">
-      <img src={tiny.src} width="48" height="30" alt="" decoding="async" loading="lazy" />
-      {annotations && <Note {...note("photo")!} />}
+    <div class="os__slider">
+      <img src={big.src} width="640" height="400" alt="" decoding="async" loading="lazy" />
+      <div class="os__cap">
+        <p>Ristrutturazioni chiavi in mano</p>
+        <span>Scopri di più</span>
+      </div>
+      <span class="os__arrow os__arrow--l" aria-hidden="true">‹</span>
+      <span class="os__arrow os__arrow--r" aria-hidden="true">›</span>
+      <span class="os__dots" aria-hidden="true"><i class="is-on"></i><i></i><i></i></span>
     </div>
-    <div class="os__text os__piece" data-old="text">
-      <p>
-        Siamo un'azienda leader nel settore delle ristrutturazioni con pluriennale esperienza. Professionalità, serietà e cortesia sono i
-        nostri punti di forza.
-      </p>
-      {annotations && <Note {...note("text")!} />}
+    <div class="os__body">
+      <div class="os__main">
+        <div class="os__text" data-old="text">
+          <h3>Benvenuti in Impresa Edile Arcadi</h3>
+          <p>
+            Da oltre trent'anni operiamo nel settore edile a Milano e provincia con professionalità e serietà. Ci occupiamo di
+            ristrutturazioni civili e industriali, manutenzioni e nuove costruzioni, seguendo il cliente dalla progettazione alla
+            consegna dei lavori.
+          </p>
+          <p>Il nostro staff qualificato è a vostra disposizione per qualsiasi esigenza.</p>
+        </div>
+        <div class="os__services">
+          {
+            services.map((s) => (
+              <div>
+                <span class="os__ico" aria-hidden="true" />
+                <b>{s.t}</b>
+                <p>{s.d}</p>
+                <span class="os__more">Leggi tutto »</span>
+              </div>
+            ))
+          }
+        </div>
+        <div class="os__works">
+          <h4>I nostri lavori</h4>
+          <div class="os__thumbs" data-old="photo">
+            {thumbs.map((t) => <img src={t.src} width="120" height="80" alt="" decoding="async" loading="lazy" />)}
+          </div>
+        </div>
+        <p class="os__cta" data-old="cta">Per informazioni e preventivi visita la pagina <u>Contatti</u>.</p>
+      </div>
+      <aside class="os__side">
+        <h4>Ultime notizie</h4>
+        <div class="os__news" data-old="foot">
+          <small>12 marzo 2019</small>
+          <p>Siamo su Facebook! Seguici per restare aggiornato.</p>
+          <small>4 novembre 2018</small>
+          <p>Nuovo cantiere a Sesto San Giovanni.</p>
+        </div>
+        <h4>Dove siamo</h4>
+        <div class="os__map" aria-hidden="true"></div>
+      </aside>
     </div>
-    <div class="os__cta os__piece" data-old="cta">
-      <span class="os__link">Clicca qui per vedere i nostri lavori</span>
-      {annotations && <Note {...note("cta")!} />}
-    </div>
-    <div class="os__extra os__piece" data-old="extra">
-      <span class="os__counter">Sei il visitatore n° <b>004381</b></span>
-    </div>
-    <div class="os__foot os__piece" data-old="foot">
-      <span>© 2011 Tutti i diritti riservati. Sito ottimizzato per Internet Explorer a 1024x768</span>
-      {annotations && <Note {...note("foot")!} />}
-    </div>
+    <footer class="os__foot">
+      <span>Impresa Edile Arcadi s.n.c. &nbsp;|&nbsp; Via Roma 12, Milano &nbsp;|&nbsp; P.IVA 01234567890</span>
+      <span>© 2016 Tutti i diritti riservati &nbsp;|&nbsp; Privacy &nbsp;|&nbsp; Credits</span>
+    </footer>
   </div>
 </div>
 <style>
   .os-wrap {
-    container-type: inline-size;
     width: 100%;
     height: 100%;
   }
+  /* Orange stays for backgrounds; as text it is the darker #9a6400 (5:1 on white). */
+  /* A computer layout in fixed proportions: it never reflows for a phone, it only shrinks. */
   .os {
     height: 100%;
     box-sizing: border-box;
-    background: #fffbe6;
-    background-image: radial-gradient(#e9e2b8 1px, transparent 1px);
-    background-size: 8px 8px;
-    color: #000080;
-    font-family: "Times New Roman", Times, "Liberation Serif", serif;
-    font-size: 11px;
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-areas: "header" "photo" "title" "text" "cta" "extra" "foot";
-    align-content: start;
+    background: #fff;
+    color: #555;
+    font-family: Arial, Helvetica, "Liberation Sans", sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
     overflow: hidden;
   }
-  .os__piece {
+  .os__top {
     position: relative;
-  }
-  .os__header {
-    grid-area: header;
-    background: linear-gradient(#3a6fd8, #1b3f9a);
-    color: #ffff66;
-    padding: 10px 8px;
-    border-bottom: 3px ridge #c0c0c0;
-    text-align: center;
-  }
-  .os__brand {
-    font-weight: bold;
-    font-size: 14px;
-    letter-spacing: 0.06em;
-    text-shadow: 2px 2px 0 #000;
-  }
-  .os__tel {
-    display: block;
-    margin-top: 3px;
-    font-size: 8px;
-    color: #c8d4ff;
-    letter-spacing: 0;
-  }
-  .os__title {
-    grid-area: title;
-    padding: 8px;
-    text-align: center;
-  }
-  .os__h {
-    font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", cursive;
-    color: #d40000;
-    font-size: 17px;
-    font-weight: bold;
-    margin: 0;
-  }
-  .os__photo {
-    grid-area: photo;
-    padding: 6px 8px;
-  }
-  .os__photo img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 10;
-    image-rendering: pixelated;
-    border: 3px outset #c0c0c0;
-    display: block;
-  }
-  .os__text {
-    grid-area: text;
-    padding: 6px 8px;
-    line-height: 1.25;
-  }
-  .os__text p {
-    margin: 0;
-  }
-  .os__cta {
-    grid-area: cta;
-    padding: 4px 8px;
-  }
-  .os__link {
-    color: #0000ee;
-    text-decoration: underline;
-  }
-  .os__extra {
-    grid-area: extra;
-    padding: 6px 8px;
-    text-align: center;
-  }
-  .os__counter {
-    display: inline-block;
-    background: #000;
-    color: #39ff14;
-    font-family: "Courier New", monospace;
-    padding: 2px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 20px;
+    background: #2b2b2b;
+    color: #bbb;
     font-size: 10px;
   }
-  .os__foot {
-    grid-area: foot;
-    padding: 8px;
-    font-size: 9px;
-    color: #555;
-    text-align: center;
-    border-top: 1px dashed #999;
+  .os__social {
+    display: flex;
+    gap: 4px;
   }
-  @container (min-width: 520px) {
-    .os {
-      grid-template-columns: 42% 1fr;
-      grid-template-areas: "header header" "title title" "photo text" "photo cta" "extra extra" "foot foot";
-      font-size: 12px;
-    }
-    .os__photo img {
-      width: 60%;
-    }
+  .os__social i {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    background: #444;
+    color: #ddd;
+    font-style: normal;
+    font-size: 8px;
+  }
+  .os__bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 3px solid #f0a500;
+  }
+  .os__logo {
+    display: grid;
+    font-weight: bold;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: #333;
+    line-height: 1;
+  }
+  .os__logo small {
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #9a6400;
+    margin-top: 3px;
+    text-transform: uppercase;
+  }
+  .os__nav {
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #666;
+  }
+  .os__nav .is-on {
+    color: #9a6400;
+  }
+  .os__slider {
+    position: relative;
+  }
+  .os__slider img {
+    display: block;
+    width: 100%;
+    height: 230px;
+    object-fit: cover;
+  }
+  .os__cap {
+    position: absolute;
+    left: 40px;
+    bottom: 40px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+  }
+  .os__cap p {
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .os__cap span {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #f0a500;
+    color: #222;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .os__arrow {
+    position: absolute;
+    top: 50%;
+    margin-top: -15px;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 20px;
+  }
+  .os__arrow--l {
+    left: 0;
+  }
+  .os__arrow--r {
+    right: 0;
+  }
+  .os__dots {
+    position: absolute;
+    right: 20px;
+    bottom: 12px;
+    display: flex;
+    gap: 5px;
+  }
+  .os__dots i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+  }
+  .os__dots i.is-on {
+    background: #f0a500;
+  }
+  .os__body {
+    display: grid;
+    grid-template-columns: 1fr 160px;
+    gap: 24px;
+    padding: 24px 20px;
+  }
+  .os h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    color: #333;
+  }
+  .os h4 {
+    margin: 0 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #333;
+  }
+  .os p {
+    margin: 0 0 8px;
+  }
+  .os__text {
+    position: relative;
+  }
+  .os__services {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 18px 0;
+    font-size: 11px;
+  }
+  .os__services b {
+    display: block;
+    margin: 6px 0 4px;
+    font-size: 12px;
+    color: #333;
+  }
+  .os__ico {
+    display: block;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f0a500;
+  }
+  .os__more {
+    color: #9a6400;
+  }
+  .os__works {
+    margin-bottom: 14px;
+  }
+  .os__thumbs {
+    position: relative;
+    display: flex;
+    gap: 6px;
+  }
+  .os__thumbs img {
+    width: 64px;
+    height: 44px;
+    object-fit: cover;
+    border: 1px solid #ddd;
+  }
+  .os__cta {
+    position: relative;
+    font-size: 11px;
+  }
+  .os__cta u {
+    color: #9a6400;
+  }
+  .os__side {
+    font-size: 11px;
+  }
+  .os__news {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .os__news small {
+    display: block;
+    color: #767676;
+    font-size: 10px;
+  }
+  .os__map {
+    height: 110px;
+    background:
+      linear-gradient(90deg, transparent 48%, #f5d58a 48%, #f5d58a 52%, transparent 52%),
+      linear-gradient(0deg, transparent 60%, #e2e2e2 60%, #e2e2e2 64%, transparent 64%),
+      #eef0ea;
+  }
+  .os__foot {
+    display: grid;
+    gap: 4px;
+    padding: 18px 20px 400px;
+    background: #2b2b2b;
+    color: #999;
+    font-size: 10px;
   }
 </style>

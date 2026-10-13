@@ -1,9 +1,9 @@
 ---
 /**
- * The makeover, filmed like the opening: one iPhone with a real-looking old website (a desktop
- * layout squeezed onto a phone, as non-responsive sites really look). It plays by itself like a
- * video, one thing at a time so it can be followed: the old site; its five problems one by one (a gentle
- * zoom, a red box on the screen, the rest dims, a floating label beside the phone says what is wrong); the phone
+ * The makeover, filmed like the opening: one iPhone with a real-looking old website (a decent
+ * WordPress-style site made for computers, squeezed onto a phone, as most firms' sites really look). It plays by itself like a
+ * video, one thing at a time so it can be followed: the old site; its five problems one by one (a lens
+ * on that piece only, a red box on the screen, the rest dims, a floating label beside the phone says what is wrong); the phone
  * turns around and comes back with the new site; the five fixes one by one (green box, the label turns
  * green and says what changed); a tap calls. Under the phone a slim bar: where we are, sound, replay.
  * Without JS or with reduced motion: the finished site, and the list of fixes for screen readers.
@@ -15,13 +15,13 @@ import OldSite from "./demo/OldSite.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
 
 // Each problem of the old site and the part of the new site that fixes it (same number).
-// `old` is a [data-old] piece of OldSite, `fix` a selector inside ArcadiHero.
+// `old` is a selector inside OldSite (its [data-old] pieces), `fix` a selector inside ArcadiHero.
 const fixes = [
-  { old: "header", fix: ".ah__call", bad: "Il numero di telefono non si vede", good: "Il tasto Chiama è sempre in alto" },
-  { old: "text", fix: "[data-piece='title']", bad: "Testo minuscolo: bisogna zoomare", good: "Titoli grandi: si legge al volo" },
-  { old: "photo", fix: "[data-piece='photo']", bad: "Una foto piccola e sgranata", good: "Una foto grande dei lavori" },
-  { old: "cta", fix: ".ah__btn--main", bad: "Nessun modo di chiedere un preventivo", good: "Preventivo con un tocco" },
-  { old: "foot", fix: "[data-piece='foot']", bad: "© 2011: sembra un'attività chiusa", good: "Aggiornato: l'ultimo lavoro è di settembre" },
+  { old: "[data-old='header']", fix: ".ah__call", bad: "Il numero è minuscolo e non si tocca", good: "Il tasto Chiama è sempre in alto" },
+  { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Testo minuscolo: bisogna zoomare", good: "Titoli grandi: si legge al volo" },
+  { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
+  { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un tocco" },
+  { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
 ];
 // The status in the bar under the phone, in order. The film shows one at a time.
 const beats: { t: string; tone?: "bad" | "good" }[] = [
@@ -40,7 +40,8 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
         <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
       </div>
       <p class="mk__lead">
-        Il sito di un'impresa edile inventata, fermo al 2011, rifatto come lo faremmo per te. Guarda cosa cambia, un pezzo alla volta.
+        Il sito di un'impresa edile inventata: sul computer sembra a posto, sul telefono no. Rifatto come lo faremmo per te. Guarda cosa
+        cambia, un pezzo alla volta.
       </p>
       <ul class="sr-only">
         {fixes.map((f) => <li>Prima: {f.bad}. Dopo: {f.good}.</li>)}
@@ -59,16 +60,14 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
             <IPhone solid label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
               <div class="mk__screen" data-mk-screen>
                 <div class="mk__old" data-mk-old>
-                  <div class="mk__zoom" data-mk-zoom>
-                    <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
-                    {
-                      fixes.map((f, i) => (
-                        <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true">
-                          <i>{i + 1}</i>
-                        </span>
-                      ))
-                    }
-                  </div>
+                  <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
+                  {
+                    fixes.map((f, i) => (
+                      <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true">
+                        <i>{i + 1}</i>
+                      </span>
+                    ))
+                  }
                 </div>
                 <div class="mk__new" data-mk-new>
                   <ArcadiHero extra={false} />
@@ -220,12 +219,6 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
     inset: 0;
     overflow: hidden;
   }
-  /* The zoom layer: the old page and its red boxes grow together, gently, on the problem shown. */
-  .mk__zoom {
-    position: absolute;
-    inset: 0;
-    transform-origin: 0 0;
-  }
   /* A desktop page squeezed onto the phone (220% wide, scaled to fit), like a real non-responsive
      site: two columns, tiny text, and the page fills the whole screen. 220% keeps OldSite in its
      desktop layout (container >= 520 px) even on the smallest phone in the film. */
@@ -376,12 +369,9 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
   .mk__tx {
     display: grid;
   }
-  .mk__tbad,
+  /* One text at a time (the problem, then the fix), so the label is as wide as its own words. */
   .mk__tgood {
-    grid-area: 1 / 1;
-  }
-  .mk__tgood {
-    opacity: 0;
+    display: none;
   }
 
   /* ---------- The bar under the phone: where we are, sound, replay ---------- */
@@ -466,6 +456,9 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
   .mk__btn svg {
     width: 18px;
     height: 18px;
+  }
+  .mk__btn {
+    touch-action: manipulation;
   }
   .mk__btn[aria-pressed="false"] .mk__wave {
     opacity: 0.3;

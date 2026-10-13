@@ -1,0 +1,52 @@
+---
+/**
+ * Under the packages: two ways out for whoever is not sure. "Nessun pacchetto fa per te?" leads to
+ * the estimator; "Non sai cosa scegliere?" to a message on WhatsApp (or the contact page).
+ */
+import { whatsappHref } from "../lib/util";
+interface Props {
+  estimatorHref?: string;
+}
+const { estimatorHref = "/prezzi/#stima" } = Astro.props;
+---
+<div class="ph-help">
+  <div class="ph-help__item">
+    <p><b>Nessun pacchetto fa per te?</b> Rispondi a qualche domanda e calcoliamo una stima del tuo preventivo.</p>
+    <a class="btn btn--secondary" href={estimatorHref}>Calcola il tuo preventivo</a>
+  </div>
+  <div class="ph-help__item">
+    <p><b>Non sai cosa scegliere?</b> Scrivici due righe sulla tua attività: ti diciamo noi cosa ti serve, senza impegno.</p>
+    <a class="btn btn--secondary" href={whatsappHref("Ciao, ho un'attività e non so quale pacchetto scegliere. Mi consigliate?")} target="_blank" rel="noopener">
+      Scrivici su WhatsApp
+    </a>
+  </div>
+</div>
+<style>
+  .ph-help {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  @media (min-width: 900px) {
+    .ph-help {
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+  }
+  .ph-help__item {
+    display: grid;
+    gap: 1rem;
+    align-content: space-between;
+    justify-items: start;
+    padding: 1.25rem 1.5rem;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid var(--filo);
+  }
+  .ph-help__item p {
+    color: var(--grafite);
+  }
+  .ph-help__item b {
+    color: var(--inchiostro);
+  }
+</style>

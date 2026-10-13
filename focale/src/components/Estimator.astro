@@ -30,137 +30,149 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
       <p class="sec__label">Stima</p>
       <h2 id="est-t">Calcola una stima del tuo preventivo.</h2>
       <p class="lead est__lead">
-        Poche domande, un minuto. Il conto lo fa il tuo telefono: non ti chiediamo l'email e non salviamo niente.
+        Sette domande, un minuto. La stima arriva alla fine. Il conto lo fa il tuo telefono: non ti chiediamo l'email e non salviamo niente.
       </p>
     </div>
 
     <div class="est__grid">
-      <form class="est__form" data-est-form onsubmit="return false" aria-label="Domande per la stima">
-        <fieldset class="est__q">
-          <legend>Che attività hai?</legend>
-          <div class="est__cards">
-            {
-              activities.map((a) => (
-                <label class="est__card">
-                  <input type="radio" name="activity" value={a.v} checked={a.v === defaultAnswers.activity} />
-                  <span>{a.t}</span>
-                </label>
-              ))
-            }
+      <form class="est__form" data-est-form onsubmit="return false" aria-label="Domande per la stima" novalidate>
+        <p class="est__progress" data-est-progress hidden>Domanda <span data-est-n>1</span> di <span data-est-of>7</span></p>
+        <div class="est__stepbox" data-est-step="0">
+          <fieldset class="est__q">
+            <legend>Che attività hai?</legend>
+            <div class="est__cards">
+              {
+                activities.map((a) => (
+                  <label class="est__card">
+                    <input type="radio" name="activity" value={a.v} checked={a.v === defaultAnswers.activity} />
+                    <span>{a.t}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </fieldset>
           </div>
-        </fieldset>
-
-        <fieldset class="est__q">
-          <legend>Quanto deve essere grande il sito?</legend>
-          <div class="est__cards">
-            <label class="est__card">
-              <input type="radio" name="size" value="una" />
-              <span><b>Una pagina sola</b><small>Chi siete, cosa fate, come contattarvi.</small></span>
-            </label>
-            <label class="est__card">
-              <input type="radio" name="size" value="completo" checked />
-              <span><b>Un sito completo</b><small>Fino a 6 pagine: una per ogni cosa importante.</small></span>
-            </label>
-            <label class="est__card">
-              <input type="radio" name="size" value="grande" />
-              <span><b>Un sito grande</b><small>Tante camere, servizi o spazi, ognuno con la sua pagina.</small></span>
-            </label>
+        <div class="est__stepbox" data-est-step="1">
+          <fieldset class="est__q">
+            <legend>Quanto deve essere grande il sito?</legend>
+            <div class="est__cards">
+              <label class="est__card">
+                <input type="radio" name="size" value="una" />
+                <span><b>Una pagina sola</b><small>Chi siete, cosa fate, come contattarvi.</small></span>
+              </label>
+              <label class="est__card">
+                <input type="radio" name="size" value="completo" checked />
+                <span><b>Un sito completo</b><small>Fino a 6 pagine: una per ogni cosa importante.</small></span>
+              </label>
+              <label class="est__card">
+                <input type="radio" name="size" value="grande" />
+                <span><b>Un sito grande</b><small>Tante camere, servizi o spazi, ognuno con la sua pagina.</small></span>
+              </label>
+            </div>
+          </fieldset>
           </div>
-        </fieldset>
-
-        <fieldset class="est__q">
-          <legend data-est-self>Vuoi aggiungere da solo nuovi lavori, camere o eventi?</legend>
-          <div class="est__cards est__cards--2">
-            <label class="est__card">
-              <input type="radio" name="self" value="no" checked />
-              <span><b>No, ci pensate voi</b><small>Ci scrivi e lo aggiorniamo noi.</small></span>
-            </label>
-            <label class="est__card">
-              <input type="radio" name="self" value="si" />
-              <span><b>Sì, in automatico</b><small>Un pannello semplice: compili e la pagina nuova appare da sola.</small></span>
-            </label>
+        <div class="est__stepbox" data-est-step="2">
+          <fieldset class="est__q">
+            <legend data-est-self>Vuoi aggiungere da solo nuovi lavori, camere o eventi?</legend>
+            <div class="est__cards est__cards--2">
+              <label class="est__card">
+                <input type="radio" name="self" value="no" checked />
+                <span><b>No, ci pensate voi</b><small>Ci scrivi e lo aggiorniamo noi.</small></span>
+              </label>
+              <label class="est__card">
+                <input type="radio" name="self" value="si" />
+                <span><b>Sì, in automatico</b><small>Un pannello semplice: compili e la pagina nuova appare da sola.</small></span>
+              </label>
+            </div>
+          </fieldset>
           </div>
-        </fieldset>
-
-        <fieldset class="est__q" data-only="trades">
-          <legend>Come ti chiedono un preventivo?</legend>
-          <div class="est__cards est__cards--2">
-            <label class="est__card">
-              <input type="radio" name="key-trades" value="base" checked />
-              <span><b>Con un modulo guidato</b><small>Tipo di lavoro, zona, tempi: ti arriva tutto su WhatsApp. Incluso.</small></span>
+        <div class="est__stepbox" data-est-step="3">
+          <fieldset class="est__q" data-only="trades">
+            <legend>Come ti chiedono un preventivo?</legend>
+            <div class="est__cards est__cards--2">
+              <label class="est__card">
+                <input type="radio" name="key-trades" value="base" checked />
+                <span><b>Con un modulo guidato</b><small>Tipo di lavoro, zona, tempi: ti arriva tutto su WhatsApp. Incluso.</small></span>
+              </label>
+              <label class="est__card">
+                <input type="radio" name="key-trades" value="auto" />
+                <span><b>Con un prezzo indicativo</b><small>Il cliente sceglie lavoro e metri, il sito gli mostra una cifra di massima.</small></span>
+              </label>
+            </div>
+          </fieldset>
+            <fieldset class="est__q" data-only="hospitality">
+            <legend>Come si prenota da te?</legend>
+            <div class="est__cards">
+              <label class="est__card">
+                <input type="radio" name="key-hospitality" value="base" checked />
+                <span><b>Con una richiesta</b><small>Il cliente chiede la disponibilità, rispondi tu. Incluso.</small></span>
+              </label>
+              <label class="est__card">
+                <input type="radio" name="key-hospitality" value="link" />
+                <span><b>Ho già un booking engine</b><small>Basta un pulsante che porta lì. Incluso.</small></span>
+              </label>
+              <label class="est__card">
+                <input type="radio" name="key-hospitality" value="auto" />
+                <span><b>Dentro il sito</b><small>Date, prezzi e disponibilità aggiornati da soli.</small></span>
+              </label>
+            </div>
+          </fieldset>
+            <fieldset class="est__q" data-only="venue">
+            <legend>Come ti chiedono una visita?</legend>
+            <div class="est__cards est__cards--2">
+              <label class="est__card">
+                <input type="radio" name="key-venue" value="base" checked />
+                <span><b>Con un modulo</b><small>Data dell'evento, ospiti, budget: rispondi tu. Incluso.</small></span>
+              </label>
+              <label class="est__card">
+                <input type="radio" name="key-venue" value="auto" />
+                <span><b>Con un calendario</b><small>Scelgono loro giorno e ora della visita, tu ricevi l'appuntamento.</small></span>
+              </label>
+            </div>
+            <label class="est__check est__check--solo">
+              <input type="checkbox" name="brochure" />
+              <span>Anche un listino o una brochure da scaricare</span>
             </label>
-            <label class="est__card">
-              <input type="radio" name="key-trades" value="auto" />
-              <span><b>Con un prezzo indicativo</b><small>Il cliente sceglie lavoro e metri, il sito gli mostra una cifra di massima.</small></span>
-            </label>
+          </fieldset>
           </div>
-        </fieldset>
-
-        <fieldset class="est__q" data-only="hospitality">
-          <legend>Come si prenota da te?</legend>
-          <div class="est__cards">
-            <label class="est__card">
-              <input type="radio" name="key-hospitality" value="base" checked />
-              <span><b>Con una richiesta</b><small>Il cliente chiede la disponibilità, rispondi tu. Incluso.</small></span>
-            </label>
-            <label class="est__card">
-              <input type="radio" name="key-hospitality" value="link" />
-              <span><b>Ho già un booking engine</b><small>Basta un pulsante che porta lì. Incluso.</small></span>
-            </label>
-            <label class="est__card">
-              <input type="radio" name="key-hospitality" value="auto" />
-              <span><b>Dentro il sito</b><small>Date, prezzi e disponibilità aggiornati da soli.</small></span>
-            </label>
+        <div class="est__stepbox" data-est-step="4">
+          <fieldset class="est__q">
+            <legend>In quante lingue?</legend>
+            <div class="est__cards">
+              <label class="est__card"><input type="radio" name="languages" value="0" checked /><span>Solo italiano</span></label>
+              <label class="est__card"><input type="radio" name="languages" value="1" /><span>Italiano e inglese</span></label>
+              <label class="est__card"><input type="radio" name="languages" value="2" /><span>Italiano, inglese e un'altra</span></label>
+            </div>
+          </fieldset>
           </div>
-        </fieldset>
-
-        <fieldset class="est__q" data-only="venue">
-          <legend>Come ti chiedono una visita?</legend>
-          <div class="est__cards est__cards--2">
-            <label class="est__card">
-              <input type="radio" name="key-venue" value="base" checked />
-              <span><b>Con un modulo</b><small>Data dell'evento, ospiti, budget: rispondi tu. Incluso.</small></span>
-            </label>
-            <label class="est__card">
-              <input type="radio" name="key-venue" value="auto" />
-              <span><b>Con un calendario</b><small>Scelgono loro giorno e ora della visita, tu ricevi l'appuntamento.</small></span>
-            </label>
+        <div class="est__stepbox" data-est-step="5">
+          <fieldset class="est__q">
+            <legend>Hai già delle foto buone dei lavori o della struttura?</legend>
+            <div class="est__cards est__cards--2">
+              <label class="est__card"><input type="radio" name="photos" value="si" checked /><span>Sì, le abbiamo</span></label>
+              <label class="est__card"><input type="radio" name="photos" value="no" /><span>Poche o vecchie</span></label>
+            </div>
+          </fieldset>
           </div>
-          <label class="est__check est__check--solo">
-            <input type="checkbox" name="brochure" />
-            <span>Anche un listino o una brochure da scaricare</span>
-          </label>
-        </fieldset>
-
-        <fieldset class="est__q">
-          <legend>In quante lingue?</legend>
-          <div class="est__cards">
-            <label class="est__card"><input type="radio" name="languages" value="0" checked /><span>Solo italiano</span></label>
-            <label class="est__card"><input type="radio" name="languages" value="1" /><span>Italiano e inglese</span></label>
-            <label class="est__card"><input type="radio" name="languages" value="2" /><span>Italiano, inglese e un'altra</span></label>
+        <div class="est__stepbox" data-est-step="6">
+          <fieldset class="est__q">
+            <legend>Ti serve anche...</legend>
+            <div class="est__checks">
+              <label class="est__check"><input type="checkbox" name="google" /><span>Sistemare la scheda Google della tua attività</span></label>
+              <label class="est__check"><input type="checkbox" name="migration" /><span>Recuperare testi e foto dal vecchio sito</span></label>
+              <label class="est__check"><input type="checkbox" name="blog" /><span>Un blog o una pagina di notizie</span></label>
+              <label class="est__check" data-only="hosp-venue"><input type="checkbox" name="vouchers" /><span>Vendere buoni regalo online</span></label>
+            </div>
+          </fieldset>
           </div>
-        </fieldset>
-
-        <fieldset class="est__q">
-          <legend>Hai già delle foto buone dei lavori o della struttura?</legend>
-          <div class="est__cards est__cards--2">
-            <label class="est__card"><input type="radio" name="photos" value="si" checked /><span>Sì, le abbiamo</span></label>
-            <label class="est__card"><input type="radio" name="photos" value="no" /><span>Poche o vecchie</span></label>
-          </div>
-        </fieldset>
-
-        <fieldset class="est__q">
-          <legend>Ti serve anche...</legend>
-          <div class="est__checks">
-            <label class="est__check"><input type="checkbox" name="google" /><span>Sistemare la scheda Google della tua attività</span></label>
-            <label class="est__check"><input type="checkbox" name="migration" /><span>Recuperare testi e foto dal vecchio sito</span></label>
-            <label class="est__check"><input type="checkbox" name="blog" /><span>Un blog o una pagina di notizie</span></label>
-            <label class="est__check" data-only="hosp-venue"><input type="checkbox" name="vouchers" /><span>Vendere buoni regalo online</span></label>
-          </div>
-        </fieldset>
+        <div class="est__nav" data-est-nav hidden>
+          <button type="button" class="btn btn--secondary est__back" data-est-back>Indietro</button>
+          <button type="button" class="btn btn--primary" data-est-next>Avanti</button>
+        </div>
+        <noscript><p class="est__nojs">Per vedere la stima serve JavaScript. Puoi sempre chiederci l'anteprima gratuita: il preventivo te lo scriviamo noi.</p></noscript>
       </form>
 
-      <div class="est__result on-navy" id="est-result">
+      <div class="est__result on-navy" id="est-result" data-est-result hidden tabindex="-1">
         <p class="est__kicker">La tua stima, pacchetto <span data-est-plan>{first.planName}</span></p>
         <p class="est__range" role="status" aria-atomic="true">
           <span data-est-range>{range(first.min, first.max)}</span>
@@ -186,13 +198,13 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
           È una stima, non un preventivo. Il prezzo vero te lo scriviamo dopo l'anteprima gratuita, e da lì non cambia. I giorni partono da quando
           abbiamo testi e foto. {open && "Prezzi fondatori. "}<P value={site.vatNote} />
         </p>
-        <a class="btn btn--primary btn--big est__cta" href={`/anteprima-gratuita?pacchetto=${first.plan}`} data-est-cta>Voglio l'anteprima gratuita</a>
+        <div class="est__actions">
+          <a class="btn btn--primary btn--big est__cta" href={`/anteprima-gratuita?pacchetto=${first.plan}`} data-est-cta>Voglio l'anteprima gratuita</a>
+          <button type="button" class="textlink est__redo" data-est-redo>Rifai le domande</button>
+        </div>
       </div>
     </div>
   </div>
-  <a class="est__peek" href="#est-result" data-est-peek aria-hidden="true" tabindex="-1">
-    Stima: <b data-est-peek-range>{range(first.min, first.max)}</b>
-  </a>
 </section>
 
 <style>
@@ -206,25 +218,68 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
     margin-top: 1rem;
     color: var(--grafite);
   }
+  /* One card: the questions, one at a time; at the end the result takes its place. */
   .est__grid {
-    display: grid;
-    gap: 2rem;
     margin-top: clamp(1.75rem, 1rem + 2vw, 3rem);
-  }
-  @media (min-width: 1000px) {
-    .est__grid {
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      gap: clamp(2rem, 4vw, 4rem);
-      align-items: start;
-    }
-    .est__result {
-      position: sticky;
-      top: calc(var(--header-h) + 1.25rem);
-    }
+    max-width: 46rem;
   }
   .est__form {
     display: grid;
-    gap: 1.75rem;
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 0.8rem + 2vw, 2rem);
+    border-radius: 24px;
+    border: 1px solid var(--filo);
+    background: var(--carta);
+    box-shadow: 0 30px 60px -40px rgba(11, 27, 63, 0.35);
+  }
+  .est__form[hidden],
+  .est__stepbox[hidden],
+  .est__result[hidden],
+  .est__progress[hidden],
+  .est__nav[hidden] {
+    display: none;
+  }
+  .est__stepbox {
+    display: grid;
+    gap: 1.25rem;
+  }
+  .est__progress {
+    font-size: var(--fs-small);
+    font-weight: 600;
+    color: var(--blu);
+  }
+  .est__nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--filo);
+  }
+  .est__nav .btn {
+    min-width: 8rem;
+  }
+  .est__back[disabled] {
+    visibility: hidden;
+  }
+  .est__nojs {
+    color: var(--grafite);
+  }
+  .est__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    margin-top: 0.6rem;
+  }
+  .est__redo {
+    background: none;
+    border: 0;
+    padding: 0;
+    min-height: 44px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
   }
   .est__q {
     border: 0;
@@ -238,9 +293,10 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
   .est__q legend {
     display: block;
     padding: 0;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
     font-weight: 700;
-    font-size: 1.125rem;
+    font-size: var(--fs-h3);
+    line-height: 1.2;
     color: var(--inchiostro);
   }
   .est__cards {
@@ -398,48 +454,23 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
     font-size: var(--fs-small);
     color: var(--on-dark-muted);
   }
-  .est__cta {
-    margin-top: 0.6rem;
-    justify-self: start;
-  }
-  /* Phones: a small pill keeps the running total in sight while answering. */
-  .est__peek {
-    display: none;
-  }
-  @media (max-width: 999px) {
-    :global(.est-live) .est__peek {
-      display: block;
-      position: sticky;
-      bottom: calc(0.75rem + env(safe-area-inset-bottom));
-      width: max-content;
-      max-width: calc(100% - 2rem);
-      margin: -3rem auto 0;
-      padding: 0.7rem 1.1rem;
-      border-radius: 999px;
-      background: var(--notte);
-      color: #fff;
-      font-size: var(--fs-small);
-      text-decoration: none;
-      box-shadow: 0 12px 30px -12px rgba(11, 27, 63, 0.6);
-      z-index: 5;
-      transition: opacity 0.25s ease;
-    }
-    :global(.est-live) .est__peek.is-away {
-      opacity: 0;
-      pointer-events: none;
-    }
-  }
+
 </style>
 <script>
   import { estimate, modelOf, type Answers } from "../lib/estimate";
   import { num } from "../lib/util";
 
+  /* One question at a time; the estimate appears only at the end (Lorenzo: a price that moves while
+     you answer invites answering for the lowest number). "Rifai le domande" starts again from the top. */
   const root = document.querySelector<HTMLElement>("[data-est]");
   const form = root?.querySelector<HTMLFormElement>("[data-est-form]");
   if (root && form) {
     const cfg = JSON.parse(root.dataset.est!);
-    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
-    const peek = $("[data-est-peek]");
+    const $ = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const steps = Array.from(form.querySelectorAll<HTMLElement>("[data-est-step]"));
+    const result = $("[data-est-result]");
+    const back = $<HTMLButtonElement>("[data-est-back]");
+    const next = $<HTMLButtonElement>("[data-est-next]");
     const selfText = {
       trades: "Vuoi aggiungere da solo nuovi lavori o servizi?",
       hospitality: "Vuoi aggiungere da solo nuove camere o offerte?",
@@ -447,7 +478,7 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
     } as const;
     const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(a)} € e ${num(b)} €`);
     const money = (a: number, b: number) => (a === b ? `${num(a)} €` : `${num(a)}-${num(b)} €`);
-    root.classList.add("est-live");
+    let at = 0;
 
     const read = (): Answers => {
       const f = new FormData(form);
@@ -467,44 +498,73 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
         photos: f.get("photos") !== "no",
       };
     };
-    const list = (el: HTMLElement, items: HTMLElement[]) => el.replaceChildren(...items);
-    const li = (...parts: string[]) => {
-      const n = document.createElement("li");
-      parts.forEach((p) => {
-        const s = document.createElement("span");
-        s.textContent = p;
-        n.append(s);
-      });
-      if (parts.length === 1) n.textContent = parts[0];
-      return n;
-    };
-
-    const render = () => {
-      const a = read();
-      const model = modelOf(a.activity);
-      // Only the questions that matter for this kind of business.
+    // Only the questions that matter for this kind of business.
+    const tailor = () => {
+      const model = modelOf(read().activity);
       root.querySelectorAll<HTMLElement>("[data-only]").forEach((el) => {
         const only = el.dataset.only;
         el.hidden = !(only === model || (only === "hosp-venue" && model !== "trades"));
       });
       $("[data-est-self]").textContent = selfText[model];
-      const r = estimate(a, cfg, cfg.open);
+    };
+    const show = (i: number, focus = true) => {
+      at = i;
+      steps.forEach((st, j) => (st.hidden = j !== i));
+      $("[data-est-n]").textContent = String(i + 1);
+      back.disabled = i === 0;
+      next.textContent = i === steps.length - 1 ? "Calcola la stima" : "Avanti";
+      if (focus) {
+        const legend = steps[i].querySelector<HTMLElement>("fieldset:not([hidden]) legend");
+        if (legend) {
+          legend.tabIndex = -1;
+          legend.focus({ preventScroll: true });
+        }
+        form.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    };
+    const li = (...parts: string[]) => {
+      const n = document.createElement("li");
+      if (parts.length === 1) n.textContent = parts[0];
+      else
+        parts.forEach((p) => {
+          const s = document.createElement("span");
+          s.textContent = p;
+          n.append(s);
+        });
+      return n;
+    };
+    const finish = () => {
+      const r = estimate(read(), cfg, cfg.open);
       $("[data-est-plan]").textContent = r.planName;
       $("[data-est-range]").textContent = range(r.min, r.max);
-      $("[data-est-peek-range]").textContent = range(r.min, r.max);
       $("[data-est-days]").textContent = r.daysMin === r.daysMax ? String(r.daysMin) : `${r.daysMin}-${r.daysMax}`;
       const up = $("[data-est-up]");
       up.hidden = !r.upgraded;
       up.textContent = r.upgraded ? `${r.upgraded} La stima parte dal Professionale.` : "";
-      list($("[data-est-lines]"), r.lines.map((l) => li(l.label, money(l.min, l.max))));
-      list($("[data-est-apart]"), r.apart.map((t) => li(t)));
-      ($("[data-est-cta]") as HTMLAnchorElement).href = `/anteprima-gratuita?pacchetto=${r.plan}`;
+      $("[data-est-lines]").replaceChildren(...r.lines.map((l) => li(l.label, money(l.min, l.max))));
+      $("[data-est-apart]").replaceChildren(...r.apart.map((t) => li(t)));
+      $<HTMLAnchorElement>("[data-est-cta]").href = `/anteprima-gratuita?pacchetto=${r.plan}`;
+      form.hidden = true;
+      result.hidden = false;
+      result.focus({ preventScroll: true });
+      result.scrollIntoView({ block: "start", behavior: "smooth" });
     };
 
-    form.addEventListener("input", render);
-    form.addEventListener("change", render);
-    // The pill hides while the result itself is on screen.
-    new IntersectionObserver(([e]) => peek.classList.toggle("is-away", e.isIntersecting), { threshold: 0.2 }).observe($("#est-result"));
-    render();
+    $("[data-est-progress]").hidden = false;
+    $("[data-est-nav]").hidden = false;
+    $("[data-est-of]").textContent = String(steps.length);
+    form.addEventListener("change", tailor);
+    next.addEventListener("click", () => (at < steps.length - 1 ? show(at + 1) : finish()));
+    back.addEventListener("click", () => at > 0 && show(at - 1));
+    $("[data-est-redo]").addEventListener("click", () => {
+      form.reset();
+      tailor();
+      result.hidden = true;
+      form.hidden = false;
+      show(0);
+    });
+    tailor();
+    result.hidden = true;
+    show(0, false);
   }
 </script>
