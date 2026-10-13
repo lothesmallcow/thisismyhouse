@@ -59,7 +59,7 @@ import { whatsappHref } from "../lib/util";
   if (bar) {
     const root = document.documentElement;
     const hero = document.querySelector(".hero__cta, [data-hero]");
-    const quiet = Array.from(document.querySelectorAll<HTMLElement>(".closing, .hs-end, form, .mk__cap"));
+    const quiet = Array.from(document.querySelectorAll<HTMLElement>(".closing, .hs-end, form, .mk__bar"));
     let pastHero = false;
     const inQuiet = new Set<Element>();
     let typing = false;

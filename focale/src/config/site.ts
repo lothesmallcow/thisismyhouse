@@ -42,24 +42,25 @@ export const site = {
    * list prices). Each unit-priced item says how many units the package already includes.
    */
   estimate: {
-    // Pages the Professionale already includes for services, rooms, spaces or event types.
-    includedUnits: 4,
-    // Pages in a Professionale site (home, contacts and the included units).
-    professionalePages: 6,
-    // Essenziale is one page: past this many services/rooms/spaces, the estimate moves to Professionale.
-    onePageMaxUnits: 4,
-    extraPage: { min: 80, max: 140, days: 0.6 },
-    extraRoom: { min: 60, max: 100, days: 0.4 },
+    // Pages in each size: one page, a complete site (Professionale), a big site (Professionale + bigSite).
+    pages: { una: 1, completo: 6, grande: 12 },
+    // A big site: the extra pages (about 4-8 more services, rooms or spaces) on top of the Professionale.
+    bigSite: { min: 350, max: 700, days: 4 },
     language: {
       setup: { min: 120, max: 200, days: 1 },
       nextSetup: { min: 40, max: 60, days: 0.3 },
       perPage: { min: 35, max: 50, days: 0.35 },
     },
     bookingWidget: { min: 120, max: 220, days: 1 },
+    // Trades: a quote form that also shows the customer an indicative price, worked out automatically.
+    quoteCalc: { min: 280, max: 550, days: 2 },
+    // Venues: a calendar where couples pick the day and time of their visit.
+    visitCalendar: { min: 80, max: 150, days: 0.5 },
     bookingFeeMonthly: "di solito tra 15 e 80 € al mese",
     brochure: { min: 70, max: 130, days: 0.5 },
     googleProfile: { min: 80, max: 140, days: 0.5 },
     blog: { min: 150, max: 250, days: 1 },
+    // A simple panel to add rooms, works or events: new pages appear by themselves.
     editor: { min: 300, max: 500, days: 2 },
     vouchers: { min: 100, max: 150, days: 0.5 },
     migration: { min: 80, max: 140, days: 0.5 },

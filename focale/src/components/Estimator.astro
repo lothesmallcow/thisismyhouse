@@ -1,8 +1,9 @@
 ---
 /**
- * "Calcola una stima del tuo preventivo": a few questions that follow the kind of business
- * (services for trades, rooms and bookings for hospitality, spaces and brochure for venues), and a
- * live result: price range, working days, what each part costs, what is paid to others.
+ * "Calcola una stima del tuo preventivo": a few questions about size and mechanisms (do you want to
+ * add pages yourself; the one thing that matters for your kind of business: an automatic price for
+ * trades, bookings inside the site for hospitality, a visit calendar for venues), languages and
+ * extras, and a live result: price range, working days, what each part costs, what is paid to others.
  * Everything runs in the browser: no email asked, nothing sent or stored.
  * Numbers from site.estimate (config), logic in lib/estimate.ts (also used for the no-JS render).
  */
@@ -51,55 +52,83 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
 
         <fieldset class="est__q">
           <legend>Quanto deve essere grande il sito?</legend>
-          <div class="est__cards est__cards--2">
+          <div class="est__cards">
             <label class="est__card">
               <input type="radio" name="size" value="una" />
               <span><b>Una pagina sola</b><small>Chi siete, cosa fate, come contattarvi.</small></span>
             </label>
             <label class="est__card">
-              <input type="radio" name="size" value="piu" checked />
-              <span><b>Più pagine</b><small>Una pagina per ogni servizio, camera o spazio.</small></span>
+              <input type="radio" name="size" value="completo" checked />
+              <span><b>Un sito completo</b><small>Fino a 6 pagine: una per ogni cosa importante.</small></span>
+            </label>
+            <label class="est__card">
+              <input type="radio" name="size" value="grande" />
+              <span><b>Un sito grande</b><small>Tante camere, servizi o spazi, ognuno con la sua pagina.</small></span>
             </label>
           </div>
         </fieldset>
 
-        <div class="est__q est__units">
-          <label for="est-units" data-est-unit-label>Quanti servizi, camere o spazi vuoi presentare?</label>
-          <p class="hint" id="est-units-hint" data-est-unit-hint>Ognuno avrà la sua pagina, o la sua parte di pagina.</p>
-          <div class="est__stepper">
-            <button type="button" class="est__step" data-est-step="-1" aria-label="Uno in meno" aria-controls="est-units">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
-            </button>
-            <input id="est-units" name="units" type="number" inputmode="numeric" min="1" max="40" value={defaultAnswers.units} aria-describedby="est-units-hint" />
-            <button type="button" class="est__step" data-est-step="1" aria-label="Uno in più" aria-controls="est-units">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
-            </button>
+        <fieldset class="est__q">
+          <legend data-est-self>Vuoi aggiungere da solo nuovi lavori, camere o eventi?</legend>
+          <div class="est__cards est__cards--2">
+            <label class="est__card">
+              <input type="radio" name="self" value="no" checked />
+              <span><b>No, ci pensate voi</b><small>Ci scrivi e lo aggiorniamo noi.</small></span>
+            </label>
+            <label class="est__card">
+              <input type="radio" name="self" value="si" />
+              <span><b>Sì, in automatico</b><small>Un pannello semplice: compili e la pagina nuova appare da sola.</small></span>
+            </label>
           </div>
-        </div>
+        </fieldset>
+
+        <fieldset class="est__q" data-only="trades">
+          <legend>Come ti chiedono un preventivo?</legend>
+          <div class="est__cards est__cards--2">
+            <label class="est__card">
+              <input type="radio" name="key-trades" value="base" checked />
+              <span><b>Con un modulo guidato</b><small>Tipo di lavoro, zona, tempi: ti arriva tutto su WhatsApp. Incluso.</small></span>
+            </label>
+            <label class="est__card">
+              <input type="radio" name="key-trades" value="auto" />
+              <span><b>Con un prezzo indicativo</b><small>Il cliente sceglie lavoro e metri, il sito gli mostra una cifra di massima.</small></span>
+            </label>
+          </div>
+        </fieldset>
 
         <fieldset class="est__q" data-only="hospitality">
           <legend>Come si prenota da te?</legend>
           <div class="est__cards">
             <label class="est__card">
-              <input type="radio" name="booking" value="richiesta" checked />
-              <span><b>Con una richiesta</b><small>Il cliente chiede la disponibilità, rispondi tu.</small></span>
+              <input type="radio" name="key-hospitality" value="base" checked />
+              <span><b>Con una richiesta</b><small>Il cliente chiede la disponibilità, rispondi tu. Incluso.</small></span>
             </label>
             <label class="est__card">
-              <input type="radio" name="booking" value="link" />
-              <span><b>Ho già un booking engine</b><small>Basta un pulsante che porta lì.</small></span>
+              <input type="radio" name="key-hospitality" value="link" />
+              <span><b>Ho già un booking engine</b><small>Basta un pulsante che porta lì. Incluso.</small></span>
             </label>
             <label class="est__card">
-              <input type="radio" name="booking" value="widget" />
-              <span><b>Prenotazione dentro il sito</b><small>Date e prezzi senza uscire dal sito.</small></span>
+              <input type="radio" name="key-hospitality" value="auto" />
+              <span><b>Dentro il sito</b><small>Date, prezzi e disponibilità aggiornati da soli.</small></span>
             </label>
           </div>
         </fieldset>
 
         <fieldset class="est__q" data-only="venue">
-          <legend>Ti serve un listino o una brochure da scaricare?</legend>
-          <label class="est__check">
+          <legend>Come ti chiedono una visita?</legend>
+          <div class="est__cards est__cards--2">
+            <label class="est__card">
+              <input type="radio" name="key-venue" value="base" checked />
+              <span><b>Con un modulo</b><small>Data dell'evento, ospiti, budget: rispondi tu. Incluso.</small></span>
+            </label>
+            <label class="est__card">
+              <input type="radio" name="key-venue" value="auto" />
+              <span><b>Con un calendario</b><small>Scelgono loro giorno e ora della visita, tu ricevi l'appuntamento.</small></span>
+            </label>
+          </div>
+          <label class="est__check est__check--solo">
             <input type="checkbox" name="brochure" />
-            <span>Sì, un PDF con spazi, menu o pacchetti</span>
+            <span>Anche un listino o una brochure da scaricare</span>
           </label>
         </fieldset>
 
@@ -126,7 +155,6 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
             <label class="est__check"><input type="checkbox" name="google" /><span>Sistemare la scheda Google della tua attività</span></label>
             <label class="est__check"><input type="checkbox" name="migration" /><span>Recuperare testi e foto dal vecchio sito</span></label>
             <label class="est__check"><input type="checkbox" name="blog" /><span>Un blog o una pagina di notizie</span></label>
-            <label class="est__check"><input type="checkbox" name="editor" /><span>Modificare testi e foto da solo, quando vuoi</span></label>
             <label class="est__check" data-only="hosp-venue"><input type="checkbox" name="vouchers" /><span>Vendere buoni regalo online</span></label>
           </div>
         </fieldset>
@@ -207,19 +235,13 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
   .est__q[hidden] {
     display: none;
   }
-  .est__q legend,
-  .est__units > label {
+  .est__q legend {
     display: block;
     padding: 0;
     margin-bottom: 0.75rem;
     font-weight: 700;
     font-size: 1.125rem;
     color: var(--inchiostro);
-  }
-  .est__units .hint {
-    margin: -0.4rem 0 0.75rem;
-    font-size: var(--fs-small);
-    color: var(--grafite);
   }
   .est__cards {
     display: grid;
@@ -296,45 +318,8 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
       grid-template-columns: 1fr 1fr;
     }
   }
-  .est__stepper {
-    display: inline-grid;
-    grid-template-columns: 52px 5rem 52px;
-    align-items: center;
-    border: 1.5px solid var(--filo);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .est__step {
-    height: 52px;
-    border: 0;
-    background: var(--nebbia);
-    color: var(--blu);
-    cursor: pointer;
-    display: grid;
-    place-items: center;
-  }
-  .est__step svg {
-    width: 20px;
-    height: 20px;
-  }
-  .est__step:hover {
-    background: #e3e9f7;
-  }
-  .est__stepper input {
-    width: 100%;
-    height: 52px;
-    border: 0;
-    text-align: center;
-    font: inherit;
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: var(--inchiostro);
-    background: var(--carta);
-    -moz-appearance: textfield;
-  }
-  .est__stepper input::-webkit-inner-spin-button,
-  .est__stepper input::-webkit-outer-spin-button {
-    -webkit-appearance: none;
+  .est__check--solo {
+    margin-top: 0.5rem;
   }
 
   /* ---------- Result ---------- */
@@ -454,14 +439,11 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
   if (root && form) {
     const cfg = JSON.parse(root.dataset.est!);
     const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
-    const units = form.querySelector<HTMLInputElement>("#est-units")!;
-    const unitLabel = $("[data-est-unit-label]");
-    const unitHint = $("[data-est-unit-hint]");
     const peek = $("[data-est-peek]");
-    const hints = {
-      trades: ["Quanti servizi vuoi presentare?", "Es. bagni, cucine, facciate: ognuno con la sua pagina."],
-      hospitality: ["Quante camere o appartamenti hai?", "Ognuno con la sua scheda: foto, servizi, prezzi."],
-      venue: ["Quanti spazi o tipi di evento vuoi presentare?", "Es. la sala, il giardino, i matrimoni, le feste aziendali."],
+    const selfText = {
+      trades: "Vuoi aggiungere da solo nuovi lavori o servizi?",
+      hospitality: "Vuoi aggiungere da solo nuove camere o offerte?",
+      venue: "Vuoi aggiungere da solo nuovi eventi o spazi?",
     } as const;
     const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(a)} € e ${num(b)} €`);
     const money = (a: number, b: number) => (a === b ? `${num(a)} €` : `${num(a)}-${num(b)} €`);
@@ -470,16 +452,16 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
     const read = (): Answers => {
       const f = new FormData(form);
       const on = (n: string) => f.get(n) === "on";
+      const activity = (f.get("activity") as Answers["activity"]) ?? "edile";
       return {
-        activity: (f.get("activity") as Answers["activity"]) ?? "edile",
-        size: (f.get("size") as Answers["size"]) ?? "piu",
-        units: Number(units.value) || 1,
-        booking: (f.get("booking") as Answers["booking"]) ?? "richiesta",
+        activity,
+        size: (f.get("size") as Answers["size"]) ?? "completo",
+        selfUpdate: f.get("self") === "si",
+        key: (f.get(`key-${modelOf(activity)}`) as Answers["key"]) ?? "base",
         brochure: on("brochure"),
         languages: Number(f.get("languages") ?? 0) as Answers["languages"],
         google: on("google"),
         blog: on("blog"),
-        editor: on("editor"),
         vouchers: on("vouchers"),
         migration: on("migration"),
         photos: f.get("photos") !== "no",
@@ -505,8 +487,7 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
         const only = el.dataset.only;
         el.hidden = !(only === model || (only === "hosp-venue" && model !== "trades"));
       });
-      unitLabel.textContent = hints[model][0];
-      unitHint.textContent = hints[model][1];
+      $("[data-est-self]").textContent = selfText[model];
       const r = estimate(a, cfg, cfg.open);
       $("[data-est-plan]").textContent = r.planName;
       $("[data-est-range]").textContent = range(r.min, r.max);
@@ -522,13 +503,6 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
 
     form.addEventListener("input", render);
     form.addEventListener("change", render);
-    root.querySelectorAll<HTMLButtonElement>("[data-est-step]").forEach((b) =>
-      b.addEventListener("click", () => {
-        const v = Math.min(40, Math.max(1, (Number(units.value) || 1) + Number(b.dataset.estStep)));
-        units.value = String(v);
-        render();
-      }),
-    );
     // The pill hides while the result itself is on screen.
     new IntersectionObserver(([e]) => peek.classList.toggle("is-away", e.isIntersecting), { threshold: 0.2 }).observe($("#est-result"));
     render();

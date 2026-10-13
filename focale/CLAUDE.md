@@ -48,28 +48,30 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
 - Opening film (scripts/hero.ts): tap on "Chiama ora" rings the Dynamic Island, iOS banners drop in.
   Sound (scripts/sound.ts) only after the visitor presses the speaker button.
 - Makeover (Makeover.astro, scripts/makeover.ts): a film like the opening one, not scroll-driven, about 30 s,
-  ONE THING AT A TIME (Lorenzo found the all-at-once version confusing: old site, boxes, labels and new site were
-  all unclear, too small, too fast). Script in seconds at the top of makeover.ts: the old site (a desktop page at
-  220% scaled down, so it stays in its two-column layout); its five problems one by one (the old page zooms on
-  the problem, 1.7x-2.4x by height, a red box lights it and dims the rest, the caption says "Problema N di 5");
-  the phone lifts and turns, the new site is swapped while it faces away; the five fixes one by one (green box,
-  "Risolto N di 5"); a tap on "Chiama ora" rings. The `fixes` list in Makeover.astro pairs each OldSite piece
-  with its fix in ArcadiHero (shown without its promise chips, `extra={false}`). Caption and the computer-only
-  checklist (red, then green) are worked out from the film's clock (sync), so seeking or replaying never leaves
-  them out of step. It plays by itself when the phone is in view, pauses when it leaves, goes on when it comes
-  back (restarts if finished). Under the phone: caption (all lines stacked in one cell, nothing moves), a sound
-  switch and "Rivedi"; no play/pause, no progress bar (Lorenzo). On phones the phone is bigger and the button
-  comes after the film. Sound cues (scripts/sound.ts) are timeline callbacks; one page-wide switch
-  (bindSoundButton). Keep GSAP lag smoothing on (smooth.ts): with it off a hitch or a tab switch sent the films
-  straight to their end. The old site has a tiny phone number in its header (problem 1).
+  ONE THING AT A TIME (Lorenzo found the all-at-once version confusing). Script in seconds at the top of
+  makeover.ts: the old site (a desktop page at 220% scaled down, so it stays in its two-column layout); its five
+  problems one by one (a gentle zoom, 1.25x-1.5x: Lorenzo liked the zoom but 2.4x was too much; a red box
+  lights the problem and dims the rest; a floating label, beside the phone with a dashed line on computers,
+  over the phone under the box on phones); the phone lifts and turns, the new site is swapped while it faces
+  away; the five fixes one by one (green box, label turns green); a tap on "Chiama ora" rings. The `fixes` list
+  in Makeover.astro pairs each OldSite piece with its fix in ArcadiHero (`extra={false}`: no promise chips).
+  Under the phone a slim pill bar: one-line status worked out from the film's clock (sync), sound switch,
+  "Rivedi"; no play/pause, no progress bar (Lorenzo). It plays when in view, pauses when it leaves, goes on
+  when it comes back (restarts if finished). Phones: bigger phone, button after the film, the sticky bar
+  hides over .mk__bar. Sound cues are timeline callbacks; one page-wide switch (bindSoundButton). Keep GSAP
+  lag smoothing on (smooth.ts): with it off a hitch or a tab switch sent the films straight to their end.
+  The section's padding is set in global.css (`.home .scenes > section.mk`): it once was 0 and the phone
+  touched the band's edge. The old site has a tiny phone number in its header (problem 1).
 - Header (Header.astro): on touch screens it never hides on scroll (hiding glitched on iPhone with momentum
   and rubber-band scrolling); with a mouse it hides after 60 px of steady scrolling down, back after 24 px up.
 - "Calcola una stima del tuo preventivo" (Estimator.astro on /prezzi/#stima, logic in lib/estimate.ts, numbers in
-  site.estimate): questions follow the business (services for trades, rooms and booking for B&B/agriturismi,
-  spaces/event types and brochure for venues), then languages, photos, extras. Live result: price range,
-  working days, line-by-line breakdown, costs paid to others (domain, booking engine fee, payment fees,
-  photographer) kept apart, "stima, non preventivo". No email, nothing sent or stored. One-page sites move to
-  Professionale past onePageMaxUnits or with blog/panel/booking. Prices from reports/Stima preventivo siti web.md.
+  site.estimate): it asks about size and MECHANISMS, not counts (Lorenzo: "how many rooms" confuses; what moves
+  price is whether things happen by themselves). Questions: activity; size (one page / complete up to 6 pages /
+  big site); "vuoi aggiungere da solo..." (panel that makes new pages); the key mechanism for the business
+  (trades: guided form included, or an automatic indicative price; hospitality: request or link included, or
+  booking inside the site; venues: form included, or a visit calendar, plus brochure); languages; photos;
+  extras. Live result: range, working days, breakdown, costs paid to others kept apart, "stima, non
+  preventivo". No email, nothing sent or stored. Prices from reports/Stima preventivo siti web.md.
 - Sector chooser (Choose.astro, scripts/paths.ts): radios + CSS :has(), Flip. Each path shows the live demo.
 - Live demos (DemoViewer.astro, scripts/demo-viewer.ts): a real iframe of /lavori/<slug>/demo/, phone frame
   (390 px wide, scaled) on phones, browser window (1280 px, scaled) on computers, a switch between them.

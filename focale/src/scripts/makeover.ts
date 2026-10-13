@@ -6,14 +6,16 @@ import { bindSoundButton, buzz, whoosh, fixed, ring } from "./sound";
  * The makeover film, played like the opening one: it starts by itself when the phone is well in
  * view (no pinning, the scroll stays free), pauses when it leaves and goes on when it comes back.
  * One thing at a time, slow enough to read (about 30 s):
- * 1. the old site; then its five problems one by one: the screen zooms on the problem, a red box
- *    lights it, the rest dims, the line under the phone says what is wrong;
+ * 1. the old site; then its five problems one by one: a gentle zoom (1.25x-1.5x: Lorenzo liked it but
+ *    found 2.4x too much), a red box lights the problem, the rest of the
+ *    screen dims, a floating label says what is wrong (beside the phone on computers, with a dashed
+ *    line to the box; over the phone, under the box, on phones);
  * 2. the phone lifts and turns all the way round; facing away, the old site becomes the new one;
- * 3. the five fixes one by one: a green box on the part that solves each problem;
+ * 3. the five fixes one by one: a green box on the part that solves each problem, the label green;
  * 4. a tap on "Chiama ora".
- * The caption line and the checklist (computers) are worked out from the film's time, so seeking
- * or replaying never leaves them out of step. Sound cues ride the timeline (silent until the
- * visitor turns sound on). See Makeover.astro for the markup and the no-JS final frame.
+ * The status in the bar under the phone is worked out from the film's clock, so seeking or
+ * replaying never leaves it out of step. Sound cues ride the timeline (silent until the visitor
+ * turns sound on). See Makeover.astro for the markup and the no-JS final frame.
  */
 
 // The script, in seconds.
@@ -43,7 +45,7 @@ export function initMakeover() {
   const sweep = q("[data-mk-sweep]");
   const marks = qa("[data-mk-mark]");
   const goods = qa("[data-mk-good]");
-  const rows = qa("[data-mk-row]");
+  const tags = qa("[data-mk-tag]");
   const beats = qa("[data-mk-beat]");
   const callBtn = newSite.querySelector<HTMLElement>(".ah__btn--ghost");
 
@@ -62,15 +64,9 @@ export function initMakeover() {
       shownBeat = beat;
       beats.forEach((b, j) => b.classList.toggle("is-on", j === beat));
     }
-    rows.forEach((r, i) => {
-      const good = t >= F0 + i * FSTEP;
-      const bad = !good && t >= P0 + i * PSTEP;
-      r.classList.toggle("is-good", good);
-      r.classList.toggle("is-bad", bad);
-      r.classList.toggle("is-now", beat === 1 + i || beat === 7 + i);
-    });
   };
   sync(0);
+  gsap.set(zoom, { transformOrigin: "0 0" });
 
   // Where things sit on the screen (px, layout boxes: transforms ignored, so the phone's 3D turn
   // and the zoom do not matter). The old page is drawn at 220% and scaled down to fit.
@@ -93,18 +89,34 @@ export function initMakeover() {
     width: () => Math.max(18, box().w + 2 * pad),
     height: () => Math.max(16, box().h + 2 * pad),
   });
-  // The zoom that brings problem i to the middle of the screen, big enough to read (1.7x to 2.4x,
-  // by its height: wide pieces get cropped at the sides), never showing beyond the page's edges.
+  // The gentle zoom on problem i: 1.25x-1.5x, centred on it as far as the page's edges allow.
   const zoomTo = (i: number) => {
-    const b = () => oldBox(i);
-    const W = () => screen.offsetWidth;
-    const H = () => screen.offsetHeight;
-    const z = () => Math.min(2.4, Math.max(1.7, (0.4 * H()) / b().h));
+    const W = screen.offsetWidth;
+    const H = screen.offsetHeight;
+    const b = oldBox(i);
+    const z = Math.min(1.5, Math.max(1.25, (0.35 * H) / b.h));
     const clamp = (v: number, min: number) => Math.min(0, Math.max(min, v));
+    const x = clamp(W / 2 - (b.x + b.w / 2) * z, W * (1 - z));
+    const y = clamp(H / 2 - (b.y + b.h / 2) * z, H * (1 - z));
+    return { z, x, y, box: { x: x + b.x * z, y: y + b.y * z, w: b.w * z, h: b.h * z } };
+  };
+
+  // Floating labels. Computers: left of the phone, level with the box, a dashed line reaching it.
+  // Phones: over the phone, centred, just under the box (above it when the box is low).
+  const wide = () => window.matchMedia("(min-width: 900px)").matches;
+  const scr = () => offsetIn(screen, stage);
+  const tagAt = (i: number, box: () => { x: number; y: number; w: number; h: number }) => {
+    const t = tags[i];
+    const gap = 18;
     return {
-      scale: z,
-      x: () => clamp(W() / 2 - (b().x + b().w / 2) * z(), W() * (1 - z())),
-      y: () => clamp(H() / 2 - (b().y + b().h / 2) * z(), H() * (1 - z())),
+      left: () => (wide() ? scr().x - gap - t.offsetWidth - 24 : scr().x + (screen.offsetWidth - t.offsetWidth) / 2),
+      top: () => {
+        const b = box();
+        if (wide()) return scr().y + b.y + b.h / 2 - t.offsetHeight / 2;
+        const below = scr().y + b.y + b.h + 12;
+        return below + t.offsetHeight < scr().y + screen.offsetHeight - 8 ? below : scr().y + b.y - t.offsetHeight - 12;
+      },
+      "--reach": () => (wide() ? `${24 + gap + Math.max(0, box().x) + 2}px` : "0px"),
     };
   };
 
@@ -115,25 +127,27 @@ export function initMakeover() {
   });
   const cue = (fn: () => void, at: number) => tl.call(fn, [], at);
 
-  gsap.set(zoom, { transformOrigin: "0 0" });
   marks.forEach((m, i) => tl.set(m, place(() => oldBox(i)), 0));
   goods.forEach((g, i) => tl.set(g, place(() => newBox(i)), 0));
-  tl.set(zoom, { x: 0, y: 0, scale: 1 }, 0);
 
-  // 1. The problems, one at a time: zoom in, the red box lights it and the rest dims.
+  // 1. The problems, one at a time: the red box lights it, the rest dims, the label says what is wrong.
   marks.forEach((m, i) => {
     const at = P0 + i * PSTEP;
-    tl.to(zoom, { ...zoomTo(i), duration: 0.7 }, at);
+    const t = tags[i];
+    tl.to(zoom, { scale: () => zoomTo(i).z, x: () => zoomTo(i).x, y: () => zoomTo(i).y, duration: 0.7 }, at);
+    tl.set(t, { ...tagAt(i, () => zoomTo(i).box), "--tone": "#d92d20" }, at);
     tl.fromTo(
       m,
       { autoAlpha: 0, scale: 1.25, boxShadow: "0 0 0 2000px rgba(11, 27, 63, 0)" },
-      { autoAlpha: 1, scale: 1, boxShadow: "0 0 0 2000px rgba(11, 27, 63, 0.4)", duration: 0.45, ease: spring(0.3) },
-      at + 0.55,
+      { autoAlpha: 1, scale: 1, boxShadow: "0 0 0 2000px rgba(11, 27, 63, 0.45)", duration: 0.45, ease: spring(0.3) },
+      at + 0.2,
     );
-    cue(buzz, at + 0.55);
-    tl.to(m, { autoAlpha: 0, duration: 0.25 }, at + PSTEP - 0.3);
+    tl.fromTo(t, { autoAlpha: 0, x: wide() ? -14 : 0, y: wide() ? 0 : 8 }, { autoAlpha: 1, x: 0, y: 0, duration: 0.45, ease: spring(0.3) }, at + 0.35);
+    cue(buzz, at + 0.2);
+    tl.to([m, t], { autoAlpha: 0, duration: 0.25 }, at + PSTEP - 0.3);
   });
-  tl.to(zoom, { x: 0, y: 0, scale: 1, duration: 0.6 }, TURN - 0.4);
+
+  tl.to(zoom, { scale: 1, x: 0, y: 0, duration: 0.6 }, TURN - 0.4);
 
   // 2. The makeover: the phone lifts and turns all the way round (titanium back, cameras);
   //    when it faces away the old site is swapped for the new one, then light crosses the glass.
@@ -147,12 +161,21 @@ export function initMakeover() {
   tl.fromTo(sweep, { left: "-60%", opacity: 0 }, { left: "120%", opacity: 1, duration: 0.6, ease: "power1.inOut" }, TURN + 2.7);
   tl.to(sweep, { opacity: 0, duration: 0.1 }, TURN + 3.3);
 
-  // 3. The fixes, one at a time: a green box on the part of the new site that solves it.
+  // 3. The fixes, one at a time: a green box on the part of the new site that solves it, the label green.
   goods.forEach((g, i) => {
     const at = F0 + i * FSTEP;
+    const t = tags[i];
+    const dot = t.querySelector(".mk__tdot")!;
+    tl.set(t, { ...tagAt(i, () => newBox(i)), "--tone": "#1f8a4c" }, at);
+    tl.set(t.querySelector(".mk__tbad"), { opacity: 0 }, at);
+    tl.set(t.querySelector(".mk__tgood"), { opacity: 1 }, at);
+    tl.set(dot, { backgroundColor: "#1f8a4c" }, at);
+    tl.set(dot.querySelector(".mk__tn"), { opacity: 0 }, at);
+    tl.set(dot.querySelector("svg"), { opacity: 1 }, at);
     tl.fromTo(g, { autoAlpha: 0, scale: 1.2 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: spring(0.3) }, at + 0.2);
+    tl.fromTo(t, { autoAlpha: 0, x: wide() ? -14 : 0, y: wide() ? 0 : 8 }, { autoAlpha: 1, x: 0, y: 0, duration: 0.45, ease: spring(0.3) }, at + 0.3);
     cue(() => fixed(i), at + 0.2);
-    tl.to(g, { autoAlpha: 0, duration: 0.25 }, at + FSTEP - 0.25);
+    tl.to([g, t], { autoAlpha: 0, duration: 0.25 }, at + FSTEP - 0.25);
   });
 
   // 4. A tap on "Chiama ora", and the phone rings.
