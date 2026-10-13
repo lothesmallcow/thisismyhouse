@@ -24,6 +24,7 @@ const note = (area: string) => notes.find((n) => n.area === area);
   <div class="os">
     <div class="os__header os__piece" data-old="header">
       <span class="os__brand">IMPRESA EDILE ARCADI s.n.c.</span>
+      <span class="os__tel">per informazioni tel. 02 1234 5678 (orario ufficio)</span>
       {annotations && <Note {...note("header")!} />}
     </div>
     <div class="os__title os__piece" data-old="title">
@@ -90,6 +91,13 @@ const note = (area: string) => notes.find((n) => n.area === area);
     font-size: 14px;
     letter-spacing: 0.06em;
     text-shadow: 2px 2px 0 #000;
+  }
+  .os__tel {
+    display: block;
+    margin-top: 3px;
+    font-size: 8px;
+    color: #c8d4ff;
+    letter-spacing: 0;
   }
   .os__title {
     grid-area: title;

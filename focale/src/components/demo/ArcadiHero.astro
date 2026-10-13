@@ -12,8 +12,10 @@ interface Props {
   callHref?: string;
   quoteHref?: string;
   headingTag?: "h1" | "p";
+  /** The row of small promises under the buttons (left out where the screen must stay simple). */
+  extra?: boolean;
 }
-const { eager = false, class: cls, callHref, quoteHref, headingTag = "p" } = Astro.props;
+const { eager = false, class: cls, callHref, quoteHref, headingTag = "p", extra = true } = Astro.props;
 const Tag = headingTag;
 const CallEl = callHref ? "a" : "span";
 const QuoteEl = quoteHref ? "a" : "span";
@@ -41,11 +43,15 @@ const QuoteEl = quoteHref ? "a" : "span";
       <QuoteEl class="ah__btn ah__btn--main" href={quoteHref}>Chiedi un preventivo</QuoteEl>
       <CallEl class="ah__btn ah__btn--ghost" href={callHref}>Chiama ora</CallEl>
     </div>
-    <ul class="ah__extra" data-piece="extra">
-      <li>Preventivo scritto</li>
-      <li>Cantiere pulito</li>
-      <li>Garanzia sui lavori</li>
-    </ul>
+    {
+      extra && (
+        <ul class="ah__extra" data-piece="extra">
+          <li>Preventivo scritto</li>
+          <li>Cantiere pulito</li>
+          <li>Garanzia sui lavori</li>
+        </ul>
+      )
+    }
     <p class="ah__foot" data-piece="foot">Ultimo lavoro consegnato: bagno in zona Lambrate, settembre 2026.</p>
   </div>
 </div>

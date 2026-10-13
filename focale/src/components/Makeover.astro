@@ -2,10 +2,12 @@
 /**
  * The makeover, filmed like the opening: one iPhone with a real-looking old website (a desktop
  * layout squeezed onto a phone, as non-responsive sites really look). It plays by itself like a
- * video, with play/pause, replay and a progress bar (the page never pins): a scan finds the five problems in one pass (numbered boxes on the screen, labels beside
- * the phone), the phone turns around in 3D and comes back with the new site, then each label turns
- * green on the part of the new site that fixes it, and a tap calls.
- * Without JS or with reduced motion: the finished site and the steps as a list.
+ * video, one thing at a time so it can be followed (Lorenzo found the all-at-once version confusing):
+ * the old site; its five problems one by one (the screen zooms on each, a red box, a line under the
+ * phone says what is wrong); the phone turns around and comes back with the new site; the five
+ * fixes one by one (green box, the line says what changed); a tap calls.
+ * On computers a checklist beside the phone fills in as the film runs (red, then green).
+ * Without JS or with reduced motion: the finished site and the list of fixes.
  * Logic in scripts/makeover.ts.
  */
 import IPhone from "./IPhone.astro";
@@ -13,130 +15,370 @@ import { site } from "../config/site";
 import OldSite from "./demo/OldSite.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
 
-const steps = [
-  { t: "Il sito di oggi, aperto dal telefono.", d: "Fatto per il computer, nel 2011." },
-  { t: "Cinque problemi, in un colpo d'occhio.", d: "Numero nascosto, foto sgranate, testo minuscolo, niente preventivo, fermo al 2011." },
-  { t: "Il makeover.", d: "Stessa impresa, sito nuovo: in 10 giorni." },
-  { t: "Ogni problema, risolto.", d: "Chiama con un tocco, si legge senza zoom, preventivo in 3 domande." },
-  { t: "Chi lo apre, ti chiama.", d: "Un tocco e il telefono squilla." },
-];
 // Each problem of the old site and the part of the new site that fixes it (same number).
 // `old` is a [data-old] piece of OldSite, `fix` a selector inside ArcadiHero.
 const fixes = [
-  { old: "header", fix: ".ah__phone", bad: "Numero nascosto", good: "Chiama con un tocco" },
-  { old: "photo", fix: "[data-piece='photo']", bad: "Foto sgranate", good: "Lavori in primo piano" },
-  { old: "text", fix: "[data-piece='title']", bad: "Testo minuscolo", good: "Si legge senza zoom" },
-  { old: "cta", fix: ".ah__btn--main", bad: "Niente preventivo", good: "Preventivo in 3 domande" },
-  { old: "foot", fix: "[data-piece='foot']", bad: "Fermo al 2011", good: "Ultimi lavori in vista" },
+  { old: "header", fix: ".ah__call", bad: "Il numero di telefono non si vede", good: "Il tasto Chiama è sempre in alto" },
+  { old: "text", fix: "[data-piece='title']", bad: "Testo minuscolo: bisogna zoomare", good: "Titoli grandi: si legge al volo" },
+  { old: "photo", fix: "[data-piece='photo']", bad: "Una foto piccola e sgranata", good: "Una foto grande dei lavori" },
+  { old: "cta", fix: ".ah__btn--main", bad: "Nessun modo di chiedere un preventivo", good: "Preventivo con un tocco" },
+  { old: "foot", fix: "[data-piece='foot']", bad: "© 2011: sembra un'attività chiusa", good: "Aggiornato: l'ultimo lavoro è di settembre" },
+];
+// The lines under the phone, in order. The film shows one at a time.
+const beats: { t: string; d: string; tone?: "bad" | "good" }[] = [
+  { t: "Il sito di oggi, aperto dal telefono.", d: "Fatto per il computer, nel 2011." },
+  ...fixes.map((f, i) => ({ t: `Problema ${i + 1} di 5`, d: f.bad, tone: "bad" as const })),
+  { t: "Lo rifacciamo.", d: `Stessa impresa, sito nuovo, in ${site.deliveryDays.professionale} giorni.` },
+  ...fixes.map((f, i) => ({ t: `Risolto ${i + 1} di 5`, d: f.good, tone: "good" as const })),
+  { t: "Chi lo apre, ti chiama.", d: "Un tocco e il telefono squilla." },
 ];
 ---
 <section class="mk on-navy" id="makeover" aria-labelledby="mk-t" data-makeover>
-  <div class="mk__pin" data-mk-pin>
-    <div class="wrap mk__in">
-      <div class="mk__text">
-        <div class="mk__head">
-          <p class="eyebrow mk__kicker">Progetto dimostrativo: un'impresa edile inventata</p>
-          <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
-        </div>
-        <ol class="mk__steps" data-mk-steps>
-          {
-            steps.map((s, i) => (
-              <li data-mk-step={i}>
-                <span class="mk__st">{s.t}</span>
-                <span class="mk__sd">{s.d}</span>
-              </li>
-            ))
-          }
-        </ol>
-        <div class="mk__ask">
-          <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
-          <p class="mk__micro">Gratis e senza impegno. Il tuo sito, rifatto così, in {site.previewHours} ore.</p>
-        </div>
-        <a class="textlink mk__more" href="/lavori/">Vedi i tre siti completi</a>
+  <div class="wrap mk__in">
+    <div class="mk__text">
+      <div class="mk__head">
+        <p class="eyebrow mk__kicker">Progetto dimostrativo: un'impresa edile inventata</p>
+        <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
       </div>
+      <ol class="mk__list" data-mk-list>
+        {
+          fixes.map((f, i) => (
+            <li data-mk-row={i}>
+              <span class="mk__dot" aria-hidden="true">
+                <span class="mk__n">{i + 1}</span>
+                <svg viewBox="0 0 12 12" width="12" height="12">
+                  <path d="M2 6.4 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span class="mk__row">
+                <span class="mk__good">{f.good}</span>
+                <span class="mk__bad">Prima: {f.bad.charAt(0).toLowerCase() + f.bad.slice(1)}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="mk__ask">
+        <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
+        <p class="mk__micro">Gratis e senza impegno. Il tuo sito, rifatto così, in {site.previewHours} ore.</p>
+      </div>
+      <a class="textlink mk__more" href="/lavori/">Vedi i tre siti completi</a>
+    </div>
 
-      <figure class="mk__stage">
-        <div class="mk__rig" data-phone3d>
+    <figure class="mk__stage">
+      <div class="mk__rig" data-phone3d>
         <div class="mk__obj" data-mk-obj>
-        <div class="mk__phone" data-mk-phone>
-          <IPhone solid label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
-            <div class="mk__screen" data-mk-screen>
-              <div class="mk__old" data-mk-old>
-                <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
+          <div class="mk__phone" data-mk-phone>
+            <IPhone solid label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
+              <div class="mk__screen" data-mk-screen>
+                <div class="mk__old" data-mk-old>
+                  <div class="mk__zoom" data-mk-zoom>
+                    <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
+                    {
+                      fixes.map((f, i) => (
+                        <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true">
+                          <i>{i + 1}</i>
+                        </span>
+                      ))
+                    }
+                  </div>
+                </div>
+                <div class="mk__new" data-mk-new>
+                  <ArcadiHero extra={false} />
+                  {
+                    fixes.map((f, i) => (
+                      <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true">
+                        <i>{i + 1}</i>
+                      </span>
+                    ))
+                  }
+                </div>
+                <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
               </div>
-              <div class="mk__new" data-mk-new><ArcadiHero /></div>
-              <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
-              <span class="mk__scan" data-mk-scan aria-hidden="true"></span>
-              {
-                fixes.map((f, i) => (
-                  <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true">
-                    <i>{i + 1}</i>
-                  </span>
-                ))
-              }
-              {
-                fixes.map((f, i) => (
-                  <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true">
-                    <i>{i + 1}</i>
-                  </span>
-                ))
-              }
-            </div>
-            <span class="mk__finger mk__finger--a" data-mk-fa aria-hidden="true"></span>
-            <span class="mk__finger mk__finger--b" data-mk-fb aria-hidden="true"></span>
-          </IPhone>
+              <span class="mk__finger" data-mk-fa aria-hidden="true"></span>
+            </IPhone>
+          </div>
         </div>
-        </div>
-        </div>
-        <figcaption class="mk__cap">
-          <span class="mk__beat" aria-live="off">
-            {
-              steps.map((s, i) => (
-                <span class="mk__b" data-mk-beat={i}>
-                  <b>{s.t}</b>
-                  <span>{s.d}</span>
-                </span>
-              ))
-            }
-          </span>
-          <span class="mk__ctl" data-mk-ctl hidden>
-            <button type="button" class="mk__btn" data-mk-sound aria-pressed="false" aria-label="Attiva il suono">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" /><path class="mk__wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
-            </button>
-            <button type="button" class="mk__btn" data-mk-replay aria-label="Rivedi il prima e dopo">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><path d="M6 3.5v4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
-            </button>
-          </span>
-        </figcaption>
-        <ul class="mk__tags" aria-hidden="true" data-mk-tags>
+      </div>
+      <figcaption class="mk__cap">
+        <span class="mk__beat">
           {
-            fixes.map((f, i) => (
-              <li class:list={["mk__tag", i % 2 ? "mk__tag--r" : "mk__tag--l"]} data-mk-tag={i}>
-                <span class="mk__dot">
-                  <span class="mk__dot-bad">{i + 1}</span>
-                  <span class="mk__dot-good"><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2 6.4 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
-                </span>
-                <span class="mk__tx">
-                  <span class="mk__bad">{f.bad}</span>
-                  <span class="mk__good">{f.good}</span>
-                </span>
-              </li>
+            beats.map((b, i) => (
+              <span class:list={["mk__b", b.tone && `mk__b--${b.tone}`]} data-mk-beat={i}>
+                <b>{b.t}</b>
+                <span>{b.d}</span>
+              </span>
             ))
           }
-        </ul>
-      </figure>
-    </div>
+        </span>
+        <span class="mk__ctl" data-mk-ctl hidden>
+          <button type="button" class="mk__btn" data-mk-sound aria-pressed="false" aria-label="Attiva il suono">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" /><path class="mk__wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+          </button>
+          <button type="button" class="mk__btn" data-mk-replay aria-label="Rivedi il prima e dopo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><path d="M6 3.5v4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+        </span>
+      </figcaption>
+    </figure>
   </div>
 </section>
 
 <style>
   .mk {
     overflow-x: clip;
-  }
-  .mk__pin {
     padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
   }
-  /* Under the phone, like the opening film: what is happening now, sound and replay. */
+  .mk__in {
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+    width: 100%;
+  }
+  @media (min-width: 900px) {
+    .mk__in {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: clamp(2rem, 6vw, 7rem);
+    }
+  }
+  .mk__kicker {
+    margin-bottom: 0.85rem !important;
+    color: var(--on-dark-muted);
+  }
+  .mk__t {
+    font-size: var(--fs-h2);
+    max-width: 18ch;
+  }
+  .mk__ask {
+    display: grid;
+    gap: 0.6rem;
+    justify-items: start;
+    margin-top: 1.75rem;
+  }
+  .mk__micro {
+    font-size: var(--fs-small);
+    color: var(--on-dark-muted);
+  }
+  /* The words stay readable above the phone while it turns. */
+  .mk__text {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ---------- The checklist: problem, then fix ---------- */
+  .mk__list {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.5rem, 4vh, 2.25rem) 0 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .mk__list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  .mk__dot {
+    position: relative;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #1f8a4c;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: background-color 0.3s ease;
+  }
+  .mk__dot > * {
+    grid-area: 1 / 1;
+    transition: opacity 0.25s ease;
+  }
+  .mk__n {
+    opacity: 0;
+  }
+  .mk__row {
+    display: grid;
+    line-height: 1.3;
+  }
+  .mk__good {
+    font-weight: 600;
+    color: #fff;
+  }
+  .mk__bad {
+    font-size: var(--fs-small);
+    color: var(--on-dark-muted);
+  }
+  /* Live: rows wait (muted, grey dot), turn red with the problem, then green with the fix.
+     Colours, not opacity: muted text keeps its contrast. */
+  :global(.mk-live) .mk__list li .mk__bad {
+    display: none;
+  }
+  :global(.mk-live) .mk__list li:not(.is-good) .mk__good {
+    display: none;
+  }
+  :global(.mk-live) .mk__list li:not(.is-good) .mk__bad {
+    display: block;
+    font-size: 1rem;
+    color: var(--on-dark-muted);
+  }
+  :global(.mk-live) .mk__list li.is-bad .mk__bad {
+    color: #fff;
+  }
+  :global(.mk-live) .mk__list li:not(.is-good) .mk__dot {
+    background: rgba(255, 255, 255, 0.16);
+  }
+  :global(.mk-live) .mk__list li.is-bad .mk__dot {
+    background: #d92d20;
+  }
+  :global(.mk-live) .mk__list li:not(.is-good) .mk__n {
+    opacity: 1;
+  }
+  :global(.mk-live) .mk__list li:not(.is-good) .mk__dot svg {
+    opacity: 0;
+  }
+  :global(.mk-live) .mk__list li.is-now .mk__dot {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.25);
+  }
+
+  /* ---------- Phone ---------- */
+  .mk__stage {
+    position: relative;
+    margin: 0;
+    display: grid;
+    justify-items: center;
+  }
+  .mk__phone {
+    position: relative;
+    transform-style: preserve-3d;
+  }
+  .mk__rig {
+    perspective: 1600px;
+    perspective-origin: 50% 40%;
+  }
+  .mk__obj {
+    position: relative;
+    transform-style: preserve-3d;
+    --w: clamp(220px, 38vh, 320px);
+  }
+  .mk__phone::after {
+    content: "";
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    bottom: calc(var(--w) * -0.07);
+    height: calc(var(--w) * 0.1);
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(11, 27, 63, 0.3), rgba(11, 27, 63, 0));
+    z-index: -1;
+  }
+  .mk__screen {
+    position: absolute;
+    inset: 13.7cqw 0 0;
+    overflow: hidden;
+    background: #fff;
+  }
+  .mk__old,
+  .mk__new {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  /* The zoom layer: the old page and its red boxes grow together on the problem being shown. */
+  .mk__zoom {
+    position: absolute;
+    inset: 0;
+    transform-origin: 50% 0;
+  }
+  /* A desktop page squeezed onto the phone (220% wide, scaled to fit), like a real non-responsive
+     site: two columns, tiny text, and the page fills the whole screen. 220% keeps OldSite in its
+     desktop layout (container >= 520 px) even on the smallest phone in the film. */
+  .mk__oldpage {
+    width: 220%;
+    height: 220%;
+    transform-origin: 0 0;
+    transform: scale(0.4545);
+    background: #fffbe6;
+  }
+  .mk__oldpage :global(.os-wrap),
+  .mk__oldpage :global(.os) {
+    height: 100%;
+  }
+  .mk__new {
+    background: #f2f2f0;
+  }
+  /* Final frame by default (no JS): the old page is hidden. */
+  .mk__old {
+    visibility: hidden;
+  }
+  :global(.mk-live) .mk__old {
+    visibility: visible;
+  }
+  .mk__sweep {
+    position: absolute;
+    top: -20%;
+    bottom: -20%;
+    left: -60%;
+    width: 45%;
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-12deg);
+    opacity: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .mk__finger {
+    position: absolute;
+    width: 11cqw;
+    height: 11cqw;
+    margin: -5.5cqw 0 0 -5.5cqw;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.65);
+    box-shadow:
+      0 0 0 1cqw rgba(29, 31, 33, 0.18),
+      0 1cqw 3cqw rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    z-index: 8;
+    pointer-events: none;
+  }
+  /* Numbered boxes: red on the old site, green on the new one. One at a time. */
+  .mk__mark {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border: 2.5px solid #d92d20;
+    border-radius: 6px;
+    background: rgba(217, 45, 32, 0.1);
+    box-shadow: 0 0 0 2000px rgba(11, 27, 63, 0);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 7;
+    pointer-events: none;
+  }
+  .mk__mark i {
+    position: absolute;
+    left: -9px;
+    top: -9px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #d92d20;
+    color: #fff;
+    font: 700 11px/1 var(--font);
+    font-style: normal;
+  }
+  .mk__mark--good {
+    border-color: #1f8a4c;
+    background: rgba(31, 138, 76, 0.1);
+  }
+  .mk__mark--good i {
+    background: #1f8a4c;
+  }
+
+  /* ---------- Caption, sound and replay, like the opening film ---------- */
   .mk__cap {
     display: none;
   }
@@ -149,11 +391,11 @@ const fixes = [
     margin-top: 1.4rem;
     min-height: 44px;
   }
-  /* All five lines share one cell: the caption is as tall as the longest, so nothing below moves. */
+  /* All lines share one cell: the caption is as tall as the longest, so nothing below moves. */
   .mk__beat {
     display: grid;
-    font-size: var(--fs-small);
-    color: var(--on-dark-muted);
+    font-size: 1rem;
+    color: #fff;
   }
   .mk__b {
     grid-area: 1 / 1;
@@ -172,12 +414,22 @@ const fixes = [
     opacity: 1;
     visibility: visible;
     transform: none;
-    transition-delay: 0.15s, 0.15s, 0s;
+    transition-delay: 0.12s, 0.12s, 0s;
   }
   .mk__b b {
+    font-size: var(--fs-small);
     font-weight: 600;
-    font-size: 1rem;
-    color: #fff;
+    color: var(--on-dark-muted);
+  }
+  .mk__b--bad b {
+    color: #ffb4ab;
+  }
+  .mk__b--good b {
+    color: #8fe0ad;
+  }
+  .mk__b span {
+    font-weight: 600;
+    line-height: 1.3;
   }
   .mk__ctl {
     display: flex;
@@ -213,89 +465,15 @@ const fixes = [
     border-color: #fff;
     color: var(--notte);
   }
-  .mk__in {
-    display: grid;
-    gap: 2rem;
-    align-items: center;
-    width: 100%;
-  }
-  @media (min-width: 900px) {
-    .mk__in {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      column-gap: clamp(2rem, 6vw, 7rem);
+
+  /* ---------- Phones: title, the film big, then the button ---------- */
+  @media (max-width: 899px) {
+    .mk__obj {
+      --w: min(72vw, 290px, 44svh);
     }
-  }
-  .mk__kicker {
-    margin-bottom: 0.85rem !important;
-    color: var(--on-dark-muted);
-  }
-  .mk__ask {
-    display: grid;
-    gap: 0.6rem;
-    justify-items: start;
-    margin-top: 1.75rem;
-  }
-  .mk__micro {
-    font-size: var(--fs-small);
-    color: var(--on-dark-muted);
-  }
-  .mk__t {
-    font-size: var(--fs-h2);
-    max-width: 18ch;
-  }
-  .mk__steps {
-    list-style: none;
-    padding: 0;
-    margin: clamp(1.5rem, 4vh, 2.5rem) 0 1.5rem;
-    display: grid;
-    gap: 0.25rem;
-  }
-  .mk__steps li {
-    display: grid;
-    gap: 0.15rem;
-    padding: 0.6rem 0 0.6rem 1rem;
-    border-left: 2px solid var(--filo);
-    transition: border-color 0.4s;
-  }
-  .mk__st {
-    font-weight: 500;
-    font-size: 1.1rem;
-    color: var(--grafite);
-    transition: color 0.4s;
-  }
-  .mk__sd {
-    font-size: var(--fs-small);
-    color: var(--grafite);
-  }
-  /* The step being played */
-  .mk__steps li.is-on {
-    border-left-color: #fff;
-  }
-  .mk__steps li.is-on .mk__st {
-    color: #fff;
-    font-weight: 700;
-  }
-  /* While the film runs: on computers the list becomes the film's chapters (titles only, the one
-     playing lit) and the caption under the phone gives its detail; on phones the caption alone
-     tells the story. */
-  :global(.mk-live) .mk__steps li .mk__sd {
-    display: none;
-  }
-  @media (min-width: 900px) {
-    :global(.mk-live) .mk__b b {
+    :global(.mk-live) .mk__list {
       display: none;
     }
-  }
-  @media (max-width: 899px) {
-    :global(.mk-live) .mk__steps {
-      display: none;
-    }
-  }
-  @media (max-width: 899px) {
-    .mk__in {
-      gap: 1.25rem;
-    }
-    /* On phones: title, the film, then the button (you see the proof before being asked). */
     :global(.mk-live) .mk__text {
       display: contents;
     }
@@ -313,225 +491,8 @@ const fixes = [
     :global(.mk-live) .mk__more {
       order: 3;
     }
-    .mk__cap {
+    :global(.mk-live) .mk__cap {
       margin-top: 1rem;
-    }
-  }
-
-  /* The words stay readable above the phone while it turns. */
-  .mk__text {
-    position: relative;
-    z-index: 2;
-  }
-  .mk__stage {
-    position: relative;
-    margin: 0;
-    display: grid;
-    justify-items: center;
-  }
-  .mk__phone {
-    position: relative;
-    transform-style: preserve-3d;
-  }
-  /* ---------- 3D rig ---------- */
-  .mk__rig {
-    perspective: 1600px;
-    perspective-origin: 50% 40%;
-  }
-  .mk__obj {
-    position: relative;
-    transform-style: preserve-3d;
-    --w: clamp(190px, 34vh, 310px);
-  }
-  @media (max-width: 899px) {
-    .mk__obj {
-      --w: clamp(170px, 30vh, 240px);
-    }
-  }
-  .mk__phone::after {
-    content: "";
-    position: absolute;
-    left: 10%;
-    right: 10%;
-    bottom: calc(var(--w) * -0.07);
-    height: calc(var(--w) * 0.1);
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(11, 27, 63, 0.3), rgba(11, 27, 63, 0));
-    z-index: -1;
-  }
-  .mk__screen {
-    position: absolute;
-    inset: 13.7cqw 0 0;
-    overflow: hidden;
-    background: #fff;
-  }
-  .mk__old,
-  .mk__new {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-  }
-  /* A desktop page squeezed onto the phone (180% wide, scaled to fit), like a real non-responsive
-     site: tiny text, and the page fills the whole screen. */
-  .mk__oldpage {
-    width: 180%;
-    height: 180%;
-    transform-origin: 0 0;
-    transform: scale(0.5556);
-    background: #fffbe6;
-  }
-  .mk__oldpage :global(.os-wrap),
-  .mk__oldpage :global(.os) {
-    height: 100%;
-  }
-  .mk__new {
-    background: #f2f2f0;
-  }
-  /* Final frame by default (no JS): the old page is hidden. */
-  .mk__old {
-    visibility: hidden;
-  }
-  :global(.mk-live) .mk__old {
-    visibility: visible;
-  }
-  /* A band of light crossing the glass when the new site lands. */
-  .mk__sweep {
-    position: absolute;
-    top: -20%;
-    bottom: -20%;
-    left: -60%;
-    width: 45%;
-    background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%);
-    transform: skewX(-12deg);
-    opacity: 0;
-    z-index: 3;
-    pointer-events: none;
-  }
-  .mk__finger {
-    position: absolute;
-    width: 11cqw;
-    height: 11cqw;
-    margin: -5.5cqw 0 0 -5.5cqw;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.65);
-    box-shadow:
-      0 0 0 1cqw rgba(29, 31, 33, 0.18),
-      0 1cqw 3cqw rgba(0, 0, 0, 0.2);
-    opacity: 0;
-    z-index: 8;
-    pointer-events: none;
-  }
-
-  /* The scan: a band of warm light running down the old site, finding the problems. */
-  .mk__scan {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -25%;
-    height: 22%;
-    background: linear-gradient(180deg, rgba(19, 48, 122, 0) 0%, rgba(19, 48, 122, 0.18) 70%, rgba(19, 48, 122, 0.75) 98%, rgba(19, 48, 122, 0) 100%);
-    opacity: 0;
-    visibility: hidden;
-    z-index: 6;
-    pointer-events: none;
-  }
-  /* Numbered boxes on the screen: red on the old site, green on the new one. */
-  .mk__mark {
-    position: absolute;
-    left: 0;
-    top: 0;
-    border: 2px solid #d92d20;
-    border-radius: 6px;
-    background: rgba(217, 45, 32, 0.08);
-    opacity: 0;
-    visibility: hidden;
-    z-index: 7;
-    pointer-events: none;
-  }
-  .mk__mark i {
-    position: absolute;
-    left: -8px;
-    top: -8px;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: #d92d20;
-    color: #fff;
-    font: 700 11px/1 var(--font);
-    font-style: normal;
-  }
-  .mk__mark--good {
-    border-color: #1f8a4c;
-    background: rgba(31, 138, 76, 0.08);
-  }
-  .mk__mark--good i {
-    background: #1f8a4c;
-  }
-
-  /* Labels beside the phone, one per problem; each turns into its fix. Positioned by makeover.ts. */
-  .mk__tags {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    visibility: hidden;
-  }
-  :global(.mk-live) .mk__tags {
-    visibility: visible;
-  }
-  .mk__tag {
-    position: absolute;
-    top: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.8rem 0.4rem 0.4rem;
-    border-radius: 999px;
-    background: var(--carta);
-    box-shadow: 0 12px 26px -14px rgba(11, 27, 63, 0.55);
-    font-size: 0.86rem;
-    font-weight: 500;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    z-index: 4;
-  }
-  .mk__dot {
-    position: relative;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 50%;
-    flex: none;
-    background: #d92d20;
-    color: #fff;
-    font-size: 0.78rem;
-    font-weight: 700;
-  }
-  .mk__dot > span {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-  }
-  .mk__tx {
-    display: grid;
-  }
-  .mk__bad,
-  .mk__good {
-    grid-area: 1 / 1;
-  }
-  .mk__bad {
-    color: #9b1c12;
-  }
-  .mk__good,
-  .mk__dot-good {
-    opacity: 0;
-  }
-  /* On phones the step line says it all: no labels around the phone. */
-  @media (max-width: 899px) {
-    .mk__tags {
-      display: none;
     }
   }
 </style>

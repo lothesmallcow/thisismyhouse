@@ -258,17 +258,34 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
 
 <script>
   const root = document.documentElement;
-  let lastY = window.scrollY;
-  const onScroll = () => {
-    const y = window.scrollY;
-    root.classList.toggle("is-compact", y > 40);
-    // Hide while scrolling down past the first screen, show again on the way up.
-    const menuOpen = document.body.classList.contains("menu-open");
-    if (!menuOpen) root.classList.toggle("hdr-hidden", y > 500 && y > lastY + 2);
-    if (y < lastY - 2) root.classList.remove("hdr-hidden");
+  /* On touch screens the header always stays: hiding it on scroll glitched on iPhone (momentum and
+     rubber-band scrolling flip the direction every few frames). With a mouse it hides while you read
+     down and comes back as soon as you scroll up, with some slack so small wobbles do nothing. */
+  const canHide = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  let lastY = Math.max(0, window.scrollY);
+  let travel = 0;
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const y = Math.min(Math.max(0, window.scrollY), Math.max(0, max));
+    if (y > 40) root.classList.add("is-compact");
+    else if (y < 8) root.classList.remove("is-compact");
+    const dy = y - lastY;
     lastY = y;
+    if (!canHide || document.body.classList.contains("menu-open")) return;
+    // Count travel in one direction; a change of direction starts again from zero.
+    travel = Math.sign(dy) === Math.sign(travel) ? travel + dy : dy;
+    if (y < 200 || travel < -24) root.classList.remove("hdr-hidden");
+    else if (y > 500 && travel > 60) root.classList.add("hdr-hidden");
   };
-  onScroll();
+  const onScroll = () => {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+  };
+  update();
   window.addEventListener("scroll", onScroll, { passive: true });
   document.addEventListener("focusin", (e) => {
     if ((e.target as HTMLElement).closest?.("[data-header]")) root.classList.remove("hdr-hidden");

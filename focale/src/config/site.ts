@@ -35,6 +35,39 @@ export const site = {
   depositPercent: 30,
   revisionRounds: 2,
   domainCostRange: "tra 10 e 20 € l'anno",
+  /**
+   * "Calcola una stima" (components/Estimator.astro, lib/estimate.ts). Add-on prices are ranges in
+   * euro, days are working days added to the package's delivery. From the price table in
+   * reports/Stima preventivo siti web.md (about 30-35 €/hour of real work, checked against Italian
+   * list prices). Each unit-priced item says how many units the package already includes.
+   */
+  estimate: {
+    // Pages the Professionale already includes for services, rooms, spaces or event types.
+    includedUnits: 4,
+    // Pages in a Professionale site (home, contacts and the included units).
+    professionalePages: 6,
+    // Essenziale is one page: past this many services/rooms/spaces, the estimate moves to Professionale.
+    onePageMaxUnits: 4,
+    extraPage: { min: 80, max: 140, days: 0.6 },
+    extraRoom: { min: 60, max: 100, days: 0.4 },
+    language: {
+      setup: { min: 120, max: 200, days: 1 },
+      nextSetup: { min: 40, max: 60, days: 0.3 },
+      perPage: { min: 35, max: 50, days: 0.35 },
+    },
+    bookingWidget: { min: 120, max: 220, days: 1 },
+    bookingFeeMonthly: "di solito tra 15 e 80 € al mese",
+    brochure: { min: 70, max: 130, days: 0.5 },
+    googleProfile: { min: 80, max: 140, days: 0.5 },
+    blog: { min: 150, max: 250, days: 1 },
+    editor: { min: 300, max: 500, days: 2 },
+    vouchers: { min: 100, max: 150, days: 0.5 },
+    migration: { min: 80, max: 140, days: 0.5 },
+    photographer: "di solito tra 350 e 950 €, a seconda di quante foto servono",
+    // Safety margin (%) on the top end of the extras' price and of the days: more when there are
+    // moving parts (booking, vouchers, old content, languages) or the photos are missing.
+    margin: { price: { simple: 10, complex: 15 }, days: { simple: 15, complex: 25 } },
+  },
   reviews: [] as { author: string; text: string; source: string; url: string }[],
   web3formsKey: env.PUBLIC_WEB3FORMS_KEY ?? "",
   sheetsEndpoint: env.PUBLIC_SHEETS_ENDPOINT ?? "",

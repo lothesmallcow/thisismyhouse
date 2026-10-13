@@ -1,0 +1,536 @@
+---
+/**
+ * "Calcola una stima del tuo preventivo": a few questions that follow the kind of business
+ * (services for trades, rooms and bookings for hospitality, spaces and brochure for venues), and a
+ * live result: price range, working days, what each part costs, what is paid to others.
+ * Everything runs in the browser: no email asked, nothing sent or stored.
+ * Numbers from site.estimate (config), logic in lib/estimate.ts (also used for the no-JS render).
+ */
+import { site } from "../config/site";
+import { foundersOpen, num } from "../lib/util";
+import { estimate, defaultAnswers, type Activity } from "../lib/estimate";
+import P from "./P.astro";
+
+const open = foundersOpen();
+const first = estimate(defaultAnswers, site, open);
+const cfg = { estimate: site.estimate, prices: site.prices, deliveryDays: site.deliveryDays, domainCostRange: site.domainCostRange, open };
+const activities: { v: Activity; t: string }[] = [
+  { v: "edile", t: "Impresa edile o ristrutturazioni" },
+  { v: "serramenti", t: "Serramenti e infissi" },
+  { v: "ospitalita", t: "B&B o agriturismo" },
+  { v: "eventi", t: "Location per eventi e matrimoni" },
+  { v: "altro", t: "Altro" },
+];
+const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(a)} € e ${num(b)} €`);
+---
+<section class="section est" id="stima" aria-labelledby="est-t" data-est={JSON.stringify(cfg)}>
+  <div class="wrap">
+    <div class="est__head">
+      <p class="sec__label">Stima</p>
+      <h2 id="est-t">Calcola una stima del tuo preventivo.</h2>
+      <p class="lead est__lead">
+        Poche domande, un minuto. Il conto lo fa il tuo telefono: non ti chiediamo l'email e non salviamo niente.
+      </p>
+    </div>
+
+    <div class="est__grid">
+      <form class="est__form" data-est-form onsubmit="return false" aria-label="Domande per la stima">
+        <fieldset class="est__q">
+          <legend>Che attività hai?</legend>
+          <div class="est__cards">
+            {
+              activities.map((a) => (
+                <label class="est__card">
+                  <input type="radio" name="activity" value={a.v} checked={a.v === defaultAnswers.activity} />
+                  <span>{a.t}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="est__q">
+          <legend>Quanto deve essere grande il sito?</legend>
+          <div class="est__cards est__cards--2">
+            <label class="est__card">
+              <input type="radio" name="size" value="una" />
+              <span><b>Una pagina sola</b><small>Chi siete, cosa fate, come contattarvi.</small></span>
+            </label>
+            <label class="est__card">
+              <input type="radio" name="size" value="piu" checked />
+              <span><b>Più pagine</b><small>Una pagina per ogni servizio, camera o spazio.</small></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="est__q est__units">
+          <label for="est-units" data-est-unit-label>Quanti servizi, camere o spazi vuoi presentare?</label>
+          <p class="hint" id="est-units-hint" data-est-unit-hint>Ognuno avrà la sua pagina, o la sua parte di pagina.</p>
+          <div class="est__stepper">
+            <button type="button" class="est__step" data-est-step="-1" aria-label="Uno in meno" aria-controls="est-units">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
+            </button>
+            <input id="est-units" name="units" type="number" inputmode="numeric" min="1" max="40" value={defaultAnswers.units} aria-describedby="est-units-hint" />
+            <button type="button" class="est__step" data-est-step="1" aria-label="Uno in più" aria-controls="est-units">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <fieldset class="est__q" data-only="hospitality">
+          <legend>Come si prenota da te?</legend>
+          <div class="est__cards">
+            <label class="est__card">
+              <input type="radio" name="booking" value="richiesta" checked />
+              <span><b>Con una richiesta</b><small>Il cliente chiede la disponibilità, rispondi tu.</small></span>
+            </label>
+            <label class="est__card">
+              <input type="radio" name="booking" value="link" />
+              <span><b>Ho già un booking engine</b><small>Basta un pulsante che porta lì.</small></span>
+            </label>
+            <label class="est__card">
+              <input type="radio" name="booking" value="widget" />
+              <span><b>Prenotazione dentro il sito</b><small>Date e prezzi senza uscire dal sito.</small></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="est__q" data-only="venue">
+          <legend>Ti serve un listino o una brochure da scaricare?</legend>
+          <label class="est__check">
+            <input type="checkbox" name="brochure" />
+            <span>Sì, un PDF con spazi, menu o pacchetti</span>
+          </label>
+        </fieldset>
+
+        <fieldset class="est__q">
+          <legend>In quante lingue?</legend>
+          <div class="est__cards">
+            <label class="est__card"><input type="radio" name="languages" value="0" checked /><span>Solo italiano</span></label>
+            <label class="est__card"><input type="radio" name="languages" value="1" /><span>Italiano e inglese</span></label>
+            <label class="est__card"><input type="radio" name="languages" value="2" /><span>Italiano, inglese e un'altra</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="est__q">
+          <legend>Hai già delle foto buone dei lavori o della struttura?</legend>
+          <div class="est__cards est__cards--2">
+            <label class="est__card"><input type="radio" name="photos" value="si" checked /><span>Sì, le abbiamo</span></label>
+            <label class="est__card"><input type="radio" name="photos" value="no" /><span>Poche o vecchie</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="est__q">
+          <legend>Ti serve anche...</legend>
+          <div class="est__checks">
+            <label class="est__check"><input type="checkbox" name="google" /><span>Sistemare la scheda Google della tua attività</span></label>
+            <label class="est__check"><input type="checkbox" name="migration" /><span>Recuperare testi e foto dal vecchio sito</span></label>
+            <label class="est__check"><input type="checkbox" name="blog" /><span>Un blog o una pagina di notizie</span></label>
+            <label class="est__check"><input type="checkbox" name="editor" /><span>Modificare testi e foto da solo, quando vuoi</span></label>
+            <label class="est__check" data-only="hosp-venue"><input type="checkbox" name="vouchers" /><span>Vendere buoni regalo online</span></label>
+          </div>
+        </fieldset>
+      </form>
+
+      <div class="est__result on-navy" id="est-result">
+        <p class="est__kicker">La tua stima, pacchetto <span data-est-plan>{first.planName}</span></p>
+        <p class="est__range" role="status" aria-atomic="true">
+          <span data-est-range>{range(first.min, first.max)}</span>
+          <span class="est__days">Online in <span data-est-days>{first.daysMin === first.daysMax ? first.daysMin : `${first.daysMin}-${first.daysMax}`}</span> giorni lavorativi</span>
+        </p>
+        <p class="est__up" data-est-up hidden></p>
+        <h3 class="est__sub">Da cosa viene</h3>
+        <ul class="est__lines" data-est-lines>
+          {
+            first.lines.map((l) => (
+              <li>
+                <span>{l.label}</span>
+                <span>{l.min === l.max ? `${num(l.min)} €` : `${num(l.min)}-${num(l.max)} €`}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <h3 class="est__sub">A parte, non li paghi a noi</h3>
+        <ul class="est__apart" data-est-apart>
+          {first.apart.map((t) => <li>{t}</li>)}
+        </ul>
+        <p class="est__note">
+          È una stima, non un preventivo. Il prezzo vero te lo scriviamo dopo l'anteprima gratuita, e da lì non cambia. I giorni partono da quando
+          abbiamo testi e foto. {open && "Prezzi fondatori. "}<P value={site.vatNote} />
+        </p>
+        <a class="btn btn--primary btn--big est__cta" href={`/anteprima-gratuita?pacchetto=${first.plan}`} data-est-cta>Voglio l'anteprima gratuita</a>
+      </div>
+    </div>
+  </div>
+  <a class="est__peek" href="#est-result" data-est-peek aria-hidden="true" tabindex="-1">
+    Stima: <b data-est-peek-range>{range(first.min, first.max)}</b>
+  </a>
+</section>
+
+<style>
+  .est__head {
+    max-width: 44rem;
+  }
+  .est__head h2 {
+    margin-top: 0.75rem;
+  }
+  .est__lead {
+    margin-top: 1rem;
+    color: var(--grafite);
+  }
+  .est__grid {
+    display: grid;
+    gap: 2rem;
+    margin-top: clamp(1.75rem, 1rem + 2vw, 3rem);
+  }
+  @media (min-width: 1000px) {
+    .est__grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: clamp(2rem, 4vw, 4rem);
+      align-items: start;
+    }
+    .est__result {
+      position: sticky;
+      top: calc(var(--header-h) + 1.25rem);
+    }
+  }
+  .est__form {
+    display: grid;
+    gap: 1.75rem;
+  }
+  .est__q {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+  .est__q[hidden] {
+    display: none;
+  }
+  .est__q legend,
+  .est__units > label {
+    display: block;
+    padding: 0;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: var(--inchiostro);
+  }
+  .est__units .hint {
+    margin: -0.4rem 0 0.75rem;
+    font-size: var(--fs-small);
+    color: var(--grafite);
+  }
+  .est__cards {
+    display: grid;
+    gap: 0.5rem;
+  }
+  @media (min-width: 560px) {
+    .est__cards {
+      grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    }
+    .est__cards--2 {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .est__card,
+  .est__check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.7rem;
+    align-items: start;
+    min-height: 44px;
+    padding: 0.8rem 1rem;
+    border: 1.5px solid var(--filo);
+    border-radius: 14px;
+    background: var(--carta);
+    cursor: pointer;
+    line-height: 1.35;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .est__card input,
+  .est__check input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0.15rem 0 0;
+    accent-color: var(--blu);
+  }
+  .est__card b {
+    display: block;
+    font-weight: 700;
+  }
+  .est__card span {
+    color: var(--inchiostro);
+  }
+  .est__card span:not(:has(b)) {
+    font-weight: 600;
+  }
+  .est__card small {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: var(--fs-small);
+    color: var(--grafite);
+  }
+  .est__card:hover,
+  .est__check:hover {
+    border-color: var(--blu);
+  }
+  .est__card:has(input:checked),
+  .est__check:has(input:checked) {
+    border-color: var(--blu);
+    background: var(--nebbia);
+  }
+  .est__card:has(input:focus-visible),
+  .est__check:has(input:focus-visible) {
+    outline: 3px solid var(--blu);
+    outline-offset: 2px;
+  }
+  .est__checks {
+    display: grid;
+    gap: 0.5rem;
+  }
+  @media (min-width: 560px) {
+    .est__checks {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .est__stepper {
+    display: inline-grid;
+    grid-template-columns: 52px 5rem 52px;
+    align-items: center;
+    border: 1.5px solid var(--filo);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .est__step {
+    height: 52px;
+    border: 0;
+    background: var(--nebbia);
+    color: var(--blu);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .est__step svg {
+    width: 20px;
+    height: 20px;
+  }
+  .est__step:hover {
+    background: #e3e9f7;
+  }
+  .est__stepper input {
+    width: 100%;
+    height: 52px;
+    border: 0;
+    text-align: center;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--inchiostro);
+    background: var(--carta);
+    -moz-appearance: textfield;
+  }
+  .est__stepper input::-webkit-inner-spin-button,
+  .est__stepper input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+
+  /* ---------- Result ---------- */
+  .est__result {
+    background: var(--blu);
+    color: #fff;
+    border-radius: 24px;
+    padding: clamp(1.4rem, 1rem + 1.5vw, 2rem);
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+  }
+  .est__kicker {
+    font-size: var(--fs-small);
+    color: var(--on-dark-muted);
+  }
+  .est__kicker span {
+    color: #fff;
+    font-weight: 700;
+  }
+  .est__range {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .est__range > span:first-child {
+    font-size: clamp(1.75rem, 1.3rem + 1.8vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .est__days {
+    font-weight: 600;
+    color: #fff;
+  }
+  .est__up {
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: var(--fs-small);
+  }
+  .est__up[hidden] {
+    display: none;
+  }
+  .est__sub {
+    margin-top: 0.75rem;
+    font-size: var(--fs-small);
+    font-weight: 700;
+    color: var(--on-dark-muted);
+  }
+  .est__lines,
+  .est__apart {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+    font-size: var(--fs-small);
+  }
+  /* Rows are rebuilt by the script (no scoped attribute): reach them with :global. */
+  .est__lines :global(li) {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .est__lines :global(li span:last-child) {
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .est__apart :global(li) {
+    color: var(--on-dark-muted);
+  }
+  .est__note {
+    margin-top: 0.6rem;
+    font-size: var(--fs-small);
+    color: var(--on-dark-muted);
+  }
+  .est__cta {
+    margin-top: 0.6rem;
+    justify-self: start;
+  }
+  /* Phones: a small pill keeps the running total in sight while answering. */
+  .est__peek {
+    display: none;
+  }
+  @media (max-width: 999px) {
+    :global(.est-live) .est__peek {
+      display: block;
+      position: sticky;
+      bottom: calc(0.75rem + env(safe-area-inset-bottom));
+      width: max-content;
+      max-width: calc(100% - 2rem);
+      margin: -3rem auto 0;
+      padding: 0.7rem 1.1rem;
+      border-radius: 999px;
+      background: var(--notte);
+      color: #fff;
+      font-size: var(--fs-small);
+      text-decoration: none;
+      box-shadow: 0 12px 30px -12px rgba(11, 27, 63, 0.6);
+      z-index: 5;
+      transition: opacity 0.25s ease;
+    }
+    :global(.est-live) .est__peek.is-away {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+</style>
+<script>
+  import { estimate, modelOf, type Answers } from "../lib/estimate";
+  import { num } from "../lib/util";
+
+  const root = document.querySelector<HTMLElement>("[data-est]");
+  const form = root?.querySelector<HTMLFormElement>("[data-est-form]");
+  if (root && form) {
+    const cfg = JSON.parse(root.dataset.est!);
+    const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const units = form.querySelector<HTMLInputElement>("#est-units")!;
+    const unitLabel = $("[data-est-unit-label]");
+    const unitHint = $("[data-est-unit-hint]");
+    const peek = $("[data-est-peek]");
+    const hints = {
+      trades: ["Quanti servizi vuoi presentare?", "Es. bagni, cucine, facciate: ognuno con la sua pagina."],
+      hospitality: ["Quante camere o appartamenti hai?", "Ognuno con la sua scheda: foto, servizi, prezzi."],
+      venue: ["Quanti spazi o tipi di evento vuoi presentare?", "Es. la sala, il giardino, i matrimoni, le feste aziendali."],
+    } as const;
+    const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(a)} € e ${num(b)} €`);
+    const money = (a: number, b: number) => (a === b ? `${num(a)} €` : `${num(a)}-${num(b)} €`);
+    root.classList.add("est-live");
+
+    const read = (): Answers => {
+      const f = new FormData(form);
+      const on = (n: string) => f.get(n) === "on";
+      return {
+        activity: (f.get("activity") as Answers["activity"]) ?? "edile",
+        size: (f.get("size") as Answers["size"]) ?? "piu",
+        units: Number(units.value) || 1,
+        booking: (f.get("booking") as Answers["booking"]) ?? "richiesta",
+        brochure: on("brochure"),
+        languages: Number(f.get("languages") ?? 0) as Answers["languages"],
+        google: on("google"),
+        blog: on("blog"),
+        editor: on("editor"),
+        vouchers: on("vouchers"),
+        migration: on("migration"),
+        photos: f.get("photos") !== "no",
+      };
+    };
+    const list = (el: HTMLElement, items: HTMLElement[]) => el.replaceChildren(...items);
+    const li = (...parts: string[]) => {
+      const n = document.createElement("li");
+      parts.forEach((p) => {
+        const s = document.createElement("span");
+        s.textContent = p;
+        n.append(s);
+      });
+      if (parts.length === 1) n.textContent = parts[0];
+      return n;
+    };
+
+    const render = () => {
+      const a = read();
+      const model = modelOf(a.activity);
+      // Only the questions that matter for this kind of business.
+      root.querySelectorAll<HTMLElement>("[data-only]").forEach((el) => {
+        const only = el.dataset.only;
+        el.hidden = !(only === model || (only === "hosp-venue" && model !== "trades"));
+      });
+      unitLabel.textContent = hints[model][0];
+      unitHint.textContent = hints[model][1];
+      const r = estimate(a, cfg, cfg.open);
+      $("[data-est-plan]").textContent = r.planName;
+      $("[data-est-range]").textContent = range(r.min, r.max);
+      $("[data-est-peek-range]").textContent = range(r.min, r.max);
+      $("[data-est-days]").textContent = r.daysMin === r.daysMax ? String(r.daysMin) : `${r.daysMin}-${r.daysMax}`;
+      const up = $("[data-est-up]");
+      up.hidden = !r.upgraded;
+      up.textContent = r.upgraded ? `${r.upgraded} La stima parte dal Professionale.` : "";
+      list($("[data-est-lines]"), r.lines.map((l) => li(l.label, money(l.min, l.max))));
+      list($("[data-est-apart]"), r.apart.map((t) => li(t)));
+      ($("[data-est-cta]") as HTMLAnchorElement).href = `/anteprima-gratuita?pacchetto=${r.plan}`;
+    };
+
+    form.addEventListener("input", render);
+    form.addEventListener("change", render);
+    root.querySelectorAll<HTMLButtonElement>("[data-est-step]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const v = Math.min(40, Math.max(1, (Number(units.value) || 1) + Number(b.dataset.estStep)));
+        units.value = String(v);
+        render();
+      }),
+    );
+    // The pill hides while the result itself is on screen.
+    new IntersectionObserver(([e]) => peek.classList.toggle("is-away", e.isIntersecting), { threshold: 0.2 }).observe($("#est-result"));
+    render();
+  }
+</script>

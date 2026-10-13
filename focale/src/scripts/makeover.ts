@@ -1,21 +1,31 @@
 import { gsap } from "gsap";
 import { spring } from "./spring";
-import { bindSoundButton, scanSweep, buzz, whoosh, fixed, ring } from "./sound";
-
+import { bindSoundButton, buzz, whoosh, fixed, ring } from "./sound";
 
 /**
  * The makeover film, played like the opening one: it starts by itself when the phone is well in
  * view (no pinning, the scroll stays free), pauses when it leaves and goes on when it comes back.
- * Under the phone a line says what is happening, with a sound switch (off until pressed) and
- * "Rivedi".
- * 1. the diagnosis: a band of light runs down the old site and boxes its five problems as it
- *    passes them, each with a numbered label beside the phone;
- * 2. the phone lifts and turns all the way round (back and cameras); facing away, the old site is
- *    swapped for the new one, light crosses the glass;
- * 3. the fixes: every label slides to the part of the new site that solves it and turns green;
- * 4. a tap calls.
- * See Makeover.astro for the markup and the no-JS final frame.
+ * One thing at a time, slow enough to read (about 30 s):
+ * 1. the old site; then its five problems one by one: the screen zooms on the problem, a red box
+ *    lights it, the rest dims, the line under the phone says what is wrong;
+ * 2. the phone lifts and turns all the way round; facing away, the old site becomes the new one;
+ * 3. the five fixes one by one: a green box on the part that solves each problem;
+ * 4. a tap on "Chiama ora".
+ * The caption line and the checklist (computers) are worked out from the film's time, so seeking
+ * or replaying never leaves them out of step. Sound cues ride the timeline (silent until the
+ * visitor turns sound on). See Makeover.astro for the markup and the no-JS final frame.
  */
+
+// The script, in seconds.
+const INTRO = 2;
+const P0 = INTRO; // first problem
+const PSTEP = 2.4; // per problem
+const TURN = P0 + 5 * PSTEP + 0.2; // 14.2
+const F0 = TURN + 3.4; // first fix, 17.6
+const FSTEP = 2;
+const END = F0 + 5 * FSTEP; // 27.6
+const LENGTH = END + 3.4;
+
 export function initMakeover() {
   const found = document.querySelector<HTMLElement>("[data-makeover]");
   if (!found || !window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
@@ -25,37 +35,46 @@ export function initMakeover() {
   const stage = q(".mk__stage");
   const screen = q("[data-mk-screen]");
   const oldWrap = q("[data-mk-old]");
+  const zoom = q("[data-mk-zoom]");
   const oldPage = q("[data-mk-oldpage]");
   const newSite = q("[data-mk-new]");
   const fa = q("[data-mk-fa]");
   const obj = q("[data-mk-obj]");
   const sweep = q("[data-mk-sweep]");
-  const scan = q("[data-mk-scan]");
   const marks = qa("[data-mk-mark]");
   const goods = qa("[data-mk-good]");
-  const tags = qa("[data-mk-tag]");
-  const steps = qa("[data-mk-step]");
+  const rows = qa("[data-mk-row]");
   const beats = qa("[data-mk-beat]");
   const callBtn = newSite.querySelector<HTMLElement>(".ah__btn--ghost");
 
   root.classList.add("mk-live");
-  // The caption lines crossfade in CSS; the chapter list (computers) lights the current step.
-  let shown = -1;
-  const setStep = (i: number) => {
-    if (i === shown) return;
-    shown = i;
-    steps.forEach((s, j) => s.classList.toggle("is-on", j === i));
-    beats.forEach((b, j) => b.classList.toggle("is-on", j === i));
-  };
-  setStep(0);
   // Hidden by opacity, not visibility: the new site is painted (and its images decoded) from the
   // start, so the swap mid-turn costs nothing.
   gsap.set(newSite, { opacity: 0 });
   gsap.set(fa, { opacity: 0 });
 
+  // Caption and checklist follow the film's clock.
+  let shownBeat = -1;
+  const sync = (t: number) => {
+    const beat =
+      t < P0 ? 0 : t < TURN ? 1 + Math.min(4, Math.floor((t - P0) / PSTEP)) : t < F0 ? 6 : t < END ? 7 + Math.min(4, Math.floor((t - F0) / FSTEP)) : 12;
+    if (beat !== shownBeat) {
+      shownBeat = beat;
+      beats.forEach((b, j) => b.classList.toggle("is-on", j === beat));
+    }
+    rows.forEach((r, i) => {
+      const good = t >= F0 + i * FSTEP;
+      const bad = !good && t >= P0 + i * PSTEP;
+      r.classList.toggle("is-good", good);
+      r.classList.toggle("is-bad", bad);
+      r.classList.toggle("is-now", beat === 1 + i || beat === 7 + i);
+    });
+  };
+  sync(0);
+
   // Where things sit on the screen (px, layout boxes: transforms ignored, so the phone's 3D turn
-  // does not matter). The old page is drawn at 180% and scaled down to fit.
-  const oldScale = () => oldPage.offsetWidth ? screen.offsetWidth / oldPage.offsetWidth : 0.5556;
+  // and the zoom do not matter). The old page is drawn at 220% and scaled down to fit.
+  const oldScale = () => (oldPage.offsetWidth ? screen.offsetWidth / oldPage.offsetWidth : 0.4545);
   const oldBox = (i: number) => {
     const el = oldPage.querySelector<HTMLElement>(`[data-old="${marks[i].dataset.oldPiece}"]`)!;
     const o = offsetIn(el, oldPage);
@@ -67,111 +86,102 @@ export function initMakeover() {
     const o = offsetIn(el, newSite);
     return { x: o.x, y: o.y, w: el.offsetWidth, h: el.offsetHeight };
   };
-  const pad = 3;
+  const pad = 2;
   const place = (box: () => { x: number; y: number; w: number; h: number }) => ({
-    left: () => box().x + pad,
-    top: () => box().y + pad,
-    width: () => Math.max(16, box().w - 2 * pad),
-    height: () => Math.max(14, box().h - 2 * pad),
+    left: () => box().x - pad,
+    top: () => box().y - pad,
+    width: () => Math.max(18, box().w + 2 * pad),
+    height: () => Math.max(16, box().h + 2 * pad),
   });
-  // Labels: beside the phone, level with the box they describe; left and right in turn.
-  const scr = () => offsetIn(screen, stage);
-  const tagTop = (i: number, box: { y: number; h: number }) => scr().y + box.y + box.h / 2 - tags[i].offsetHeight / 2;
-  // They may reach into the gutter between the columns and the page margin, never over the screen.
-  const tagLeft = (i: number) => {
-    const s = scr();
-    const gap = 14;
-    const r = stage.getBoundingClientRect();
-    const roomR = Math.max(0, Math.min(60, document.documentElement.clientWidth - r.right - 12));
-    return i % 2
-      ? Math.min(s.x + screen.offsetWidth + gap, stage.offsetWidth + roomR - tags[i].offsetWidth)
-      : Math.max(-60, s.x - gap - tags[i].offsetWidth);
+  // The zoom that brings problem i to the middle of the screen, big enough to read (1.7x to 2.4x,
+  // by its height: wide pieces get cropped at the sides), never showing beyond the page's edges.
+  const zoomTo = (i: number) => {
+    const b = () => oldBox(i);
+    const W = () => screen.offsetWidth;
+    const H = () => screen.offsetHeight;
+    const z = () => Math.min(2.4, Math.max(1.7, (0.4 * H()) / b().h));
+    const clamp = (v: number, min: number) => Math.min(0, Math.max(min, v));
+    return {
+      scale: z,
+      x: () => clamp(W() / 2 - (b().x + b().w / 2) * z(), W() * (1 - z())),
+      y: () => clamp(H() / 2 - (b().y + b().h / 2) * z(), H() * (1 - z())),
+    };
   };
 
   const tl = gsap.timeline({
     paused: true,
     defaults: { ease: "power2.inOut" },
-    onUpdate: () => {
-      const p = tl.progress();
-      setStep(p < 0.06 ? 0 : p < 0.34 ? 1 : p < 0.72 ? 2 : p < 0.88 ? 3 : 4);
-    },
+    onUpdate: () => sync(tl.time()),
   });
-  // Sounds ride the timeline as callbacks (silent unless the visitor turned sound on).
   const cue = (fn: () => void, at: number) => tl.call(fn, [], at);
 
-  // 1. The diagnosis, in one pass.
-  const S0 = 0.07;
-  const SD = 0.2;
+  gsap.set(zoom, { transformOrigin: "0 0" });
   marks.forEach((m, i) => tl.set(m, place(() => oldBox(i)), 0));
   goods.forEach((g, i) => tl.set(g, place(() => newBox(i)), 0));
-  tags.forEach((t, i) => tl.set(t, { left: () => tagLeft(i), top: () => tagTop(i, oldBox(i)) }, 0));
-  tl.set(scan, { autoAlpha: 1, top: "-25%" }, S0);
-  cue(() => scanSweep(SD * 14), S0);
-  tl.to(scan, { top: "105%", duration: SD, ease: "none" }, S0);
-  tl.set(scan, { autoAlpha: 0 }, S0 + SD);
+  tl.set(zoom, { x: 0, y: 0, scale: 1 }, 0);
+
+  // 1. The problems, one at a time: zoom in, the red box lights it and the rest dims.
   marks.forEach((m, i) => {
-    // Each box appears as the light reaches it.
-    const b = oldBox(i);
-    const at = S0 + SD * Math.min(1, (b.y + b.h * 0.6) / screen.offsetHeight + 0.12);
-    cue(buzz, at);
-    tl.fromTo(m, { autoAlpha: 0, scale: 1.18 }, { autoAlpha: 1, scale: 1, duration: 0.025, ease: spring(0.3) }, at);
-    tl.fromTo(tags[i], { autoAlpha: 0, x: i % 2 ? -12 : 12 }, { autoAlpha: 1, x: 0, duration: 0.025, ease: spring(0.3) }, at + 0.006);
+    const at = P0 + i * PSTEP;
+    tl.to(zoom, { ...zoomTo(i), duration: 0.7 }, at);
+    tl.fromTo(
+      m,
+      { autoAlpha: 0, scale: 1.25, boxShadow: "0 0 0 2000px rgba(11, 27, 63, 0)" },
+      { autoAlpha: 1, scale: 1, boxShadow: "0 0 0 2000px rgba(11, 27, 63, 0.4)", duration: 0.45, ease: spring(0.3) },
+      at + 0.55,
+    );
+    cue(buzz, at + 0.55);
+    tl.to(m, { autoAlpha: 0, duration: 0.25 }, at + PSTEP - 0.3);
   });
-  // A beat to read them, then the red boxes go (the labels stay through the turn).
-  tl.to(marks, { autoAlpha: 0, duration: 0.02 }, 0.34);
+  tl.to(zoom, { x: 0, y: 0, scale: 1, duration: 0.6 }, TURN - 0.4);
 
   // 2. The makeover: the phone lifts and turns all the way round (titanium back, cameras);
   //    when it faces away the old site is swapped for the new one, then light crosses the glass.
-  tl.to(tags, { opacity: 0.35, duration: 0.03 }, 0.37);
-  tl.to(obj, { y: -20, scale: 1.04, rotationX: 8, duration: 0.05, ease: "power2.out" }, 0.37);
-  tl.to(obj, { rotationY: 360, duration: 0.3, ease: "power2.inOut" }, 0.4);
-  cue(() => whoosh(0.3 * 14 * 0.8), 0.42);
-  tl.set(oldWrap, { autoAlpha: 0 }, 0.55);
-  tl.set(newSite, { opacity: 1 }, 0.55);
-  tl.to(obj, { y: 0, scale: 1, rotationX: 0, duration: 0.08, ease: spring(0.25) }, 0.68);
-  tl.set(obj, { rotationY: 0 }, 0.76);
-  tl.fromTo(sweep, { left: "-60%", opacity: 0 }, { left: "120%", opacity: 1, duration: 0.07, ease: "power1.inOut" }, 0.7);
-  tl.to(sweep, { opacity: 0, duration: 0.01 }, 0.77);
+  tl.to(obj, { y: -20, scale: 1.04, rotationX: 8, duration: 0.4, ease: "power2.out" }, TURN + 0.2);
+  tl.to(obj, { rotationY: 360, duration: 2.2, ease: "power2.inOut" }, TURN + 0.4);
+  cue(() => whoosh(1.8), TURN + 0.5);
+  tl.set(oldWrap, { autoAlpha: 0 }, TURN + 1.5);
+  tl.set(newSite, { opacity: 1 }, TURN + 1.5);
+  tl.to(obj, { y: 0, scale: 1, rotationX: 0, duration: 0.6, ease: spring(0.25) }, TURN + 2.6);
+  tl.set(obj, { rotationY: 0 }, TURN + 3.2);
+  tl.fromTo(sweep, { left: "-60%", opacity: 0 }, { left: "120%", opacity: 1, duration: 0.6, ease: "power1.inOut" }, TURN + 2.7);
+  tl.to(sweep, { opacity: 0, duration: 0.1 }, TURN + 3.3);
 
-  // 3. The fixes: each label glides to its fix on the new site and turns green, one after another.
-  tags.forEach((t, i) => {
-    const at = 0.74 + i * 0.022;
-    tl.to(t, { top: () => tagTop(i, newBox(i)), opacity: 1, duration: 0.03, ease: "power3.inOut" }, at);
-    tl.to(t.querySelector(".mk__bad"), { opacity: 0, duration: 0.012 }, at + 0.012);
-    tl.to(t.querySelector(".mk__good"), { opacity: 1, duration: 0.012 }, at + 0.016);
-    tl.to(t.querySelector(".mk__dot"), { backgroundColor: "#1f8a4c", duration: 0.012 }, at + 0.012);
-    tl.to(t.querySelector(".mk__dot-bad"), { opacity: 0, duration: 0.01 }, at + 0.012);
-    tl.to(t.querySelector(".mk__dot-good"), { opacity: 1, duration: 0.01 }, at + 0.016);
-    cue(() => fixed(i), at + 0.014);
-    tl.fromTo(goods[i], { autoAlpha: 0, scale: 1.15 }, { autoAlpha: 1, scale: 1, duration: 0.025, ease: spring(0.3) }, at + 0.014);
+  // 3. The fixes, one at a time: a green box on the part of the new site that solves it.
+  goods.forEach((g, i) => {
+    const at = F0 + i * FSTEP;
+    tl.fromTo(g, { autoAlpha: 0, scale: 1.2 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: spring(0.3) }, at + 0.2);
+    cue(() => fixed(i), at + 0.2);
+    tl.to(g, { autoAlpha: 0, duration: 0.25 }, at + FSTEP - 0.25);
   });
 
-  // 4. A tap on "Chiama ora".
+  // 4. A tap on "Chiama ora", and the phone rings.
   if (callBtn) {
     const pos = () => offsetIn(callBtn, newSite);
-    tl.set(fa, { left: () => screen.offsetLeft + pos().x + callBtn.offsetWidth / 2, top: () => screen.offsetTop + pos().y + callBtn.offsetHeight / 2, x: 0, y: 0, scale: 1.3 }, 0.88);
-    tl.to(fa, { opacity: 0.95, scale: 0.9, duration: 0.02 }, 0.89);
-    tl.to(callBtn, { scale: 0.93, duration: 0.015 }, 0.9);
-    cue(ring, 0.905);
-    tl.to(callBtn, { scale: 1, duration: 0.04, ease: spring(0.35) }, 0.915);
-    tl.to(fa, { opacity: 0, scale: 1.5, duration: 0.03 }, 0.93);
+    tl.set(fa, { left: () => screen.offsetLeft + pos().x + callBtn.offsetWidth / 2, top: () => screen.offsetTop + pos().y + callBtn.offsetHeight / 2, x: 0, y: 0, scale: 1.3 }, END + 0.2);
+    tl.to(fa, { opacity: 0.95, scale: 0.9, duration: 0.25 }, END + 0.3);
+    tl.to(callBtn, { scale: 0.93, duration: 0.15 }, END + 0.45);
+    cue(ring, END + 0.5);
+    tl.to(callBtn, { scale: 1, duration: 0.5, ease: spring(0.35) }, END + 0.6);
+    tl.to(fa, { opacity: 0, scale: 1.5, duration: 0.4 }, END + 0.8);
   }
-  tl.to({}, { duration: 0.04 }, 0.96);
-  // The timeline is laid out on 0..1; this many seconds of film.
-  tl.timeScale(1 / 14);
+  tl.to({}, { duration: 0.1 }, LENGTH - 0.1);
 
   // Controls: sound and replay. Plays when in view, pauses when it leaves, goes on when it comes
   // back; once finished, it plays again from the start the next time it comes into view.
   const ctl = q("[data-mk-ctl]");
   const replay = q<HTMLButtonElement>("[data-mk-replay]");
   ctl.hidden = false;
-  const restart = () => tl.restart();
+  const restart = () => {
+    tl.restart();
+    sync(0);
+  };
   replay.addEventListener("click", restart);
   bindSoundButton(q<HTMLButtonElement>("[data-mk-sound]"), restart);
   new IntersectionObserver(
     ([e]) => {
       if (e.isIntersecting) {
-        if (tl.progress() >= 1) tl.restart();
+        if (tl.progress() >= 1) restart();
         else tl.play();
       } else tl.pause();
     },
@@ -182,9 +192,10 @@ export function initMakeover() {
   addEventListener("resize", () => {
     clearTimeout(rt);
     rt = window.setTimeout(() => {
-      const p = tl.progress();
+      const t = tl.time();
       tl.invalidate();
-      tl.progress(p, true);
+      tl.time(t, true);
+      sync(t);
     }, 200);
   });
 }
