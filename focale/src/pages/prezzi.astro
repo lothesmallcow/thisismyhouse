@@ -155,6 +155,12 @@ const service = {
 </Base>
 
 <style>
+  /* Phones: the recommended package first. */
+  @media (max-width: 899px) {
+    .pz__plan--rec {
+      order: -1;
+    }
+  }
   .pz-banner {
     margin-top: 2rem !important;
     padding-top: 1.25rem;
@@ -248,7 +254,7 @@ const service = {
     line-height: 1;
   }
   .pz__from {
-    font-size: 0.4em;
+    font-size: max(0.4em, 1rem);
     font-weight: 500;
     font-stretch: 100%;
     letter-spacing: 0;

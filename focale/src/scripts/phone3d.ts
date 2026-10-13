@@ -174,6 +174,15 @@ class Rig {
     this.scene.add(this.holder);
     this.camera.matrixAutoUpdate = false;
 
+    // iOS drops WebGL contexts under memory pressure or when Safari goes to the background: give the
+    // phone back to the CSS body and stop drawing, instead of leaving an empty frame.
+    this.canvas.addEventListener("webglcontextlost", (e) => {
+      e.preventDefault();
+      this.lost = true;
+      this.canvas.style.visibility = "hidden";
+      this.phone.classList.remove("iph--gl");
+    });
+
     new IntersectionObserver(
       ([e]) => {
         this.visible = e.isIntersecting;
@@ -197,8 +206,10 @@ class Rig {
   changedAt = 0;
   blurry = false;
 
+  lost = false;
+
   loop = () => {
-    if (!this.visible) return;
+    if (!this.visible || this.lost) return;
     if (this.frame()) {
       this.changedAt = performance.now();
     } else if (this.blurry && performance.now() - this.changedAt > 160) {
@@ -290,13 +301,17 @@ export function initPhone3D() {
     document.querySelectorAll<HTMLElement>("[data-phone3d]"),
   );
   if (!rigs.length) return;
+  // The real 3D model only where it will run smoothly: WebGL available, no data saver, and not a
+  // low-end phone (under 4 GB of memory or 4 cores: mid-range Android would stutter). Everyone else
+  // keeps the CSS phone, which looks almost the same and costs nothing.
+  const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
+  if (nav.connection?.saveData) return;
+  if ((nav.deviceMemory ?? 8) < 4 || (nav.hardwareConcurrency ?? 8) < 4) return;
   const probe = document.createElement("canvas");
-  if (!probe.getContext("webgl2") && !probe.getContext("webgl")) return;
-  if (
-    (navigator as Navigator & { connection?: { saveData?: boolean } })
-      .connection?.saveData
-  )
-    return;
+  const gl = (probe.getContext("webgl2") ?? probe.getContext("webgl")) as WebGLRenderingContext | null;
+  if (!gl) return;
+  // Free the probe's context at once: iOS allows only a few live WebGL contexts per page.
+  gl.getExtension("WEBGL_lose_context")?.loseContext();
   loadModel()
     .then((model) => rigs.forEach((eye) => new Rig(eye, model)))
     .catch(() => {

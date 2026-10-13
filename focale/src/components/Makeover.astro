@@ -450,8 +450,10 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
     color: #fff;
     cursor: pointer;
   }
-  .mk__btn:hover {
-    border-color: #fff;
+  @media (hover: hover) and (pointer: fine) {
+    .mk__btn:hover {
+      border-color: #fff;
+    }
   }
   .mk__btn svg {
     width: 18px;

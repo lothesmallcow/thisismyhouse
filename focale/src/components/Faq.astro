@@ -47,9 +47,13 @@ const { items, compact = false, cols = false } = Astro.props;
     padding-inline: 1.25rem;
     transition: box-shadow 0.3s var(--ease-out);
   }
-  .faq--compact .faq__item:hover,
   .faq--compact .faq__item[open] {
     box-shadow: 0 14px 30px -22px rgba(120, 40, 5, 0.45);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .faq--compact .faq__item:hover {
+      box-shadow: 0 14px 30px -22px rgba(120, 40, 5, 0.45);
+    }
   }
   .faq--compact summary {
     padding: 1.05rem 0;

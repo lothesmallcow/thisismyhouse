@@ -150,10 +150,15 @@ const isCurrent = (href: string) => path === href || path.startsWith(href + "/")
     transform-origin: right;
     transition: transform 0.4s var(--ease-out);
   }
-  .hdr__nav a:hover::after,
   .hdr__nav a[aria-current="page"]::after {
     transform: scaleX(1);
     transform-origin: left;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .hdr__nav a:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
   }
   .hdr__end {
     display: flex;

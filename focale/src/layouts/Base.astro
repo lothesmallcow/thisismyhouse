@@ -39,6 +39,8 @@ const showSticky = sticky && !minimal;
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#FFFFFF" />
+    <!-- Light only: stops Chrome's auto dark theme (and asks Samsung Internet) from recolouring the site. -->
+    <meta name="color-scheme" content="light only" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="it_IT" />
     <meta property="og:site_name" content={site.brand} />

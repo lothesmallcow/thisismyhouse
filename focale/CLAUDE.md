@@ -112,6 +112,17 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   The closing (Closing.astro) is a full-width orange band that runs into the orange footer.
 - docs/video/focus-design-home-telefono.mp4: vertical recording of the home (Playwright + ffmpeg).
 - `node scripts/overflow-check.mjs` finds cut-off text and sideways scroll on every page at 6 widths.
+- Phones and tablets (reports/Sito desktop su iPhone e mobile.md): every :hover lives under
+  `(hover: hover) and (pointer: fine)` (on touch it sticks after a tap); touch gets a quick :active press instead;
+  no tap flash, `touch-action: manipulation`, `font-synthesis: none`, `color-scheme: light only` (meta + :root)
+  against Chrome/Samsung forced dark. Full-height blocks use svh (never bare 100vh). `.wrap` and the sticky bar
+  respect left/right safe areas (landscape notch). The sticky bar is opaque (Safari 26 tints its bars from fixed
+  elements). Phone mockup screens keep a -webkit-mask so Safari holds the rounded clip. three.js only with
+  WebGL, no Save-Data, >= 4 GB and >= 4 cores, and it hands back to the CSS phone on webglcontextlost.
+  Sound asks for audioSession "playback" (silent switch) and follows the AudioContext state. ScrollTrigger
+  ignores mobile resizes. H1 is 34 px on phones (iOS large title); prices use a non-breaking space before €;
+  the recommended plan comes first on phones. The claude.ai preview is a cross-origin iframe: iOS throttles it
+  to about 30 fps until touched, so judge smoothness on the real URL, not the preview.
 - Do not use the CSS `translate` property on elements GSAP transforms: GSAP folds it into its own transform.
 
 ## Scripts

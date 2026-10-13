@@ -829,6 +829,7 @@ const tel = telHref();
       top: calc(var(--banner) + 100px);
       aspect-ratio: 4 / 5;
       max-height: calc(100vh - var(--banner) - 140px);
+      max-height: calc(100svh - var(--banner) - 140px);
       width: 100%;
       overflow: hidden;
       border-radius: 6px;
@@ -905,6 +906,7 @@ const tel = telHref();
   @media (min-width: 900px) {
     .ar-works-sec {
       min-height: 100vh;
+      min-height: 100svh;
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       align-content: center;

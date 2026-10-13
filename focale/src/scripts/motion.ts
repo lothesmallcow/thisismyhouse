@@ -3,6 +3,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
+// Phones: the address bar showing and hiding must not re-measure every trigger (jumps on iOS and Android).
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 const motionOk = () => window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
 const finePointer = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches;

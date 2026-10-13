@@ -22,7 +22,7 @@ const activities: { v: Activity; t: string }[] = [
   { v: "eventi", t: "Location per eventi e matrimoni" },
   { v: "altro", t: "Altro" },
 ];
-const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(a)} € e ${num(b)} €`);
+const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra ${num(a)}\u00a0€ e ${num(b)}\u00a0€`);
 ---
 <section class="section est" id="stima" aria-labelledby="est-t" data-est={JSON.stringify(cfg)}>
   <div class="wrap">
@@ -185,7 +185,7 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
             first.lines.map((l) => (
               <li>
                 <span>{l.label}</span>
-                <span>{l.min === l.max ? `${num(l.min)} €` : `${num(l.min)}-${num(l.max)} €`}</span>
+                <span>{l.min === l.max ? `${num(l.min)}\u00a0€` : `${num(l.min)}-${num(l.max)}\u00a0€`}</span>
               </li>
             ))
           }
@@ -351,9 +351,11 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
     font-size: var(--fs-small);
     color: var(--grafite);
   }
-  .est__card:hover,
-  .est__check:hover {
-    border-color: var(--blu);
+  @media (hover: hover) and (pointer: fine) {
+    .est__card:hover,
+    .est__check:hover {
+      border-color: var(--blu);
+    }
   }
   .est__card:has(input:checked),
   .est__check:has(input:checked) {
@@ -476,8 +478,8 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(
       hospitality: "Vuoi aggiungere da solo nuove camere o offerte?",
       venue: "Vuoi aggiungere da solo nuovi eventi o spazi?",
     } as const;
-    const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(a)} € e ${num(b)} €`);
-    const money = (a: number, b: number) => (a === b ? `${num(a)} €` : `${num(a)}-${num(b)} €`);
+    const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra ${num(a)}\u00a0€ e ${num(b)}\u00a0€`);
+    const money = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `${num(a)}-${num(b)}\u00a0€`);
     let at = 0;
 
     const read = (): Answers => {

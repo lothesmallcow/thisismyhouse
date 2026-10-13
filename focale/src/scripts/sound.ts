@@ -13,7 +13,15 @@ export function soundOn(): boolean {
 export async function enableSound() {
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   if (!AC) return false;
-  ctx = ctx ?? new AC();
+  // iOS treats Web Audio as "ambient": the silent switch mutes it even after this click. The visitor
+  // pressed the speaker on purpose, so ask for "playback" where Safari supports it.
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (session) session.type = "playback";
+  if (!ctx) {
+    ctx = new AC();
+    // Locking the phone or switching apps can leave it "interrupted": keep every button honest.
+    ctx.addEventListener("statechange", () => window.dispatchEvent(new Event(EVT)));
+  }
   if (ctx.state !== "running") await ctx.resume();
   window.dispatchEvent(new Event(EVT));
   return true;

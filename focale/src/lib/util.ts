@@ -11,9 +11,10 @@ export function num(n: number): string {
   return new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0, useGrouping: "always" }).format(n);
 }
 
-/** Price with euro sign after the number, Italian style: "990 €" */
+/** Price with euro sign after the number, Italian style: "990 €". The space is non-breaking, so on
+ *  a phone the € never ends up alone at the start of a line. */
 export function euro(n: number): string {
-  return `${num(n)} €`;
+  return `${num(n)}\u00a0€`;
 }
 
 /** Dev fallback so the build works before the real domain exists. */

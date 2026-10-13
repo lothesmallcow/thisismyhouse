@@ -2,6 +2,8 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
+// Phones: the address bar showing and hiding must not re-measure every trigger (jumps on iOS and Android).
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 /**
  * Motion for the inner pages' pictures (components/visual/*) and the page colour play.

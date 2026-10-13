@@ -13,15 +13,16 @@ import { whatsappHref } from "../lib/util";
 <style>
   .sb {
     position: fixed;
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    left: max(0.75rem, env(safe-area-inset-left));
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     z-index: 40;
     display: flex;
     gap: 0.4rem;
     padding: 0.4rem;
-    /* Solid, not blurred: it lives on phones, where a backdrop blur over moving content stutters. */
-    background: rgba(255, 255, 255, 0.97);
+    /* Solid, not blurred: a backdrop blur over moving content stutters on phones, and Safari 26
+       tints its own bars from fixed elements, so a see-through bar would tint them oddly. */
+    background: #fff;
     border: 1px solid var(--filo);
     border-radius: var(--radius-ui);
     box-shadow: 0 10px 30px -12px rgba(11, 27, 63, 0.25);

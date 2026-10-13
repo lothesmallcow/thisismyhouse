@@ -209,6 +209,9 @@ const slices = solid ? Array.from({ length: 22 }, (_, i) => i) : [];
     container-type: inline-size;
     background: #fff;
     isolation: isolate;
+    /* Safari can let transformed or composited children (the lens, the boxes, the turning site)
+       escape a rounded overflow clip: a mask makes the rounded corners hold. */
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
     font-family: var(--font);
     font-stretch: 100%;
     color: #1d1d1f;
