@@ -714,7 +714,7 @@ html.lenis body {
 }
 /* The makeover band: room above and below the phone (it used to touch the band's edge). */
 .home .scenes > section.mk {
-  padding-block: clamp(3rem, 2rem + 3vw, 5.5rem);
+  padding-block: clamp(3rem, 2rem + 3vw, 4.5rem);
 }
 /* The header is fixed but has a spacer in the flow (Header.astro): the opening only needs the
    rest of the first screen, without counting the header twice. */

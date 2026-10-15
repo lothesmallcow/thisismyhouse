@@ -87,14 +87,11 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
   .lv__item--villa-ortensia {
     background: #e2e8dd;
   }
+  /* The text block sits in the middle of the card, next to the screenshots (no gap in between). */
   .lv__text {
     display: flex;
     flex-direction: column;
-  }
-  /* Name on top, the goal and links at the foot of the card. */
-  .lv__text .lv__goal {
-    margin-top: auto !important;
-    padding-top: 1.5rem;
+    justify-content: center;
   }
   .lv__links {
     padding-top: 1.75rem;

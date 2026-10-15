@@ -2,8 +2,9 @@
 /**
  * "Focus vuol dire mettere a fuoco", shown as a photo being taken. At first everything is sharp:
  * the three things a visitor looks for in the middle, and all the clutter old sites are full of
- * around them. The focus hunts, the shutter fires (flash), and from then on only the middle is
- * sharp. Decorative (the paragraph next to it says the same): hidden from screen readers.
+ * around them. The focus hunts ("AF" blinking), locks (the corners turn green), the six-blade iris
+ * shutter closes and opens, a flash, and from then on only the middle is sharp. A small camera readout
+ * (AF, shutter speed, aperture, ISO) frames it like a real viewfinder. Decorative (the paragraph next to it says the same): hidden from screen readers.
  * scripts/inner.ts sets .is-hunting then .is-shot; static and all sharp with reduced motion.
  */
 const keep = ["Chi sei", "Cosa fai", "Come contattarti"];
@@ -33,6 +34,9 @@ const noise = [
     <ul class="fl__keep" data-lens-keep>
       {keep.map((k) => <li>{k}</li>)}
     </ul>
+    <span class="fl__iris">{[0, 1, 2, 3, 4, 5].map((n) => <i style={`--r: ${n * 60}deg`} />)}</span>
+    <span class="fl__af"><b></b>AF-S</span>
+    <span class="fl__exp"><span>1/250</span><span>f/1.8</span><span>ISO 100</span></span>
   </div>
   <span class="fl__flash"></span>
 </div>
@@ -107,7 +111,7 @@ const noise = [
     }
     /* 2. Shot: flash, the brackets lock, everything but the middle falls out of focus. */
     .fl.is-shot .fl__flash {
-      animation: fl-flash 0.6s ease-out;
+      animation: fl-flash 0.6s ease-out 0.12s backwards;
     }
     .fl.is-shot .fl__view {
       animation: fl-click 0.35s ease-out;
@@ -117,7 +121,7 @@ const noise = [
       transition: border-color 0.2s;
     }
     .fl.is-shot .fl__chip {
-      filter: blur(4px);
+      filter: blur(5px);
       color: #5c6684;
       transition:
         filter 0.5s ease 0.15s,
@@ -207,6 +211,83 @@ const noise = [
     border-left: 0;
     border-top: 0;
     border-radius: 0 0 14px 0;
+  }
+  /* ---------- Camera readout ---------- */
+  .fl__af,
+  .fl__exp {
+    position: absolute;
+    left: 50%;
+    translate: -50% 0;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--grafite);
+  }
+  .fl__af {
+    bottom: calc(100% + 18px);
+    gap: 0.45rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    border: 1.5px solid currentColor;
+  }
+  .fl__af b {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .fl__exp {
+    top: calc(100% + 20px);
+  }
+  /* ---------- Iris shutter: six blades close and open at the shot ---------- */
+  .fl__iris {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2;
+  }
+  /* Each blade is a half-plane whose straight edge sits --d from the centre; six at 60 degrees leave
+     a hexagonal opening that shrinks to nothing as --d goes to 0. */
+  .fl__iris i {
+    position: absolute;
+    left: -50%;
+    top: 50%;
+    width: 200%;
+    height: 100%;
+    transform-origin: 50% 0;
+    transform: rotate(var(--r)) translateY(53%);
+    background: linear-gradient(180deg, #2a3350, #151b2e);
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .fl.is-hunting .fl__af {
+      animation: fl-blink 0.45s steps(2, jump-none) infinite;
+    }
+    .fl.is-shot .fl__af {
+      color: #1f8a4c;
+    }
+    .fl.is-shot .fl__c {
+      border-color: #1f8a4c !important;
+    }
+    .fl.is-shot .fl__iris i {
+      animation: fl-iris 0.36s cubic-bezier(0.5, 0, 0.3, 1);
+    }
+  }
+  @keyframes fl-blink {
+    to {
+      opacity: 0.25;
+    }
+  }
+  @keyframes fl-iris {
+    45% {
+      transform: rotate(var(--r)) translateY(0%);
+    }
   }
   .fl__keep {
     list-style: none;

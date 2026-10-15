@@ -65,6 +65,17 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   theme made for computers (top bar with a tiny number, menu, slider, services, small work photos, quote
   behind "Contatti", news stopped in 2019). Lorenzo: if it looks ridiculous, a prospect says "mine is better";
   when it looks like theirs, they see the real problem. It fills the whole phone screen.
+  Phone AND laptop (Lorenzo): a "Telefono | Computer" switch under the bar; one film per device (buildFilm),
+  each with its own labels in `devices`. The laptop is Laptop.astro (CSS body built to the model's measures)
+  with a real 3D model (public/models/macbook.glb, CC BY, credits in docs/CREDITI.md and the footer; logo faces
+  cut at load, silver), drawn by the same Rig in phone3d.ts ([data-laptop3d], loaded on the first switch).
+  Its pages are drawn 1280 px wide and scaled (--k); the old one boxed in 1000 px like an old theme. The lid
+  angle (--lid, --lift; hinge.ts shared by CSS and WebGL) opens at the start, shuts and reopens for the swap;
+  a mouse pointer clicks "Chiedi un preventivo" at the end. The device not shown is opacity 0 + inert (not
+  visibility: film pieces set their own visibility); on phones it is display none. Sizes: phone and laptop
+  widths come from 100svh minus about 300 px, so device + bar + switch fit one screen (checked at 1280x720).
+  Left column kept clean on purpose (Lorenzo): title, lead, one button, "Vedi i tre siti completi" under it;
+  no chip, no viewfinder corners, no grid, no "Gratis e senza impegno" line.
 - Header (Header.astro): on touch screens it never hides on scroll (hiding glitched on iPhone with momentum
   and rubber-band scrolling); with a mouse it hides after 60 px of steady scrolling down, back after 24 px up.
 - "Calcola una stima del tuo preventivo" (Estimator.astro on /prezzi/#stima, logic in lib/estimate.ts, numbers in
@@ -105,6 +116,9 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   when in view, "sta scrivendo…" with typing dots before each Focus reply, a soft pop if sound is on, "Rivedi"), "Siti per [sector] che lavorano bene"
   rolling pill and a camera shot (all sharp, flash, only the middle stays sharp) on Lo studio, contact card on
   Contatti, phone fan on Lavori and sector pages, a huge "0 €" on La garanzia (no circles, no emoji-prone glyphs like ✳: iPhone draws them as emoji).
+  Lo studio "Focus vuol dire" (FocusLens.astro): a camera shot, AF pill that hunts then locks green, an
+  exposure line, a six-blade iris that fires, corners turn green. Lavori cards: text centred in its column
+  (no margin-top:auto: it left dead space). Prezzi: `.pz` has no bottom padding (the estimator follows).
   Entrances are CSS (play at first paint, no opacity on text: axe measures mid-animation); hover/scroll parts
   are scripts/inner.ts. Never leave a half-empty row: Lorenzo checks for dead space first.
 - Colour play: a section with [data-tone="sole|pesca"] floods the whole page with its colour while it holds

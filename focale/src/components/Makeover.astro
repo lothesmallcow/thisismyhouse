@@ -1,117 +1,161 @@
 ---
 /**
- * The makeover, filmed like the opening: one iPhone with a real-looking old website (a decent
- * WordPress-style site made for computers, squeezed onto a phone, as most firms' sites really look). It plays by itself like a
- * video, one thing at a time so it can be followed: the old site; its five problems one by one (a lens
- * on that piece only, a red box on the screen, the rest dims, a floating label beside the phone says what is wrong); the phone
- * turns around and comes back with the new site; the five fixes one by one (green box, the label turns
- * green and says what changed); a tap calls. Under the phone a slim bar: where we are, sound, replay.
- * Without JS or with reduced motion: the finished site, and the list of fixes for screen readers.
- * Logic in scripts/makeover.ts.
+ * The makeover, filmed like the opening, on a phone and on a laptop (switch under the film; the
+ * phone first). The same invented firm's real-looking old website (a decent WordPress-style site
+ * made for computers, as most firms' sites really look). It plays by itself like a video, one
+ * thing at a time so it can be followed: the old site; its five problems one by one (a lens on
+ * that piece only, a red box on the screen, the rest dims, a floating label says what is wrong);
+ * the phone turns around, or the laptop's lid shuts and opens again, and the new site is there;
+ * the five fixes one by one (green box, the label turns green and says what changed); a tap calls,
+ * or a click asks for a quote. Under the device a slim bar: where we are, sound, replay; under it
+ * the switch. The 3D bodies are real models (phone3d.ts); the screens stay live HTML.
+ * Without JS or with reduced motion: the phone with the finished site, and the list of fixes for
+ * screen readers. Logic in scripts/makeover.ts.
  */
 import IPhone from "./IPhone.astro";
+import Laptop from "./Laptop.astro";
 import { site } from "../config/site";
 import OldSite from "./demo/OldSite.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
 
-// Each problem of the old site and the part of the new site that fixes it (same number).
-// `old` is a selector inside OldSite (its [data-old] pieces), `fix` a selector inside ArcadiHero.
-const fixes = [
-  { old: "[data-old='header']", fix: ".ah__call", bad: "Il numero è minuscolo e non si tocca", good: "Il tasto Chiama è sempre in alto" },
-  { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Testo minuscolo: bisogna zoomare", good: "Titoli grandi: si legge al volo" },
-  { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
-  { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un tocco" },
-  { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
+// Each problem of the old site and the part of the new site that fixes it (same number), for each
+// device. `old` is a selector inside OldSite (its [data-old] pieces), `fix` a selector inside ArcadiHero.
+type Fix = { old: string; fix: string; bad: string; good: string };
+const devices: { id: "phone" | "laptop"; fixes: Fix[]; first: string; last: string }[] = [
+  {
+    id: "phone",
+    first: "Il sito di oggi, dal telefono",
+    last: "Un tocco, e ti chiamano",
+    fixes: [
+      { old: "[data-old='header']", fix: ".ah__call", bad: "Il numero è minuscolo e non si tocca", good: "Il tasto Chiama è sempre in alto" },
+      { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Testo minuscolo: bisogna zoomare", good: "Titoli grandi: si legge al volo" },
+      { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
+      { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un tocco" },
+      { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
+    ],
+  },
+  {
+    id: "laptop",
+    first: "Il sito di oggi, dal computer",
+    last: "Un clic, e ti scrivono",
+    fixes: [
+      { old: "[data-old='header']", fix: ".ah__phone", bad: "Il telefono è scritto in piccolo, in un angolo", good: "Numero e tasto Chiama sempre in vista" },
+      { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Un muro di testo: nessuno lo legge", good: "Una frase dice cosa fate e dove" },
+      { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
+      { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un clic" },
+      { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
+    ],
+  },
 ];
-// The status in the bar under the phone, in order. The film shows one at a time.
-const beats: { t: string; tone?: "bad" | "good" }[] = [
-  { t: "Il sito di oggi, dal telefono" },
-  ...fixes.map((_, i) => ({ t: `Problema ${i + 1} di 5`, tone: "bad" as const })),
+// The status in the bar under the device, in order. The film shows one at a time.
+const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good" }[] => [
+  { t: d.first },
+  ...d.fixes.map((_, i) => ({ t: `Problema ${i + 1} di 5`, tone: "bad" as const })),
   { t: `Lo rifacciamo in ${site.deliveryDays.professionale} giorni` },
-  ...fixes.map((_, i) => ({ t: `Risolto ${i + 1} di 5`, tone: "good" as const })),
-  { t: "Un tocco, e ti chiamano" },
+  ...d.fixes.map((_, i) => ({ t: `Risolto ${i + 1} di 5`, tone: "good" as const })),
+  { t: d.last },
 ];
+const [phone, laptop] = devices;
 ---
 <section class="mk on-navy" id="makeover" aria-labelledby="mk-t" data-makeover>
   <div class="wrap mk__in">
     <div class="mk__text">
-      <div class="mk__head">
-        <p class="eyebrow mk__kicker">Progetto dimostrativo: un'impresa edile inventata</p>
-        <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
-      </div>
+      <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto da noi.</h2>
       <p class="mk__lead">
-        Il sito di un'impresa edile inventata: sul computer sembra a posto, sul telefono no. Rifatto come lo faremmo per te. Guarda cosa
-        cambia, un pezzo alla volta.
+        Un'impresa edile inventata: il sito che ha oggi e quello che le faremmo noi. Guarda cosa cambia, sul telefono e sul computer.
       </p>
       <ul class="sr-only">
-        {fixes.map((f) => <li>Prima: {f.bad}. Dopo: {f.good}.</li>)}
+        {phone.fixes.map((f) => <li>Prima: {f.bad}. Dopo: {f.good}.</li>)}
       </ul>
       <div class="mk__ask">
         <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
-        <p class="mk__micro">Gratis e senza impegno. Il tuo sito, rifatto così, in {site.previewHours} ore.</p>
       </div>
       <a class="textlink mk__more" href="/lavori/">Vedi i tre siti completi</a>
     </div>
 
     <figure class="mk__stage">
-      <div class="mk__rig" data-phone3d>
-        <div class="mk__obj" data-mk-obj>
-          <div class="mk__phone" data-mk-phone>
-            <IPhone solid label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
-              <div class="mk__screen" data-mk-screen>
-                <div class="mk__old" data-mk-old>
-                  <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
-                  {
-                    fixes.map((f, i) => (
-                      <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true">
-                        <i>{i + 1}</i>
-                      </span>
-                    ))
-                  }
-                </div>
-                <div class="mk__new" data-mk-new>
-                  <ArcadiHero extra={false} />
-                  {
-                    fixes.map((f, i) => (
-                      <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true">
-                        <i>{i + 1}</i>
-                      </span>
-                    ))
-                  }
-                </div>
-                <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
+      <div class="mk__devs">
+        <div class="mk__dev mk__dev--phone is-on" data-mk-dev="phone">
+          <div class="mk__rig" data-phone3d>
+            <div class="mk__obj" data-mk-obj>
+              <div class="mk__phone">
+                <IPhone solid label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
+                  <div class="mk__screen" data-mk-screen>
+                    <div class="mk__old" data-mk-old>
+                      <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
+                      {phone.fixes.map((f, i) => <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true"><i>{i + 1}</i></span>)}
+                    </div>
+                    <div class="mk__new" data-mk-new>
+                      <div class="mk__newpage" data-mk-newpage><ArcadiHero extra={false} /></div>
+                      {phone.fixes.map((f, i) => <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true"><i>{i + 1}</i></span>)}
+                    </div>
+                    <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
+                  </div>
+                  <span class="mk__finger" data-mk-fa aria-hidden="true"></span>
+                </IPhone>
               </div>
-              <span class="mk__finger" data-mk-fa aria-hidden="true"></span>
-            </IPhone>
+            </div>
           </div>
+          <ul class="mk__tags" aria-hidden="true">
+            {
+              phone.fixes.map((f, i) => (
+                <li class="mk__tag" data-mk-tag={i}>
+                  <span class="mk__tdot">
+                    <span class="mk__tn">{i + 1}</span>
+                    <svg viewBox="0 0 12 12" width="12" height="12"><path d="M2 6.4 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                  <span class="mk__tx"><span class="mk__tbad">{f.bad}</span><span class="mk__tgood">{f.good}</span></span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="mk__dev mk__dev--laptop" data-mk-dev="laptop" inert>
+          <div class="mk__rig mk__rig--lap" data-laptop3d>
+            <div class="mk__obj mk__obj--lap" data-mk-obj>
+              <Laptop url="arcadi-ristrutturazioni.demo" label="Lo stesso sito, prima e dopo il rifacimento, su un computer portatile">
+                <div class="mk__screen mk__screen--lap" data-mk-screen>
+                  <div class="mk__old" data-mk-old>
+                    <div class="mk__oldpage mk__oldpage--desk" data-mk-oldpage data-desk><OldSite annotations={false} /></div>
+                    {laptop.fixes.map((f, i) => <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true"><i>{i + 1}</i></span>)}
+                  </div>
+                  <div class="mk__new" data-mk-new>
+                    <div class="mk__newpage mk__newpage--desk" data-mk-newpage data-desk><ArcadiHero extra={false} /></div>
+                    {laptop.fixes.map((f, i) => <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true"><i>{i + 1}</i></span>)}
+                  </div>
+                  <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
+                  <svg class="mk__cursor" data-mk-fa viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v16.5l4.6-4.4 2.9 6.4 2.6-1.2-2.9-6.3H18.5Z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" /></svg>
+                </div>
+              </Laptop>
+            </div>
+          </div>
+          <ul class="mk__tags" aria-hidden="true">
+            {
+              laptop.fixes.map((f, i) => (
+                <li class="mk__tag" data-mk-tag={i}>
+                  <span class="mk__tdot">
+                    <span class="mk__tn">{i + 1}</span>
+                    <svg viewBox="0 0 12 12" width="12" height="12"><path d="M2 6.4 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                  <span class="mk__tx"><span class="mk__tbad">{f.bad}</span><span class="mk__tgood">{f.good}</span></span>
+                </li>
+              ))
+            }
+          </ul>
         </div>
       </div>
-      <ul class="mk__tags" aria-hidden="true">
-        {
-          fixes.map((f, i) => (
-            <li class="mk__tag" data-mk-tag={i}>
-              <span class="mk__tdot">
-                <span class="mk__tn">{i + 1}</span>
-                <svg viewBox="0 0 12 12" width="12" height="12">
-                  <path d="M2 6.4 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </span>
-              <span class="mk__tx">
-                <span class="mk__tbad">{f.bad}</span>
-                <span class="mk__tgood">{f.good}</span>
-              </span>
-            </li>
-          ))
-        }
-      </ul>
+
       <figcaption class="mk__bar">
         <span class="mk__status">
           {
-            beats.map((b, i) => (
-              <span class:list={["mk__b", b.tone && `mk__b--${b.tone}`]} data-mk-beat={i}>
-                {b.t}
-              </span>
-            ))
+            devices.map((d) =>
+              beatsOf(d).map((b, i) => (
+                <span class:list={["mk__b", b.tone && `mk__b--${b.tone}`]} data-mk-beat={i} data-for={d.id}>
+                  {b.t}
+                </span>
+              )),
+            )
           }
         </span>
         <span class="mk__ctl" data-mk-ctl hidden>
@@ -123,6 +167,16 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
           </button>
         </span>
       </figcaption>
+      <div class="mk__sw" role="group" aria-label="Guarda il film sul telefono o sul computer" data-mk-sw hidden>
+        <button type="button" data-mk-show="phone" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7" /><path d="M10.5 5.2h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+          Telefono
+        </button>
+        <button type="button" data-mk-show="laptop" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4.5" width="16" height="11" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7" /><path d="M2 18.8h20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+          Computer
+        </button>
+      </div>
     </figure>
   </div>
 </section>
@@ -140,27 +194,25 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
   }
   @media (min-width: 900px) {
     .mk__in {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      column-gap: clamp(2rem, 6vw, 7rem);
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      column-gap: clamp(2rem, 4vw, 4.5rem);
     }
   }
-  .mk__kicker {
-    margin-bottom: 0.85rem !important;
-    color: var(--on-dark-muted);
-  }
   .mk__t {
-    font-size: var(--fs-h2);
-    max-width: 18ch;
+    font-size: clamp(1.75rem, 1.1rem + 2.6vw, 3.4rem);
+    line-height: 1.02;
+    max-width: 16ch;
   }
   .mk__ask {
-    display: grid;
-    gap: 0.6rem;
-    justify-items: start;
-    margin-top: 1.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.75rem;
+    margin-top: 2.25rem;
   }
-  .mk__micro {
-    font-size: var(--fs-small);
-    color: var(--on-dark-muted);
+  .mk__more {
+    display: inline-block;
+    margin-top: 1.25rem;
   }
   /* The words stay readable above the phone while it turns. */
   .mk__text {
@@ -169,20 +221,43 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
   }
 
   .mk__lead {
-    margin-top: 1.1rem;
-    max-width: 34ch;
+    margin-top: 1.25rem;
+    max-width: 36ch;
     font-size: var(--fs-lead);
     line-height: 1.45;
     color: var(--on-dark-muted);
   }
 
-  /* ---------- Phone ---------- */
+  /* ---------- Devices: phone and laptop share one place; the one not shown keeps its room on computers ---------- */
   .mk__stage {
     position: relative;
     margin: 0;
     display: grid;
     justify-items: center;
   }
+  .mk__devs {
+    display: grid;
+    width: 100%;
+    place-items: center;
+  }
+  .mk__dev {
+    grid-area: 1 / 1;
+    position: relative;
+    display: grid;
+    justify-items: center;
+  }
+  /* Opacity, not visibility: pieces of the film set their own visibility and would show through. */
+  .mk__dev:not(.is-on) {
+    opacity: 0;
+    pointer-events: none;
+  }
+  @media (max-width: 899px) {
+    .mk__dev:not(.is-on) {
+      display: none;
+    }
+  }
+
+  /* ---------- Phone ---------- */
   .mk__phone {
     position: relative;
     transform-style: preserve-3d;
@@ -194,7 +269,8 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
   .mk__obj {
     position: relative;
     transform-style: preserve-3d;
-    --w: clamp(220px, 38vh, 320px);
+    /* Phone, bar and switch fit in one screen (about 300 px of bars and padding round it). */
+    --w: clamp(200px, calc((100svh - 300px) / 2.06), 300px);
   }
   .mk__phone::after {
     content: "";
@@ -213,6 +289,56 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
     overflow: hidden;
     background: #fff;
   }
+  .mk__newpage {
+    position: relative;
+    height: 100%;
+  }
+
+  /* ---------- Laptop: seen from a little above; its screen is drawn 1280 px wide and scaled (--k, makeover.ts) ---------- */
+  .mk__rig--lap {
+    position: relative;
+    perspective: 2600px;
+    perspective-origin: 50% 20%;
+  }
+  .mk__obj--lap {
+    --w: clamp(300px, min(40vw, 100svh - 300px), 620px);
+    /* Room for the keyboard coming towards the eye under the lid. */
+    padding-bottom: calc(var(--w) * 0.17);
+  }
+  .mk__obj--lap :global(.lap) {
+    transform: rotateX(-12deg);
+  }
+  .mk__screen--lap {
+    inset: 0;
+  }
+  .mk__oldpage--desk,
+  .mk__newpage--desk {
+    width: 1280px;
+    height: 780px;
+    transform-origin: 0 0;
+    transform: scale(var(--k, 0.45));
+  }
+  /* An old boxed theme: the page sits in a 1000 px column on a grey background. */
+  .mk__oldpage--desk {
+    background: #e3e0d9;
+  }
+  .mk__oldpage--desk :global(.os) {
+    max-width: 1000px;
+    margin-inline: auto;
+    box-shadow: 0 0 0 1px #d3cfc6;
+  }
+  .mk__cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 2.6cqi;
+    height: 2.6cqi;
+    margin: -0.4cqi 0 0 -0.6cqi;
+    opacity: 0;
+    z-index: 8;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  }
   .mk__old,
   .mk__new {
     position: absolute;
@@ -223,6 +349,7 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
      site: two columns, tiny text, and the page fills the whole screen. 220% keeps OldSite in its
      desktop layout (container >= 520 px) even on the smallest phone in the film. */
   .mk__oldpage {
+    position: relative;
     width: 220%;
     height: 220%;
     transform-origin: 0 0;
@@ -337,6 +464,13 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+  }
+  /* Computers: one line, so the label is exactly as wide as its words. */
+  @media (min-width: 900px) {
+    .mk__tag {
+      max-width: none;
+      white-space: nowrap;
+    }
   }
   /* A thin line from the label to the box it talks about (computers). */
   .mk__tag::after {
@@ -471,6 +605,51 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
     color: var(--notte);
   }
 
+  /* ---------- Telefono | Computer, under the bar ---------- */
+  .mk__sw {
+    display: inline-flex;
+    margin-top: 0.75rem;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  .mk__sw[hidden] {
+    display: none;
+  }
+  .mk__sw button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    padding: 0 1.1rem 0 0.85rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--on-dark-muted);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
+  }
+  .mk__sw svg {
+    width: 18px;
+    height: 18px;
+  }
+  .mk__sw button[aria-pressed="true"] {
+    background: #fff;
+    color: var(--notte);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .mk__sw button[aria-pressed="false"]:hover {
+      color: #fff;
+    }
+  }
+
   /* ---------- Phones: title, the film big, then the button ---------- */
   @media (max-width: 899px) {
     .mk__obj {
@@ -492,11 +671,17 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
     }
     :global(.mk-live) .mk__more {
       order: 3;
+      justify-self: start;
+      margin-top: 0;
+    }
+    .mk__obj--lap {
+      --w: min(90vw, 520px);
     }
     :global(.mk-live) .mk__bar {
       margin-top: 1.1rem;
     }
     .mk__lead {
+      margin-top: -0.75rem;
       font-size: 1rem;
     }
   }
