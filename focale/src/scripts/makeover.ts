@@ -27,6 +27,8 @@ type Box = { x: number; y: number; w: number; h: number };
 interface Film {
   tl: gsap.core.Timeline;
   sync: (t: number) => void;
+  /** When the last scene (the tap) is over, s. */
+  end: number;
 }
 
 export function initMakeover() {
@@ -37,8 +39,30 @@ export function initMakeover() {
   root.classList.add("mk-live");
   const film = buildFilm(dev, Array.from(root.querySelectorAll<HTMLElement>("[data-mk-beat]")));
 
+  // A mini film (Lorenzo): the phone starts alone in the middle of the band, no words, no buttons;
+  // when the film is over it glides to its place on the right and the words come in, one after the
+  // other. Transforms only (no layout shift) and nothing pinned: the page scrolls freely, nobody is
+  // made to watch. "Rivedi" puts the phone back in the middle. Left out when the band is already on
+  // screen when this runs (the visitor would see it jump); the band's top peeking at the fold is fine.
+  const stage = root.querySelector<HTMLElement>(".mk__stage")!;
+  const words = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-word]"));
+  const box = stage.getBoundingClientRect();
+  if (box.top > innerHeight - box.height * 0.25 || box.bottom < 0) {
+    const toCentre = () => {
+      const o = offsetIn(stage, root);
+      return { x: root.clientWidth / 2 - (o.x + stage.offsetWidth / 2), y: root.clientHeight / 2 - (o.y + stage.offsetHeight / 2) };
+    };
+    film.tl.fromTo(
+      stage,
+      { x: () => toCentre().x, y: () => toCentre().y, scale: 1.04 },
+      { x: 0, y: 0, scale: 1, duration: 1.6, ease: "expo.inOut" },
+      film.end,
+    );
+    film.tl.fromTo(words, { autoAlpha: 0, y: 28 }, { autoAlpha: 1, y: 0, duration: 1.1, ease: "expo.out", stagger: 0.1 }, film.end + 0.8);
+  }
+
   // Controls: sound and replay. Plays when in view, pauses when it leaves, goes on when it comes
-  // back; once finished, it plays again from the start the next time it comes into view.
+  // back. Once over it stays over (the words and the button stay put); "Rivedi" plays it again.
   const ctl = root.querySelector<HTMLElement>("[data-mk-ctl]")!;
   const replay = root.querySelector<HTMLButtonElement>("[data-mk-replay]")!;
   ctl.hidden = false;
@@ -55,8 +79,7 @@ export function initMakeover() {
   new IntersectionObserver(
     ([e]) => {
       if (e.isIntersecting) {
-        if (film.tl.progress() >= 1) restart();
-        else film.tl.play();
+        if (film.tl.progress() < 1) film.tl.play();
       } else film.tl.pause();
     },
     // Low enough that looking at the bar under the phone does not pause the film.
@@ -262,7 +285,7 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   }
   tl.to({}, { duration: 0.1 }, LENGTH - 0.1);
   sync(0);
-  return { tl, sync };
+  return { tl, sync, end: END + 1.6 };
 }
 
 function offsetIn(el: HTMLElement, ancestor: HTMLElement) {

@@ -67,6 +67,11 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   when it looks like theirs, they see the real problem. It fills the whole phone screen.
   A laptop version (switch Telefono | Computer, 3D MacBook) was built and dropped: "too much" (Lorenzo).
   Phone only. Its width comes from 100svh minus about 240 px, so phone + bar fit one screen (1280x720 too).
+  Mini film (Lorenzo): the phone starts alone in the middle of the band (stage translated, transforms
+  only: no layout shift), no words or buttons; when the tap is over it glides to the right and the words
+  ([data-mk-word]) come in one by one. Nothing pinned, the page scrolls freely. Once over it stays over
+  (coming back does not restart it, the words stay); "Rivedi" replays from the middle. Skipped when the
+  stage is already mostly on screen at start-up (it would jump).
   Left column kept clean on purpose (Lorenzo): title, lead, one button, "Vedi i tre siti completi" under it;
   no chip, no viewfinder corners, no grid, no "Gratis e senza impegno" line.
 - Header (Header.astro): on touch screens it never hides on scroll (hiding glitched on iPhone with momentum

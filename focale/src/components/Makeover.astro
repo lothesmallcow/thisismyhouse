@@ -36,17 +36,17 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
 <section class="mk on-navy" id="makeover" aria-labelledby="mk-t" data-makeover>
   <div class="wrap mk__in">
     <div class="mk__text">
-      <h2 id="mk-t" class="mk__t">Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
-      <p class="mk__lead">
+      <h2 id="mk-t" class="mk__t" data-mk-word>Prima e dopo: lo stesso sito, rifatto per il telefono.</h2>
+      <p class="mk__lead" data-mk-word>
         Sul computer sembra a posto, sul telefono no. Qui un'impresa edile inventata: guarda cosa cambia, un pezzo alla volta.
       </p>
       <ul class="sr-only">
         {fixes.map((f) => <li>Prima: {f.bad}. Dopo: {f.good}.</li>)}
       </ul>
-      <div class="mk__ask">
+      <div class="mk__ask" data-mk-word>
         <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
       </div>
-      <a class="textlink mk__more" href="/lavori/">Vedi i tre siti completi</a>
+      <a class="textlink mk__more" href="/lavori/" data-mk-word>Vedi i tre siti completi</a>
     </div>
 
     <figure class="mk__stage">
@@ -114,6 +114,7 @@ const beats: { t: string; tone?: "bad" | "good" }[] = [
 
 <style>
   .mk {
+    position: relative;
     overflow-x: clip;
     padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
   }
