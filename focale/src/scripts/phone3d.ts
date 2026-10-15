@@ -124,6 +124,10 @@ function loadLaptop() {
         mat.color = new Color("#c9cacd");
         mat.roughness = 0.45;
       }
+      // The bezel round the screen (LidMesh): flat black that reflects nothing, like the screen. As
+      // glossy glass it mirrored the bright room the model is lit by: mauve-grey with the lid open
+      // (Lorenzo), white when made smoother.
+      if (mesh.name === "LidMesh") mesh.material = new MeshBasicMaterial({ color: 0x0b0c0e });
       if (mesh.name === "LidMesh" && mesh.geometry.index) {
         const geo = mesh.geometry;
         const idx = geo.index!;
