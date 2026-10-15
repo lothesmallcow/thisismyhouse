@@ -243,3 +243,155 @@ Not legal advice: write drafts, flag them, and have the client's lawyer or accou
 - Content delays from the client are the usual reason projects stall: set a date for assets in writing.
 - 3D and heavy motion look great on his laptop; on a cheap Android they can stutter. Keep the CSS
   fallback, test on a low-end phone, and prefer less motion on a client site than on his own showcase.
+
+---
+
+## 12. Visitor psychology: what the research says (and how to apply it to a client)
+
+Full reports with sources are in the repo root `reports/` (research notes in `research_notes/`):
+`Why visitors dive into websites.md`, `Layout e call to action.md`, `Sito desktop su iPhone e mobile.md`,
+`Stima preventivo siti web.md`. They were written for the studio's own site; the rules below are the
+parts that transfer to a client's local-business site. Evidence marks: **[E]** measured study or standard,
+**[P]** practitioner or vendor data (directional), **[S]** our judgment.
+
+**The order a visitor decides in** (the core model): looks simple and familiar in under a second, says
+what it offers and for whom in about ten seconds, then every scroll proves a real, reachable, competent
+business stands behind it.
+
+1. **First 50 ms: simple and familiar wins.** Appeal is judged in 50 ms and the judgment sticks; low
+   visual complexity plus "looks like a typical site of its kind" rates best; trust at 50 ms is driven
+   by visual appeal (Lindgaard; Tuch/Google; Reinecke) [E]. Design look is the most cited credibility
+   factor (Stanford, 46% of comments) [E]. **Apply:** conventional skeleton (nav, offer headline, real
+   work, contact), craft in the details, not in a weird structure.
+2. **Ten seconds, two screens.** 57% of viewing time above the fold, 74% in the first two screens; 80%
+   of fixations on the left half (NN/g eyetracking) [E]. Value proposition must land in ~10 s [E].
+   **Apply:** first viewport on a 375 px phone = one sentence the customer understands (what, for whom,
+   where), one reason to believe (a real photo of the work), one primary action, a visible sliver of the
+   next section.
+3. **False floor.** A full-screen hero or a wide empty band makes the page look finished and people stop
+   (NN/g "illusion of completeness") [E]. Whitespace groups; dead space ends the page. Let the next
+   section peek.
+4. **Headings carry the argument.** People scan headings ("layer cake") and dip into text [E]. Write
+   headings as takeaways ("Bagno rifatto in 10 giorni, preventivo scritto"), never "Chi siamo" alone.
+5. **Real photos are content, stock is ignored.** Real people and real products get studied; decorative
+   stock gets skipped (NN/g) [E]; owner photo beats stock in trust (BrightLocal, small sample) [P].
+   **Apply:** push the client hard for real photos of jobs, rooms, team. A face looking toward the CTA
+   pulls attention to it [E, thin].
+6. **Trust without testimonials:** named owner with face, P.IVA, published "from €" prices or price for
+   common cases (hidden prices send people to competitors, NN/g) [E], written process, true risk reducer.
+   Voluntary cost transparency raised sales up to ~20% (HBS) [E]. **Fake or manipulated reviews are
+   illegal** (Omnibus, D.Lgs. 26/2023) [E]: link to real Google reviews instead.
+7. **One action, repeated after each proof.** Single-CTA pages converted 13.5% vs 10.5% (Unbounce,
+   secondary source) [P]. Put the same button (same words, same destination) in hero, after the main
+   proof, on price cards, at the end, plus a sticky mobile bar. Never two filled buttons in one section.
+8. **Button: contrast, not hue.** "Red beats green" is an isolation effect [E/P]. One accent colour used
+   only for the action. Check WCAG: 4.5:1 text, 3:1 UI. Watch white on orange (often fails) and white on
+   WhatsApp green #25d366 (1.98:1, fails): use navy labels / outlined WhatsApp button.
+9. **Labels name what you get:** "Chiedi il preventivo gratuito", "Prenota la visita", never "Invia",
+   "Contattaci", "Scopri di più" [P]. Microcopy next to the doubt ("Rispondiamo entro 24 ore", "Niente
+   spam"), and **only if literally true**: false reassurance backfires [P].
+10. **Forms: short.** Text areas, drop-downs and phone fields cost conversions (HubSpot, 40k pages) [E];
+    explain why you ask for a phone (Baymard) [E]. 3 to 4 single-line fields. Multi-step only if data
+    shows drop-off (big multi-step claims come from vendors) [P].
+11. **Italy runs on WhatsApp:** ~90% of Italian internet users [E]. Always offer `wa.me` with a
+    prefilled message next to the form and phone. No controlled test proves it beats forms [S].
+12. **Motion explains, never hijacks.** Moving things steal attention from the headline; UI transitions
+    100 to 500 ms (NN/g) [E]. Scrolljacking hurts control, discoverability and task success [E]; parallax
+    can cause dizziness [E]. Before/after demos are legitimate motion (they explain the product). Loops
+    over 5 s need a pause/replay control (WCAG 2.2.2) [E].
+13. **3D is evidence of craft, not a conversion driver.** No independent A/B test of a 3D hero exists;
+    a concrete-fact hero beat an animated one (+18% vs +5%, vendor study) [P]. Headline and CTA sit above
+    or beside the visual, never below it; the headline renders as plain HTML so LCP never waits for WebGL.
+    For most client sites: skip 3D, spend the craft on real photos and speed.
+14. **Phones and speed set the ceiling.** ~88% of Italians' online time is on mobile [E]; in Italy
+    Android is ~63 to 66% of mobile traffic and Chrome ~68 to 70% (StatCounter) [E]: "works on my iPhone"
+    covers one mobile visitor in three. Vodafone Italy: 31% better LCP gave 8% more sales [E]; bounce
+    rises 32% from 1 s to 3 s load (Google) [E].
+15. **Typography for owners aged 45 to 65:** body 17 to 18 px, x-height ≥ 0.50 em, never weights below
+    400 at text sizes, 50 to 75 characters per line (40 to 60 on phones), inputs ≥ 16 px (iOS zoom) [E].
+    No font proved universally best (Adobe/Wallace) [E]. Avoid the template look (Inter, a serif accent
+    word, the "second tier" Satoshi/Manrope/DM Sans/Bricolage) [P/S]: pick a face with a real story.
+16. **Pricing honesty:** a genuine top tier can anchor the middle plan; "Consigliato" is fine, "Il più
+    scelto" is not unless true; no fake countdowns or "posti rimasti" [P/S]. For quotes: a reasoned range
+    beats an exact number; show the result only at the end (people game live prices) [S, Lorenzo].
+
+**What nobody has measured** (test with 5 real customers of the client, five-second tests and recorded
+sessions, rather than assume): template look vs trust, 3D vs static, CTA repetition count, WhatsApp vs
+form for Italian local services, Italian button copy.
+
+## 13. How to make things (recipes from this project)
+
+### A 3D device with a live HTML screen (iPhone / laptop)
+Files: `src/components/IPhone.astro`, `src/components/Laptop.astro`, `src/scripts/phone3d.ts`,
+`src/scripts/hinge.ts`, `src/scripts/makeover.ts`.
+
+1. **The HTML device is the truth.** Build the device in CSS (screen in container units so its content
+   scales with the width), animate it with CSS/GSAP transforms inside a rig element with `perspective`.
+   This is also the fallback when WebGL is missing.
+2. **Find a model:** GLB with a commercial licence (CC0 or CC BY with credit). Sketchfab and most CDNs
+   are blocked from the build machine; `raw.githubusercontent.com` mirrors work (the iPhone came from a
+   tutorial repo, the MacBook from `william-laverty/rigged-macbook-3d`, already rigged at the hinge).
+   Verify the licence on the original page, credit it in the footer and `docs/CREDITI.md`.
+3. **Inspect it:** `npx @gltf-transform/cli inspect model.glb` (meshes, materials, sizes). Render it alone
+   in a scratch page with three.js to find which mesh is what (paint one mesh red at a time).
+4. **Optimise:** `gltf-transform optimize --compress meshopt --texture-compress webp --texture-size 1024`;
+   load with `GLTFLoader().setMeshoptDecoder(MeshoptDecoder)`. Aim for about 1 MB.
+5. **Clean it:** hide or cut brand logos (trademark): hide the logo meshes, or drop faces by normal
+   direction when the logo shares a mesh with something you keep. Recolour (silver here).
+6. **Black parts that must stay black** (screen, bezel): `MeshBasicMaterial` (unlit). Glossy black
+   mirrors the environment and shows grey, mauve or white by angle.
+7. **Sync 3D with CSS:** multiply the CSS transforms from the device up to the rig (`chain()` in
+   `phone3d.ts`), convert to three.js axes (flip y), and build a camera that reproduces the CSS
+   perspective and perspective-origin. Place the model so its screen sits exactly under the HTML screen
+   (measure the model's screen size and hinge; the laptop lid shares one angle via `hinge.ts`).
+   The HTML screen stays on top, the canvas sits behind with an alpha background.
+8. **Gate and load:** WebGL + no Save-Data + ≥ 4 GB + ≥ 4 cores, else CSS. Preload models at idle,
+   create renderers at the first gesture, draw only when the pose changes or the rig is on screen,
+   lower pixel ratio while moving, sharp frame when still, handle `webglcontextlost`.
+9. **WebKit traps** (mobile report): `preserve-3d` flattens under `overflow`, `opacity < 1` or `filter`
+   on an ancestor; too many layers + WebGL + big images can kill the tab on iPhone. Test the direct URL,
+   not the claude.ai preview (its iframe throttles timers to ~30 fps and audio follows the silent switch).
+
+### A short explanatory film (before/after, product demo)
+Files: `src/components/Makeover.astro`, `src/scripts/makeover.ts`, `src/components/demo/OldSite.astro`.
+
+- One GSAP timeline in seconds, written as a script at the top of the file; one thing at a time.
+- Plays when in view (IntersectionObserver), pauses when it leaves, **never pinned**, stays finished
+  once over; a replay button and a sound toggle are the only controls.
+- Status text derived from the timeline clock (`sync(t)`), so seeking or replaying never desyncs it.
+- "Lens" zoom: scale only the piece in place (transform-origin computed so the scaled box lands inside
+  the screen), dim the rest with a huge box-shadow spotlight, a floating label explains it.
+- Measure pieces on layout boxes (`offsetLeft` chain), re-measure on width changes only, redraw after
+  `invalidate()`.
+- Mini-film pattern: device alone in the middle, then it glides to its column and the words come in;
+  transforms only (no CLS), words hidden with autoAlpha and revealed with a stagger.
+- Without JS or with reduced motion: the final frame and an `sr-only` list of what changes.
+
+### Sound
+`src/scripts/sound.ts`: every cue is synthesised with Web Audio (no audio files). Off until the visitor
+presses a speaker button; one page-wide switch; `navigator.audioSession.type = "playback"` on iOS.
+
+### Images when there are no photos yet
+`scripts/illustrations/`: scenes written as SVG code and rendered to JPEG with `sharp`. Good for
+clearly-labelled demos; **for a real client, real photos win** (section 12, point 5).
+
+### Logo and favicons from a font
+`scripts/logo.mjs` + `scripts/fonts-build/`: glyph outlines extracted with fontTools, written as SVG,
+favicons rendered with `sharp`. Licence of the font must allow it (OFL does).
+
+### Quote estimator
+`src/lib/estimate.ts` (logic shared by server and client) + `src/components/Estimator.astro` (one question
+per screen, result only at the end, a range not a number, costs not paid to the studio listed apart).
+Ask about mechanisms ("vuoi che le camere si aggiornino da sole?"), not counts.
+
+### Scrollable demo of a site inside a device
+`src/components/DemoViewer.astro`: a real iframe rendered at 390 or 1280 px and scaled, loaded when in
+view; on touch it wakes with a tap so a swipe never traps the page.
+
+### Verifying visual work without a real device
+- Screenshots at 1440, 1280 and 390 px (Playwright, `scripts/browser.mjs`), contact sheets with PIL, look
+  at them before claiming anything.
+- For animations, a temporary debug hook (`window.__mkTl`) to seek the timeline to exact beats.
+- Measure instead of guessing: computed transforms, pixel colours sampled from the user's screenshot,
+  a red material to reveal misalignment.
+- Headless has no GPU: 3D timing and some frames lie. Say what needs a real iPhone and a mid Android.
