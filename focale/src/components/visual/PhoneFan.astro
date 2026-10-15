@@ -1,6 +1,6 @@
 ---
 /**
- * The three demo sites as phone screens fanned out like cards (Lavori header, sector pages).
+ * The three projects as phone screens fanned out like cards (Lavori header, sector pages).
  * `only` puts one demo in front. They deal in at first paint (CSS); the mouse spreads them (inner.ts).
  */
 import { Image } from "astro:assets";
@@ -10,11 +10,10 @@ interface Props {
 }
 const { only } = Astro.props;
 let lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.data.order);
-// The chosen demo (or the middle one) sits in the centre, in front.
-if (only) {
-  const rest = lavori.filter((l) => l.id !== only);
-  lavori = [rest[0], ...lavori.filter((l) => l.id === only), ...rest.slice(1)];
-}
+// The chosen project (or else the first, the real client's site) sits in the centre, in front.
+const front = only ?? lavori[0].id;
+const rest = lavori.filter((l) => l.id !== front);
+lavori = [rest[0], ...lavori.filter((l) => l.id === front), ...rest.slice(1)];
 ---
 <div class="pfan" data-fan aria-hidden="true">
   {

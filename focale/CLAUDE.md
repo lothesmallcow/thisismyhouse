@@ -110,9 +110,17 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   picture wipes, parallax, pinned sideways galleries ([data-hscroll]), stacking cards ([data-stack]),
   count-ups, highlighter strokes ([data-mark]), magnetic buttons. Lenis on mouse only. Language switches must
   use setText() from demo-motion so split headings survive.
-  Cascina Rovere: warm serif, rooms gallery sliding sideways, "Una giornata in cascina". Villa Ortensia:
-  editorial, spaces as stacking cards, seasons, price bands. Arcadi: "studio" look (stone, ink, one rust
+  Villa Ortensia: editorial, spaces as stacking cards, seasons, price bands. Arcadi: "studio" look (stone, ink, one rust
   accent, square buttons, hairlines, quieter pictures): Lorenzo found the bold orange version childish.
+- Lavori: the first project is a REAL client's site, Casa Turati 3 (Paolo's apartment in Milan, permission
+  given), built in the repo lothesmallcow/studio-starter and online at `url` in its yaml. It replaced the
+  invented B&B Cascina Rovere (deleted, still in git history). Every place that shows a project words it
+  through `src/lib/lavori.ts` (`isReal`, `kindLabel`, `siteHref`, `siteAlt`): a real site is never called
+  "dimostrativo", a demo never passed off as a client. A real site shows no results it has not had yet
+  ("Cosa fa il sito", not "Cosa ottiene"). DemoViewer shows a real site as screenshots in the frames with
+  its link, no iframe (another host may refuse framing or be down). Screenshots: build the client repo
+  locally and shoot 1440x900 and 390x844 @2x. The CSP in `public/_headers` allows framing that host
+  (frame-src), in case a live embed comes back; update it when the client moves to its own domain.
 - Demos on phones: long lists are swipe rails (`:is(ul, ol).d-rail`, focusable, with aria-label), Arcadi's works
   show 3 then "Altri lavori" (`.d-more` + `.d-more-btn` anywhere in the section). Grid children holding a
   rail need `min-width: 0` or they widen the page. Arcadi's call bar appears after the hero.

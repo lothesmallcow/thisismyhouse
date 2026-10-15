@@ -19,6 +19,7 @@ export async function getStaticPaths() {
 const { s } = Astro.props as { s: CollectionEntry<"settori"> };
 const d = s.data;
 const demo = await getEntry("lavori", d.demo);
+import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
 ---
 <Base
   title={d.title.replace("Focale", site.brand)}
@@ -81,14 +82,14 @@ const demo = await getEntry("lavori", d.demo);
           </div>
           <div class="st-demo">
             <a class="st-demo__media" href={`/lavori/${demo.id}/`}>
-              <Image src={demo.data.shotDesktop} alt={`Il sito dimostrativo di ${demo.data.name}`} widths={[600, 1000]} sizes="(min-width: 1000px) 50vw, 92vw" />
+              <Image src={demo.data.shotDesktop} alt={siteAlt(demo)} widths={[600, 1000]} sizes="(min-width: 1000px) 50vw, 92vw" />
             </a>
             <div>
-              <p class="muted">Progetto dimostrativo per un'attività inventata</p>
+              <p class="muted">{kindLabel(demo)}</p>
               <p class="st-demo__goal">{demo.data.goal}</p>
               <div class="st-links">
                 <a class="textlink" href={`/lavori/${demo.id}/`}>Leggi il progetto</a>
-                <a class="textlink" href={`/lavori/${demo.id}/demo/`} target="_blank" rel="noopener">Apri il sito</a>
+                <a class="textlink" href={siteHref(demo)} target="_blank" rel="noopener">Apri il sito</a>
               </div>
             </div>
           </div>

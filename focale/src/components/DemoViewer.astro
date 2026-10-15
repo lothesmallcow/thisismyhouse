@@ -5,7 +5,9 @@
  * /lavori/<slug>/demo/, loaded only when the viewer comes into view, and rendered at true
  * phone (390 px) or desktop (1280 px) width, then scaled to fit. On touch screens the site
  * wakes with a tap, so a swipe over it never traps the page scroll. Without JS: screenshots
- * and a link. Logic in scripts/demo-viewer.ts.
+ * and a link. A real client's site (`url`) shows its screenshots in the same frames with its link,
+ * no iframe: another host refusing to be framed, or down, can never leave a broken box here.
+ * Logic in scripts/demo-viewer.ts.
  */
 import { Image } from "astro:assets";
 import IPhone from "./IPhone.astro";
@@ -18,20 +20,23 @@ interface Props {
   class?: string;
   /** Lazy screenshots (below the fold) or eager (first screen). */
   eager?: boolean;
+  /** A real client's site: its live address instead of the demo served here. */
+  url?: string;
 }
-const { slug, name, shotPhone, shotDesktop, class: cls, eager = false } = Astro.props;
-const src = `/lavori/${slug}/demo/`;
-// An address that is clearly not a real site (.demo is not a domain anyone can own).
-const domain = `${slug}.demo`;
+const { slug, name, shotPhone, shotDesktop, class: cls, eager = false, url } = Astro.props;
+const src = url ?? `/lavori/${slug}/demo/`;
+// A real site shows its own address; a demo one that is clearly not real (.demo is not a domain anyone can own).
+const domain = url ? new URL(url).host : `${slug}.demo`;
+const what = url ? `Il sito di ${name}` : `Il sito dimostrativo di ${name}`;
 const loading = eager ? "eager" : "lazy";
 ---
-<div class:list={["dv", cls]} data-dv data-src={src} data-mode="phone">
+<div class:list={["dv", cls]} data-dv data-src={src} data-mode="phone" data-static={url ? "" : undefined}>
   <div class="dv__stage">
     <div class="dv__phone">
       <IPhone>
         <div class="dv__site" data-dv-fit="390">
           <Image src={shotPhone} alt="" widths={[300, 600]} sizes="280px" class="dv__shot" loading={loading} />
-          <iframe data-dv-frame title={`Il sito dimostrativo di ${name}, versione telefono`} tabindex="-1"></iframe>
+          {!url && <iframe data-dv-frame title={`${what}, versione telefono`} tabindex="-1" />}
         </div>
       </IPhone>
     </div>
@@ -44,7 +49,7 @@ const loading = eager ? "eager" : "lazy";
         </div>
         <div class="dv__view" data-dv-fit="1280">
           <Image src={shotDesktop} alt="" widths={[800, 1400]} sizes="(min-width: 900px) 60vw, 92vw" class="dv__shot" loading={loading} />
-          <iframe data-dv-frame title={`Il sito dimostrativo di ${name}, versione computer`} tabindex="-1"></iframe>
+          {!url && <iframe data-dv-frame title={`${what}, versione computer`} tabindex="-1" />}
         </div>
       </div>
     </div>
@@ -60,7 +65,7 @@ const loading = eager ? "eager" : "lazy";
       <button type="button" data-dv-to="desk" aria-pressed="false">Computer</button>
     </div>
     <button type="button" class="dv__done" data-dv-done hidden>Fatto, torna alla pagina</button>
-    <a class="dv__open" href={src} target="_blank" rel="noopener">Apri a schermo intero</a>
+    <a class="dv__open" href={src} target="_blank" rel="noopener">{url ? "Apri il sito" : "Apri a schermo intero"}</a>
   </div>
 </div>
 

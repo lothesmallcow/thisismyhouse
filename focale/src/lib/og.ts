@@ -31,6 +31,6 @@ export async function ogPages(): Promise<OgPage[]> {
   return [
     ...STATIC,
     ...settori.map((s) => ({ key: `per-${s.id}`, title: s.data.h1 })),
-    ...lavori.map((l) => ({ key: `lavori-${l.id}`, title: `${l.data.name}: progetto dimostrativo`, kicker: l.data.sector })),
+    ...lavori.map((l) => ({ key: `lavori-${l.id}`, title: `${l.data.name}: ${l.data.url ? "sito per un cliente" : "progetto dimostrativo"}`, kicker: l.data.sector })),
   ];
 }

@@ -1,19 +1,20 @@
 ---
 /**
- * The three demo projects as a horizontal reel. Desktop with motion: the section pins and the
+ * The three projects (the first a real client's site, two demos) as a horizontal reel. Desktop with motion: the section pins and the
  * reel slides sideways as you scroll. Everywhere else it is a native, swipeable row.
  */
 import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
+import { siteAlt } from "../lib/lavori";
 const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.data.order);
 ---
 <section class="reel" data-reel aria-labelledby="lavori-t">
   <div class="reel__pin" data-reel-pin>
     <div class="wrap reel__head">
       <p class="sec__label">Lavori</p>
-      <h2 id="lavori-t">Tre siti completi, per tre attività inventate.</h2>
+      <h2 id="lavori-t">Tre siti completi. Il primo è di un cliente vero.</h2>
       <p class="reel__intro muted">
-        Siamo appena partiti: questi sono progetti dimostrativi. I lavori dei primi clienti arriveranno qui.
+        Il primo è online per un appartamento in affitto a Milano. Gli altri due sono progetti dimostrativi, per attività inventate.
       </p>
     </div>
     <div class="reel__viewport" data-reel-viewport tabindex="0" aria-label="Lavori, scorri in orizzontale">
@@ -25,7 +26,7 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
                 <div class="reel__media">
                   <Image
                     src={l.data.shotDesktop}
-                    alt={`Il sito dimostrativo di ${l.data.name}`}
+                    alt={siteAlt(l)}
                     widths={[600, 1000, 1400]}
                     sizes="(min-width: 1000px) 62vw, 86vw"
                     class="reel__img"

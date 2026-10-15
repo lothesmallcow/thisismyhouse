@@ -3,7 +3,7 @@
 import { launch } from "./browser.mjs";
 
 const base = process.env.BASE ?? "http://localhost:4321";
-const demos = ["arcadi-ristrutturazioni", "cascina-rovere", "villa-ortensia"];
+const demos = ["arcadi-ristrutturazioni", "villa-ortensia"];
 const out = (p) => new URL(`../src/assets/${p}`, import.meta.url).pathname;
 const hideBanner = ".demo-banner{display:none!important} body.demo{--banner:0px!important} .ar-sticky{display:none!important}";
 

@@ -7,18 +7,19 @@ import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { site } from "../../config/site";
 import { breadcrumbs } from "../../lib/schema";
+import { kindLabel, siteHref } from "../../lib/lavori";
 
 const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.data.order);
 ---
 <Base
   title={`Lavori | ${site.brand}`}
-  description="Tre siti dimostrativi completi: un'impresa di ristrutturazioni, un agriturismo e una location per matrimoni."
+  description="Tre siti completi: un appartamento per affitti brevi a Milano, online per un cliente, e due progetti dimostrativi, un'impresa di ristrutturazioni e una location per matrimoni."
   jsonLd={[breadcrumbs([{ name: "Lavori", path: "/lavori/" }])]}
 >
   <PageHead
     label="Lavori"
-    title="Tre siti completi, per tre attività inventate."
-    lead={`${site.brand} è appena nato. Per farti vedere come lavoriamo, abbiamo costruito tre siti completi per attività inventate, nei settori dove il sito conta di più. Appena i primi clienti ci danno il permesso, i loro lavori veri compaiono qui.`}
+    title="Tre siti completi. Il primo è di un cliente vero."
+    lead={`Il primo è online per un appartamento in affitto a Milano. Gli altri due li abbiamo costruiti per attività inventate, per farti vedere come lavoriamo nei settori dove il sito conta di più.`}
   >
     <PhoneFan slot="visual" />
   </PageHead>
@@ -43,10 +44,10 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
                 <h2>{l.data.name}</h2>
                 <p class="muted">{l.data.sector}</p>
                 <p class="lv__goal">{l.data.goal}</p>
-                <p class="small muted">Progetto dimostrativo per un'attività inventata.</p>
+                <p class="small muted">{kindLabel(l)}.</p>
                 <div class="lv__links">
                   <a class="textlink" href={`/lavori/${l.id}/`}>Leggi il progetto</a>
-                  <a class="textlink" href={`/lavori/${l.id}/demo/`} target="_blank" rel="noopener">Apri il sito</a>
+                  <a class="textlink" href={siteHref(l)} target="_blank" rel="noopener">Apri il sito</a>
                 </div>
               </div>
             </li>
@@ -81,8 +82,8 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
   .lv__item--arcadi-ristrutturazioni {
     background: #ecebe6;
   }
-  .lv__item--cascina-rovere {
-    background: #f4e2c8;
+  .lv__item--casa-turati-3 {
+    background: #e6e3da;
   }
   .lv__item--villa-ortensia {
     background: #e2e8dd;

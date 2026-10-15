@@ -5,6 +5,7 @@ import DemoViewer from "../../../components/DemoViewer.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { site } from "../../../config/site";
 import { breadcrumbs } from "../../../lib/schema";
+import { isReal, kindLabel, siteHref } from "../../../lib/lavori";
 
 export async function getStaticPaths() {
   const lavori = await getCollection("lavori");
@@ -12,15 +13,17 @@ export async function getStaticPaths() {
 }
 const { l } = Astro.props as { l: CollectionEntry<"lavori"> };
 const d = l.data;
+const real = isReal(l);
+// A real site is new: its third list says what the site does, never results it has not had yet.
 const blocks = [
-  { h: "I problemi tipici del settore", items: d.problems },
+  { h: real ? "Da dove partivamo" : "I problemi tipici del settore", items: d.problems },
   { h: "Le scelte", items: d.choices },
-  { h: "Cosa ottiene l'attività", items: d.outcome },
+  { h: real ? "Cosa fa il sito" : "Cosa ottiene l'attività", items: d.outcome },
 ];
 ---
 <Base
-  title={`${d.name}: progetto dimostrativo | ${site.brand}`}
-  description={`${d.sector}. ${d.goal} Un sito dimostrativo completo, per un'attività inventata.`}
+  title={`${d.name}: ${real ? "sito per un cliente" : "progetto dimostrativo"} | ${site.brand}`}
+  description={`${d.sector}. ${d.goal} ${real ? `Un sito online, fatto da ${site.brand} per un cliente.` : "Un sito dimostrativo completo, per un'attività inventata."}`}
   jsonLd={[breadcrumbs([{ name: "Lavori", path: "/lavori/" }, { name: d.name, path: `/lavori/${l.id}/` }])]}
 >
   <section class="cs-head" data-hero>
@@ -29,14 +32,14 @@ const blocks = [
       <h1>{d.name}</h1>
       <div class="cs-meta">
         <p>{d.sector}</p>
-        <p class="muted">Progetto dimostrativo per un'attività inventata</p>
-        <a class="btn btn--primary" href={`/lavori/${l.id}/demo/`} target="_blank" rel="noopener">Apri il sito dimostrativo</a>
+        <p class="muted">{kindLabel(l)}</p>
+        <a class="btn btn--primary" href={siteHref(l)} target="_blank" rel="noopener">{real ? "Apri il sito" : "Apri il sito dimostrativo"}</a>
       </div>
     </div>
   </section>
 
   <div class="wrap">
-    <DemoViewer slug={l.id} name={d.name} shotPhone={d.shotPhone} shotDesktop={d.shotDesktop} eager class="cs-live" />
+    <DemoViewer slug={l.id} name={d.name} shotPhone={d.shotPhone} shotDesktop={d.shotDesktop} url={d.url} eager class="cs-live" />
   </div>
 
   <section class="section cs" aria-labelledby="obiettivo">

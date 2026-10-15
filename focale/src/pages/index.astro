@@ -72,7 +72,7 @@ const steps = [
                   <p class="hs-card__problem">{x.problem}</p>
                   <div class="hs-card__links">
                     <a class="textlink" href={`/per/${x.id}/`}>Cosa facciamo per te</a>
-                    <a class="textlink" href={`/lavori/${x.demo.id}/`}>Guarda il sito demo</a>
+                    <a class="textlink" href={`/lavori/${x.demo.id}/`}>{x.demo.data.url ? "Guarda il sito" : "Guarda il sito demo"}</a>
                   </div>
                 </div>
               </li>

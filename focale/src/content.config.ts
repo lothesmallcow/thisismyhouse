@@ -44,6 +44,8 @@ const lavori = defineCollection({
       choices: z.array(z.string()),
       outcome: z.array(z.string()),
       settore: z.string(),
+      /** A real client's site, online here. Without it the project is a demo at /lavori/<slug>/demo/. */
+      url: z.url().optional(),
       shotPhone: image(),
       shotDesktop: image(),
     }),

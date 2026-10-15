@@ -1,0 +1,24 @@
+# The first real client site (with the owner's permission). Facts from the site's own repo
+# (lothesmallcow/studio-starter: docs/BRIEF.md, src/content/*.json). No results claimed yet: the
+# third list says what the site does, not what it achieved.
+order: 1
+name: Casa Turati 3
+sector: Appartamento per affitti brevi, Milano
+url: https://studio-starter.lorenzovacchino.workers.dev/
+goal: Dare fiducia a chi ha già visto l'annuncio, e portarlo a prenotare.
+problems:
+  - C'era solo l'annuncio su Airbnb, impaginato come tutti gli altri.
+  - Ospiti soprattutto stranieri, che arrivano dall'annuncio e cercano conferme prima di prenotare.
+choices:
+  - Una pagina sola, in italiano e in inglese.
+  - Il palazzo in primo piano, con l'androne e il giardino.
+  - "Le distanze vere a piedi: metro M3 Turati 1 minuto, via Montenapoleone 10, Duomo 15."
+  - Voto e numero di recensioni che si aggiornano da soli ogni mattina, con il link all'annuncio.
+  - Nessun finto modulo di prenotazione, calendario e pagamento restano su Airbnb.
+outcome:
+  - Chi arriva dall'annuncio ritrova lo stesso appartamento, con più foto e i fatti in chiaro.
+  - Un tocco porta alle date libere.
+  - Il proprietario non deve aggiornare niente a mano.
+settore: b-and-b-e-agriturismi
+shotPhone: ../../assets/lavori/casa-turati-3-phone.png
+shotDesktop: ../../assets/lavori/casa-turati-3-desktop.png

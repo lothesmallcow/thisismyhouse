@@ -18,10 +18,12 @@ function setup(dv: HTMLElement) {
   const boxes = Array.from(dv.querySelectorAll<HTMLElement>("[data-dv-fit]"));
   const touch = window.matchMedia("(pointer: coarse)").matches;
   const small = touch || window.matchMedia("(max-width: 899px)").matches;
+  // A real client's site: screenshots only (no iframe), just the phone/computer switch.
+  const live = !("static" in dv.dataset);
   let visible = false;
   sw.hidden = false;
   dv.classList.toggle("is-touch", touch);
-  wake.hidden = !touch;
+  wake.hidden = !touch || !live;
 
   const fit = (box: HTMLElement) => {
     const frame = box.querySelector<HTMLIFrameElement>("iframe")!;
@@ -34,7 +36,7 @@ function setup(dv: HTMLElement) {
     frame.style.setProperty("--fh", `${box.clientHeight / k}px`);
   };
   const load = () => {
-    if (!visible) return;
+    if (!visible || !live) return;
     const box = boxes[dv.dataset.mode === "desk" ? 1 : 0];
     const frame = box.querySelector<HTMLIFrameElement>("iframe")!;
     fit(box);
@@ -44,6 +46,7 @@ function setup(dv: HTMLElement) {
     }
   };
   const setLive = (on: boolean) => {
+    if (!live) return;
     dv.classList.toggle("is-live", on);
     boxes.forEach((b) => (on ? b.querySelector("iframe")!.removeAttribute("tabindex") : b.querySelector("iframe")!.setAttribute("tabindex", "-1")));
     if (touch) {
@@ -78,5 +81,5 @@ function setup(dv: HTMLElement) {
     },
     { rootMargin: "300px 0px" },
   ).observe(dv);
-  new ResizeObserver(() => boxes.forEach(fit)).observe(dv);
+  if (live) new ResizeObserver(() => boxes.forEach(fit)).observe(dv);
 }

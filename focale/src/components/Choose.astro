@@ -9,7 +9,7 @@ import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import DemoViewer from "./DemoViewer.astro";
 import imgArcadi from "../assets/demo/arcadi-ristrutturazioni/cucina-dopo.jpg";
-import imgCascina from "../assets/demo/cascina-rovere/hero.jpg";
+import imgTurati from "../assets/lavori/casa-turati-3-giardino.jpg";
 import imgVilla from "../assets/demo/villa-ortensia/terrazza.jpg";
 
 const settori = (await getCollection("settori")).sort((a, b) => a.data.order - b.data.order);
@@ -22,7 +22,7 @@ const look: Record<string, { img: ImageMetadata; chip: string; title: string; ct
     cta: "Anteprima per la mia impresa",
   },
   "b-and-b-e-agriturismi": {
-    img: imgCascina,
+    img: imgTurati,
     chip: "B&B e agriturismi",
     title: "Prenotano da te, non dai portali.",
     cta: "Anteprima per la mia struttura",
@@ -68,7 +68,7 @@ const rules = [...paths.map((p) => p.slug), "altro"]
             <div class="path__media">
               <Image src={p.img} alt="" widths={[640, 1000, 1400]} sizes="(min-width: 900px) 50vw, 92vw" class="path__img" data-path-img />
               <div class="path__demo" data-path-phone>
-                <DemoViewer slug={p.demo.id} name={p.demo.data.name} shotPhone={p.demo.data.shotPhone} shotDesktop={p.demo.data.shotDesktop} />
+                <DemoViewer slug={p.demo.id} name={p.demo.data.name} shotPhone={p.demo.data.shotPhone} shotDesktop={p.demo.data.shotDesktop} url={p.demo.data.url} />
               </div>
             </div>
             <div class="path__body">
