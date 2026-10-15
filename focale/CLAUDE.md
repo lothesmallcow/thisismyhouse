@@ -69,7 +69,9 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   Telefono | Computer switch was tried and dropped as too much). The laptop is Laptop.astro (CSS body
   built to the model's measures) with a real 3D model (public/models/macbook.glb, CC BY, credits in
   docs/CREDITI.md and the footer; logo faces cut at load, silver) drawn by the same Rig in phone3d.ts
-  ([data-laptop3d], loaded when the laptop film is built). Its pages are drawn 1280 px wide and scaled
+  ([data-laptop3d]). Models are preloaded at idle (preloadModels) and drawn from the first gesture
+  (index.astro); the laptop film waits for data-gl="ready" (3 s at most) before opening the lid, or the
+  CSS stand-in was seen opening and then turning into the real laptop (Lorenzo: "a block"). Its pages are drawn 1280 px wide and scaled
   (--k); the old one boxed in 1000 px like an old theme (doubled classes: the phone's 220% rule must not
   win). The lid angle (--lid, --lift; hinge.ts shared by CSS and WebGL) opens at the start, shuts and
   reopens for the swap; a mouse pointer clicks "Chiedi un preventivo" at the end. One film per device,

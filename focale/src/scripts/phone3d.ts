@@ -414,7 +414,13 @@ class Rig {
 /** The real 3D model only where it will run smoothly: WebGL available, no data saver, and not a
  * low-end phone (under 4 GB of memory or 4 cores: mid-range Android would stutter). Everyone else
  * keeps the CSS body, which looks almost the same and costs nothing. */
+let glOk: boolean | null = null;
 function canGL() {
+  if (glOk !== null) return glOk;
+  glOk = probeGL();
+  return glOk;
+}
+function probeGL() {
   const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
   if (nav.connection?.saveData) return false;
   if ((nav.deviceMemory ?? 8) < 4 || (nav.hardwareConcurrency ?? 8) < 4) return false;
@@ -436,13 +442,37 @@ export function initPhone3D() {
     });
 }
 
-/** The makeover's laptop: called the first time it is shown. */
+/**
+ * Download and unpack the models once the page is idle (no drawing yet), so the 3D bodies are ready
+ * before the visitor reaches them: the laptop used to arrive while its lid was already opening, and
+ * the CSS stand-in (a black block) was seen turning into the real one.
+ */
+export function preloadModels() {
+  if (!canGL()) return;
+  loadModel().catch(() => {});
+  if (window.matchMedia("(min-width: 900px)").matches) loadLaptop().catch(() => {});
+}
+
+/**
+ * The makeover's laptop. The rig element gets data-gl="ready" and a "gl-ready" event once the model
+ * draws, or as soon as it is clear it never will (no WebGL, model failed): the film waits for it
+ * before opening the lid.
+ */
 export function initLaptop3D(eye: HTMLElement) {
-  if (eye.dataset.gl || !canGL()) return;
-  eye.dataset.gl = "1";
+  if (eye.dataset.gl) return;
+  const done = () => {
+    eye.dataset.gl = "ready";
+    eye.dispatchEvent(new Event("gl-ready"));
+  };
+  if (!canGL()) return done();
+  eye.dataset.gl = "loading";
   loadLaptop()
-    .then((model) => new Rig(eye, model, laptopFit))
-    .catch(() => {
-      /* The CSS laptop stays. */
-    });
+    .then((model) => {
+      const rig = new Rig(eye, model, laptopFit);
+      // Draw the first frame now, not when the band scrolls in.
+      rig.renderer.compile(rig.scene, rig.camera);
+      rig.frame();
+      done();
+    })
+    .catch(done);
 }

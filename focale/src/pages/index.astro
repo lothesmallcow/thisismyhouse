@@ -232,12 +232,21 @@ const steps = [
   initScenes();
   import("../scripts/forms").then((m) => m.initPreviewForm());
   initTilt();
-  // The real 3D phone (three.js and the model, about 1 MB) loads at the visitor's first gesture,
-  // so it never weighs on the first load; until then the CSS phone stands in, almost identical.
+  // The real 3D phone and, on computers, the makeover's laptop (three.js and the models): downloaded
+  // once the page is idle, drawn from the visitor's first gesture, so neither weighs on the first
+  // paint and both are ready before the visitor scrolls to them (Lorenzo saw the CSS stand-in turn
+  // into the real laptop mid-film).
+  later(() => import("../scripts/phone3d").then((m) => m.preloadModels()));
   const wake = ["pointermove", "pointerdown", "wheel", "touchstart", "keydown", "scroll"];
   const go = () => {
     wake.forEach((e) => removeEventListener(e, go));
-    later(() => import("../scripts/phone3d").then((m) => m.initPhone3D()));
+    later(() =>
+      import("../scripts/phone3d").then((m) => {
+        m.initPhone3D();
+        const lap = document.querySelector<HTMLElement>("[data-laptop3d]");
+        if (lap && window.matchMedia("(min-width: 900px)").matches) m.initLaptop3D(lap);
+      }),
+    );
   };
   wake.forEach((e) => addEventListener(e, go, { passive: true }));
 </script>

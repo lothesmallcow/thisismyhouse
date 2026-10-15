@@ -34,6 +34,8 @@ interface Film {
   fit: () => void;
   /** When the last scene (the tap or the click) is over, s. */
   end: number;
+  /** Resolves when the film can start (the laptop waits for its 3D body). */
+  ready?: Promise<void>;
 }
 
 export function initMakeover() {
@@ -61,10 +63,17 @@ export function initMakeover() {
   const filmOf = (d: HTMLElement) => {
     const id = d.dataset.mkDev!;
     if (!films.has(id)) {
+      let ready = Promise.resolve();
       if (id === "laptop") {
-        // The 3D laptop (model, shaders) only once a good part of it is on screen: loaded with the page
-        // (the band peeks at the fold) it slowed the opening film's entrance on weaker computers.
+        // The 3D laptop is preloaded and started at the visitor's first gesture (index.astro). The
+        // film waits for it (3 s at most) before opening the lid, so the opening is never played by
+        // the CSS stand-in; it also starts it here if no gesture came first.
         const rig = d.querySelector<HTMLElement>("[data-laptop3d]")!;
+        ready = new Promise<void>((done) => {
+          if (rig.dataset.gl === "ready") return done();
+          rig.addEventListener("gl-ready", () => done(), { once: true });
+          window.setTimeout(done, 3000);
+        });
         const near = new IntersectionObserver(
           ([e]) => {
             if (!e.isIntersecting) return;
@@ -75,7 +84,7 @@ export function initMakeover() {
         );
         near.observe(rig);
       }
-      const f = buildFilm(d, allBeats.filter((b) => b.dataset.for === id));
+      const f = { ...buildFilm(d, allBeats.filter((b) => b.dataset.for === id)), ready };
       f.tl.fromTo(stage, { x: () => toCentre().x, y: () => toCentre().y, scale: 1.04 }, { x: 0, y: 0, scale: 1, duration: 1.6, ease: "expo.inOut" }, f.end);
       f.tl.fromTo(words, { autoAlpha: 0, y: 28 }, { autoAlpha: 1, y: 0, duration: 1.1, ease: "expo.out", stagger: 0.1 }, f.end + 0.8);
       films.set(id, f);
@@ -109,11 +118,17 @@ export function initMakeover() {
   });
   bindSoundButton(root.querySelector<HTMLButtonElement>("[data-mk-sound]")!, restart);
   let inView = false;
+  const start = () => {
+    const f = film;
+    (f.ready ?? Promise.resolve()).then(() => {
+      if (f === film && inView && f.tl.progress() < 1) f.tl.play();
+    });
+  };
   new IntersectionObserver(
     ([e]) => {
       inView = e.isIntersecting;
       if (!inView) film.tl.pause();
-      else if (film.tl.progress() < 1) film.tl.play();
+      else if (film.tl.progress() < 1) start();
     },
     // Low enough that looking at the bar under the device does not pause the film.
     { threshold: 0.35 },
@@ -129,7 +144,7 @@ export function initMakeover() {
       film.tl.pause(0);
       film.tl.invalidate();
       film.sync(0);
-      if (inView) film.tl.play();
+      if (inView) start();
     });
   });
 
