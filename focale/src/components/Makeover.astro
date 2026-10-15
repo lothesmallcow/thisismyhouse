@@ -318,6 +318,8 @@ const [phone, laptop] = devices;
   .mk__oldpage--desk :global(.os) {
     max-width: 1000px;
     margin-inline: auto;
+    /* A piece under the lens grows past the column: the screen crops it, not the column. */
+    overflow: visible;
     box-shadow: 0 0 0 1px #d3cfc6;
   }
   .mk__cursor {

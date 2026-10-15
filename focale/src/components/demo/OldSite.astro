@@ -285,9 +285,11 @@ const services = [
   .os__works {
     margin-bottom: 14px;
   }
+  /* As wide as their content (here and on .os__cta): the makeover's lens and red box frame the
+     piece itself, not the empty rest of the column. */
   .os__thumbs {
     position: relative;
-    display: flex;
+    display: inline-flex;
     gap: 6px;
   }
   .os__thumbs img {
@@ -298,6 +300,7 @@ const services = [
   }
   .os__cta {
     position: relative;
+    display: table;
     font-size: 11px;
   }
   .os__cta u {

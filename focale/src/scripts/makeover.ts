@@ -243,7 +243,8 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   };
   const oldBox = (i: number) => boxIn(oldPage, marks[i].dataset.oldPiece!);
   const newBox = (i: number) => boxIn(newPage, goods[i].dataset.fix!);
-  const pad = 2;
+  // Room inside the box, so its number badge does not cover the first letters.
+  const pad = laptop ? 6 : 4;
   const place = (box: () => Box) => ({
     left: () => box().x - pad,
     top: () => box().y - pad,
