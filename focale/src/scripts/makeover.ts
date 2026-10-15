@@ -1,28 +1,25 @@
 import { gsap } from "gsap";
 import { spring } from "./spring";
-import { bindSoundButton, buzz, whoosh, fixed, ring, chime } from "./sound";
-import { LID_OPEN, LID_SHUT, lidLift, lapUnit } from "./hinge";
+import { bindSoundButton, buzz, whoosh, fixed, ring } from "./sound";
 
 /**
- * The makeover film, played like the opening one, on a phone or on a laptop (the switch under the
- * film; one film per device, built the same way). It starts by itself when the device is well in
+ * The makeover film, played like the opening one: it starts by itself when the phone is well in
  * view (no pinning, the scroll stays free), pauses when it leaves and goes on when it comes back.
  * One thing at a time, slow enough to read (about 30 s):
- * 1. the old site; then its five problems one by one: a lens on that piece only (it grows in place
- *    over its neighbours; the rest of the page does not move: Lorenzo found a zoom of the whole
- *    page hid what it zoomed on), a red box lights the problem, the rest of the screen dims, a
+ * 1. the old site; then its five problems one by one: a lens on that piece only (it grows in place,
+ *    1.3x-1.8x, over its neighbours; the rest of the page does not move: Lorenzo found a zoom of the
+ *    whole page hid what it zoomed on), a red box lights the problem, the rest of the screen dims, a
  *    floating label says what is wrong (beside the phone on computers, with a dashed line to the
- *    box; over the screen, under the box, on phones and on the laptop);
- * 2. the phone lifts and turns all the way round, or the laptop's lid shuts and opens again; out
- *    of sight, the old site becomes the new one;
+ *    box; over the phone, under the box, on phones);
+ * 2. the phone lifts and turns all the way round; facing away, the old site becomes the new one;
  * 3. the five fixes one by one: a green box on the part that solves each problem, the label green;
- * 4. a tap on "Chiama ora" (phone), a click on "Chiedi un preventivo" (laptop).
- * The status in the bar is worked out from the film's clock, so seeking or replaying never leaves
- * it out of step. Sound cues ride the timeline (silent until the visitor turns sound on).
- * See Makeover.astro for the markup and the no-JS final frame.
+ * 4. a tap on "Chiama ora".
+ * The status in the bar under the phone is worked out from the film's clock, so seeking or
+ * replaying never leaves it out of step. Sound cues ride the timeline (silent until the visitor
+ * turns sound on). See Makeover.astro for the markup and the no-JS final frame.
  */
 
-// The script, in seconds. The laptop's film starts with the lid opening, so its problems start later.
+// The script, in seconds.
 const PSTEP = 2.4; // per problem
 const FSTEP = 2;
 
@@ -30,25 +27,15 @@ type Box = { x: number; y: number; w: number; h: number };
 interface Film {
   tl: gsap.core.Timeline;
   sync: (t: number) => void;
-  fit: () => void;
 }
 
 export function initMakeover() {
   const found = document.querySelector<HTMLElement>("[data-makeover]");
   if (!found || !window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
   const root: HTMLElement = found;
-  const devs = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-dev]"));
-  const allBeats = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-beat]"));
+  const dev = root.querySelector<HTMLElement>("[data-mk-dev]")!;
   root.classList.add("mk-live");
-
-  const films = new Map<string, Film>();
-  const filmOf = (d: HTMLElement) => {
-    const id = d.dataset.mkDev!;
-    if (!films.has(id)) films.set(id, buildFilm(d, allBeats.filter((b) => b.dataset.for === id)));
-    return films.get(id)!;
-  };
-  let dev = devs[0];
-  let film = filmOf(dev);
+  const film = buildFilm(dev, Array.from(root.querySelectorAll<HTMLElement>("[data-mk-beat]")));
 
   // Controls: sound and replay. Plays when in view, pauses when it leaves, goes on when it comes
   // back; once finished, it plays again from the start the next time it comes into view.
@@ -65,58 +52,16 @@ export function initMakeover() {
     gsap.fromTo(replay.querySelector("svg"), { rotation: 0 }, { rotation: -360, duration: 0.6, ease: "power2.out" });
   });
   bindSoundButton(root.querySelector<HTMLButtonElement>("[data-mk-sound]")!, restart);
-  let inView = false;
   new IntersectionObserver(
     ([e]) => {
-      inView = e.isIntersecting;
-      if (inView) {
+      if (e.isIntersecting) {
         if (film.tl.progress() >= 1) restart();
         else film.tl.play();
       } else film.tl.pause();
     },
-    // Low enough that looking at the bar under the device does not pause the film.
+    // Low enough that looking at the bar under the phone does not pause the film.
     { threshold: 0.35 },
   ).observe(root.querySelector(".mk__devs")!);
-
-  // Telefono | Computer: the shown device steps back, the other comes in and its film starts.
-  const sw = root.querySelector<HTMLElement>("[data-mk-sw]")!;
-  const shows = Array.from(sw.querySelectorAll<HTMLButtonElement>("[data-mk-show]"));
-  sw.hidden = false;
-  shows.forEach((b) =>
-    b.addEventListener("click", () => {
-      const next = devs.find((d) => d.dataset.mkDev === b.dataset.mkShow)!;
-      if (next === dev) return;
-      shows.forEach((s) => s.setAttribute("aria-pressed", String(s === b)));
-      if (next.dataset.mkDev === "laptop") {
-        const rig = next.querySelector<HTMLElement>("[data-laptop3d]")!;
-        import("./phone3d").then((m) => m.initLaptop3D(rig)).catch(() => {});
-      }
-      const prev = dev;
-      film.tl.pause();
-      allBeats.forEach((x) => x.classList.remove("is-on"));
-      gsap.to(prev, {
-        autoAlpha: 0,
-        y: 12,
-        duration: 0.25,
-        ease: "power2.in",
-        onComplete: () => {
-          prev.classList.remove("is-on");
-          prev.inert = true;
-          next.inert = false;
-          gsap.set(prev, { clearProps: "opacity,visibility,transform" });
-          dev = next;
-          dev.classList.add("is-on");
-          film = filmOf(dev);
-          film.fit();
-          film.tl.pause(0);
-          film.tl.invalidate();
-          film.sync(0);
-          gsap.fromTo(dev, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out", clearProps: "opacity,visibility,transform" });
-          if (inView) film.tl.play();
-        },
-      });
-    }),
-  );
 
   // Positions are measured on layout boxes: measure again when the layout changes.
   let rt = 0;
@@ -124,7 +69,6 @@ export function initMakeover() {
     clearTimeout(rt);
     rt = window.setTimeout(() => {
       const t = film.tl.time();
-      film.fit();
       film.tl.invalidate();
       film.tl.time(t, true);
       film.sync(t);
@@ -133,7 +77,6 @@ export function initMakeover() {
 }
 
 function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
-  const laptop = dev.dataset.mkDev === "laptop";
   const q = <T extends HTMLElement = HTMLElement>(s: string) => dev.querySelector<T>(s)!;
   const qa = (s: string) => Array.from(dev.querySelectorAll<HTMLElement>(s));
   const screen = q("[data-mk-screen]");
@@ -147,45 +90,23 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   const marks = qa("[data-mk-mark]");
   const goods = qa("[data-mk-good]");
   const tags = qa("[data-mk-tag]");
-  const lap = laptop ? q(".lap") : null;
-  const endBtn = newSite.querySelector<HTMLElement>(laptop ? ".ah__btn--main" : ".ah__btn--ghost");
+  const endBtn = newSite.querySelector<HTMLElement>(".ah__btn--ghost");
 
-  const INTRO = laptop ? 2.6 : 2;
+  const INTRO = 2;
   const P0 = INTRO;
   const TURN = P0 + 5 * PSTEP + 0.2;
   const F0 = TURN + 3.4;
   const END = F0 + 5 * FSTEP;
   const LENGTH = END + 3.4;
 
-  // The laptop's pages are drawn 1280 px wide (a computer screen) and scaled to the glass.
-  const fit = () => {
-    if (!laptop) return;
-    const k = screen.offsetWidth / 1280;
-    if (!k) return;
-    [oldPage, newPage].forEach((p) => {
-      p.style.setProperty("--k", String(k));
-      p.style.height = `${screen.offsetHeight / k}px`;
-    });
-  };
-  fit();
-
   // Hidden by opacity, not visibility: the new site is painted (and its images decoded) from the
   // start, so the swap out of sight costs nothing.
   gsap.set(newSite, { opacity: 0 });
   gsap.set(fa, { opacity: 0 });
 
-  // The lid (laptop): one angle drives the CSS lid and, through hinge.ts, the 3D model.
-  const lid = { deg: LID_OPEN };
-  const applyLid = () => {
-    if (!lap) return;
-    lap.style.setProperty("--lid", `${lid.deg}deg`);
-    lap.style.setProperty("--lift", `${-lidLift(lid.deg) * lapUnit(lap.offsetWidth)}px`);
-  };
-
-  // Caption (and the lid, also after a silent seek) follow the film's clock.
+  // Caption follows the film's clock.
   let shownBeat = -1;
   const sync = (t: number) => {
-    applyLid();
     const beat =
       t < P0 ? 0 : t < TURN ? 1 + Math.min(4, Math.floor((t - P0) / PSTEP)) : t < F0 ? 6 : t < END ? 7 + Math.min(4, Math.floor((t - F0) / FSTEP)) : 12;
     if (beat !== shownBeat || !beats[beat]?.classList.contains("is-on")) {
@@ -194,8 +115,8 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
     }
   };
 
-  // Where things sit on the screen (px, layout boxes: transforms ignored, so the device's 3D turn
-  // and the lens do not matter). Both pages may be drawn larger and scaled down to fit.
+  // Where things sit on the screen (px, layout boxes: transforms ignored, so the phone's 3D turn
+  // and the lens do not matter). The old page is drawn at 220% and scaled down to fit.
   const scaleOf = (page: HTMLElement) => (page.offsetWidth ? screen.offsetWidth / page.offsetWidth : 1);
   const boxIn = (page: HTMLElement, sel: string): Box => {
     const el = page.querySelector<HTMLElement>(sel)!;
@@ -215,14 +136,12 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   // The lens on problem i: only that piece of the old page grows, in place, kept inside the screen
   // when it fits (wide pieces such as the header are allowed to crop at the sides).
   const piece = (i: number) => oldPage.querySelector<HTMLElement>(marks[i].dataset.oldPiece!)!;
-  const zMax = laptop ? 2.2 : 1.8;
-  const zMin = laptop ? 1.1 : 1.3;
   const lens = (i: number) => {
     const W = screen.offsetWidth;
     const H = screen.offsetHeight;
     const b = oldBox(i);
     const k = scaleOf(oldPage);
-    const z = Math.max(zMin, Math.min(zMax, (0.94 * W) / b.w, (0.4 * H) / b.h));
+    const z = Math.max(1.3, Math.min(1.8, (0.94 * W) / b.w, (0.4 * H) / b.h));
     const keep = (c: number, size: number, room: number) => (size * z <= room - 8 ? Math.min(Math.max(c, (size * z) / 2 + 4), room - (size * z) / 2 - 4) : c);
     const cx = b.x + b.w / 2;
     const cy = b.y + b.h / 2;
@@ -238,11 +157,9 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
     };
   };
 
-  // Floating labels. Phone on computers: left of the phone, level with the box, a dashed line
-  // reaching it. Phones, and the laptop: over the screen, centred, just under the box (above it
-  // when the box is low). Measured on screen (the laptop's glass leans back, so its layout box is
-  // not where it shows).
-  const side = () => !laptop && window.matchMedia("(min-width: 900px)").matches;
+  // Floating labels. Computers: left of the phone, level with the box, a dashed line reaching it.
+  // Phones: over the phone, centred, just under the box (above it when the box is low).
+  const side = () => window.matchMedia("(min-width: 900px)").matches;
   const glass = () => {
     const r = screen.getBoundingClientRect();
     const d = dev.getBoundingClientRect();
@@ -279,14 +196,6 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   marks.forEach((m, i) => tl.set(m, place(() => oldBox(i)), 0));
   goods.forEach((g, i) => tl.set(g, place(() => newBox(i)), 0));
 
-  // 0. The laptop: the lid opens on the old site.
-  if (laptop) {
-    lid.deg = LID_SHUT;
-    applyLid();
-    tl.fromTo(lid, { deg: LID_SHUT }, { deg: LID_OPEN, duration: 1.5, ease: "power3.out", immediateRender: false }, 0.3);
-    cue(() => whoosh(1.1), 0.35);
-  }
-
   // 1. The problems, one at a time: the red box lights it, the rest dims, the label says what is wrong.
   marks.forEach((m, i) => {
     const at = P0 + i * PSTEP;
@@ -309,25 +218,15 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
     tl.to([m, t], { autoAlpha: 0, duration: 0.25 }, at + PSTEP - 0.3);
   });
 
-  // 2. The makeover, out of sight: the old site is swapped for the new one, then light crosses the glass.
-  if (laptop) {
-    // The lid shuts on the old site and opens on the new one.
-    tl.to(lid, { deg: LID_SHUT, duration: 0.75, ease: "power2.in" }, TURN + 0.3);
-    cue(() => whoosh(0.8), TURN + 0.3);
-    tl.set(oldWrap, { autoAlpha: 0 }, TURN + 1.1);
-    tl.set(newSite, { opacity: 1 }, TURN + 1.1);
-    tl.to(lid, { deg: LID_OPEN, duration: 1.4, ease: "power3.out" }, TURN + 1.25);
-    cue(() => whoosh(1.1), TURN + 1.25);
-  } else {
-    // The phone lifts and turns all the way round (titanium back, cameras).
-    tl.to(obj, { y: -20, scale: 1.04, rotationX: 8, duration: 0.4, ease: "power2.out" }, TURN + 0.2);
-    tl.to(obj, { rotationY: 360, duration: 2.2, ease: "power2.inOut" }, TURN + 0.4);
-    cue(() => whoosh(1.8), TURN + 0.5);
-    tl.set(oldWrap, { autoAlpha: 0 }, TURN + 1.5);
-    tl.set(newSite, { opacity: 1 }, TURN + 1.5);
-    tl.to(obj, { y: 0, scale: 1, rotationX: 0, duration: 0.6, ease: spring(0.25) }, TURN + 2.6);
-    tl.set(obj, { rotationY: 0 }, TURN + 3.2);
-  }
+  // 2. The makeover: the phone lifts and turns all the way round (titanium back, cameras); when it
+  //    faces away the old site is swapped for the new one, then light crosses the glass.
+  tl.to(obj, { y: -20, scale: 1.04, rotationX: 8, duration: 0.4, ease: "power2.out" }, TURN + 0.2);
+  tl.to(obj, { rotationY: 360, duration: 2.2, ease: "power2.inOut" }, TURN + 0.4);
+  cue(() => whoosh(1.8), TURN + 0.5);
+  tl.set(oldWrap, { autoAlpha: 0 }, TURN + 1.5);
+  tl.set(newSite, { opacity: 1 }, TURN + 1.5);
+  tl.to(obj, { y: 0, scale: 1, rotationX: 0, duration: 0.6, ease: spring(0.25) }, TURN + 2.6);
+  tl.set(obj, { rotationY: 0 }, TURN + 3.2);
   tl.fromTo(sweep, { left: "-60%", opacity: 0 }, { left: "120%", opacity: 1, duration: 0.6, ease: "power1.inOut" }, TURN + 2.7);
   tl.to(sweep, { opacity: 0, duration: 0.1 }, TURN + 3.3);
 
@@ -348,33 +247,22 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
     tl.to([g, t], { autoAlpha: 0, duration: 0.25 }, at + FSTEP - 0.25);
   });
 
-  // 4. The phone: a tap on "Chiama ora", and it rings. The laptop: the pointer clicks "Chiedi un preventivo".
+  // 4. A tap on "Chiama ora", and the phone rings.
   if (endBtn) {
     const k = () => scaleOf(newPage);
     const pos = () => offsetIn(endBtn, newPage);
     const cx = () => (pos().x + endBtn.offsetWidth / 2) * k();
     const cy = () => (pos().y + endBtn.offsetHeight / 2) * k();
-    if (laptop) {
-      tl.set(fa, { left: () => cx() + screen.offsetWidth * 0.3, top: () => cy() + screen.offsetHeight * 0.25, x: 0, y: 0 }, END);
-      tl.to(fa, { opacity: 1, duration: 0.2 }, END + 0.05);
-      tl.to(fa, { left: cx, top: cy, duration: 0.7, ease: "power3.inOut" }, END + 0.1);
-      tl.to(endBtn, { scale: 0.94, duration: 0.12 }, END + 0.85);
-      tl.to(fa, { scale: 0.85, duration: 0.12, transformOrigin: "20% 15%" }, END + 0.85);
-      cue(() => chime(1.2), END + 0.9);
-      tl.to([endBtn, fa], { scale: 1, duration: 0.5, ease: spring(0.35) }, END + 1);
-      tl.to(fa, { opacity: 0, duration: 0.3 }, END + 2.4);
-    } else {
-      tl.set(fa, { left: () => screen.offsetLeft + cx(), top: () => screen.offsetTop + cy(), x: 0, y: 0, scale: 1.3 }, END + 0.2);
-      tl.to(fa, { opacity: 0.95, scale: 0.9, duration: 0.25 }, END + 0.3);
-      tl.to(endBtn, { scale: 0.93, duration: 0.15 }, END + 0.45);
-      cue(ring, END + 0.5);
-      tl.to(endBtn, { scale: 1, duration: 0.5, ease: spring(0.35) }, END + 0.6);
-      tl.to(fa, { opacity: 0, scale: 1.5, duration: 0.4 }, END + 0.8);
-    }
+    tl.set(fa, { left: () => screen.offsetLeft + cx(), top: () => screen.offsetTop + cy(), x: 0, y: 0, scale: 1.3 }, END + 0.2);
+    tl.to(fa, { opacity: 0.95, scale: 0.9, duration: 0.25 }, END + 0.3);
+    tl.to(endBtn, { scale: 0.93, duration: 0.15 }, END + 0.45);
+    cue(ring, END + 0.5);
+    tl.to(endBtn, { scale: 1, duration: 0.5, ease: spring(0.35) }, END + 0.6);
+    tl.to(fa, { opacity: 0, scale: 1.5, duration: 0.4 }, END + 0.8);
   }
   tl.to({}, { duration: 0.1 }, LENGTH - 0.1);
   sync(0);
-  return { tl, sync, fit };
+  return { tl, sync };
 }
 
 function offsetIn(el: HTMLElement, ancestor: HTMLElement) {

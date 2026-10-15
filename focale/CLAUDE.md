@@ -65,15 +65,8 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   theme made for computers (top bar with a tiny number, menu, slider, services, small work photos, quote
   behind "Contatti", news stopped in 2019). Lorenzo: if it looks ridiculous, a prospect says "mine is better";
   when it looks like theirs, they see the real problem. It fills the whole phone screen.
-  Phone AND laptop (Lorenzo): a "Telefono | Computer" switch under the bar; one film per device (buildFilm),
-  each with its own labels in `devices`. The laptop is Laptop.astro (CSS body built to the model's measures)
-  with a real 3D model (public/models/macbook.glb, CC BY, credits in docs/CREDITI.md and the footer; logo faces
-  cut at load, silver), drawn by the same Rig in phone3d.ts ([data-laptop3d], loaded on the first switch).
-  Its pages are drawn 1280 px wide and scaled (--k); the old one boxed in 1000 px like an old theme. The lid
-  angle (--lid, --lift; hinge.ts shared by CSS and WebGL) opens at the start, shuts and reopens for the swap;
-  a mouse pointer clicks "Chiedi un preventivo" at the end. The device not shown is opacity 0 + inert (not
-  visibility: film pieces set their own visibility); on phones it is display none. Sizes: phone and laptop
-  widths come from 100svh minus about 300 px, so device + bar + switch fit one screen (checked at 1280x720).
+  A laptop version (switch Telefono | Computer, 3D MacBook) was built and dropped: "too much" (Lorenzo).
+  Phone only. Its width comes from 100svh minus about 240 px, so phone + bar fit one screen (1280x720 too).
   Left column kept clean on purpose (Lorenzo): title, lead, one button, "Vedi i tre siti completi" under it;
   no chip, no viewfinder corners, no grid, no "Gratis e senza impegno" line.
 - Header (Header.astro): on touch screens it never hides on scroll (hiding glitched on iPhone with momentum
