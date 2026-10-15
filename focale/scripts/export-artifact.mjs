@@ -72,7 +72,7 @@ for (const f of files) {
     // Artifact hosts do not serve .glb: ship it as base64 text (phone3d.ts decodes a .txt model).
     writeFileSync(`${dst}.txt`, readFileSync(src).toString("base64"));
   } else if (f.endsWith(".js")) {
-    let js = readFileSync(src, "utf8").replace("models/iphone.glb", "models/iphone.glb.txt").replace("n=function(e){return`/`+e}", "n=function(e){return new URL(`../`+e,import.meta.url).href}");
+    let js = readFileSync(src, "utf8").replace(/models\/(iphone|macbook)\.glb/g, "models/$1.glb.txt").replace("n=function(e){return`/`+e}", "n=function(e){return new URL(`../`+e,import.meta.url).href}");
     writeFileSync(dst, js.replaceAll("_astro/", "assets/"));
   } else if (f.endsWith(".css")) {
     writeFileSync(dst, readFileSync(src, "utf8").replaceAll("_astro/", "assets/").replace(/url\((["']?)\/(fonts\/[^)"']+)\1\)/g, "url($1../$2$1)"));

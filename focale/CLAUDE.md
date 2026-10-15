@@ -65,13 +65,21 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   theme made for computers (top bar with a tiny number, menu, slider, services, small work photos, quote
   behind "Contatti", news stopped in 2019). Lorenzo: if it looks ridiculous, a prospect says "mine is better";
   when it looks like theirs, they see the real problem. It fills the whole phone screen.
-  A laptop version (switch Telefono | Computer, 3D MacBook) was built and dropped: "too much" (Lorenzo).
-  Phone only. Its width comes from 100svh minus about 240 px, so phone + bar fit one screen (1280x720 too).
+  Device by screen (Lorenzo): iPhone under 900 px, a laptop on computers (it fills the right side; a
+  Telefono | Computer switch was tried and dropped as too much). The laptop is Laptop.astro (CSS body
+  built to the model's measures) with a real 3D model (public/models/macbook.glb, CC BY, credits in
+  docs/CREDITI.md and the footer; logo faces cut at load, silver) drawn by the same Rig in phone3d.ts
+  ([data-laptop3d], loaded when the laptop film is built). Its pages are drawn 1280 px wide and scaled
+  (--k); the old one boxed in 1000 px like an old theme (doubled classes: the phone's 220% rule must not
+  win). The lid angle (--lid, --lift; hinge.ts shared by CSS and WebGL) opens at the start, shuts and
+  reopens for the swap; a mouse pointer clicks "Chiedi un preventivo" at the end. One film per device,
+  built only for the device on screen (a hidden one measures 0); crossing 900 px swaps and restarts.
+  Sizes from 100svh minus about 240 px, so device + bar fit one screen.
   Mini film (Lorenzo): the phone starts alone in the middle of the band (stage translated, transforms
   only: no layout shift), no words or buttons; when the tap is over it glides to the right and the words
   ([data-mk-word]) come in one by one. Nothing pinned, the page scrolls freely. Once over it stays over
-  (coming back does not restart it, the words stay); "Rivedi" replays from the middle. Skipped when the
-  stage is already mostly on screen at start-up (it would jump).
+  (coming back does not restart it, the words stay); "Rivedi" replays from the middle. When the band is
+  already on screen at start-up (a reload keeps the scroll), the device glides to the middle instead of jumping.
   Left column kept clean on purpose (Lorenzo): title, lead, one button, "Vedi i tre siti completi" under it;
   no chip, no viewfinder corners, no grid, no "Gratis e senza impegno" line.
 - Header (Header.astro): on touch screens it never hides on scroll (hiding glitched on iPhone with momentum
