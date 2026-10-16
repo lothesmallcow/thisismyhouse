@@ -72,7 +72,7 @@ const lavori = defineCollection({
           apart: z.array(z.string()).optional(),
         })
         .optional(),
-      /** A real site's scrolling tour: a selector on the site and what that part does (RealTour.astro). */
+      /** Pieces of a real site, measured on its full-page shots (the film's boxes); `t` says what each does. */
       tour: z.array(z.object({ sel: z.string(), t: z.string() })).optional(),
       /** A makeover film on the project page: an invented old site, then the real one (ProjectFilm.astro). */
       film: z

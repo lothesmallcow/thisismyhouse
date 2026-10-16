@@ -1,13 +1,9 @@
 ---
 /**
- * A real client's site, explained a piece at a time (Lorenzo: like the makeover, but interactive and
- * scrolling). The whole page of the real site sits in a browser window (computers) or an iPhone
- * (phones), and it scrolls: by itself the first time it comes into view, from one numbered point to
- * the next; with the visitor's own wheel or finger; or to the point they pick in the list. The point
- * in view gets its numbered box on the site and is lit in the list. The list always shows every
- * label, so nothing has to be read in a hurry. A switch shows the other device's version.
- * Pictures and boxes come from scripts/tour-shots.mjs (the same page, measured as it was shot).
- * Without JS: the list, and a site that scrolls. Logic in scripts/real-tour.ts.
+ * A real client's site to scroll, on its project page (Lorenzo: no numbered steps, just the site).
+ * The whole page of the real site sits in a browser window (computers) or an iPhone (phones) and
+ * scrolls inside it like the real thing; a switch shows the other device's version. Pictures from
+ * scripts/tour-shots.mjs. Without JS: the window on computers, the phone on phones.
  */
 import { Image } from "astro:assets";
 import IPhone from "./IPhone.astro";
@@ -16,193 +12,78 @@ interface Props {
   slug: string;
   name: string;
   url: string;
-  tour: { sel: string; t: string }[];
 }
-const { slug, name, url, tour } = Astro.props;
-type Shot = { w: number; h: number; boxes: [number, number, number, number][] };
-const jsons = import.meta.glob<{ default: { desktop: Shot; phone: Shot } }>("../assets/lavori/*-tour.json", { eager: true });
+const { slug, name, url } = Astro.props;
 const pics = import.meta.glob<{ default: ImageMetadata }>("../assets/lavori/*-tour-*.jpg", { eager: true });
-const data = jsons[`../assets/lavori/${slug}-tour.json`]?.default;
 const desk = pics[`../assets/lavori/${slug}-tour-desktop.jpg`]?.default;
 const phone = pics[`../assets/lavori/${slug}-tour-phone.jpg`]?.default;
-if (!data || !desk || !phone) throw new Error(`RealTour: run node scripts/tour-shots.mjs ${slug} <url>`);
-if (data.desktop.boxes.length !== tour.length || data.phone.boxes.length !== tour.length) throw new Error(`RealTour: ${slug}'s shots are older than its tour, shoot them again`);
+if (!desk || !phone) throw new Error(`RealTour: run node scripts/tour-shots.mjs ${slug} <url>`);
 const domain = new URL(url).host;
-// Boxes in % of the page, so they follow the picture at any size, with a little room round the
-// piece (kept inside the page). The number sits on the top left corner, inside it when the box
-// touches the page's edge (the screen would cut it), beside a small piece.
-const PAD = 12;
-const edges = (s: Shot, i: number) => {
-  const [x, y, w, h] = s.boxes[i];
-  const x0 = Math.max(0, x - PAD);
-  const y0 = Math.max(0, y - PAD);
-  return { x0, y0, x1: Math.min(s.w, x + w + PAD), y1: Math.min(s.h, y + h + PAD), small: w < 120 };
-};
-const boxStyle = (s: Shot, i: number) => {
-  const e = edges(s, i);
-  return `--x:${(e.x0 / s.w) * 100}%;--y:${(e.y0 / s.h) * 100}%;--bw:${((e.x1 - e.x0) / s.w) * 100}%;--bh:${((e.y1 - e.y0) / s.h) * 100}%`;
-};
-const boxClass = (s: Shot, i: number) => {
-  const e = edges(s, i);
-  return ["rt__box", e.small ? "rt__box--small" : (e.x0 < 14 || e.y0 < 14) && "rt__box--edge"];
-};
 ---
-<section class="rt" aria-labelledby="rt-t" data-rt>
-  <div class="rt__side">
-    <h2 id="rt-t" class="rt__t">Il sito, un pezzo alla volta</h2>
-    <p class="rt__lead">Scorrilo come farebbe un ospite, o tocca un punto: ti portiamo lì.</p>
-    <ol class="rt__steps">
-      {
-        tour.map((p, i) => (
-          <li>
-            <button type="button" class="rt__step" data-rt-step={i} aria-pressed="false">
-              <span class="rt__n">{i + 1}</span>
-              <span>{p.t}</span>
-            </button>
-          </li>
-        ))
-      }
-    </ol>
-  </div>
-
-  <div class="rt__stage">
-    <div class="rt__desk">
-      <div class="rt__win">
-        <div class="rt__chrome" aria-hidden="true">
-          <span class="rt__dots"><i></i><i></i><i></i></span>
-          <span class="rt__url">{domain}</span>
-        </div>
-        <div class="rt__screen rt__screen--desk" data-rt-screen tabindex="0" role="region" aria-label={`Il sito di ${name} come su un computer, da scorrere`}>
-          <div class="rt__page">
-            <Image src={desk} alt={`La pagina intera del sito di ${name}, come si vede da un computer`} widths={[760, 1280]} sizes="(min-width: 900px) 56vw, 92vw" format="webp" loading="lazy" class="rt__img" />
-            {tour.map((_, i) => <span class:list={boxClass(data.desktop, i)} data-rt-box={i} style={boxStyle(data.desktop, i)} aria-hidden="true"><i>{i + 1}</i></span>)}
+<section class="section rt" aria-labelledby="rt-t" data-rt>
+  <div class="wrap rt__in">
+    <div class="rt__head">
+      <h2 id="rt-t" class="rt__t">Il sito, da scorrere</h2>
+      <p class="rt__lead">Scorrilo come farebbe un ospite: è la pagina intera, com'è online.</p>
+    </div>
+    <div class="rt__stage">
+      <div class="rt__desk">
+        <div class="rt__win">
+          <div class="rt__chrome" aria-hidden="true">
+            <span class="rt__dots"><i></i><i></i><i></i></span>
+            <span class="rt__url">{domain}</span>
+          </div>
+          <div class="rt__screen rt__screen--desk" tabindex="0" role="region" aria-label={`Il sito di ${name} come su un computer, da scorrere`}>
+            <Image src={desk} alt={`La pagina intera del sito di ${name}, come si vede da un computer`} widths={[760, 1280]} sizes="(min-width: 1180px) 1120px, 92vw" format="webp" loading="lazy" class="rt__img" />
           </div>
         </div>
       </div>
-    </div>
-    <div class="rt__phone">
-      <IPhone>
-        <div class="rt__screen rt__screen--phone" data-rt-screen tabindex="0" role="region" aria-label={`Il sito di ${name} come su un telefono, da scorrere`}>
-          <div class="rt__page">
+      <div class="rt__phone">
+        <IPhone>
+          <div class="rt__screen rt__screen--phone" tabindex="0" role="region" aria-label={`Il sito di ${name} come su un telefono, da scorrere`}>
             <Image src={phone} alt={`La pagina intera del sito di ${name}, come si vede da un telefono`} widths={[600, 780]} sizes="300px" format="webp" loading="lazy" class="rt__img" />
-            {tour.map((_, i) => <span class:list={boxClass(data.phone, i)} data-rt-box={i} style={boxStyle(data.phone, i)} aria-hidden="true"><i>{i + 1}</i></span>)}
           </div>
-        </div>
-      </IPhone>
-    </div>
-    <div class="rt__switch" role="group" aria-label="Guarda il sito come su" data-rt-switch hidden>
-      <button type="button" data-rt-to="phone" aria-pressed="false">Telefono</button>
-      <button type="button" data-rt-to="desk" aria-pressed="true">Computer</button>
+        </IPhone>
+      </div>
+      <div class="rt__switch" role="group" aria-label="Guarda il sito come su" data-rt-switch hidden>
+        <button type="button" data-rt-to="phone" aria-pressed="false">Telefono</button>
+        <button type="button" data-rt-to="desk" aria-pressed="true">Computer</button>
+      </div>
     </div>
   </div>
 </section>
 
 <style>
-  .rt {
+  /* Right under the project's head (its own bottom padding is the gap). */
+  .rt.section {
+    padding-top: 0;
+  }
+  .rt__in {
     display: grid;
-    gap: 2rem;
-    align-items: center;
-  }
-  @media (min-width: 900px) {
-    .rt {
-      grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
-      gap: clamp(2rem, 4vw, 4rem);
-    }
-  }
-  .rt__t {
-    max-width: 16ch;
-  }
-  /* Phones: title and line, then the phone, then the list. */
-  @media (max-width: 899px) {
-    .rt__side {
-      display: contents;
-    }
-    .rt__t,
-    .rt__lead {
-      margin: 0;
-    }
-    .rt__lead {
-      margin-top: -1.25rem;
-    }
-    .rt__steps {
-      margin-top: 0;
-      order: 2;
-    }
+    gap: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
   }
   .rt__lead {
-    margin-top: 0.9rem;
+    margin-top: 0.75rem;
     color: var(--grafite);
-    max-width: 36ch;
+    max-width: 48ch;
   }
-  .rt__steps {
-    list-style: none;
-    margin: 1.5rem 0 0;
-    padding: 0;
-    border-top: 1px solid var(--filo);
-  }
-  .rt__step {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.8rem;
-    width: 100%;
-    min-height: 44px;
-    padding: 0.75rem 0.25rem;
-    border: 0;
-    border-bottom: 1px solid var(--filo);
-    background: transparent;
-    color: var(--grafite);
-    font: 400 1rem/1.4 var(--font);
-    text-align: left;
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: color 0.2s ease;
-  }
-  .rt__n {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 1.6rem;
-    height: 1.6rem;
-    margin-top: -0.05rem;
-    border-radius: 50%;
-    background: var(--filo);
-    color: var(--inchiostro);
-    font-size: 0.8rem;
-    font-weight: 700;
-    transition:
-      background-color 0.2s ease,
-      color 0.2s ease;
-  }
-  .rt__step[aria-pressed="true"] {
-    color: var(--inchiostro);
-    font-weight: 600;
-  }
-  .rt__step[aria-pressed="true"] .rt__n {
-    background: #1f8a4c;
-    color: #fff;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .rt__step:hover {
-      color: var(--inchiostro);
-    }
-  }
-
   .rt__stage {
     display: grid;
     justify-items: center;
     gap: 1rem;
     min-width: 0;
   }
-  /* Computers see the window first, phones the phone; the switch shows the other one. */
+  .rt__desk {
+    width: 100%;
+    max-width: 1120px;
+  }
+  /* Computers see the window first, phones the phone; the switch shows the other one.
+     Without JS by the screen's width; with it, data-mode (set from the width, then by the switch). */
   .rt__phone {
     display: none;
     --w: clamp(220px, 34svh, 290px);
     filter: drop-shadow(0 30px 40px rgba(11, 27, 63, 0.28));
   }
-  .rt__desk {
-    width: 100%;
-  }
-  /* Without JS by the screen's width; with it, data-mode (set from the width, then by the switch). */
   @media (max-width: 899px) {
     .rt:not([data-mode]) .rt__desk {
       display: none;
@@ -286,6 +167,7 @@ const boxClass = (s: Shot, i: number) => {
   }
   /* A computer's screen: 1280 x 800, the size the page was shot at. */
   .rt__screen--desk {
+    width: 100%;
     aspect-ratio: 16 / 10;
     max-height: 72svh;
   }
@@ -294,65 +176,11 @@ const boxClass = (s: Shot, i: number) => {
     position: absolute;
     inset: 13.7cqw 0 0;
   }
-  .rt__page {
-    position: relative;
-  }
-  .rt__img {
+  /* :global: the picture is an Image component, scoped classes do not reach it. */
+  .rt__screen :global(.rt__img) {
     display: block;
     width: 100%;
     height: auto;
-  }
-  /* The numbered box on the part being explained, drawn inside its edges (it may touch the screen's). */
-  .rt__box {
-    position: absolute;
-    left: var(--x);
-    top: var(--y);
-    width: var(--bw);
-    height: var(--bh);
-    min-width: 34px;
-    min-height: 30px;
-    border-radius: 8px;
-    box-shadow:
-      inset 0 0 0 3px #1f8a4c,
-      inset 0 0 0 9999px rgba(31, 138, 76, 0.08);
-    opacity: 0;
-    transform: scale(1.04);
-    pointer-events: none;
-  }
-  .rt__box i {
-    position: absolute;
-    left: -11px;
-    top: -11px;
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #1f8a4c;
-    color: #fff;
-    font: 700 12px/1 var(--font);
-    font-style: normal;
-  }
-  .rt__box--edge i {
-    left: 7px;
-    top: 7px;
-  }
-  /* A small piece (a button, a switch): the number sits beside it, not over it. */
-  .rt__box--small i {
-    left: -28px;
-    top: 50%;
-    margin-top: -11px;
-  }
-  .rt__box:global(.is-on) {
-    opacity: 1;
-    transform: none;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .rt__box {
-      transition:
-        opacity 0.3s ease,
-        transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
-    }
   }
   .rt__switch {
     display: inline-flex;
@@ -381,6 +209,16 @@ const boxClass = (s: Shot, i: number) => {
   }
 </style>
 <script>
-  import { initRealTour } from "../scripts/real-tour";
-  initRealTour();
+  // Telefono | Computer: by the width at first, then the switch.
+  document.querySelectorAll<HTMLElement>("[data-rt]").forEach((root) => {
+    const sw = root.querySelector<HTMLElement>("[data-rt-switch]")!;
+    const btns = Array.from(sw.querySelectorAll<HTMLButtonElement>("[data-rt-to]"));
+    const mode = (m: string) => {
+      root.dataset.mode = m;
+      btns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.rtTo === m)));
+    };
+    mode(window.matchMedia("(min-width: 900px)").matches ? "desk" : "phone");
+    btns.forEach((b) => b.addEventListener("click", () => mode(b.dataset.rtTo!)));
+    sw.hidden = false;
+  });
 </script>

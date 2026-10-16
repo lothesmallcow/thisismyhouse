@@ -507,9 +507,11 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
     layout: () => {},
   };
 
-  // The green numbers go as the device glides to its place.
+  // The green numbers go as the device glides to its place, and a real page scrolls back to its
+  // top (Lorenzo: the film ends on the site's first screen, not on its last band).
   const end = END + (laptop ? 2.1 : 1.6);
   tl.to(goods, { autoAlpha: 0, duration: 0.3 }, end);
+  if (rolls) tl.to(roller, { y: 0, duration: 1.4, ease: "power2.inOut" }, end + 0.1);
   return { tl, sync, fit, map, end };
 }
 

@@ -43,8 +43,9 @@ quote:
     - "Le commissioni di Airbnb restano quelle di oggi: il sito non ne aggiunge."
 shotPhone: ../../assets/lavori/casa-turati-3-phone.png
 shotDesktop: ../../assets/lavori/casa-turati-3-desktop.png
-# The scrolling tour on the project page (RealTour.astro): each point is a selector on the real site
-# and what it does. Screenshots and boxes: node scripts/tour-shots.mjs casa-turati-3 <url of a local build>.
+# Pieces of the real site, measured on its full-page shots: the home's film puts its green boxes on
+# them (film.fixes[].at), the project page shows the shots to scroll (RealTour.astro). Shots and boxes:
+# node scripts/tour-shots.mjs casa-turati-3 <url of a local build>. `t` says what each piece does.
 tourEnd: ".final .button"
 tour:
   - sel: ".hero__copy"

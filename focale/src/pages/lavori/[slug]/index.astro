@@ -40,15 +40,15 @@ const blocks = [
     </div>
   </section>
 
-  <div class="wrap">
-    {
-      d.url && d.tour ? (
-        <RealTour slug={l.id} name={d.name} url={d.url} tour={d.tour} />
-      ) : (
+  {
+    d.url && d.tour ? (
+      <RealTour slug={l.id} name={d.name} url={d.url} />
+    ) : (
+      <div class="wrap">
         <DemoViewer slug={l.id} name={d.name} shotPhone={d.shotPhone} shotDesktop={d.shotDesktop} url={d.url} eager class="cs-live" />
-      )
-    }
-  </div>
+      </div>
+    )
+  }
 
   <section class="section cs" aria-labelledby="obiettivo">
     <div class="wrap sec">

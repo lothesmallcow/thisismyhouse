@@ -35,7 +35,7 @@ const money = (a: number, b: number) => (a === b ? `${num(a)} €` : `${num(a)}
 const paid = quote.paid;
 const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(a)} € e ${num(b)} €`);
 ---
-<section class="section cq" aria-labelledby="costo">
+<section class="section section--pietra cq" aria-labelledby="costo">
   <div class="wrap sec">
     <p class="sec__label">{paid ? "Quanto è costato" : "Quanto costerebbe"}</p>
     <div class="sec__body">
@@ -105,9 +105,6 @@ const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num
 </section>
 
 <style>
-  .cq {
-    background: var(--nebbia);
-  }
   .cq__t {
     max-width: 22ch;
   }
