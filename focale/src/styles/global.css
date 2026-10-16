@@ -54,6 +54,7 @@
   --filo: #dde3ef; /* hairlines */
   --mandarino: #13307a; /* brand navy (name kept from the old palette): surfaces and accents, white text on it */
   --blu: #13307a;
+  --blu-chiaro: #2350b8; /* the makeover band only: white 7.2:1, --on-dark-muted 4.7:1 */
   --fuoco: #ff6a1f; /* actions only: buttons, navy text on it 5.9:1 */
   --fuoco-hover: #ff8547;
   --miele: #ffd23f; /* small highlights only */

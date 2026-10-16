@@ -47,6 +47,12 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   The 3D canvas is sized to the phone only and moved with transform (no layout shift).
 - Opening film (scripts/hero.ts): tap on "Chiama ora" rings the Dynamic Island, iOS banners drop in.
   Sound (scripts/sound.ts) only after the visitor presses the speaker button.
+- Makeover on the home = Casa Turati 3 (Lorenzo: it replaced the invented Arcadi film). ProjectFilm.astro
+  feeds Makeover.astro (now props + slots, no defaults): the old site is INVENTED (demo/OldBnb.astro, the
+  apartment only had its Airbnb listing; the lead says so), the new one the real page (demo/ShotPage.astro,
+  shots and boxes from scripts/tour-shots.mjs) that scrolls to each fix (roll). Texts and pairs in the yaml
+  `film`. The band is a lighter blue (--blu-chiaro #2350b8). The film is NOT on the project page (Lorenzo);
+  that page keeps the tour and the price. Notes below about Arcadi pieces describe the old film's mechanics.
 - Makeover (Makeover.astro, scripts/makeover.ts): a film like the opening one, not scroll-driven, about 30 s,
   ONE THING AT A TIME (Lorenzo found the all-at-once version confusing). Script in seconds at the top of
   makeover.ts: the old site (a desktop page at 220% scaled down, so it stays in its two-column layout); its five

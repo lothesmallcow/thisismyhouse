@@ -7,7 +7,7 @@ import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
 import PreviewForm from "../components/PreviewForm.astro";
 import { Image } from "astro:assets";
-import Makeover from "../components/Makeover.astro";
+import ProjectFilm from "../components/ProjectFilm.astro";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
 import PlanHelp from "../components/PlanHelp.astro";
@@ -24,6 +24,8 @@ const open = foundersOpen();
 
 const settori = (await getCollection("settori")).sort((a, b) => a.id.localeCompare(b.id));
 const lavori = await getCollection("lavori");
+// The makeover film: the real client with a film (Casa Turati 3), in the place of the old Arcadi one.
+const turati = lavori.find((l) => l.data.film)!;
 const sectors = ["ristrutturazioni-e-serramenti", "b-and-b-e-agriturismi", "location-per-matrimoni"].map((id) => {
   const s = settori.find((x) => x.id === id)!;
   const demo = lavori.find((l) => l.id === s.data.demo)!;
@@ -52,7 +54,7 @@ const steps = [
   <div class="scenes">
     <HeroScene />
 
-    <Makeover />
+    <ProjectFilm l={turati} home />
 
     <section class="section hs-sec" id="settori" aria-labelledby="settori-t">
       <div class="wrap">

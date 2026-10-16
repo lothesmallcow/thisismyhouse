@@ -15,9 +15,6 @@
 import IPhone from "./IPhone.astro";
 import Laptop from "./Laptop.astro";
 import { site } from "../config/site";
-import OldSite from "./demo/OldSite.astro";
-import ArcadiHero from "./demo/ArcadiHero.astro";
-
 // Each problem of the old site and the part of the new site that fixes it (same number), for each
 // device. `old` is a selector inside the old site (its [data-old] pieces), `fix` one inside the new
 // site; `end` is the button tapped (phone) or clicked (laptop) at the end.
@@ -30,68 +27,28 @@ export interface FilmDevice {
 }
 interface Props {
   id?: string;
-  title?: string;
-  lead?: string;
+  title: string;
+  lead: string;
   /** The status while the device turns or the lid shuts. */
-  mid?: string;
+  mid: string;
   /** The laptop's address bar: the old site's, then (if given) the new one's after the swap. */
-  url?: string;
+  url: string;
   newUrl?: string;
-  phone?: FilmDevice;
-  laptop?: FilmDevice;
-  phoneLabel?: string;
-  laptopLabel?: string;
+  phone: FilmDevice;
+  laptop: FilmDevice;
+  phoneLabel: string;
+  laptopLabel: string;
   /** The new site is a whole tall page (a real site): it scrolls to each fix. */
   roll?: boolean;
   /** The button and the link under the words. */
   ask?: boolean;
   more?: { href: string; text: string } | null;
 }
-// The home's film: the invented renovation firm Arcadi (OldSite, then ArcadiHero).
-const arcadiPhone: FilmDevice = {
-  first: "Il sito di oggi, dal telefono",
-  last: "Un tocco, e ti chiamano",
-  end: ".ah__btn--ghost",
-  fixes: [
-    { old: "[data-old='header']", fix: ".ah__call", bad: "Il numero è minuscolo e non si tocca", good: "Il tasto Chiama è sempre in alto" },
-    { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Testo minuscolo: bisogna zoomare", good: "Titoli grandi: si legge al volo" },
-    { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
-    { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un tocco" },
-    { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
-  ],
-};
-const arcadiLaptop: FilmDevice = {
-  first: "Il sito di oggi, dal computer",
-  last: "Un clic, e ti scrivono",
-  end: ".ah__btn--main",
-  fixes: [
-    { old: "[data-old='header']", fix: ".ah__phone", bad: "Il telefono è scritto in piccolo, in un angolo", good: "Numero e tasto Chiama sempre in vista" },
-    { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Un muro di testo: nessuno lo legge", good: "Una frase dice cosa fate e dove" },
-    { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
-    { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un clic" },
-    { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
-  ],
-};
-const {
-  id = "makeover",
-  title = "Prima e dopo: lo stesso sito, rifatto da noi.",
-  lead = "Un'impresa edile inventata: il sito che ha oggi e quello che le faremmo noi. Guarda cosa cambia, un pezzo alla volta.",
-  mid = `Lo rifacciamo in ${site.deliveryDays.professionale} giorni`,
-  url = "arcadi-ristrutturazioni.demo",
-  newUrl,
-  phone = arcadiPhone,
-  laptop = arcadiLaptop,
-  phoneLabel = "Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone",
-  laptopLabel = "Lo stesso sito, prima e dopo il rifacimento, su un computer portatile",
-  roll = false,
-  ask = true,
-  more = { href: "/lavori/", text: "Vedi i tre siti completi" },
-} = Astro.props;
-// Another film passes its sites as slots: "old" (both devices), "new-phone" and "new-laptop".
-const own = Astro.slots.has("old");
-const oldHtml = own ? await Astro.slots.render("old") : "";
-const newPhone = own ? await Astro.slots.render("new-phone") : "";
-const newLaptop = own ? await Astro.slots.render("new-laptop") : "";
+const { id = "makeover", title, lead, mid, url, newUrl, phone, laptop, phoneLabel, laptopLabel, roll = false, ask = true, more = null } = Astro.props;
+// The sites come as slots: "old" (both devices), "new-phone" and "new-laptop".
+const oldHtml = await Astro.slots.render("old");
+const newPhone = await Astro.slots.render("new-phone");
+const newLaptop = await Astro.slots.render("new-laptop");
 const devices = [
   { id: "phone" as const, ...phone },
   { id: "laptop" as const, ...laptop },
@@ -132,12 +89,12 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
                 <IPhone solid label={phoneLabel}>
                   <div class="mk__screen" data-mk-screen>
                     <div class="mk__old" data-mk-old>
-                      <div class="mk__oldpage" data-mk-oldpage>{own ? <Fragment set:html={oldHtml} /> : <OldSite annotations={false} />}</div>
+                      <div class="mk__oldpage" data-mk-oldpage><Fragment set:html={oldHtml} /></div>
                       {phone.fixes.map((f, i) => <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true"><i>{i + 1}</i></span>)}
                     </div>
                     <div class="mk__new" data-mk-new>
                       <div class="mk__roll" data-mk-roll>
-                        <div class="mk__newpage" data-mk-newpage>{own ? <Fragment set:html={newPhone} /> : <ArcadiHero extra={false} />}</div>
+                        <div class="mk__newpage" data-mk-newpage><Fragment set:html={newPhone} /></div>
                         {phone.fixes.map((f, i) => <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true"><i>{i + 1}</i></span>)}
                       </div>
                     </div>
@@ -169,12 +126,12 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
               <Laptop url={url} label={laptopLabel}>
                 <div class="mk__screen mk__screen--lap" data-mk-screen>
                   <div class="mk__old" data-mk-old>
-                    <div class="mk__oldpage mk__oldpage--desk" data-mk-oldpage data-desk>{own ? <Fragment set:html={oldHtml} /> : <OldSite annotations={false} />}</div>
+                    <div class="mk__oldpage mk__oldpage--desk" data-mk-oldpage data-desk><Fragment set:html={oldHtml} /></div>
                     {laptop.fixes.map((f, i) => <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true"><i>{i + 1}</i></span>)}
                   </div>
                   <div class="mk__new" data-mk-new>
                     <div class="mk__roll" data-mk-roll>
-                      <div class="mk__newpage mk__newpage--desk" data-mk-newpage data-desk>{own ? <Fragment set:html={newLaptop} /> : <ArcadiHero extra={false} />}</div>
+                      <div class="mk__newpage mk__newpage--desk" data-mk-newpage data-desk><Fragment set:html={newLaptop} /></div>
                       {laptop.fixes.map((f, i) => <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true"><i>{i + 1}</i></span>)}
                     </div>
                   </div>
@@ -231,7 +188,10 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
 </section>
 
 <style>
+  /* A lighter blue than the other bands (Lorenzo); white 7.2:1, muted text 4.7:1. */
   .mk {
+    background: var(--blu-chiaro);
+    --carta: var(--blu-chiaro);
     position: relative;
     overflow-x: clip;
     padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
@@ -608,9 +568,6 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
     text-overflow: ellipsis;
     opacity: 0;
     visibility: hidden;
-    transition:
-      opacity 0.25s ease,
-      visibility 0s 0.25s;
   }
   .mk__b::before {
     content: "";
@@ -626,10 +583,11 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
   .mk__b--good::before {
     background: #4cd387;
   }
+  /* Only the new status fades in; the old one goes at once, so two never overlap. */
   .mk__b:global(.is-on) {
     opacity: 1;
     visibility: visible;
-    transition-delay: 0.1s, 0s;
+    transition: opacity 0.25s ease 0.05s;
   }
   /* At the end the status gives way to Prima | Dopo: which map the numbers show. */
   .mk__bar:global(.is-map) {

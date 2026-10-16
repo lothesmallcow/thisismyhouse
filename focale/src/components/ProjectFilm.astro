@@ -1,7 +1,7 @@
 ---
 /**
- * The makeover film for a real client's project page (Lorenzo: like the home's, with the new site
- * real and scrolling). The before is an invented old site (each project names its own below); the
+ * The makeover film of a real client (Lorenzo): on the home, where the invented Arcadi film was,
+ * with the new site real and scrolling. The before is an invented old site (each project names its own below); the
  * after is the real site's whole page (ShotPage, from scripts/tour-shots.mjs), which scrolls to each
  * fix. Texts and pairs in the project's yaml (`film`, `tour`, `tourEnd`). Film logic: Makeover.astro.
  */
@@ -12,8 +12,10 @@ import OldBnb from "./demo/OldBnb.astro";
 
 interface Props {
   l: CollectionEntry<"lavori">;
+  /** On the home (Lorenzo: it takes the place of the old Arcadi film): its id, the button, the link to the works. */
+  home?: boolean;
 }
-const { l } = Astro.props;
+const { l, home = false } = Astro.props;
 const d = l.data;
 const film = d.film!;
 type Shot = { w: number; h: number; boxes: [number, number, number, number][]; end?: [number, number, number, number] };
@@ -31,7 +33,7 @@ const fixes = film.fixes.map((f) => ({ old: `[data-old='${f.old}']`, fix: `[data
 const end = "[data-at='end']";
 ---
 <Makeover
-  id="prima-dopo"
+  id={home ? "makeover" : "prima-dopo"}
   title={film.title}
   lead={film.lead}
   mid={film.mid}
@@ -42,8 +44,8 @@ const end = "[data-at='end']";
   phoneLabel={`Un sito inventato e il sito vero di ${d.name}, prima e dopo, su un iPhone`}
   laptopLabel={`Un sito inventato e il sito vero di ${d.name}, prima e dopo, su un computer portatile`}
   roll
-  ask={false}
-  more={{ href: d.url!, text: "Apri il sito vero" }}
+  ask={home}
+  more={home ? { href: "/lavori/", text: "Vedi i tre siti completi" } : { href: d.url!, text: "Apri il sito vero" }}
 >
   <Old slot="old" />
   <ShotPage slot="new-phone" src={phone} shot={shots.phone} widths={[520, 780]} sizes="300px" />
