@@ -19,75 +19,127 @@ import OldSite from "./demo/OldSite.astro";
 import ArcadiHero from "./demo/ArcadiHero.astro";
 
 // Each problem of the old site and the part of the new site that fixes it (same number), for each
-// device. `old` is a selector inside OldSite (its [data-old] pieces), `fix` a selector inside ArcadiHero.
+// device. `old` is a selector inside the old site (its [data-old] pieces), `fix` one inside the new
+// site; `end` is the button tapped (phone) or clicked (laptop) at the end.
 type Fix = { old: string; fix: string; bad: string; good: string };
-const devices: { id: "phone" | "laptop"; fixes: Fix[]; first: string; last: string }[] = [
-  {
-    id: "phone",
-    first: "Il sito di oggi, dal telefono",
-    last: "Un tocco, e ti chiamano",
-    fixes: [
-      { old: "[data-old='header']", fix: ".ah__call", bad: "Il numero è minuscolo e non si tocca", good: "Il tasto Chiama è sempre in alto" },
-      { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Testo minuscolo: bisogna zoomare", good: "Titoli grandi: si legge al volo" },
-      { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
-      { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un tocco" },
-      { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
-    ],
-  },
-  {
-    id: "laptop",
-    first: "Il sito di oggi, dal computer",
-    last: "Un clic, e ti scrivono",
-    fixes: [
-      { old: "[data-old='header']", fix: ".ah__phone", bad: "Il telefono è scritto in piccolo, in un angolo", good: "Numero e tasto Chiama sempre in vista" },
-      { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Un muro di testo: nessuno lo legge", good: "Una frase dice cosa fate e dove" },
-      { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
-      { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un clic" },
-      { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
-    ],
-  },
+export interface FilmDevice {
+  fixes: Fix[];
+  first: string;
+  last: string;
+  end: string;
+}
+interface Props {
+  id?: string;
+  title?: string;
+  lead?: string;
+  /** The status while the device turns or the lid shuts. */
+  mid?: string;
+  /** The laptop's address bar: the old site's, then (if given) the new one's after the swap. */
+  url?: string;
+  newUrl?: string;
+  phone?: FilmDevice;
+  laptop?: FilmDevice;
+  phoneLabel?: string;
+  laptopLabel?: string;
+  /** The new site is a whole tall page (a real site): it scrolls to each fix. */
+  roll?: boolean;
+  /** The button and the link under the words. */
+  ask?: boolean;
+  more?: { href: string; text: string } | null;
+}
+// The home's film: the invented renovation firm Arcadi (OldSite, then ArcadiHero).
+const arcadiPhone: FilmDevice = {
+  first: "Il sito di oggi, dal telefono",
+  last: "Un tocco, e ti chiamano",
+  end: ".ah__btn--ghost",
+  fixes: [
+    { old: "[data-old='header']", fix: ".ah__call", bad: "Il numero è minuscolo e non si tocca", good: "Il tasto Chiama è sempre in alto" },
+    { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Testo minuscolo: bisogna zoomare", good: "Titoli grandi: si legge al volo" },
+    { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
+    { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un tocco" },
+    { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
+  ],
+};
+const arcadiLaptop: FilmDevice = {
+  first: "Il sito di oggi, dal computer",
+  last: "Un clic, e ti scrivono",
+  end: ".ah__btn--main",
+  fixes: [
+    { old: "[data-old='header']", fix: ".ah__phone", bad: "Il telefono è scritto in piccolo, in un angolo", good: "Numero e tasto Chiama sempre in vista" },
+    { old: "[data-old='text']", fix: "[data-piece='title']", bad: "Un muro di testo: nessuno lo legge", good: "Una frase dice cosa fate e dove" },
+    { old: "[data-old='photo']", fix: "[data-piece='photo']", bad: "Le foto dei lavori sono francobolli", good: "Una foto grande dei lavori" },
+    { old: "[data-old='cta']", fix: ".ah__btn--main", bad: "Per un preventivo devi cercare i Contatti", good: "Preventivo con un clic" },
+    { old: "[data-old='foot']", fix: "[data-piece='foot']", bad: "Ultima notizia del 2019: sembra chiuso", good: "Aggiornato: l'ultimo lavoro è di settembre" },
+  ],
+};
+const {
+  id = "makeover",
+  title = "Prima e dopo: lo stesso sito, rifatto da noi.",
+  lead = "Un'impresa edile inventata: il sito che ha oggi e quello che le faremmo noi. Guarda cosa cambia, un pezzo alla volta.",
+  mid = `Lo rifacciamo in ${site.deliveryDays.professionale} giorni`,
+  url = "arcadi-ristrutturazioni.demo",
+  newUrl,
+  phone = arcadiPhone,
+  laptop = arcadiLaptop,
+  phoneLabel = "Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone",
+  laptopLabel = "Lo stesso sito, prima e dopo il rifacimento, su un computer portatile",
+  roll = false,
+  ask = true,
+  more = { href: "/lavori/", text: "Vedi i tre siti completi" },
+} = Astro.props;
+// Another film passes its sites as slots: "old" (both devices), "new-phone" and "new-laptop".
+const own = Astro.slots.has("old");
+const oldHtml = own ? await Astro.slots.render("old") : "";
+const newPhone = own ? await Astro.slots.render("new-phone") : "";
+const newLaptop = own ? await Astro.slots.render("new-laptop") : "";
+const devices = [
+  { id: "phone" as const, ...phone },
+  { id: "laptop" as const, ...laptop },
 ];
 // The status in the bar under the device, in order. The film shows one at a time.
 const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good" }[] => [
   { t: d.first },
-  ...d.fixes.map((_, i) => ({ t: `Problema ${i + 1} di 5`, tone: "bad" as const })),
-  { t: `Lo rifacciamo in ${site.deliveryDays.professionale} giorni` },
-  ...d.fixes.map((_, i) => ({ t: `Risolto ${i + 1} di 5`, tone: "good" as const })),
+  ...d.fixes.map((_, i) => ({ t: `Problema ${i + 1} di ${d.fixes.length}`, tone: "bad" as const })),
+  { t: mid },
+  ...d.fixes.map((_, i) => ({ t: `Risolto ${i + 1} di ${d.fixes.length}`, tone: "good" as const })),
   { t: d.last },
 ];
-const [phone, laptop] = devices;
 ---
-<section class="mk on-navy" id="makeover" aria-labelledby="mk-t" data-makeover>
+<section class="mk on-navy" id={id} aria-labelledby={`${id}-t`} data-makeover data-roll={roll ? "" : undefined}>
   <div class="wrap mk__in">
     <div class="mk__text">
-      <h2 id="mk-t" class="mk__t" data-mk-word>Prima e dopo: lo stesso sito, rifatto da noi.</h2>
-      <p class="mk__lead" data-mk-word>
-        Un'impresa edile inventata: il sito che ha oggi e quello che le faremmo noi. Guarda cosa cambia, un pezzo alla volta.
-      </p>
+      <h2 id={`${id}-t`} class="mk__t" data-mk-word>{title}</h2>
+      <p class="mk__lead" data-mk-word>{lead}</p>
       <ul class="sr-only">
         {phone.fixes.map((f) => <li>Prima: {f.bad}. Dopo: {f.good}.</li>)}
       </ul>
-      <div class="mk__ask" data-mk-word>
-        <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
-      </div>
-      <a class="textlink mk__more" href="/lavori/" data-mk-word>Vedi i tre siti completi</a>
+      {
+        ask && (
+          <div class="mk__ask" data-mk-word>
+            <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
+          </div>
+        )
+      }
+      {more && <a class="textlink mk__more" href={more.href} data-mk-word>{more.text}</a>}
     </div>
 
     <figure class="mk__stage">
       <div class="mk__devs">
-        <div class="mk__dev mk__dev--phone" data-mk-dev="phone">
+        <div class="mk__dev mk__dev--phone" data-mk-dev="phone" data-end={phone.end}>
           <div class="mk__rig" data-phone3d>
             <div class="mk__obj" data-mk-obj>
               <div class="mk__phone">
-                <IPhone solid label="Il sito di un'impresa edile inventata, prima e dopo il rifacimento, su un iPhone">
+                <IPhone solid label={phoneLabel}>
                   <div class="mk__screen" data-mk-screen>
                     <div class="mk__old" data-mk-old>
-                      <div class="mk__oldpage" data-mk-oldpage><OldSite annotations={false} /></div>
+                      <div class="mk__oldpage" data-mk-oldpage>{own ? <Fragment set:html={oldHtml} /> : <OldSite annotations={false} />}</div>
                       {phone.fixes.map((f, i) => <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true"><i>{i + 1}</i></span>)}
                     </div>
                     <div class="mk__new" data-mk-new>
-                      <div class="mk__newpage" data-mk-newpage><ArcadiHero extra={false} /></div>
-                      {phone.fixes.map((f, i) => <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true"><i>{i + 1}</i></span>)}
+                      <div class="mk__roll" data-mk-roll>
+                        <div class="mk__newpage" data-mk-newpage>{own ? <Fragment set:html={newPhone} /> : <ArcadiHero extra={false} />}</div>
+                        {phone.fixes.map((f, i) => <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true"><i>{i + 1}</i></span>)}
+                      </div>
                     </div>
                     <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
                   </div>
@@ -111,18 +163,20 @@ const [phone, laptop] = devices;
           </ul>
         </div>
 
-        <div class="mk__dev mk__dev--laptop" data-mk-dev="laptop">
+        <div class="mk__dev mk__dev--laptop" data-mk-dev="laptop" data-end={laptop.end} data-url={url} data-new-url={newUrl}>
           <div class="mk__rig mk__rig--lap" data-laptop3d>
             <div class="mk__obj mk__obj--lap" data-mk-obj>
-              <Laptop url="arcadi-ristrutturazioni.demo" label="Lo stesso sito, prima e dopo il rifacimento, su un computer portatile">
+              <Laptop url={url} label={laptopLabel}>
                 <div class="mk__screen mk__screen--lap" data-mk-screen>
                   <div class="mk__old" data-mk-old>
-                    <div class="mk__oldpage mk__oldpage--desk" data-mk-oldpage data-desk><OldSite annotations={false} /></div>
+                    <div class="mk__oldpage mk__oldpage--desk" data-mk-oldpage data-desk>{own ? <Fragment set:html={oldHtml} /> : <OldSite annotations={false} />}</div>
                     {laptop.fixes.map((f, i) => <span class="mk__mark" data-mk-mark={i} data-old-piece={f.old} aria-hidden="true"><i>{i + 1}</i></span>)}
                   </div>
                   <div class="mk__new" data-mk-new>
-                    <div class="mk__newpage mk__newpage--desk" data-mk-newpage data-desk><ArcadiHero extra={false} /></div>
-                    {laptop.fixes.map((f, i) => <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true"><i>{i + 1}</i></span>)}
+                    <div class="mk__roll" data-mk-roll>
+                      <div class="mk__newpage mk__newpage--desk" data-mk-newpage data-desk>{own ? <Fragment set:html={newLaptop} /> : <ArcadiHero extra={false} />}</div>
+                      {laptop.fixes.map((f, i) => <span class="mk__mark mk__mark--good" data-mk-good={i} data-fix={f.fix} aria-hidden="true"><i>{i + 1}</i></span>)}
+                    </div>
                   </div>
                   <span class="mk__sweep" data-mk-sweep aria-hidden="true"></span>
                   <svg class="mk__cursor" data-mk-fa viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v16.5l4.6-4.4 2.9 6.4 2.6-1.2-2.9-6.3H18.5Z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" /></svg>
@@ -146,6 +200,7 @@ const [phone, laptop] = devices;
         </div>
       </div>
 
+
       <figcaption class="mk__bar">
         <span class="mk__status">
           {
@@ -157,6 +212,10 @@ const [phone, laptop] = devices;
               )),
             )
           }
+        </span>
+        <span class="mk__map" data-mk-map role="group" aria-label="Rileggi i problemi o le soluzioni" hidden>
+          <button type="button" class="mk__side" data-mk-side="old" aria-pressed="false">Prima</button>
+          <button type="button" class="mk__side" data-mk-side="new" aria-pressed="true">Dopo</button>
         </span>
         <span class="mk__ctl" data-mk-ctl hidden>
           <button type="button" class="mk__btn" data-mk-sound aria-pressed="false" aria-label="Attiva il suono">
@@ -285,6 +344,11 @@ const [phone, laptop] = devices;
     position: relative;
     height: 100%;
   }
+  /* The new site and its boxes, moved together when a whole real page scrolls (roll). */
+  .mk__roll {
+    position: absolute;
+    inset: 0;
+  }
 
   /* ---------- Laptop: seen from a little above; its screen is drawn 1280 px wide and scaled (--k, makeover.ts) ---------- */
   .mk__rig--lap {
@@ -294,8 +358,9 @@ const [phone, laptop] = devices;
   }
   .mk__obj--lap {
     --w: clamp(320px, min(46vw, 100svh - 240px), 680px);
-    /* Room for the keyboard coming towards the eye under the lid. */
-    padding-bottom: calc(var(--w) * 0.23);
+    /* Room for the keyboard coming towards the eye under the lid, down to the front edge of the
+       3D base (it comes about 0.05 of the width past the old 0.23): the bar under it never touches it. */
+    padding-bottom: calc(var(--w) * 0.28);
   }
   .mk__obj--lap :global(.lap) {
     transform: rotateX(-12deg);
@@ -407,8 +472,8 @@ const [phone, laptop] = devices;
   }
   .mk__mark i {
     position: absolute;
-    left: -9px;
-    top: -9px;
+    left: var(--bx, -9px);
+    top: var(--by, -9px);
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -519,6 +584,12 @@ const [phone, laptop] = devices;
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid rgba(255, 255, 255, 0.14);
   }
+  /* Computers: a clear gap between the laptop's front edge and the bar. */
+  @media (min-width: 900px) {
+    :global(.mk-live) .mk__bar {
+      margin-top: 1.75rem;
+    }
+  }
   /* All statuses share one cell: the bar never changes size. */
   .mk__status {
     display: grid;
@@ -559,6 +630,42 @@ const [phone, laptop] = devices;
     opacity: 1;
     visibility: visible;
     transition-delay: 0.1s, 0s;
+  }
+  /* At the end the status gives way to Prima | Dopo: which map the numbers show. */
+  .mk__bar:global(.is-map) {
+    padding-left: 0.35rem;
+  }
+  .mk__bar:global(.is-map) .mk__status {
+    display: none;
+  }
+  .mk__map {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .mk__map[hidden] {
+    display: none;
+  }
+  .mk__side {
+    min-width: 5.25rem;
+    height: 44px;
+    padding: 0 1.1rem;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    background: transparent;
+    color: #fff;
+    font: 600 0.9375rem/1 var(--font);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .mk__side[aria-pressed="true"] {
+    background: #fff;
+    border-color: #fff;
+    color: var(--notte);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .mk__side:hover {
+      border-color: #fff;
+    }
   }
   .mk__ctl {
     display: flex;

@@ -2,6 +2,9 @@
 import Base from "../../../layouts/Base.astro";
 import Closing from "../../../components/Closing.astro";
 import DemoViewer from "../../../components/DemoViewer.astro";
+import CaseQuote from "../../../components/CaseQuote.astro";
+import RealTour from "../../../components/RealTour.astro";
+import ProjectFilm from "../../../components/ProjectFilm.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { site } from "../../../config/site";
 import { breadcrumbs } from "../../../lib/schema";
@@ -38,8 +41,16 @@ const blocks = [
     </div>
   </section>
 
+  {d.film && <ProjectFilm l={l} />}
+
   <div class="wrap">
-    <DemoViewer slug={l.id} name={d.name} shotPhone={d.shotPhone} shotDesktop={d.shotDesktop} url={d.url} eager class="cs-live" />
+    {
+      d.url && d.tour ? (
+        <RealTour slug={l.id} name={d.name} url={d.url} tour={d.tour} />
+      ) : (
+        <DemoViewer slug={l.id} name={d.name} shotPhone={d.shotPhone} shotDesktop={d.shotDesktop} url={d.url} eager class="cs-live" />
+      )
+    }
   </div>
 
   <section class="section cs" aria-labelledby="obiettivo">
@@ -65,8 +76,31 @@ const blocks = [
     </div>
   </section>
 
+  {d.quote && <CaseQuote quote={d.quote} />}
+
   <Closing title="Vuoi un sito così per la tua attività?" />
 </Base>
+<script>
+  import { later } from "../../../scripts/later";
+  // A project with a makeover film: its 3D phone and laptop, as on the home (models at idle, drawn
+  // from the first gesture). Other projects have no film and load nothing.
+  if (document.querySelector("[data-makeover]")) {
+      // The film's 3D phone and laptop, as on the home: models at idle, drawn from the first gesture.
+      later(() => import("../../../scripts/phone3d").then((m) => m.preloadModels()));
+      const wake = ["pointermove", "pointerdown", "wheel", "touchstart", "keydown", "scroll"];
+      const go = () => {
+        wake.forEach((e) => removeEventListener(e, go));
+        later(() =>
+          import("../../../scripts/phone3d").then((m) => {
+            m.initPhone3D();
+            const lap = document.querySelector<HTMLElement>("[data-laptop3d]");
+            if (lap && window.matchMedia("(min-width: 900px)").matches) m.initLaptop3D(lap);
+          }),
+        );
+      };
+      wake.forEach((e) => addEventListener(e, go, { passive: true }));
+  }
+</script>
 <style>
   .cs-head {
     padding-block: clamp(2rem, 1rem + 4vw, 5rem) clamp(2.5rem, 1.5rem + 3vw, 4.5rem);

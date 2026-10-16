@@ -48,6 +48,9 @@ export const site = {
     bigSite: { min: 350, max: 700, days: 4 },
     language: {
       setup: { min: 120, max: 200, days: 1 },
+      // A one-page site (Lorenzo: the price follows the structure): the same page in a second
+      // language, no menus or pages to rebuild, so almost all of it is the translation itself.
+      setupOnePage: { min: 10, max: 20, days: 0.2 },
       nextSetup: { min: 40, max: 60, days: 0.3 },
       perPage: { min: 35, max: 50, days: 0.35 },
     },
@@ -64,6 +67,9 @@ export const site = {
     editor: { min: 300, max: 500, days: 2 },
     vouchers: { min: 100, max: 150, days: 0.5 },
     migration: { min: 80, max: 140, days: 0.5 },
+    // Rating and review count read from the listing's public page every morning, the site
+    // republished by itself (Casa Turati 3: one small script and a scheduled job).
+    reviewsSync: { min: 40, max: 70, days: 0.3 },
     photographer: "di solito tra 350 e 950 €, a seconda di quante foto servono",
     // Safety margin (%) on the top end of the extras' price and of the days: more when there are
     // moving parts (booking, vouchers, old content, languages) or the photos are missing.

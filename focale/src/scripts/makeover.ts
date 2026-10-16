@@ -25,7 +25,10 @@ import { LID_OPEN, LID_SHUT, lidLift, lapUnit } from "./hinge";
 
 // The script, in seconds. The laptop's film starts with the lid opening, so its problems start later.
 const PSTEP = 2.4; // per problem
-const FSTEP = 2;
+const FSTEP = 2; // per fix (a real page that scrolls to each one takes longer: ROLL_STEP)
+const ROLL_STEP = 2.9;
+const ROLL = 0.85; // the scroll to the next fix
+const DIM = { off: "0 0 0 2000px rgba(11, 27, 63, 0)", on: "0 0 0 2000px rgba(11, 27, 63, 0.45)" };
 
 type Box = { x: number; y: number; w: number; h: number };
 interface Film {
@@ -36,12 +39,23 @@ interface Film {
   end: number;
   /** Resolves when the film can start (the laptop waits for its 3D body). */
   ready?: Promise<void>;
+  map: MapView;
+}
+/** The end of the film: Prima | Dopo shows either site, clean. */
+interface MapView {
+  enter: () => void;
+  exit: () => void;
+  show: (side: "old" | "new") => void;
+  layout: () => void;
 }
 
 export function initMakeover() {
-  const found = document.querySelector<HTMLElement>("[data-makeover]");
-  if (!found || !window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
-  const root: HTMLElement = found;
+  if (!window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
+  // The home's film, and a project page's own (Makeover.astro takes its sites as slots).
+  document.querySelectorAll<HTMLElement>("[data-makeover]").forEach((root, n) => initFilm(root, n === 0));
+}
+
+function initFilm(root: HTMLElement, first: boolean) {
   const devs = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-dev]"));
   const allBeats = Array.from(root.querySelectorAll<HTMLElement>("[data-mk-beat]"));
   root.classList.add("mk-live");
@@ -87,6 +101,7 @@ export function initMakeover() {
       const f = { ...buildFilm(d, allBeats.filter((b) => b.dataset.for === id)), ready };
       f.tl.fromTo(stage, { x: () => toCentre().x, y: () => toCentre().y, scale: 1.04 }, { x: 0, y: 0, scale: 1, duration: 1.6, ease: "expo.inOut" }, f.end);
       f.tl.fromTo(words, { autoAlpha: 0, y: 28 }, { autoAlpha: 1, y: 0, duration: 1.1, ease: "expo.out", stagger: 0.1 }, f.end + 0.8);
+      f.tl.eventCallback("onComplete", () => f === film && enterMap());
       films.set(id, f);
     }
     return films.get(id)!;
@@ -97,6 +112,7 @@ export function initMakeover() {
   const box = stage.getBoundingClientRect();
   const onScreen = box.top < innerHeight && box.bottom > 0;
   let film = filmOf(pick());
+  if (import.meta.env.DEV && first) Object.assign(window, { __mkTl: () => film.tl });
   if (onScreen) {
     gsap.from(stage, { x: 0, y: 0, scale: 1, duration: 1.1, ease: "expo.inOut" });
     gsap.from(words, { autoAlpha: 1, y: 0, duration: 0.45, ease: "power2.in", stagger: 0.04 });
@@ -107,7 +123,33 @@ export function initMakeover() {
   const ctl = root.querySelector<HTMLElement>("[data-mk-ctl]")!;
   const replay = root.querySelector<HTMLButtonElement>("[data-mk-replay]")!;
   ctl.hidden = false;
+
+  // The map at the end: the status gives way to Prima | Dopo.
+  const bar = root.querySelector<HTMLElement>(".mk__bar")!;
+  const mapCtl = root.querySelector<HTMLElement>("[data-mk-map]")!;
+  const sides = Array.from(mapCtl.querySelectorAll<HTMLButtonElement>("[data-mk-side]"));
+  const press = (s: string) => sides.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mkSide === s)));
+  const enterMap = () => {
+    if (mapCtl.hidden) press("new");
+    bar.classList.add("is-map");
+    mapCtl.hidden = false;
+    film.map.enter();
+  };
+  const exitMap = () => {
+    bar.classList.remove("is-map");
+    mapCtl.hidden = true;
+    film.map.exit();
+  };
+  sides.forEach((b) =>
+    b.addEventListener("click", () => {
+      const s = b.dataset.mkSide as "old" | "new";
+      press(s);
+      film.map.show(s);
+    }),
+  );
+
   const restart = () => {
+    exitMap();
     film.tl.pause(0);
     film.sync(0);
     film.tl.play();
@@ -136,6 +178,7 @@ export function initMakeover() {
 
   // A window dragged across the breakpoint (or a tablet turned): the other device, from the start.
   wide.addEventListener("change", () => {
+    exitMap();
     film.tl.pause();
     allBeats.forEach((x) => x.classList.remove("is-on"));
     requestAnimationFrame(() => {
@@ -166,6 +209,7 @@ export function initMakeover() {
       film.tl.time(Math.max(0, t - 0.001), true);
       film.tl.time(t, true);
       film.sync(t);
+      film.map.layout();
     }, 200);
   });
 }
@@ -186,13 +230,19 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   const goods = qa("[data-mk-good]");
   const tags = qa("[data-mk-tag]");
   const lap = laptop ? q(".lap") : null;
-  const endBtn = newSite.querySelector<HTMLElement>(laptop ? ".ah__btn--main" : ".ah__btn--ghost");
+  const endBtn = dev.dataset.end ? newSite.querySelector<HTMLElement>(dev.dataset.end) : null;
+  // A real site is a whole tall page: it scrolls (roll) to each fix, the boxes with it.
+  const rolls = dev.closest("[data-makeover]")!.hasAttribute("data-roll");
+  const roller = q("[data-mk-roll]");
+  const FST = rolls ? ROLL_STEP : FSTEP;
+  const LAG = rolls ? ROLL : 0;
+  const urlEl = laptop ? dev.querySelector<HTMLElement>(".lap__url") : null;
 
   const INTRO = laptop ? 2.6 : 2;
   const P0 = INTRO;
   const TURN = P0 + 5 * PSTEP + 0.2;
   const F0 = TURN + 3.4;
-  const END = F0 + 5 * FSTEP;
+  const END = F0 + 5 * FST;
   const LENGTH = END + 3.4;
 
   // The laptop's pages are drawn 1280 px wide (a computer screen) and scaled to the glass.
@@ -224,8 +274,13 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   let shownBeat = -1;
   const sync = (t: number) => {
     applyLid();
+    // The address bar follows the site on the glass.
+    if (urlEl && dev.dataset.newUrl) {
+      const u = t >= TURN + 1.1 ? dev.dataset.newUrl : dev.dataset.url!;
+      if (urlEl.textContent !== u) urlEl.textContent = u;
+    }
     const beat =
-      t < P0 ? 0 : t < TURN ? 1 + Math.min(4, Math.floor((t - P0) / PSTEP)) : t < F0 ? 6 : t < END ? 7 + Math.min(4, Math.floor((t - F0) / FSTEP)) : 12;
+      t < P0 ? 0 : t < TURN ? 1 + Math.min(4, Math.floor((t - P0) / PSTEP)) : t < F0 ? 6 : t < END ? 7 + Math.min(4, Math.floor((t - F0) / FST)) : 12;
     if (beat !== shownBeat || !beats[beat]?.classList.contains("is-on")) {
       shownBeat = beat;
       beats.forEach((b, j) => b.classList.toggle("is-on", j === beat));
@@ -243,13 +298,29 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   };
   const oldBox = (i: number) => boxIn(oldPage, marks[i].dataset.oldPiece!);
   const newBox = (i: number) => boxIn(newPage, goods[i].dataset.fix!);
+  // How far a whole real page scrolls to show fix i: its box in the middle of the glass, or its top
+  // near the top when the box is taller than the glass. Always 0 for a site that fits one screen.
+  const pageH = () => ((newPage.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0) * scaleOf(newPage);
+  const rollFor = (i: number) => {
+    if (!rolls) return 0;
+    const H = screen.offsetHeight;
+    const b = newBox(i);
+    const top = b.h > H * 0.8 ? b.y - H * 0.06 : b.y + b.h / 2 - H / 2;
+    return Math.max(0, Math.min(pageH() - H, top));
+  };
+  const rolled = (b: Box, by: number): Box => ({ ...b, y: b.y - by });
   // Room inside the box, so its number badge does not cover the first letters.
   const pad = laptop ? 6 : 4;
+  const grown = (b: Box): Box => ({ x: b.x - pad, y: b.y - pad, w: b.w + 2 * pad, h: b.h + 2 * pad });
+  // The number badge sticks out 9 px at the top left; on a box at the edge of the glass it moves
+  // inside the corner, or the glass cut it in half.
   const place = (box: () => Box) => ({
     left: () => box().x - pad,
     top: () => box().y - pad,
     width: () => Math.max(18, box().w + 2 * pad),
     height: () => Math.max(16, box().h + 2 * pad),
+    "--bx": () => (box().x - pad < 10 ? "3px" : "-9px"),
+    "--by": () => (box().y - pad < 10 ? "3px" : "-9px"),
   });
   // The lens on problem i: only that piece of the old page grows, in place, kept inside the screen
   // when it fits (wide pieces such as the header are allowed to crop at the sides).
@@ -337,16 +408,21 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
     tl.set(t, { ...tagAt(i, () => lens(i).box), "--tone": "#d92d20" }, at);
     tl.to(el, { scale: 1, boxShadow: "0 0 0 rgba(0, 0, 0, 0)", duration: 0.35 }, at + PSTEP - 0.35);
     tl.set(el, { zIndex: "auto", backgroundColor: "transparent" }, at + PSTEP);
-    tl.fromTo(
-      m,
-      { autoAlpha: 0, scale: 1.25, boxShadow: "0 0 0 2000px rgba(11, 27, 63, 0)" },
-      { autoAlpha: 1, scale: 1, boxShadow: "0 0 0 2000px rgba(11, 27, 63, 0.45)", duration: 0.45, ease: spring(0.3) },
-      at + 0.2,
-    );
+    tl.fromTo(m, { autoAlpha: 0, scale: 1.25, boxShadow: DIM.off }, { autoAlpha: 1, scale: 1, boxShadow: DIM.on, duration: 0.45, ease: spring(0.3) }, at + 0.2);
     tl.fromTo(t, { autoAlpha: 0, x: () => (side() ? -14 : 0), y: () => (side() ? 0 : 8) }, { autoAlpha: 1, x: 0, y: 0, duration: 0.45, ease: spring(0.3) }, at + 0.35);
     cue(buzz, at + 0.2);
-    tl.to([m, t], { autoAlpha: 0, duration: 0.25 }, at + PSTEP - 0.3);
+    tl.to(t, { autoAlpha: 0, duration: 0.25 }, at + PSTEP - 0.3);
+    // The numbered box stays (Lorenzo), softer, shrinking back with the piece: the problems add up
+    // on the old site until it is swapped. Earlier boxes the lens grows over step aside meanwhile.
+    tl.to(m, { ...place(() => oldBox(i)), boxShadow: DIM.off, borderColor: "rgba(217, 45, 32, 0.6)", backgroundColor: "rgba(217, 45, 32, 0)", duration: 0.35 }, at + PSTEP - 0.35);
+    marks.slice(0, i).forEach((p, j) => {
+      const covered = () => meets(grown(oldBox(j)), lens(i).box);
+      tl.to(p, { autoAlpha: () => (covered() ? 0 : 1), duration: 0.2 }, at);
+      tl.to(p, { autoAlpha: 1, duration: 0.2 }, at + PSTEP - 0.35);
+    });
   });
+  // The numbers go with the old site (so Prima at the end shows it clean).
+  tl.set(marks, { autoAlpha: 0 }, TURN + (laptop ? 1.1 : 1.5));
 
   // 2. The makeover, out of sight: the old site is swapped for the new one, then light crosses the glass.
   if (laptop) {
@@ -372,19 +448,23 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
 
   // 3. The fixes, one at a time: a green box on the part of the new site that solves it, the label green.
   goods.forEach((g, i) => {
-    const at = F0 + i * FSTEP;
+    const at = F0 + i * FST;
+    // A real page first scrolls to the piece (the boxes already shown scroll with it).
+    if (rolls) tl.to(roller, { y: () => -rollFor(i), duration: ROLL, ease: "power2.inOut" }, at);
+    tl.fromTo(g, { autoAlpha: 0, scale: 1.2 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: spring(0.3) }, at + LAG + 0.2);
+    cue(() => fixed(i), at + LAG + 0.2);
+    // The green box stays too, softer, until the device glides to its place.
+    tl.to(g, { borderColor: "rgba(31, 138, 76, 0.6)", backgroundColor: "rgba(31, 138, 76, 0)", duration: 0.3 }, at + FST - 0.25);
     const t = tags[i];
     const dot = t.querySelector(".mk__tdot")!;
-    tl.set(t, { ...tagAt(i, () => newBox(i)), "--tone": "#1f8a4c" }, at);
+    tl.set(t, { ...tagAt(i, () => rolled(newBox(i), rollFor(i))), "--tone": "#1f8a4c" }, at + LAG);
     tl.set(t.querySelector(".mk__tbad"), { display: "none" }, at);
     tl.set(t.querySelector(".mk__tgood"), { display: "block" }, at);
     tl.set(dot, { backgroundColor: "#1f8a4c" }, at);
     tl.set(dot.querySelector(".mk__tn"), { opacity: 0 }, at);
     tl.set(dot.querySelector("svg"), { opacity: 1 }, at);
-    tl.fromTo(g, { autoAlpha: 0, scale: 1.2 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: spring(0.3) }, at + 0.2);
-    tl.fromTo(t, { autoAlpha: 0, x: () => (side() ? -14 : 0), y: () => (side() ? 0 : 8) }, { autoAlpha: 1, x: 0, y: 0, duration: 0.45, ease: spring(0.3) }, at + 0.3);
-    cue(() => fixed(i), at + 0.2);
-    tl.to([g, t], { autoAlpha: 0, duration: 0.25 }, at + FSTEP - 0.25);
+    tl.fromTo(t, { autoAlpha: 0, x: () => (side() ? -14 : 0), y: () => (side() ? 0 : 8) }, { autoAlpha: 1, x: 0, y: 0, duration: 0.45, ease: spring(0.3) }, at + LAG + 0.3);
+    tl.to(t, { autoAlpha: 0, duration: 0.25 }, at + FST - 0.25);
   });
 
   // 4. The phone: a tap on "Chiama ora", and it rings. The laptop: the pointer clicks "Chiedi un preventivo".
@@ -392,7 +472,7 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
     const k = () => scaleOf(newPage);
     const pos = () => offsetIn(endBtn, newPage);
     const cx = () => (pos().x + endBtn.offsetWidth / 2) * k();
-    const cy = () => (pos().y + endBtn.offsetHeight / 2) * k();
+    const cy = () => (pos().y + endBtn.offsetHeight / 2) * k() - rollFor(goods.length - 1);
     if (laptop) {
       tl.set(fa, { left: () => cx() + screen.offsetWidth * 0.3, top: () => cy() + screen.offsetHeight * 0.25, x: 0, y: 0 }, END);
       tl.to(fa, { opacity: 1, duration: 0.2 }, END + 0.05);
@@ -413,8 +493,29 @@ function buildFilm(dev: HTMLElement, beats: HTMLElement[]): Film {
   }
   tl.to({}, { duration: 0.1 }, LENGTH - 0.1);
   sync(0);
-  return { tl, sync, fit, end: END + (laptop ? 2.1 : 1.6) };
+
+  // The end: Prima | Dopo shows the old site or the new one, clean, no numbers.
+  const map: MapView = {
+    enter: () => {},
+    exit: () => {
+      gsap.killTweensOf([oldWrap, newSite]);
+    },
+    show: (sd) => {
+      gsap.to(oldWrap, { autoAlpha: sd === "old" ? 1 : 0, duration: 0.35 });
+      gsap.to(newSite, { opacity: sd === "new" ? 1 : 0, duration: 0.35 });
+    },
+    layout: () => {},
+  };
+
+  // The green numbers go as the device glides to its place.
+  const end = END + (laptop ? 2.1 : 1.6);
+  tl.to(goods, { autoAlpha: 0, duration: 0.3 }, end);
+  return { tl, sync, fit, map, end };
 }
+
+/** Whether two boxes overlap. */
+const meets = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
 
 function offsetIn(el: HTMLElement, ancestor: HTMLElement) {
   let x = 0;

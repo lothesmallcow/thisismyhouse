@@ -65,7 +65,15 @@ export const modelOf = (a: Activity): Model => (a === "ospitalita" ? "hospitalit
 type Costs = Pick<Site, "estimate" | "prices" | "deliveryDays" | "domainCostRange">;
 const round10 = (n: number) => Math.round(n / 10) * 10;
 
-export function estimate(a: Answers, s: Costs, foundersOpen: boolean): Estimate {
+/** Something made to measure for one site, priced from site.estimate (a project page's quote). */
+export interface Custom {
+  label: string;
+  min: number;
+  max: number;
+  days: number;
+}
+
+export function estimate(a: Answers, s: Costs, foundersOpen: boolean, custom: Custom[] = []): Estimate {
   const e = s.estimate;
   const model = modelOf(a.activity);
   // "link" only exists for bookings; elsewhere it counts as the included version.
@@ -108,16 +116,18 @@ export function estimate(a: Answers, s: Costs, foundersOpen: boolean): Estimate 
       max: setup.max + e.language.perPage.max * pages,
       days: setup.days + e.language.perPage.days * pages,
     });
-    add("Versione in inglese", lang(e.language.setup));
+    add("Versione in inglese", lang(size === "una" ? e.language.setupOnePage : e.language.setup));
     if (a.languages === 2) add("Una terza lingua", lang(e.language.nextSetup));
   }
   if (a.google) add("Scheda Google sistemata", e.googleProfile);
   if (a.blog) add("Blog o notizie", e.blog);
   if (a.vouchers && model !== "trades") add("Buoni regalo vendibili online", e.vouchers);
   if (a.migration) add("Contenuti recuperati dal vecchio sito", e.migration);
+  custom.forEach((c) => add(c.label, c));
 
   // The safety margin widens only the top end of the extras (the package price is fixed) and of the days.
-  const complex = (auto && model === "hospitality") || (a.vouchers && model !== "trades") || a.migration || a.languages > 0 || !a.photos;
+  // A second language on one page is no moving part: the structure stays the same.
+  const complex = (auto && model === "hospitality") || (a.vouchers && model !== "trades") || a.migration || (a.languages > 0 && size !== "una") || !a.photos;
   const kind = complex ? "complex" : "simple";
   const extrasMax = lines.slice(1).reduce((t, l) => t + l.max, 0);
   const min = round10(lines.reduce((t, l) => t + l.min, 0));

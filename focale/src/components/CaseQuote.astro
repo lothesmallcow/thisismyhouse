@@ -1,0 +1,206 @@
+---
+/**
+ * A project page's "Quanto costerebbe": what the site would cost at our prices (Lorenzo), worked out
+ * by the same estimator as /prezzi/#stima from the answers in the project's yaml, plus anything made
+ * to measure (priced from site.estimate). Each line says why it is there; what the site did not need
+ * is listed too, since that is where the price stays low. "È costato" only with `paid`, the price the
+ * client really paid; then the lines beyond it read "nel prezzo" and today's estimate comes after.
+ */
+import type { CollectionEntry } from "astro:content";
+import { site } from "../config/site";
+import { defaultAnswers, estimate, type Custom } from "../lib/estimate";
+import { foundersOpen, num } from "../lib/util";
+
+type Quote = NonNullable<CollectionEntry<"lavori">["data"]["quote"]>;
+interface Props {
+  quote: Quote;
+}
+const { quote } = Astro.props;
+const prices = site.estimate as unknown as Record<string, { min: number; max: number; days: number }>;
+const custom: Custom[] = quote.extras.map((x) => {
+  const p = prices[x.price];
+  if (!p) throw new Error(`CaseQuote: no price "${x.price}" in site.estimate`);
+  return { label: x.label, ...p };
+});
+const answers = { ...defaultAnswers, ...quote.answers };
+const open = foundersOpen();
+const e = estimate(answers, site, open, custom);
+const full = open ? estimate(answers, site, false, custom) : null;
+const whyOf = (label: string) => {
+  const w = quote.why[label] ?? quote.extras.find((x) => x.label === label)?.why;
+  if (!w) throw new Error(`CaseQuote: no "why" for the line "${label}"`);
+  return w;
+};
+const money = (a: number, b: number) => (a === b ? `${num(a)} €` : `${num(a)}-${num(b)} €`);
+const paid = quote.paid;
+const range = (a: number, b: number) => (a === b ? `${num(a)} €` : `tra ${num(a)} € e ${num(b)} €`);
+---
+<section class="section cq" aria-labelledby="costo">
+  <div class="wrap sec">
+    <p class="sec__label">{paid ? "Quanto è costato" : "Quanto costerebbe"}</p>
+    <div class="sec__body">
+      <h2 id="costo" class="cq__t">{paid ? `Questo sito è costato ${num(paid)}\u00a0€` : "Questo sito, con i nostri prezzi"}</h2>
+      <p class="cq__lead">{quote.intro}</p>
+
+      <div class="cq__grid">
+        <ul class="cq__lines">
+          {
+            e.lines.map((l, i) => (
+              <li>
+                <p class="cq__row">
+                  <span>{l.label}</span>
+                  <span class="cq__p">{paid && i > 0 ? "nel prezzo" : money(l.min, l.max)}</span>
+                </p>
+                <p class="cq__why">{whyOf(l.label)}</p>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="cq__total">
+          {
+            paid ? (
+              <>
+                <p class="cq__tl">Pagato dal cliente</p>
+                <p class="cq__sum">{num(paid)}&nbsp;€</p>
+                <p class="cq__note">Il prezzo fondatori del pacchetto {e.planName}. Primo cliente: le voci in più sono state comprese.</p>
+                <p class="cq__note">Con la calcolatrice di oggi verrebbe {range(e.min, e.max)}{full ? `, e ${range(full.min, full.max)} quando i posti fondatori finiscono` : ""}.</p>
+              </>
+            ) : (
+              <>
+                <p class="cq__tl">Totale stimato</p>
+                <p class="cq__sum">{range(e.min, e.max)}</p>
+                {open && full && <p class="cq__note">Con il prezzo fondatori, per i primi {site.foundersSpotsTotal} clienti. Dopo: {range(full.min, full.max)}.</p>}
+                <p class="cq__note">Perché una forbice: il minimo è il listino, il massimo tiene un piccolo margine sulle voci in più.</p>
+              </>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="cq__cols">
+        {
+          quote.skipped.length > 0 && (
+            <div>
+              <h3>Cosa non serviva, quindi non si paga</h3>
+              <ul>
+                {quote.skipped.map((s) => (
+                  <li>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+        <div>
+          <h3>A parte, pagato ad altri</h3>
+          <ul>
+            {(quote.apart ?? e.apart).map((s) => <li>{s.replace("{dominio}", site.domainCostRange)}</li>)}
+          </ul>
+        </div>
+      </div>
+
+      <p class="cq__more"><a class="textlink" href="/prezzi/#stima">Calcola la stima per la tua attività</a></p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cq {
+    background: var(--nebbia);
+  }
+  .cq__t {
+    max-width: 22ch;
+  }
+  .cq__lead {
+    margin-top: 1rem;
+    max-width: 58ch;
+    font-size: var(--fs-lead);
+    color: var(--grafite);
+  }
+  .cq__grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: var(--space-block);
+    align-items: start;
+  }
+  @media (min-width: 1000px) {
+    .cq__grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+      gap: 2rem;
+    }
+  }
+  .cq__lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--inchiostro);
+  }
+  .cq__lines li {
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--filo);
+  }
+  .cq__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    font-weight: 700;
+  }
+  .cq__p {
+    flex: none;
+    white-space: nowrap;
+  }
+  .cq__why {
+    margin-top: 0.35rem;
+    max-width: 60ch;
+    color: var(--grafite);
+  }
+  .cq__total {
+    padding: 1.5rem;
+    border-radius: 16px;
+    background: var(--mandarino);
+    color: #fff;
+  }
+  .cq__tl {
+    font-weight: 700;
+    color: var(--on-dark-muted);
+  }
+  .cq__sum {
+    margin-top: 0.25rem;
+    font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .cq__note {
+    margin-top: 0.9rem;
+    font-size: var(--fs-small);
+    color: var(--on-dark-muted);
+  }
+  .cq__cols {
+    display: grid;
+    gap: 2rem;
+    margin-top: var(--space-block);
+  }
+  @media (min-width: 800px) {
+    .cq__cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .cq__cols h3 {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--inchiostro);
+  }
+  .cq__cols ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .cq__cols li {
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--filo);
+    color: var(--grafite);
+  }
+  .cq__more {
+    margin-top: 2rem;
+  }
+</style>

@@ -20,5 +20,59 @@ outcome:
   - Un tocco porta alle date libere.
   - Il proprietario non deve aggiornare niente a mano.
 settore: b-and-b-e-agriturismi
+# What it cost: Paolo paid 390 € (Lorenzo), the Essenziale founders price, with English and the
+# review update included as the first client. The lines and today's estimate come from the estimator
+# (site.estimate, site.prices) with these answers, plus the one thing made to measure.
+quote:
+  paid: 390
+  intro: "Il prezzo segue la struttura del sito, non quante cose ci sono scritte: qui una pagina sola, la stessa in inglese e una piccola automazione per le recensioni."
+  answers: { activity: ospitalita, size: una, key: link, languages: 1, photos: true }
+  why:
+    Pacchetto Essenziale: "Per un appartamento basta una pagina: chi arriva dall'annuncio cerca foto, posizione e recensioni in un posto solo. Dentro ci sono già i testi, le foto sistemate, il pulsante per le date libere, privacy e cookie."
+    Versione in inglese: "La stessa pagina in inglese, tradotta e ricontrollata da noi, con il cambio lingua in alto. Nessuna struttura nuova, per questo pesa poco."
+  extras:
+    - label: Voto e recensioni aggiornati ogni mattina
+      price: reviewsSync
+      why: "Ogni mattina un piccolo programma legge voto e numero di recensioni dalla pagina pubblica dell'annuncio e ripubblica il sito. Nessun collegamento con il conto Airbnb: se la pagina cambia, restano gli ultimi numeri buoni."
+  skipped:
+    - "La prenotazione dentro il sito: date e pagamenti restano su Airbnb, quindi nessun canone mensile in più."
+    - "Il fotografo: le foto del proprietario c'erano già."
+    - "Un pannello per modificare il sito: i numeri che cambiano si aggiornano da soli."
+  apart:
+    - "Il dominio, {dominio}, intestato al proprietario."
+    - "Le commissioni di Airbnb restano quelle di oggi: il sito non ne aggiunge."
 shotPhone: ../../assets/lavori/casa-turati-3-phone.png
 shotDesktop: ../../assets/lavori/casa-turati-3-desktop.png
+# The scrolling tour on the project page (RealTour.astro): each point is a selector on the real site
+# and what it does. Screenshots and boxes: node scripts/tour-shots.mjs casa-turati-3 <url of a local build>.
+tourEnd: ".final .button"
+tour:
+  - sel: ".hero__copy"
+    t: "Il palazzo per primo: l'androne e il giardino, a tutto schermo."
+  - sel: ".lang"
+    t: "Italiano e inglese: gli ospiti sono quasi tutti stranieri."
+  - sel: "#casa .gallery"
+    t: "Le foto come un giro della casa, una stanza dopo l'altra."
+  - sel: ".reviews"
+    t: "Voto e recensioni di Airbnb, aggiornati da soli ogni mattina."
+  - sel: ".walk"
+    t: "Le distanze vere a piedi: la metro a un minuto, il Duomo a quindici."
+  - sel: ".final"
+    t: "Una sola azione: scegliere le date su Airbnb."
+# The makeover film on the project page (ProjectFilm.astro): the "before" is an INVENTED old site
+# (demo/OldBnb.astro; the apartment only had its Airbnb listing, the film says so), the "after" the
+# real site, scrolling to each fix. `old` is a [data-old] piece of OldBnb, `at` a tour point above.
+film:
+  title: "Prima e dopo: da un sito qualunque a quello vero."
+  lead: "Casa Turati 3 aveva solo l'annuncio su Airbnb: il sito di prima l'abbiamo inventato noi, uguale a quelli che hanno in tanti. Quello dopo è il sito vero."
+  oldUrl: appartamentomilanocentro.demo
+  first: Un sito come tanti
+  mid: Ecco il sito vero
+  last: Un tocco, e si scelgono le date
+  lastLaptop: Un clic, e si scelgono le date
+  fixes:
+    - { old: header, at: 1, bad: "Solo in italiano: gli stranieri chiudono", good: "Italiano e inglese, con un tocco" }
+    - { old: text, at: 0, bad: "Un muro di testo, e il palazzo non si vede", good: "Il palazzo a tutto schermo e una frase" }
+    - { old: photo, at: 2, bad: "Le foto sono francobolli", good: "Foto grandi, stanza per stanza" }
+    - { old: reviews, at: 3, bad: "Nessun voto: chi arriva non si fida", good: "Voto e recensioni di Airbnb, aggiornati ogni mattina" }
+    - { old: cta, at: 5, bad: "Per prenotare bisogna scrivere un'email", good: "Le date libere con un tocco" }

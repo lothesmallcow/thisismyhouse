@@ -82,6 +82,11 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   ([data-mk-word]) come in one by one. Nothing pinned, the page scrolls freely. Once over it stays over
   (coming back does not restart it, the words stay); "Rivedi" replays from the middle. When the band is
   already on screen at start-up (a reload keeps the scroll), the device glides to the middle instead of jumping.
+  Numbers stay (Lorenzo): each numbered box stays on, softer, after its label goes, so the problems add
+  up on the old site until it is swapped and the fixes on the new one until the device glides to its
+  place. Labels stay one at a time (labels with lines round the laptop, and a "shrink and map" ending,
+  were tried and dropped as too much). At the end the bar shows Prima | Dopo (either site, clean),
+  sound, replay. The laptop's box includes its 3D base (padding-bottom 0.28w) so the bar never touches it.
   Left column kept clean on purpose (Lorenzo): title, lead, one button, "Vedi i tre siti completi" under it;
   no chip, no viewfinder corners, no grid, no "Gratis e senza impegno" line.
 - Header (Header.astro): on touch screens it never hides on scroll (hiding glitched on iPhone with momentum
@@ -119,7 +124,10 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   "dimostrativo", a demo never passed off as a client. A real site shows no results it has not had yet
   ("Cosa fa il sito", not "Cosa ottiene"). DemoViewer shows a real site as screenshots in the frames with
   its link, no iframe (another host may refuse framing or be down). Screenshots: build the client repo
-  locally and shoot 1440x900 and 390x844 @2x. The CSP in `public/_headers` allows framing that host
+  locally and shoot 1440x900 and 390x844 @2x. A project may carry a `quote` (CaseQuote.astro): what it
+  would cost at our prices, from the estimator plus made-to-measure lines priced in site.estimate, with
+  a "why" per line and what it did not need. "È costato" only with `paid` (the real price: Paolo paid 390 €). Price follows structure (Lorenzo): a
+  second language on a one-page site costs little (language.setupOnePage). The CSP in `public/_headers` allows framing that host
   (frame-src), in case a live embed comes back; update it when the client moves to its own domain.
 - Demos on phones: long lists are swipe rails (`:is(ul, ol).d-rail`, focusable, with aria-label), Arcadi's works
   show 3 then "Altri lavori" (`.d-more` + `.d-more-btn` anywhere in the section). Grid children holding a

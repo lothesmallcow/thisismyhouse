@@ -1,0 +1,226 @@
+---
+/**
+ * The "before" of Casa Turati 3's makeover film: an INVENTED old website (the real apartment only
+ * had its Airbnb listing; the page around the film says so). The kind of site many short-let
+ * apartments in Milan still have: a decent theme from some years ago, made for a computer, in
+ * Italian only, a long welcome text, small photos, a guestbook nobody writes in, "write us an
+ * email" to book. Not a joke (Lorenzo: when it looks like theirs, owners see the real problem).
+ * Same photos as the real site, so the before and after show the same apartment.
+ * The film zooms on the pieces marked [data-old]. Root classes .os-wrap and .os are the contract
+ * with Makeover.astro (boxed column on computers, full height on the phone).
+ */
+import { getImage } from "astro:assets";
+import androne from "../../assets/lavori/casa-turati-3/androne.jpg";
+import t1 from "../../assets/lavori/casa-turati-3/soggiorno.jpg";
+import t2 from "../../assets/lavori/casa-turati-3/camera-matrimoniale.jpg";
+import t3 from "../../assets/lavori/casa-turati-3/pranzo-cucina.jpg";
+import t4 from "../../assets/lavori/casa-turati-3/bagno.jpg";
+const big = await getImage({ src: androne, width: 640, format: "webp", quality: 55 });
+const thumbs = await Promise.all([t1, t2, t3, t4].map((src) => getImage({ src, width: 120, format: "webp", quality: 45 })));
+---
+<div class="os-wrap">
+  <div class="os ob">
+    <div class="ob__top" data-old="header">
+      <span class="ob__flag" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>Italiano</span>
+      <span class="ob__tr">Seleziona lingua &#9662;</span>
+    </div>
+    <div class="ob__bar">
+      <span class="ob__logo">Appartamento Milano Centro<small>Affitti brevi a Milano</small></span>
+      <nav class="ob__nav" aria-hidden="true">
+        <span class="is-on">Home</span><span>L'appartamento</span><span>Foto</span><span>Dove siamo</span><span>Prezzi</span><span>Contatti</span>
+      </nav>
+    </div>
+    <div class="ob__pic">
+      <img src={big.src} width="640" height="400" alt="" decoding="async" loading="lazy" />
+    </div>
+    <div class="ob__body">
+      <div class="ob__main">
+        <div class="ob__text" data-old="text">
+          <h3>Benvenuti nel nostro appartamento!</h3>
+          <p>
+            L'appartamento si trova al terzo piano di un palazzo d'epoca in zona Turati, nel centro di Milano, ed è composto da ingresso,
+            soggiorno con divano letto, cucina abitabile, due camere da letto e due bagni. Il palazzo è dotato di portineria, ascensore
+            e giardino interno. A pochi passi si trovano la fermata della metropolitana, negozi, ristoranti e tutti i servizi.
+          </p>
+          <p>
+            L'appartamento è ideale per famiglie, gruppi di amici e per chi viaggia per lavoro, in occasione di fiere ed eventi. Per
+            qualsiasi informazione non esitate a contattarci, saremo lieti di rispondere a tutte le vostre domande.
+          </p>
+        </div>
+        <p class="ob__h">Foto dell'appartamento <small>(clicca per ingrandire)</small></p>
+        <div class="ob__thumbs" data-old="photo">
+          {thumbs.map((t) => <img src={t.src} width="120" height="80" alt="" decoding="async" loading="lazy" />)}
+        </div>
+      </div>
+      <aside class="ob__side">
+        <div class="ob__box" data-old="reviews">
+          <p class="ob__bt">Libro degli ospiti</p>
+          <p>"Tutto perfetto, grazie!"<br /><small>Marco, giugno 2017</small></p>
+          <p>"Appartamento comodo e pulito."<br /><small>Anna, marzo 2017</small></p>
+          <span class="ob__more">Lascia un messaggio &raquo;</span>
+        </div>
+        <div class="ob__box ob__box--book" data-old="cta">
+          <p class="ob__bt">Prenotazioni</p>
+          <p>Per disponibilità e prezzi scrivere a:<br /><u>prenotazioni@casaturati.demo</u></p>
+        </div>
+      </aside>
+    </div>
+    <div class="ob__foot">© 2016 Appartamento Milano Centro &nbsp;|&nbsp; Tutti i diritti riservati &nbsp;|&nbsp; Visitatori: 004.213</div>
+  </div>
+</div>
+
+<style>
+  .os-wrap {
+    width: 100%;
+    height: 100%;
+  }
+  /* A computer layout in fixed proportions: it never reflows for a phone, it only shrinks. */
+  .ob {
+    height: 100%;
+    box-sizing: border-box;
+    background: #fdfbf5;
+    color: #555;
+    font-family: Verdana, Geneva, "DejaVu Sans", sans-serif;
+    font-size: 12px;
+    line-height: 1.55;
+    overflow: hidden;
+  }
+  .ob__top {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 20px;
+    background: #6b4a2b;
+    color: #e8dcc8;
+    font-size: 10px;
+  }
+  .ob__flag {
+    display: flex;
+    width: 14px;
+    height: 9px;
+  }
+  .ob__flag i {
+    flex: 1;
+    background: #009246;
+  }
+  .ob__flag i:nth-child(2) {
+    background: #fff;
+  }
+  .ob__flag i:nth-child(3) {
+    background: #ce2b37;
+  }
+  .ob__tr {
+    margin-left: 8px;
+    padding: 0 6px;
+    border: 1px solid #a88a68;
+    background: #f4efe6;
+    color: #555;
+  }
+  .ob__bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 2px solid #c9a46a;
+  }
+  .ob__logo {
+    display: grid;
+    font-family: Georgia, "DejaVu Serif", serif;
+    font-size: 21px;
+    font-style: italic;
+    color: #6b4a2b;
+    line-height: 1.1;
+  }
+  .ob__logo small {
+    font-family: Verdana, Geneva, sans-serif;
+    font-style: normal;
+    font-size: 9px;
+    color: #8a7a66;
+    margin-top: 3px;
+  }
+  .ob__nav {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: #6b4a2b;
+  }
+  .ob__nav .is-on {
+    text-decoration: underline;
+  }
+  .ob__pic img {
+    display: block;
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    object-position: 50% 60%;
+  }
+  .ob__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 22px;
+    padding: 18px 20px;
+  }
+  .ob__text h3 {
+    margin: 0 0 8px;
+    font-family: Georgia, "DejaVu Serif", serif;
+    font-size: 16px;
+    font-weight: normal;
+    color: #6b4a2b;
+  }
+  .ob__text p {
+    margin: 0 0 8px;
+    text-align: justify;
+  }
+  .ob__h {
+    margin: 12px 0 6px;
+    font-weight: bold;
+    color: #6b4a2b;
+  }
+  .ob__h small {
+    font-weight: normal;
+    color: #999;
+  }
+  .ob__thumbs {
+    display: inline-flex;
+    gap: 6px;
+  }
+  .ob__thumbs img {
+    display: block;
+    width: 64px;
+    height: 44px;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #d8cdb8;
+  }
+  .ob__box {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: #f4efe6;
+    border: 1px solid #e0d4be;
+  }
+  .ob__box p {
+    margin: 0 0 6px;
+  }
+  .ob__box small {
+    color: #999;
+  }
+  .ob__bt {
+    font-weight: bold;
+    color: #6b4a2b;
+  }
+  .ob__more {
+    font-size: 10px;
+    color: #6b4a2b;
+  }
+  .ob__box--book u {
+    color: #2a5db0;
+  }
+  .ob__foot {
+    padding: 10px 20px;
+    border-top: 1px solid #e0d4be;
+    color: #999;
+    font-size: 10px;
+  }
+</style>

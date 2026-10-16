@@ -1,0 +1,51 @@
+---
+/**
+ * The makeover film for a real client's project page (Lorenzo: like the home's, with the new site
+ * real and scrolling). The before is an invented old site (each project names its own below); the
+ * after is the real site's whole page (ShotPage, from scripts/tour-shots.mjs), which scrolls to each
+ * fix. Texts and pairs in the project's yaml (`film`, `tour`, `tourEnd`). Film logic: Makeover.astro.
+ */
+import type { CollectionEntry } from "astro:content";
+import Makeover from "./Makeover.astro";
+import ShotPage from "./demo/ShotPage.astro";
+import OldBnb from "./demo/OldBnb.astro";
+
+interface Props {
+  l: CollectionEntry<"lavori">;
+}
+const { l } = Astro.props;
+const d = l.data;
+const film = d.film!;
+type Shot = { w: number; h: number; boxes: [number, number, number, number][]; end?: [number, number, number, number] };
+const jsons = import.meta.glob<{ default: { desktop: Shot; phone: Shot } }>("../assets/lavori/*-tour.json", { eager: true });
+const pics = import.meta.glob<{ default: ImageMetadata }>("../assets/lavori/*-tour-*.jpg", { eager: true });
+const shots = jsons[`../assets/lavori/${l.id}-tour.json`]?.default;
+const desk = pics[`../assets/lavori/${l.id}-tour-desktop.jpg`]?.default;
+const phone = pics[`../assets/lavori/${l.id}-tour-phone.jpg`]?.default;
+if (!shots || !desk || !phone || !shots.desktop.end) throw new Error(`ProjectFilm: run node scripts/tour-shots.mjs ${l.id} <url> (with tourEnd set)`);
+// The invented old site of each project.
+const olds: Record<string, typeof OldBnb> = { "casa-turati-3": OldBnb };
+const Old = olds[l.id];
+if (!Old) throw new Error(`ProjectFilm: no invented old site for ${l.id}`);
+const fixes = film.fixes.map((f) => ({ old: `[data-old='${f.old}']`, fix: `[data-at='${f.at}']`, bad: f.bad, good: f.good }));
+const end = "[data-at='end']";
+---
+<Makeover
+  id="prima-dopo"
+  title={film.title}
+  lead={film.lead}
+  mid={film.mid}
+  url={film.oldUrl}
+  newUrl={new URL(d.url!).host}
+  phone={{ fixes, first: film.first, last: film.last, end }}
+  laptop={{ fixes, first: film.first, last: film.lastLaptop, end }}
+  phoneLabel={`Un sito inventato e il sito vero di ${d.name}, prima e dopo, su un iPhone`}
+  laptopLabel={`Un sito inventato e il sito vero di ${d.name}, prima e dopo, su un computer portatile`}
+  roll
+  ask={false}
+  more={{ href: d.url!, text: "Apri il sito vero" }}
+>
+  <Old slot="old" />
+  <ShotPage slot="new-phone" src={phone} shot={shots.phone} widths={[520, 780]} sizes="300px" />
+  <ShotPage slot="new-laptop" src={desk} shot={shots.desktop} widths={[760, 1280]} sizes="(min-width: 900px) 46vw, 92vw" />
+</Makeover>

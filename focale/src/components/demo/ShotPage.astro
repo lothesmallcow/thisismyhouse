@@ -1,0 +1,39 @@
+---
+/**
+ * A real client's whole page as a picture (from scripts/tour-shots.mjs), for the makeover film's
+ * "after": the film scrolls it to each fix. Every measured piece gets an invisible anchor at its
+ * place ([data-at="<n>"], and [data-at="end"] for the button clicked at the end), in % of the page,
+ * so the film's boxes find them at any size.
+ */
+import { Image } from "astro:assets";
+
+interface Props {
+  src: ImageMetadata;
+  shot: { w: number; h: number; boxes: [number, number, number, number][]; end?: [number, number, number, number] };
+  widths: number[];
+  sizes: string;
+}
+const { src, shot, widths, sizes } = Astro.props;
+const at = (b: [number, number, number, number]) =>
+  `left:${(b[0] / shot.w) * 100}%;top:${(b[1] / shot.h) * 100}%;width:${(b[2] / shot.w) * 100}%;height:${(b[3] / shot.h) * 100}%`;
+---
+<div class="sp">
+  <Image src={src} alt="" widths={widths} sizes={sizes} format="webp" loading="lazy" class="sp__img" />
+  {shot.boxes.map((b, i) => <span class="sp__at" data-at={i} style={at(b)}></span>)}
+  {shot.end && <span class="sp__at" data-at="end" style={at(shot.end)}></span>}
+</div>
+<style>
+  .sp {
+    position: relative;
+    width: 100%;
+  }
+  .sp__img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .sp__at {
+    position: absolute;
+    display: block;
+  }
+</style>
