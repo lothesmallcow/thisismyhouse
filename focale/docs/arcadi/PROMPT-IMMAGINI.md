@@ -1,5 +1,7 @@
 # Arcadi Ristrutturazioni: le immagini da generare
 
+> **Per farle tutte in una volta con ChatGPT usa `PROMPT-CHATGPT.md`**: un solo messaggio da incollare. Questo file resta come riferimento, una immagine alla volta (utile per rifare un'immagine venuta male).
+
 Arcadi è un'impresa **inventata** (sito dimostrativo di Focus Design). Queste immagini prendono il posto delle illustrazioni di oggi in `src/assets/demo/arcadi-ristrutturazioni/`. I nomi dei file sono già quelli che il sito usa: se li salvi così, si vedono subito anche nel telefono della home e nel sito vecchio del film.
 
 ## Regole per tutte le immagini

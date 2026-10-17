@@ -132,7 +132,7 @@ Arcadi non esiste, quindi i dati li inventiamo. Devono però essere **credibili,
 
 ## 7. Le immagini
 
-- **Prompt e regole:** sono in `focale/docs/arcadi/PROMPT-IMMAGINI.md`. Lorenzo le genera e te le passa.
+- **Prompt e regole:** sono in `focale/docs/arcadi/PROMPT-CHATGPT.md` (tutte in un messaggio solo) e `focale/docs/arcadi/PROMPT-IMMAGINI.md` (una alla volta). Lorenzo le genera e te le passa.
 - **I file:**
   - 22 in tutto: `hero.jpg`, sei coppie prima/dopo con i nomi di oggi, 4 di cantiere, 3 dettagli, `milano-cortile.jpg`, `laboratorio.jpg`.
   - Mettili in `focale/src/assets/demo/arcadi-ristrutturazioni/`.
