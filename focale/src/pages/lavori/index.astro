@@ -121,6 +121,21 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
     display: block;
     padding-bottom: clamp(1.5rem, 1rem + 2vw, 3rem);
   }
+  /* Phones: a project card fits one screen (Lorenzo). */
+  @media (max-width: 599px) {
+    .lv__item {
+      gap: 0.9rem;
+    }
+    .lv__media {
+      padding-bottom: 0.9rem;
+    }
+    .lv__links {
+      padding-top: 1rem;
+    }
+    .lv__text h2 {
+      font-size: 1.6rem;
+    }
+  }
   .lv__media :global(.lv__desk) {
     width: 86%;
     border-radius: 8px;

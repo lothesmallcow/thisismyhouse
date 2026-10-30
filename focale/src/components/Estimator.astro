@@ -328,6 +328,12 @@ const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra $
       border-color 0.2s ease,
       background-color 0.2s ease;
   }
+  @media (max-width: 599px) {
+    .est__card,
+    .est__check {
+      padding: 0.6rem 0.9rem;
+    }
+  }
   .est__card input,
   .est__check input {
     width: 1.15rem;

@@ -58,6 +58,12 @@ const rows: [string, number][] = [
     display: grid;
     justify-items: center;
   }
+  /* Phones: the whole receipt in one screen (Lorenzo). */
+  @media (max-width: 599px) {
+    .rc {
+      zoom: 0.78;
+    }
+  }
   /* The printer: an orange block with a status light and the paper mouth underneath. */
   .rc__printer {
     position: relative;

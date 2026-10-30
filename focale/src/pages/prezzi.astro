@@ -376,4 +376,32 @@ const service = {
   .pz-h2 {
     margin-bottom: var(--space-block);
   }
+  /* Phones: each package fits one screen with the header and the sticky bar (Lorenzo): the two
+     prices side by side, tighter list and spacing. */
+  @media (max-width: 599px) {
+    .pz__plan {
+      gap: 0.4rem;
+      padding: 1rem 1.1rem 1.1rem;
+    }
+    .pz__prices {
+      margin: 0.2rem 0;
+      padding-block: 0.6rem;
+      grid-template-columns: auto auto;
+      justify-content: start;
+      align-items: end;
+      column-gap: 1.5rem;
+    }
+    .pz__price--main dd {
+      font-size: 2.35rem;
+    }
+    .pz__feat {
+      margin-bottom: 0.5rem;
+      gap: 0.3rem;
+      font-size: 0.875rem;
+      line-height: 1.3;
+    }
+    .pz__feat li {
+      gap: 0.55rem;
+    }
+  }
 </style>

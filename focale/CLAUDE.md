@@ -174,6 +174,11 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   the recommended plan comes first on phones. The claude.ai preview is a cross-origin iframe: iOS throttles it
   to about 30 fps until touched, so judge smoothness on the real URL, not the preview.
 - Do not use the CSS `translate` property on elements GSAP transforms: GSAP folds it into its own transform.
+- Phones fit the screen's height (Lorenzo, seen in the claude.ai preview at about 390x650): devices are
+  sized from svh (makeover phone (100svh - 250px)/2.06, hero phone (100svh - 200px)/2.06), and every
+  panel (package cards, project cards, request card, receipt and chat visuals by `zoom`) fits one screen
+  with the header and the sticky bar, about 100svh - 156px. Rules live in (max-width: 599px) or 899px
+  blocks, placed AFTER the base rules (same specificity: the later one wins). Check by measuring at 390x650.
 
 ## Scripts
 dev, build, preview, check, check:placeholders, predeploy, screens, screens:demo, lighthouse, a11y,

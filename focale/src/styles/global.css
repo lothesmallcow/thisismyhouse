@@ -1092,6 +1092,40 @@ html.lenis body {
   margin-top: auto;
   align-self: stretch;
 }
+/* Phones: a package card fits one screen with the header and the sticky bar (Lorenzo). */
+@media (max-width: 599px) {
+  .hs-plan {
+    gap: 0.3rem;
+    padding: 1rem 1.1rem 1.1rem;
+  }
+  .hs-plan__for {
+    min-height: 0;
+  }
+  .hs-plan__num {
+    margin-top: 0.25rem !important;
+    font-size: 2.35rem;
+  }
+  .hs-plan__intro {
+    margin-top: 0.4rem !important;
+  }
+  .hs-plan__feat {
+    margin-top: 0.4rem;
+    padding-top: 0.5rem;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.3;
+  }
+  .hs-plan__btn {
+    margin-top: 0.75rem;
+  }
+  .tiles {
+    gap: 0.45rem;
+  }
+  .tile {
+    min-height: 52px;
+    padding: 0.55rem 1rem;
+  }
+}
 .hs-price__micro {
   margin-top: 1.5rem !important;
   color: var(--grafite);

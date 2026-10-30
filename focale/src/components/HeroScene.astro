@@ -179,8 +179,9 @@ const banners = [
     --w: clamp(220px, 30vh, 300px);
   }
   @media (max-width: 899px) {
+    /* Never taller than the screen under the header (Lorenzo: fit my phone). */
     .film__phone {
-      --w: min(64vw, 260px);
+      --w: min(64vw, 260px, calc((100svh - 200px) / 2.06));
     }
   }
   /* Phones: text tight enough that the whole iPhone sits in the first screen. */
