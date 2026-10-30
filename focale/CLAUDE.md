@@ -179,6 +179,9 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   panel (package cards, project cards, request card, receipt and chat visuals by `zoom`) fits one screen
   with the header and the sticky bar, about 100svh - 156px. Rules live in (max-width: 599px) or 899px
   blocks, placed AFTER the base rules (same specificity: the later one wins). Check by measuring at 390x650.
+- Home on touch phones: CSS scroll snap "proximity" on html, the makeover stage `scroll-snap-align: center`
+  (Lorenzo: it settles exactly on the phone when you stop near it, scrolling stays free). Touch only:
+  on computers Lenis drives the scroll and would fight CSS snapping.
 
 ## Scripts
 dev, build, preview, check, check:placeholders, predeploy, screens, screens:demo, lighthouse, a11y,

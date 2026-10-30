@@ -713,6 +713,17 @@ html.lenis body {
   /* By width, not height: tall phones made this 100 px+ on each side (Lorenzo: dead space). */
   padding-block: clamp(2.75rem, 1rem + 5vw, 8rem);
 }
+/* Phones (Lorenzo): scrolling settles exactly on the makeover's phone when you stop near it, and
+   stays free otherwise ("proximity": it only catches when you stop close, never holds you).
+   Touch screens only: on computers Lenis drives the scroll and CSS snapping would fight it. */
+@media (max-width: 899px) and (hover: none) {
+  html:has(.home .mk__stage) {
+    scroll-snap-type: y proximity;
+  }
+  .home .mk__stage {
+    scroll-snap-align: center;
+  }
+}
 /* The makeover band: room above and below the phone (it used to touch the band's edge). */
 .home .scenes > section.mk {
   padding-block: clamp(3rem, 2rem + 3vw, 4.5rem);
