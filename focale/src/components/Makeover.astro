@@ -667,10 +667,10 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
 
   /* ---------- Phones: title, the film big, then the button ---------- */
   @media (max-width: 899px) {
-    /* Sized by the screen's height too (Lorenzo: it must fit my phone): phone, bar under it,
-       header and sticky bar all in one screen. */
+    /* As big as the screen allows, by width and by height (Lorenzo): the phone (2.06 times as
+       tall as wide), the bar under it and the header fill one screen; on taller phones it grows. */
     .mk__obj {
-      --w: min(72vw, 290px, calc((100svh - 250px) / 2.06));
+      --w: min(84vw, 420px, calc((100svh - 200px) / 2.06));
     }
     :global(.mk-live) .mk__text {
       display: contents;
