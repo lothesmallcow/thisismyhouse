@@ -1,5 +1,5 @@
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "date": "2026-11-21",
   "notes": "Every sector profile totals 100 (common block 68 + sector block 32, some sectors move points into trust). Checks are automatable and deterministic for the same page and the same speed data. Speed uses real-user data (CrUX) when Google has it, otherwise lab data in wide bands. Flags (points 0) are information for a professional, never a verdict. Sector vocabularies are part of the rubric and versioned with it. Evidence: reports/Website Scorer studi fitness Milano.md and reports/Requisiti siti per settore.md.",
   "categories": [
@@ -474,7 +474,7 @@
       "vocab": {
         "activity": "b&b|b&amp;b|bed (and|&) breakfast|agriturism\\w*|casa vacanz\\w*|case vacanz\\w*|affittacamere|guest ?house|hotel|albergo|locanda|residence|appartament\\w* (per vacanze|turistic\\w*)|ospitalit\\w*|soggiorn\\w*|dimora|relais|country house|ostello|camere con colazione|holiday (home|apartment)",
         "schema": "LodgingBusiness|BedAndBreakfast|Hotel|Motel|Hostel|Resort|VacationRental|Accommodation|Apartment|GuestHouse|Campground|FarmStay",
-        "hosts": "octorate|vertical-booking|verticalbooking|simplebooking|bookassist|krossbooking|kross.travel|scidoo|beddy|smoobu|lodgify|ericsoft|blastness|cloudbeds|mews.|synxis|siteminder|thebookingbutton|avaibook|hotelrunner|webhotelier|wubook|zakbooking|bookingexpert|hotel-spider|hotelinking|sysdat|bed-booking|bookingsuite|check-in.it",
+        "hosts": "octorate|vertical-booking|verticalbooking|simplebooking|bookassist|krossbooking|kross.travel|scidoo|beddy|smoobu|lodgify|ericsoft|blastness|cloudbeds|mews.|synxis|siteminder|thebookingbutton|avaibook|hotelrunner|webhotelier|wubook|zakbooking|bookingexpert|hotel-spider|hotelinking|sysdat|bed-booking|bookingsuite|check-in.it|vikey.it|kross.travel|bedzzle",
         "ota": "booking.com|airbnb.|expedia.|vrbo.|hotels.com|agoda.|tripadvisor.",
         "words": "prenot\\w*|book(ing|\\s?now)?|verifica (la )?disponibilit\\w*|disponibilit\\w*|check availability|reserv\\w*|richiedi (un )?preventivo",
         "paths": "/(prenota|booking|book|disponibilita|availability|reservation)",

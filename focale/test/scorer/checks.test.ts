@@ -206,6 +206,7 @@ describe("sectors", () => {
   });
   it("hospitality: direct booking beats OTA-only, English and CIN", () => {
     expect(run("conv.primary", page('<a href="https://book.octorate.com/x">Disponibilità</a>'), null, "ospitalita")).toBe("pass");
+    expect(run("conv.primary", page('<a href="https://booking.vikey.it/?local_key=x">Book</a>'), null, "ospitalita")).toBe("pass");
     expect(run("conv.primary", page('<a href="https://www.booking.com/hotel/it/x.html">Guarda le stanze</a>'), null, "ospitalita")).toBe("partial");
     expect(run("info.languages", page('<a href="/en/">English</a>'), null, "ospitalita")).toBe("pass");
     expect(run("info.languages", page("<p>Solo italiano</p>"), null, "ospitalita")).toBe("fail");
