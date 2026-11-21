@@ -32,9 +32,9 @@ export interface FullAnalysis {
 
 export async function analyze(
   rawUrl: string,
-  deps: { resolve: Resolver; psiKey?: string; fetchImpl?: typeof fetch; psi?: (url: string) => Promise<PsiLike | null>; sector?: SectorId },
+  deps: { resolve: Resolver; psiKey?: string; fetchImpl?: typeof fetch; psi?: (url: string) => Promise<PsiLike | null>; sector?: SectorId; dnsAtProxy?: boolean },
 ): Promise<FullAnalysis> {
-  const fetched = await safeFetch(rawUrl, { resolve: deps.resolve, fetchImpl: deps.fetchImpl });
+  const fetched = await safeFetch(rawUrl, { resolve: deps.resolve, fetchImpl: deps.fetchImpl, dnsAtProxy: deps.dnsAtProxy });
   assertReadable(readPage(fetched.html, fetched.finalUrl));
   // Speed is measured on the final URL (after redirects); its failure never blocks the report.
   const psi = await (deps.psi ? deps.psi(fetched.finalUrl) : runPsi(fetched.finalUrl, deps.psiKey, deps.fetchImpl)).catch(() => null);

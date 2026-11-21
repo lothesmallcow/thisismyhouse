@@ -100,7 +100,7 @@ consent for the free preview, kept 12 months.
 ## Running it
 
 ```
-npm test                         # 96 unit tests
+npm test                         # 98 unit tests
 npm run build && npm run preview # then, in another terminal:
 npm run scorer:selftest          # our sites >= 90, rewrites benchmark.json
 npx tsx scripts/scorer/flow-check.ts
@@ -127,16 +127,30 @@ too long (-1). P.IVA flag: a private host with one apartment may not have one. U
 (>= 90) it needs those fixes; it is not in the benchmark and nothing was changed in the client's
 repo without Lorenzo.
 
-## Phase 3 (real Milan sites): not run here
+## Phase 3: 10 real Milan studio sites (21 Nov 2026)
 
-This build environment cannot reach outside sites (DNS and proxy blocked) and PSI answers 429
-without a key. The batch command above, with the list in `prospects/studi-milano-esempio.txt`
-(11 studios found during research), is ready to run on Lorenzo's computer.
-Checks most likely to be noisy or unfair on real sites, to review first:
+Run from this environment after 10 studio domains were added to its network allowlist, through the
+egress proxy (`NODE_USE_ENV_PROXY=1 SCORER_VIA_PROXY=1 npm run scorer:batch -- prospects/studi-milano.txt`),
+speed by local Lighthouse (no PSI key). Names and per-site results stay in the git-ignored
+`prospects/` folder; only anonymous aggregates are written here.
+
+- Every site was read and recognised as fitness on its own. Scores (rubric 2.1.0): 49, 52, 60, 63, 65,
+  69, 75, 80, 88, 90. Median about 67. Most common lost points: speed on phones, reviews not shown,
+  booking not in the header, no trial offer, accessibility.
+- Unfair check found and fixed (2.0.0 -> 2.1.0): `legal.cookie` failed 7 of 10, but 6 of them had a
+  banner from their theme or a plugin we did not know (theme GDPR bars, Joomla hints, Wix consent, custom
+  banners). It now also reads banner markers in the raw HTML (often hidden until a script shows it),
+  looks for a reject option, and treats Google Consent Mode without a visible banner as "check by hand".
+- Lenient checks to watch (they pass almost everyone, so they separate little): `local.address` 10/10,
+  `content.whatwhere` 10/10, `trust.team` 9/10 (words like "team" or "staff" are common), `info.hours`
+  9/10 (JSON-LD opening hours from SEO plugins count, even if they are the desk's hours, not classes).
+- `conv.primary` counts a link to a "calendario" page as booking: on these sites it was the booking page,
+  but it may not always be.
+- Still not covered: one site on the list was not in the allowlist (20 hosts per request).
+
+Checks most likely to be noisy on other sectors, to review when they are first used:
 - `info.prices`: any "€" counts (also a share capital in the footer).
-- `trust.team`: words like "team" or "staff" are common in menus.
 - `conv.early`: some themes build the menu with JavaScript, so header links are not in the HTML.
-- `legal.cookie`: a consent tool loaded through Google Tag Manager is invisible to us.
 - `local.address`: the street pattern can miss unusual addresses or catch a random "via".
 - Sector guess: pages that talk about several things (hotel with spa, gym with physiotherapy).
 - Speed: lab runs differ between machines (CI vs PSI); bands are wide but borderline sites can move.

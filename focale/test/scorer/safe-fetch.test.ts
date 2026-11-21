@@ -61,6 +61,13 @@ describe("safeFetch", () => {
       new Promise((_r, reject) => init?.signal?.addEventListener("abort", () => reject(new Error("aborted"))))) as typeof fetch;
     await expect(safeFetch("https://slow.example.com/", { resolve: publicDns, fetchImpl: slow, timeoutMs: 50 })).rejects.toMatchObject({ code: "too-slow" });
   });
+  it("behind a proxy it skips local DNS but still refuses IP literals and local names on every hop", async () => {
+    const noDns = async () => { throw new Error("no DNS here"); };
+    const ok = await safeFetch("https://studio.example.com/", { resolve: noDns, dnsAtProxy: true, fetchImpl: (async () => html()) as typeof fetch });
+    expect(ok.finalUrl).toBe("https://studio.example.com/");
+    const toLocal = (async () => new Response(null, { status: 302, headers: { location: "http://10.0.0.1/admin" } })) as typeof fetch;
+    await expect(safeFetch("https://studio.example.com/", { resolve: noDns, dnsAtProxy: true, fetchImpl: toLocal })).rejects.toMatchObject({ code: "blocked" });
+  });
   it("reports error statuses", async () => {
     await expect(safeFetch("https://a.example.com/", { resolve: publicDns, fetchImpl: (async () => html("no", 404)) as typeof fetch })).rejects.toMatchObject({ code: "status" });
   });

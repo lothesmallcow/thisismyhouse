@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "date": "2026-11-21",
   "notes": "Every sector profile totals 100 (common block 68 + sector block 32, some sectors move points into trust). Checks are automatable and deterministic for the same page and the same speed data. Speed uses real-user data (CrUX) when Google has it, otherwise lab data in wide bands. Flags (points 0) are information for a professional, never a verdict. Sector vocabularies are part of the rubric and versioned with it. Evidence: reports/Website Scorer studi fitness Milano.md and reports/Requisiti siti per settore.md.",
   "categories": [

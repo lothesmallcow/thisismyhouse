@@ -132,6 +132,13 @@ describe("legal", () => {
     expect(run("legal.cookie", page("", '<script src="https://www.googletagmanager.com/gtag/js"></script><script src="https://consent.cookiebot.com/uc.js"></script>'))).toBe("partial");
     expect(run("legal.cookie", page("", '<script>var _iub={csConfiguration:{"rejectButtonDisplay":true}}</script><script src="https://cdn.iubenda.com/cs/iubenda_cs.js"></script>'))).toBe("pass");
   });
+  it("theme and plugin banners count, found in the raw HTML even when hidden", () => {
+    const gtag = '<script src="https://www.googletagmanager.com/gtag/js?id=G-X"></script>';
+    expect(run("legal.cookie", page('<div class="mfn-gdpr" style="display:none"><a>Accetta</a><a>Rifiuta</a></div>', gtag))).toBe("pass");
+    expect(run("legal.cookie", page('<div id="redim-cookiehint"><a>Accetto</a></div>', gtag))).toBe("partial");
+    expect(run("legal.cookie", page("<p>ciao</p>", `${gtag}<script>gtag('consent','default',{ad_storage:'denied'})</script>`))).toBe("partial");
+    expect(run("legal.cookie", page("<p>ciao</p>", gtag))).toBe("fail");
+  });
   it("VAT is a flag, never points", () => {
     expect(run("legal.vat", page("<footer>P.IVA 01234567890</footer>"))).toBe("flag-ok");
     expect(run("legal.vat", page("<footer>Studio</footer>"))).toBe("flag-warn");

@@ -106,7 +106,16 @@ export const dohResolver =
 
 export async function safeFetch(
   raw: string,
-  opts: { resolve: Resolver; fetchImpl?: typeof fetch; maxBytes?: number; timeoutMs?: number; maxRedirects?: number; userAgent?: string },
+  opts: {
+    resolve: Resolver;
+    fetchImpl?: typeof fetch;
+    maxBytes?: number;
+    timeoutMs?: number;
+    maxRedirects?: number;
+    userAgent?: string;
+    /** Behind an egress proxy that resolves names itself and reaches only public hosts (CLI only). */
+    dnsAtProxy?: boolean;
+  },
 ): Promise<FetchedPage> {
   const fetchImpl = opts.fetchImpl ?? fetch;
   const maxBytes = opts.maxBytes ?? 1_500_000;
@@ -115,9 +124,11 @@ export async function safeFetch(
 
   for (let hop = 0; hop <= (opts.maxRedirects ?? 4); hop++) {
     checkUrlShape(url);
-    const ips = await opts.resolve(url.hostname);
-    if (!ips.length) throw new ScorerError("unreachable", "Non troviamo questo sito: controlla l'indirizzo.");
-    if (ips.some(isPrivateIp)) throw new ScorerError("blocked", "Questo indirizzo non è un sito pubblico.");
+    if (!opts.dnsAtProxy) {
+      const ips = await opts.resolve(url.hostname);
+      if (!ips.length) throw new ScorerError("unreachable", "Non troviamo questo sito: controlla l'indirizzo.");
+      if (ips.some(isPrivateIp)) throw new ScorerError("blocked", "Questo indirizzo non è un sito pubblico.");
+    }
 
     const ctl = new AbortController();
     const left = deadline - Date.now();

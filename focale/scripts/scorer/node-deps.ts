@@ -13,6 +13,12 @@ export const nodeResolver: Resolver = async (host) => {
   return all.map((a) => a.address);
 };
 export const psiKey = process.env.PSI_KEY;
+/**
+ * SCORER_VIA_PROXY=1: the machine has no DNS of its own and reaches the web only through an egress
+ * proxy (HTTPS_PROXY), which resolves names and reaches only public hosts. Node's fetch is told to
+ * use it with NODE_USE_ENV_PROXY=1. The URL checks (no IPs, no local names) still run on every hop.
+ */
+export const dnsAtProxy = process.env.SCORER_VIA_PROXY === "1";
 
 let chrome: { port: number; kill: () => Promise<void> | void } | null = null;
 

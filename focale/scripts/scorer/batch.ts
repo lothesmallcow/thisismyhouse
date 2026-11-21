@@ -13,7 +13,7 @@ import { basename } from "node:path";
 import { analyze } from "../../src/scorer/analyze";
 import { ScorerError } from "../../src/scorer/safe-fetch";
 import type { SectorId } from "../../src/scorer/types";
-import { closeSpeed, nodeResolver, speed } from "./node-deps";
+import { closeSpeed, dnsAtProxy, nodeResolver, speed } from "./node-deps";
 
 const file = process.argv[2];
 if (!file) {
@@ -30,7 +30,7 @@ const md: string[] = [`# Analisi siti: ${basename(file)} (${new Date().toISOStri
 for (const line of lines) {
   const [url, sec] = line.split(",").map((x) => x.trim());
   try {
-    const full = await analyze(url, { resolve: nodeResolver, psi: speed, sector: (sec || undefined) as SectorId | undefined });
+    const full = await analyze(url, { resolve: nodeResolver, psi: speed, dnsAtProxy, sector: (sec || undefined) as SectorId | undefined });
     const { report: r, recommendation: rec } = full.results[full.chosen];
     const cat = (id: string) => {
       const c = r.categories.find((x) => x.id === id);

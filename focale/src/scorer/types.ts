@@ -112,6 +112,12 @@ export interface PageSignals {
   /** Script sources, iframe sources and inline script text, lowercased, for vendor detection. */
   vendorBlob: string;
   multilingual: boolean;
+  /**
+   * Cookie banner evidence from the raw HTML (banners are often hidden until a script shows them):
+   * the marker that looks like a banner (class, id or script name), whether a reject option is
+   * written anywhere, and whether Google Consent Mode defaults are set.
+   */
+  consent: { banner: string | null; reject: boolean; consentMode: boolean };
 }
 
 export interface LinkSignal {

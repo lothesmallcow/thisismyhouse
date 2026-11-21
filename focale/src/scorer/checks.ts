@@ -101,7 +101,8 @@ function mainAction(p: PageSignals, v: Vocab) {
     if (isTel(h) || h.startsWith("mailto:") || isWa(h) || test(ota, h)) continue;
     const host = hostOf(hosts, h);
     if (host) return { kind: "host" as const, label: host.replace(/\.$/, "") };
-    if (test(w, l.text) || (pth && pth.test(pathOf(h)))) return { kind: "link" as const, label: l.text.slice(0, 40) || l.href.slice(0, 40), early: l.early };
+    if (test(w, l.text)) return { kind: "link" as const, label: l.text.slice(0, 40) || l.href.slice(0, 40), early: l.early };
+    if (pth && pth.test(pathOf(h))) return { kind: "link" as const, label: pathOf(h), early: l.early };
   }
   if (hosts && hosts.test(p.vendorBlob)) return { kind: "host" as const, label: hostOf(hosts, p.vendorBlob)!.replace(/\.$/, "") };
   if (p.buttons.some((b) => test(w, b))) return { kind: "button" as const, label: "" };
@@ -290,14 +291,16 @@ export const CHECKS: Record<string, Check> = {
   "legal.cookie": (p) => {
     const blob = p.vendorBlob;
     const trackers = TRACKERS.filter((t) => blob.includes(t));
-    const cmp = CMPS.find(([k]) => blob.includes(k));
+    const cmp = CMPS.find(([k]) => blob.includes(k))?.[1] ?? (p.consent.banner ? "banner del sito" : null);
     if (!trackers.length && !cmp) return ok("Non abbiamo trovato strumenti che tracciano i visitatori: il banner non serve.");
     if (cmp) {
-      const reject = /rejectbuttondisplay"?\s*:\s*true/.test(blob) || /\brifiuta\b/i.test(p.text);
+      const reject = /rejectbuttondisplay"?\s*:\s*true/.test(blob) || p.consent.reject;
       return reject
-        ? ok(`C'è un banner cookie (${cmp[1]}) con il tasto per rifiutare.`)
-        : { status: "partial", ratio: 0.8, found: `C'è un banner cookie (${cmp[1]}): controlla a mano che si possa rifiutare con un tasto come Accetta.` };
+        ? ok(`C'è un banner cookie (${cmp}) con un'opzione per rifiutare.`)
+        : { status: "partial", ratio: 0.8, found: `C'è un banner cookie (${cmp}): controlla a mano che si possa rifiutare con un tasto come Accetta.` };
     }
+    if (p.consent.consentMode)
+      return { status: "partial", ratio: 0.5, found: "Il sito usa la modalità consenso di Google, ma non vediamo il banner nella pagina: potrebbe arrivare da Google Tag Manager. Controlla a mano." };
     return no("Il sito carica strumenti che possono tracciare i visitatori, ma non abbiamo trovato un banner per il consenso.");
   },
   "legal.vat": (p) => {

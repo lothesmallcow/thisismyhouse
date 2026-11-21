@@ -6,7 +6,7 @@
  */
 import { analyze, rubric } from "../../src/scorer/analyze";
 import type { SectorId } from "../../src/scorer/types";
-import { closeSpeed, nodeResolver, speed } from "./node-deps";
+import { closeSpeed, dnsAtProxy, nodeResolver, speed } from "./node-deps";
 
 const args = process.argv.slice(2);
 const url = args.find((a) => !a.startsWith("--") && args[args.indexOf(a) - 1] !== "--settore");
@@ -15,7 +15,7 @@ if (!url) {
   console.log(`Uso: npm run scorer -- <indirizzo> [--settore ${rubric.sectors.map((s) => s.id).join("|")}] [--json]`);
   process.exit(1);
 }
-const full = await analyze(url, { resolve: nodeResolver, psi: speed, sector: args.includes("--settore") ? sector : undefined }).catch(async (e: Error) => {
+const full = await analyze(url, { resolve: nodeResolver, psi: speed, dnsAtProxy, sector: args.includes("--settore") ? sector : undefined }).catch(async (e: Error) => {
   console.log(`Non analizzato: ${e.message}`);
   await closeSpeed();
   process.exit(2);

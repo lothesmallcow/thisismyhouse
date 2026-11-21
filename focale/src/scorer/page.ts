@@ -31,6 +31,13 @@ export function readPage(html: string, finalUrl: string): PageSignals {
   for (const f of root.querySelectorAll("iframe")) vendor.push((f.getAttribute("src") || "").toLowerCase());
   for (const l of root.querySelectorAll("link[href]")) vendor.push((l.getAttribute("href") || "").toLowerCase());
 
+  const bannerMatch = lower.match(/(cookie[-_]?(?:banner|bar|notice|consent|hint|alert|popup|modal|law|box|message|dialog|wall)|cookieconsent|cookiehint|consentpolicy|gdpr[-_]?(?:banner|bar|cookie|button|content|popup)|mfn-gdpr|cmp[-_]?banner|cc-(?:banner|window)|[a-z]+-consent-(?:banner|bar|modal))/);
+  const consent = {
+    banner: bannerMatch ? bannerMatch[1] : null,
+    reject: /(rifiut|reject|decline|rejecttext|nega il consenso|solo (?:i |cookie )?(?:tecnici|necessari)|only necessary|deny)/.test(lower),
+    consentMode: /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]/.test(lower),
+  };
+
   const head = root.querySelector("head");
   const title = squash(root.querySelector("title")?.text || "");
   const description = squash(head?.querySelector('meta[name="description" i]')?.getAttribute("content") || root.querySelector('meta[name="description"]')?.getAttribute("content") || "");
@@ -100,6 +107,7 @@ export function readPage(html: string, finalUrl: string): PageSignals {
     hasAggregateRating,
     vendorBlob: vendor.join("\n"),
     multilingual,
+    consent,
   };
 }
 
