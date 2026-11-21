@@ -15,6 +15,7 @@ import benchmark from "../../scorer/benchmark.json";
 import { CONSENT } from "../../scorer/consent";
 import { breadcrumbs } from "../../lib/schema";
 import sampleHtml from "../../../test/scorer/fixtures/old-studio.html?raw";
+import goodHtml from "../../../test/scorer/fixtures/new-studio.html?raw";
 
 // Invented page and invented lab numbers, clearly labelled as an example on the page.
 const samplePsi = {
@@ -30,8 +31,21 @@ const samplePsi = {
   },
 };
 const sample = fromPartsAll("http://www.studio-esempio.it/", sampleHtml, samplePsi, { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
+const goodPsi = {
+  lighthouseResult: {
+    lighthouseVersion: "13.0.0",
+    audits: {
+      "largest-contentful-paint": { numericValue: 2900 },
+      "total-blocking-time": { numericValue: 120 },
+      "cumulative-layout-shift": { numericValue: 0.02 },
+      "total-byte-weight": { numericValue: 1_400_000 },
+    },
+    categories: { accessibility: { score: 0.93 } },
+  },
+};
+const sampleGood = fromPartsAll("https://www.studio-esempio-due.it/", goodHtml, goodPsi, { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
 const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
-const data = { sectors, offer, benchmark, consent: CONSENT, sample, rubricVersion: rubric.version };
+const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, rubricVersion: rubric.version };
 const best = (benchmark.templates as unknown as Record<string, { total: number; label: string; path: string }>).fitness;
 
 const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)).size;
@@ -75,7 +89,9 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
         <p class="error sc-form__error" id="sc-error" role="alert" data-sc-error></p>
       </form>
       <p class="sc-privacy">Il risultato lo vedi solo tu: non lo pubblichiamo e non salviamo la pagina. Guardiamo solo la pagina che indichi, come la vede chiunque.</p>
-      <p class="sc-sample-row"><button type="button" class="link sc-linkbtn" data-sc-sample>Non hai un sito a portata di mano? Guarda un esempio di risultato</button></p>
+      <p class="sc-sample-row">Non hai un sito a portata di mano? Guarda un esempio su un sito inventato:
+        <button type="button" class="link sc-linkbtn" data-sc-sample="old">uno vecchio</button> oppure
+        <button type="button" class="link sc-linkbtn" data-sc-sample="good">uno quasi a posto</button></p>
 
       <ol class="sc-steps" data-sc-steps hidden aria-live="polite">
         <li>Apriamo la pagina</li>
@@ -99,6 +115,7 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
         </div>
         <div class="sc-top__text">
           <h2 id="sc-res-t" data-sc-verdict></h2>
+          <p class="sc-top__bands">Le fasce: sotto 50 molto da sistemare, da 50 a 74 buone basi, da 75 a 89 buono, da 90 in su ottimo.</p>
           <p class="sc-top__url" data-sc-url></p>
           <div class="field sc-top__sector">
             <label for="sc-sector-now">Valutato come</label>
@@ -112,6 +129,8 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
       </div>
 
       <div class="sc-cats" data-sc-cats></div>
+
+      <div class="sc-block" data-sc-why></div>
 
       <div class="sc-block">
         <h2>Le 5 cose che valgono più punti</h2>
@@ -410,6 +429,10 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
     gap: 0.75rem;
     justify-items: start;
   }
+  .sc-top__bands {
+    color: var(--grafite);
+    font-size: 0.95rem;
+  }
   .sc-top__url {
     color: var(--grafite);
     overflow-wrap: anywhere;
@@ -436,6 +459,35 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
+  .sc-cat__note {
+    margin-top: 0.4rem !important;
+    color: var(--grafite);
+    font-size: 0.95rem;
+  }
+  .sc-why {
+    list-style: none;
+    padding: 0;
+    margin: 1.25rem 0 0;
+    display: grid;
+    gap: 0;
+    max-width: 52rem;
+  }
+  .sc-why li {
+    display: grid;
+    grid-template-columns: 4rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--filo);
+  }
+  .sc-why__pts {
+    font-weight: 800;
+    color: #b3261a;
+  }
+  .sc-why small {
+    display: block;
+    color: var(--grafite);
+    margin-top: 0.15rem;
+  }
   .sc-cat__row {
     display: flex;
     justify-content: space-between;
@@ -443,7 +495,6 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
     font-weight: 600;
   }
   .sc-cat__row span:last-child {
-    font-variant-numeric: tabular-nums;
     color: var(--grafite);
     white-space: nowrap;
   }
@@ -584,7 +635,6 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
   }
   .sc-all li span:last-child {
     white-space: nowrap;
-    font-variant-numeric: tabular-nums;
     color: var(--grafite);
   }
   .sc-all small {

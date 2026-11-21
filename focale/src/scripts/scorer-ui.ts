@@ -25,6 +25,7 @@ interface Data {
   benchmark: { templates: Record<string, { label: string; path: string; total: number; categories?: { id: string; label: string; earned: number; max: number }[] }> };
   consent: { version: string; text: string };
   sample: FullAnalysis;
+  sampleGood: FullAnalysis;
   rubricVersion: string;
 }
 
@@ -131,10 +132,12 @@ export function initScorer() {
     }
   });
 
-  $("[data-sc-sample]").addEventListener("click", () => {
-    isSample = true;
-    show(data.sample);
-  });
+  document.querySelectorAll<HTMLButtonElement>("[data-sc-sample]").forEach((b) =>
+    b.addEventListener("click", () => {
+      isSample = true;
+      show(b.dataset.scSample === "good" ? data.sampleGood : data.sample);
+    }),
+  );
   $("[data-sc-print]").addEventListener("click", () => {
     const all = $<HTMLDetailsElement>(".sc-all");
     all.open = true;
@@ -160,6 +163,7 @@ export function initScorer() {
     $("[data-sc-sample-note]").hidden = !isSample;
     drawTop(report, full, sector, animate);
     drawCats(report);
+    drawWhy(report);
     drawFixes(report);
     drawFlags(report);
     drawAll(report);
@@ -209,18 +213,59 @@ export function initScorer() {
     requestAnimationFrame(tick);
   }
 
+  // Each category says in words where its points went: "Persi 3,5 punti: ..." or "Tutti i punti."
   function drawCats(report: Report) {
     const box = $("[data-sc-cats]");
     box.replaceChildren(
-      ...report.categories.map((c) =>
-        el(
+      ...report.categories.map((c) => {
+        const lost = report.checks.filter((x) => x.category === c.id && x.max > 0 && x.status !== "unmeasured" && x.earned < x.max);
+        const unmeasured = report.checks.some((x) => x.category === c.id && x.status === "unmeasured");
+        const note = !c.measured && !c.max
+          ? "Non misurata questa volta: non conta nel punteggio."
+          : lost.length
+            ? `Persi ${pts(c.max - c.earned)} punti. Da raggiungere: ${lost.map((x) => (/^(Google|WhatsApp|HTTPS)/.test(x.title) ? x.title : x.title.charAt(0).toLowerCase() + x.title.slice(1))).join("; ")}.`
+            : unmeasured ? "Tutti i punti misurati, ma una parte non è stata misurata." : "Tutti i punti.";
+        return el(
           "div",
           { class: "sc-cat" },
-          el("p", { class: "sc-cat__row" }, el("span", {}, c.label), el("span", {}, c.measured ? `${pts(c.earned)} su ${c.max}` : "non misurata")),
+          el("p", { class: "sc-cat__row" }, el("span", {}, c.label), el("span", {}, c.measured ? `${pts(c.earned)} su ${c.max}` : c.max ? `${pts(c.earned)} su ${c.max} misurati` : "non misurata")),
           bar(c.max ? c.earned / c.max : 0),
+          el("p", { class: "sc-cat__note" }, note),
+        );
+      }),
+    );
+  }
+
+  // "Perché 63 e non 100": every lost point, heaviest first, each with what we found.
+  function drawWhy(report: Report) {
+    const box = $("[data-sc-why]");
+    const lost = report.checks
+      .filter((x) => x.max > 0 && x.status !== "unmeasured" && x.earned < x.max)
+      .sort((a, b) => b.max - b.earned - (a.max - a.earned));
+    const passed = report.checks.filter((x) => x.max > 0 && x.status === "pass").length;
+    const measured = report.checks.filter((x) => x.max > 0 && x.status !== "unmeasured").length;
+    const head = el("h2", {}, report.total >= 100 ? "Perché 100" : `Perché ${report.total} e non 100`);
+    const intro = el(
+      "p",
+      { class: "sc-sub" },
+      report.total >= 100
+        ? `Tutti i ${measured} controlli misurati sono pieni. 100 vuol dire che non abbiamo trovato niente da sistemare, non che il sito porti per forza più clienti.`
+        : `Il punteggio è la somma di ${measured} controlli, ognuno con i suoi punti (in tutto 100). Ne hai superati ${passed} in pieno; i punti mancanti vengono ${lost.length === 1 ? "da questo controllo" : `da questi ${lost.length}, dal più pesante`}.` +
+          (report.partial ? " Alcuni controlli non sono stati misurati: il voto è la quota dei punti misurati." : ""),
+    );
+    const list = el(
+      "ul",
+      { class: "sc-why" },
+      ...lost.map((x) =>
+        el(
+          "li",
+          {},
+          el("span", { class: "sc-why__pts" }, `−${pts(x.max - x.earned)}`),
+          el("span", {}, el("strong", {}, x.title), x.status === "partial" ? " (in parte)" : "", el("small", {}, x.found)),
         ),
       ),
     );
+    box.replaceChildren(head, intro, ...(lost.length ? [list] : []));
   }
 
   function drawFixes(report: Report) {
