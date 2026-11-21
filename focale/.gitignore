@@ -12,3 +12,4 @@ docs/screens/*.png
 docs/screens/animations/*.png
 preview/
 prospects/
+.wrangler/

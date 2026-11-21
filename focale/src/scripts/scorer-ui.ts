@@ -362,7 +362,13 @@ export function initScorer() {
         }),
       });
       const body = await r.json().catch(() => null);
-      if (!r.ok) throw new Error(body?.error || "Non siamo riusciti a inviare la richiesta. Riprova o scrivici su WhatsApp.");
+      if (r.status === 503 || r.status === 404) {
+        // Storage not set up yet (or the static preview): the site's own request form still works.
+        leadErr.replaceChildren("Da qui la richiesta non parte ancora. ", el("a", { class: "link", href: "/anteprima-gratuita/" }, "Chiedi l'anteprima con il modulo"), ` e scrivi l'indirizzo ${current.page.finalUrl}.`);
+        btn.disabled = false;
+        return;
+      }
+      if (!r.ok) throw new Error(body?.error || "Non siamo riusciti a inviare la richiesta. Riprova tra poco.");
       $("[data-sc-lead-ok]").hidden = false;
       leadForm.querySelectorAll("input, button").forEach((x) => ((x as HTMLInputElement).disabled = true));
     } catch (x) {

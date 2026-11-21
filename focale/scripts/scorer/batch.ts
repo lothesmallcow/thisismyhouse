@@ -13,7 +13,7 @@ import { basename } from "node:path";
 import { analyze } from "../../src/scorer/analyze";
 import { ScorerError } from "../../src/scorer/safe-fetch";
 import type { SectorId } from "../../src/scorer/types";
-import { nodeResolver, psiKey } from "./node-deps";
+import { closeSpeed, nodeResolver, speed } from "./node-deps";
 
 const file = process.argv[2];
 if (!file) {
@@ -30,7 +30,7 @@ const md: string[] = [`# Analisi siti: ${basename(file)} (${new Date().toISOStri
 for (const line of lines) {
   const [url, sec] = line.split(",").map((x) => x.trim());
   try {
-    const full = await analyze(url, { resolve: nodeResolver, psiKey, sector: (sec || undefined) as SectorId | undefined });
+    const full = await analyze(url, { resolve: nodeResolver, psi: speed, sector: (sec || undefined) as SectorId | undefined });
     const { report: r, recommendation: rec } = full.results[full.chosen];
     const cat = (id: string) => {
       const c = r.categories.find((x) => x.id === id);
@@ -41,13 +41,19 @@ for (const line of lines) {
     md.push(`## ${r.url}`, "", `**${r.total}/100**${r.partial ? " (parziale)" : ""}, ${r.sectorLabel}. Pacchetto: ${rec.packageId}.`, "", ...r.fixes.slice(0, 3).map((f) => `- +${f.gain} ${f.title}: ${f.found}`), warn ? `- Da verificare: ${warn}` : "", "");
     console.log(`${r.total}\t${r.url}`);
   } catch (e) {
-    const msg = e instanceof ScorerError ? e.message : (e as Error).message;
+    const code = e instanceof ScorerError ? e.code : "";
+    // For prospecting, "only a social profile" or "empty page" is a finding, not a failure.
+    const msg =
+      code === "social" ? "NESSUN SITO PROPRIO: c'è solo un profilo o una pagina di link (candidato a un sito nuovo)"
+      : code === "empty" ? "PAGINA VUOTA SENZA BROWSER: costruita con JavaScript, da guardare a mano"
+      : (e as Error).message;
     rows.push([url, sec || "", "", "", "", "", "", "", "", "", "", "", "", "", msg]);
     md.push(`## ${url}`, "", `Non analizzato: ${msg}`, "");
     console.log(`ERR\t${url}\t${msg}`);
   }
   await new Promise((r) => setTimeout(r, 3000));
 }
+await closeSpeed();
 mkdirSync("prospects", { recursive: true });
 const stem = `prospects/${new Date().toISOString().slice(0, 10)}-${basename(file).replace(/\.\w+$/, "")}`;
 const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");

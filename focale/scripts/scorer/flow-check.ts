@@ -20,9 +20,10 @@ await p.route("**/api/score", async (r) => {
   await new Promise((res) => setTimeout(res, 1200));
   r.fulfill({ json: full });
 });
+const leadStatus = Number(process.env.LEAD_STATUS || 200);
 await p.route("**/api/lead", (r) => {
   leadBody = r.request().postDataJSON();
-  r.fulfill({ json: { ok: true } });
+  r.fulfill(leadStatus === 200 ? { json: { ok: true } } : { status: leadStatus, json: { error: "x" } });
 });
 await p.goto(base + "/analisi-sito/", { waitUntil: "networkidle" });
 await p.click("button[type=submit]");
@@ -41,7 +42,11 @@ const noConsent = await p.textContent("[data-sc-lead-error]");
 const sentWithout = leadBody;
 await p.check("[data-sc-consent]");
 await p.click("[data-sc-lead] button[type=submit]");
-await p.waitForSelector("[data-sc-lead-ok]:not([hidden])");
+if (leadStatus === 200) await p.waitForSelector("[data-sc-lead-ok]:not([hidden])");
+else {
+  await p.waitForSelector('[data-sc-lead-error] a[href="/anteprima-gratuita/"]');
+  console.log("fallback:", await p.textContent("[data-sc-lead-error]"));
+}
 await p.screenshot({ path: "screenshots/analisi-390-flow.png", fullPage: false });
 console.log({ emptyErr, total, sector, totalAltro, noConsent, sentWithout, leadBody, errors, expected: { fitness: full.results.fitness.report.total, altro: full.results.altro.report.total } });
 await b.close();

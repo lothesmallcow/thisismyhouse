@@ -109,6 +109,23 @@ PSI_KEY=... npm run scorer:batch -- prospects/studi-milano-esempio.txt
 ```
 
 `prospects/` is git-ignored: results about other businesses stay on Lorenzo's computer.
+Without `PSI_KEY` the CLI and the batch measure speed with Lighthouse on the same computer (Chrome
+must be installed), so they work with no setup. In the batch, a social profile instead of a site is
+reported as "NESSUN SITO PROPRIO": for prospecting that is a finding, not an error.
+
+`npx tsx scripts/scorer/e2e-local.ts <local server> <public url> [sector]` runs the whole real
+pipeline (HTTP fetch, redirects, reading, Lighthouse, scoring) on a site served locally under its
+public address. `npx wrangler pages dev dist --kv SCORER_KV` runs the Functions in Cloudflare's own
+runtime (checked on 21 Nov 2026: same-origin, private and social refusals, consent, KV storage).
+
+### First real site: Casa Turati 3 (21 Nov 2026)
+
+Our real client site (other repo, built locally) scored **84/100** as hospitality, recognised on
+its own, real CIN found. Lost points: lab LCP 4,3 s (-7), phone number not tappable (-2), no
+WhatsApp (-2), no direct-booking perk (-2), reviews mentioned but not linked (-2,5), description
+too long (-1). P.IVA flag: a private host with one apartment may not have one. Under our own rule
+(>= 90) it needs those fixes; it is not in the benchmark and nothing was changed in the client's
+repo without Lorenzo.
 
 ## Phase 3 (real Milan sites): not run here
 
