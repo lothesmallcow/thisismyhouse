@@ -21,6 +21,10 @@ def fix_links(html, up):
     return html
 page = open(f"{SRC}/analisi-sito/index.html").read(); grab(page)
 page = fix_links(page, "../").replace('"../', '"').replace("(../", "(").replace("'../", "'")
+real = "/home/user/thisismyhouse/focale/prospects/real-preview-public.json"
+if os.path.exists(real):
+    data = open(real).read().replace("</", "<\\/")
+    page = page.replace("</body>", f'<script type="application/json" id="sc-real">{data}</script></body>')
 open(f"{OUT}/index.html", "w").write(page)
 os.makedirs(f"{OUT}/esempio-fitness")
 demo = open(f"{SRC}/analisi-sito/esempio-fitness/index.html").read(); grab(demo)
@@ -39,5 +43,7 @@ for n in sorted(need):
     if os.path.exists(f"{SRC}/{n}"):
         os.makedirs(os.path.dirname(f"{OUT}/{n}"), exist_ok=True); shutil.copy(f"{SRC}/{n}", f"{OUT}/{n}")
     else: print("missing", n)
+import glob
+for js in glob.glob(f"{SRC}/assets/*.js"): shutil.copy(js, f"{OUT}/assets/")
 for f in ["favicon.svg", "favicon-32.png"]: shutil.copy(f"{SRC}/{f}", f"{OUT}/{f}")
 print(sorted(need))

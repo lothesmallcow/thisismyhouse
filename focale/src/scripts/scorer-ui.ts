@@ -26,6 +26,7 @@ interface Data {
   consent: { version: string; text: string };
   sample: FullAnalysis;
   sampleGood: FullAnalysis;
+  checkTitles: string[];
   rubricVersion: string;
 }
 
@@ -45,10 +46,100 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string,
 }
 
 function band(total: number) {
-  if (total >= 90) return { id: "top", text: "Ottimo: il sito lavora bene" };
-  if (total >= 75) return { id: "good", text: "Buono, con qualche punto da recuperare" };
-  if (total >= 50) return { id: "mid", text: "Buone basi, ma perde punti importanti" };
-  return { id: "low", text: "Molto da sistemare" };
+  if (total >= 90) return { id: "top", text: "Ottimo" };
+  if (total >= 75) return { id: "good", text: "Buono" };
+  if (total >= 50) return { id: "mid", text: "Discreto" };
+  return { id: "low", text: "Da sistemare" };
+}
+
+/** One colour per category, the same in the ring, the legend and the bars. */
+const CAT_COLOR: Record<string, string> = {
+  speed: "#5aa2ff",
+  conversion: "#ff9446",
+  local: "#3cc9ae",
+  trust: "#b08cff",
+  a11y: "#ffd23f",
+  legal: "#ff7aa0",
+  content: "#94da5c",
+};
+
+/**
+ * The score ring, like a sleep score: one arc per category, its length the category's weight, filled
+ * as far as its points. Each fill grows by rotating inside a wedge that clips it (transform only).
+ */
+function drawArcs(svg: SVGSVGElement, report: Report) {
+  const R = 80;
+  const C2 = 2 * Math.PI * R;
+  const gap = 5;
+  const cats = report.categories.map((c) => {
+    const weight = report.checks.filter((x) => x.category === c.id && x.max > 0).reduce((t, x) => t + x.max, 0);
+    return { c, weight, ratio: weight ? Math.min(1, c.earned / weight) : 0 };
+  }).filter((x) => x.weight > 0);
+  const total = cats.reduce((t, x) => t + x.weight, 0) || 100;
+  const pt = (deg: number, r: number) => `${100 + r * Math.cos((deg * Math.PI) / 180)} ${100 + r * Math.sin((deg * Math.PI) / 180)}`;
+  const mk = (tag: string, attrs: Record<string, string>) => {
+    const e = document.createElementNS(SVG, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  };
+  const defs = mk("defs", {});
+  const root = mk("g", { transform: "rotate(-90 100 100)" });
+  let acc = 0;
+  cats.forEach(({ c, weight, ratio }, i) => {
+    const span = (weight / total) * 360;
+    const start = acc + gap / 2;
+    const len = Math.max(0.5, span - gap);
+    acc += span;
+    const color = CAT_COLOR[c.id] ?? "#fff";
+    const dash = (deg: number) => `${(deg / 360) * C2} ${C2}`;
+    const off = String(-(start / 360) * C2);
+    root.append(mk("circle", { cx: "100", cy: "100", r: String(R), class: "sc-arc__track", stroke: color, "stroke-dasharray": dash(len), "stroke-dashoffset": off }));
+    const id = `sc-w${i}`;
+    const clip = mk("clipPath", { id });
+    clip.append(mk("path", { d: `M100 100 L${pt(start, 110)} A110 110 0 ${len > 180 ? 1 : 0} 1 ${pt(start + len, 110)} Z` }));
+    defs.append(clip);
+    const fillDeg = len * ratio;
+    const holder = mk("g", { "clip-path": `url(#${id})` });
+    const fill = mk("g", { class: "sc-arc__fill" });
+    (fill as SVGGElement).style.setProperty("--from", `${-fillDeg}deg`);
+    (fill as SVGGElement).style.setProperty("--i", String(i));
+    if (fillDeg > 0) fill.append(mk("circle", { cx: "100", cy: "100", r: String(R), stroke: color, "stroke-dasharray": dash(fillDeg), "stroke-dashoffset": off }));
+    const t = mk("title", {});
+    t.textContent = `${c.label}: ${pts(c.earned)} su ${weight}`;
+    holder.append(fill, t);
+    root.append(holder);
+  });
+  svg.replaceChildren(defs, root);
+}
+
+const SVG = "http://www.w3.org/2000/svg";
+const C = 2 * Math.PI * 70;
+
+/** Ring segments: one arc per item, length proportional to its weight, small gaps between. */
+function segments(svg: SVGSVGElement, items: { w: number; cls: string; title?: string }[], gapDeg = 1.6) {
+  const total = items.reduce((t, x) => t + x.w, 0) || 1;
+  const gap = (gapDeg / 360) * C;
+  let at = 0;
+  svg.replaceChildren(
+    ...items.map((x, i) => {
+      const len = (x.w / total) * C;
+      const c = document.createElementNS(SVG, "circle");
+      c.setAttribute("cx", "80");
+      c.setAttribute("cy", "80");
+      c.setAttribute("r", "70");
+      c.setAttribute("class", x.cls);
+      c.style.setProperty("--i", String(i));
+      c.setAttribute("stroke-dasharray", `${Math.max(0.5, len - gap)} ${C}`);
+      c.setAttribute("stroke-dashoffset", String(-at));
+      if (x.title) {
+        const t = document.createElementNS(SVG, "title");
+        t.textContent = x.title;
+        c.append(t);
+      }
+      at += len;
+      return c;
+    }),
+  );
 }
 
 function bar(ratio: number, after = false) {
@@ -81,8 +172,17 @@ export function initScorer() {
       else li.removeAttribute("aria-current");
     });
   };
+  const scan = $("[data-sc-scan]");
+  const scanT = $("[data-sc-scan-t]");
+  let scanTimer = 0;
+  segments($<SVGSVGElement>("[data-sc-scan-ring]"), data.checkTitles.map(() => ({ w: 1, cls: "sc-scan__seg" })), 4);
   const startSteps = () => {
     steps.hidden = false;
+    scan.hidden = false;
+    let k = 0;
+    scanT.textContent = data.checkTitles[0];
+    window.clearInterval(scanTimer);
+    if (!reduced()) scanTimer = window.setInterval(() => (scanT.textContent = data.checkTitles[++k % data.checkTitles.length]), 700);
     setStep(0);
     let n = 0;
     window.clearInterval(stepTimer);
@@ -92,6 +192,8 @@ export function initScorer() {
   };
   const stopSteps = () => {
     window.clearInterval(stepTimer);
+    window.clearInterval(scanTimer);
+    scan.hidden = true;
     setStep(3);
     window.setTimeout(() => (steps.hidden = true), 400);
   };
@@ -123,7 +225,11 @@ export function initScorer() {
       show(body as FullAnalysis);
     } catch (x) {
       const offline = x instanceof TypeError || (x as Error).message.includes("JSON");
-      err.textContent = offline ? "L'analisi dal vivo non risponde da qui. Riprova tra poco, o guarda l'esempio qui sotto." : (x as Error).message;
+      err.textContent = offline
+        ? realEl
+          ? "In questa pagina di prova l'analisi dal vivo non parte: scegli un sito vero qui sotto, o scrivi l'indirizzo in chat e lo analizziamo."
+          : "L'analisi dal vivo non risponde da qui. Riprova tra poco, o guarda l'esempio qui sotto."
+        : (x as Error).message;
     } finally {
       stopSteps();
       busy = false;
@@ -138,6 +244,33 @@ export function initScorer() {
       show(b.dataset.scSample === "good" ? data.sampleGood : data.sample);
     }),
   );
+  // Private test page only: real sites analysed in advance, injected as #sc-real (never in the public build).
+  const realEl = document.getElementById("sc-real");
+  if (realEl) {
+    const real = JSON.parse(realEl.textContent || "[]") as FullAnalysis[];
+    const pick = el(
+      "select",
+      { id: "sc-real-pick", class: "sc-real__pick" },
+      el("option", { value: "" }, "Scegli un sito"),
+      ...real.map((r, i) => el("option", { value: String(i) }, `${r.page.finalUrl.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")} (${r.results[r.chosen].report.total})`)),
+    );
+    pick.addEventListener("change", () => {
+      const r = real[Number((pick as HTMLSelectElement).value)];
+      if (!r) return;
+      isSample = false;
+      show(r);
+    });
+    $("[data-sc-sample]").closest("p")!.after(
+      el(
+        "div",
+        { class: "sc-real" },
+        el("p", { class: "sc-real__k" }, "Pagina di prova privata: siti veri analizzati davvero, con il motore vero. Non condividere."),
+        el("label", { for: "sc-real-pick" }, "Siti veri già analizzati"),
+        pick,
+      ),
+    );
+  }
+
   $("[data-sc-print]").addEventListener("click", () => {
     const all = $<HTMLDetailsElement>(".sc-all");
     all.open = true;
@@ -185,18 +318,37 @@ export function initScorer() {
     const ring = $("[data-sc-ring]");
     const b = band(report.total);
     ring.dataset.band = b.id;
-    ring.setAttribute("aria-label", `Punteggio ${report.total} su 100`);
-    const arc = $<SVGCircleElement>("[data-sc-arc]");
-    arc.style.strokeDashoffset = String(439.82 * (1 - report.total / 100));
+    ring.setAttribute("aria-label", `Punteggio ${report.total} su 100: ${b.text.toLowerCase()}`);
+    drawArcs($<SVGSVGElement>("[data-sc-arcs]"), report);
     $("[data-sc-verdict]").textContent = b.text;
-    $("[data-sc-url]").textContent = report.url;
+    $("[data-sc-url]").textContent = report.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+    const when = new Date(report.measuredAt).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+    const speedSrc = report.perfSource === "field" ? "velocità dalle visite reali" : report.perfSource === "lab" ? "velocità da una prova da telefono" : "velocità non misurata";
+    $("[data-sc-meta]").replaceChildren(el("span", {}, report.sectorLabel), el("span", {}, `analizzato il ${when}`), el("span", {}, speedSrc));
+
     const notes: string[] = [];
-    if (full.guessed === sector && sector !== "altro") notes.push(`Dalla pagina ci sembra: ${data.sectors.find((s) => s.id === sector)?.label.toLowerCase()}. Se non è così, cambia qui sopra: il punteggio si ricalcola subito.`);
+    if (full.guessed === sector && sector !== "altro") notes.push("Il settore l'abbiamo capito dalla pagina: se non è giusto, cambialo in alto e il punteggio si ricalcola subito.");
     if (sector === "altro") notes.push("Con \"Altro\" controlliamo solo quello che serve a qualsiasi attività.");
-    if (report.partial) notes.push("Questa volta non siamo riusciti a misurare la velocità: il punteggio conta solo i controlli misurati. Riprova più tardi per il quadro completo.");
-    else if (report.perfSource === "lab") notes.push("Velocità misurata con una nostra prova da telefono: Google non ha ancora abbastanza dati dalle visite reali.");
-    else if (report.perfSource === "field") notes.push("Velocità misurata sulle visite reali degli ultimi 28 giorni (dati di Google).");
+    if (report.partial) notes.push("Questa volta la velocità non è stata misurata: il voto conta solo i controlli misurati.");
     $("[data-sc-note]").textContent = notes.join(" ");
+
+    // Summary in words: strongest and weakest category, the first fix, how many checks passed.
+    const scored = report.categories.filter((c) => c.max > 0);
+    const byRatio = [...scored].sort((a, c) => c.earned / c.max - a.earned / a.max);
+    const best = byRatio[0];
+    const worst = [...scored].sort((a, c) => c.max - c.earned - (a.max - a.earned))[0];
+    const passed = report.checks.filter((c) => c.max > 0 && c.status === "pass").length;
+    const measured = report.checks.filter((c) => c.max > 0 && c.status !== "unmeasured").length;
+    $("[data-sc-summary]").textContent =
+      report.total >= 90
+        ? `Il sito fa bene quasi tutto quello che controlliamo: ${report.total} punti su 100.`
+        : `Il sito prende ${report.total} punti su 100. Va meglio in ${best.label.toLowerCase()}, perde di più in ${worst.label.toLowerCase()}: da lì viene la maggior parte dei punti mancanti.`;
+    const hl: [string, string][] = [
+      ["Punto forte", `${best.label} (${pts(best.earned)} su ${best.max})`],
+      ["Da sistemare per primo", report.fixes[0] ? `${report.fixes[0].title} (+${pts(report.fixes[0].gain)} punti)` : "Niente di urgente"],
+      ["Controlli superati in pieno", `${passed} su ${measured}`],
+    ];
+    $("[data-sc-highlights]").replaceChildren(...hl.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]));
 
     const n = $("[data-sc-total]");
     if (!animate || reduced()) {
@@ -204,7 +356,7 @@ export function initScorer() {
       return;
     }
     const t0 = performance.now();
-    const dur = 1100;
+    const dur = 1400;
     const tick = (t: number) => {
       const k = Math.min(1, (t - t0) / dur);
       n.textContent = String(Math.round(report.total * (1 - Math.pow(1 - k, 3))));
@@ -213,26 +365,34 @@ export function initScorer() {
     requestAnimationFrame(tick);
   }
 
-  // Each category says in words where its points went: "Persi 3,5 punti: ..." or "Tutti i punti."
+  // The legend under the ring: colour, name, points, a bar in the same colour, where the points went.
   function drawCats(report: Report) {
     const box = $("[data-sc-cats]");
     box.replaceChildren(
-      ...report.categories.map((c) => {
-        const lost = report.checks.filter((x) => x.category === c.id && x.max > 0 && x.status !== "unmeasured" && x.earned < x.max);
-        const unmeasured = report.checks.some((x) => x.category === c.id && x.status === "unmeasured");
-        const note = !c.measured && !c.max
-          ? "Non misurata questa volta: non conta nel punteggio."
-          : lost.length
-            ? `Persi ${pts(c.max - c.earned)} punti. Da raggiungere: ${lost.map((x) => (/^(Google|WhatsApp|HTTPS)/.test(x.title) ? x.title : x.title.charAt(0).toLowerCase() + x.title.slice(1))).join("; ")}.`
-            : unmeasured ? "Tutti i punti misurati, ma una parte non è stata misurata." : "Tutti i punti.";
-        return el(
-          "div",
-          { class: "sc-cat" },
-          el("p", { class: "sc-cat__row" }, el("span", {}, c.label), el("span", {}, c.measured ? `${pts(c.earned)} su ${c.max}` : c.max ? `${pts(c.earned)} su ${c.max} misurati` : "non misurata")),
-          bar(c.max ? c.earned / c.max : 0),
-          el("p", { class: "sc-cat__note" }, note),
-        );
-      }),
+      ...report.categories
+        .filter((c) => report.checks.some((x) => x.category === c.id && x.max > 0))
+        .map((c, i) => {
+          const weight = report.checks.filter((x) => x.category === c.id && x.max > 0).reduce((t, x) => t + x.max, 0);
+          const lost = report.checks.filter((x) => x.category === c.id && x.max > 0 && x.status !== "unmeasured" && x.earned < x.max);
+          const notMeasured = report.checks.some((x) => x.category === c.id && x.status === "unmeasured");
+          const note = !c.max
+            ? "Non misurata questa volta."
+            : lost.length
+              ? `Persi ${pts(c.max - c.earned)} punti in ${lost.length} ${lost.length === 1 ? "controllo" : "controlli"}.`
+              : notMeasured ? "Pieno nella parte misurata." : "Tutti i punti.";
+          const li = el(
+            "li",
+            { class: "sc-leg" },
+            el("span", { class: "sc-leg__dot", "aria-hidden": "true" }),
+            el("span", { class: "sc-leg__name" }, c.label),
+            el("span", { class: "sc-leg__pts" }, c.max ? `${pts(c.earned)}/${weight}` : "n.m."),
+            bar(weight ? c.earned / weight : 0),
+            el("span", { class: "sc-leg__note" }, note),
+          );
+          li.style.setProperty("--c", CAT_COLOR[c.id] ?? "#fff");
+          li.style.setProperty("--i", String(i));
+          return li;
+        }),
     );
   }
 
@@ -244,7 +404,7 @@ export function initScorer() {
       .sort((a, b) => b.max - b.earned - (a.max - a.earned));
     const passed = report.checks.filter((x) => x.max > 0 && x.status === "pass").length;
     const measured = report.checks.filter((x) => x.max > 0 && x.status !== "unmeasured").length;
-    const head = el("h2", {}, report.total >= 100 ? "Perché 100" : `Perché ${report.total} e non 100`);
+    const head = el("h3", { class: "sc-card__h" }, report.total >= 100 ? "Perché 100" : `Perché ${report.total} e non 100`);
     const intro = el(
       "p",
       { class: "sc-sub" },
@@ -271,15 +431,22 @@ export function initScorer() {
   function drawFixes(report: Report) {
     const box = $("[data-sc-fixes]");
     if (!report.fixes.length) {
+      $("[data-sc-climb]").textContent = "";
       box.replaceChildren(el("li", { class: "sc-fix" }, el("p", {}, "Niente da recuperare: tutti i controlli misurati sono pieni.")));
       return;
     }
+    // Running total: what the score becomes as each fix is added (scaled when speed was not measured).
+    const measuredMax = report.checks.filter((c) => c.max > 0 && c.status !== "unmeasured").reduce((t, c) => t + c.max, 0) || 100;
+    const k = 100 / measuredMax;
+    let run = report.total;
+    const runs = report.fixes.map((f) => (run = Math.min(100, Math.round(run + f.gain * k))));
+    $("[data-sc-climb]").replaceChildren("Sistemando queste ", String(report.fixes.length), " cose passi da ", el("strong", {}, String(report.total)), " a ", el("strong", {}, String(runs[runs.length - 1] ?? report.total)), ".");
     box.replaceChildren(
-      ...report.fixes.map((f) =>
+      ...report.fixes.map((f, i) =>
         el(
           "li",
           { class: "sc-fix" },
-          el("p", { class: "sc-fix__gain" }, `+${pts(f.gain)}`, el("small", {}, "punti")),
+          el("p", { class: "sc-fix__gain" }, `+${pts(f.gain)}`, el("small", {}, "punti"), el("span", { class: "sc-fix__run" }, `poi sei a ${runs[i]}`)),
           el(
             "div",
             {},
@@ -337,6 +504,13 @@ export function initScorer() {
       lead.textContent = `Abbiamo misurato con la stessa griglia il sito d'esempio che abbiamo costruito per questo settore. È un numero misurato, non una promessa: sul tuo dipende anche da foto, testi e recensioni vere.`;
       const link = el("a", { href: tpl.path }, `Guarda ${tpl.label}`);
       proj.replaceChildren(
+        el(
+          "p",
+          { class: "sc-compare", "aria-label": `Il tuo sito oggi ${report.total}, il nostro sito d'esempio ${tpl.total}` },
+          el("span", { class: "sc-compare__n" }, String(report.total), el("small", {}, "il tuo sito oggi")),
+          el("span", { class: "sc-compare__arrow", "aria-hidden": "true" }, "→"),
+          el("span", { class: "sc-compare__n" }, String(tpl.total), el("small", {}, "il sito che costruiamo noi")),
+        ),
         el("div", {}, el("p", { class: "sc-cat__row" }, el("span", {}, "Il tuo sito oggi"), el("span", {}, `${report.total} su 100`)), bar(report.total / 100)),
         el("div", {}, el("p", { class: "sc-cat__row" }, el("span", {}, "Il sito che costruiamo noi, misurato"), el("span", {}, `${tpl.total} su 100`)), bar(tpl.total / 100, true)),
         el("p", {}, link),

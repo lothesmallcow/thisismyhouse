@@ -45,7 +45,8 @@ const goodPsi = {
 };
 const sampleGood = fromPartsAll("https://www.studio-esempio-due.it/", goodHtml, goodPsi, { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
 const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
-const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, rubricVersion: rubric.version };
+const checkTitles = [...new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.title))];
+const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, checkTitles, rubricVersion: rubric.version };
 const best = (benchmark.templates as unknown as Record<string, { total: number; label: string; path: string }>).fitness;
 
 const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)).size;
@@ -93,7 +94,14 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
         <button type="button" class="link sc-linkbtn" data-sc-sample="old">uno vecchio</button> oppure
         <button type="button" class="link sc-linkbtn" data-sc-sample="good">uno quasi a posto</button></p>
 
-      <ol class="sc-steps" data-sc-steps hidden aria-live="polite">
+      <div class="sc-scan" data-sc-scan hidden aria-hidden="true">
+        <svg class="sc-scan__ring" viewBox="0 0 160 160" data-sc-scan-ring></svg>
+        <div>
+          <p class="sc-scan__k">Controlliamo</p>
+          <p class="sc-scan__t" data-sc-scan-t></p>
+        </div>
+      </div>
+      <ol class="sc-steps sc-visually-hidden" data-sc-steps hidden aria-live="polite">
         <li>Apriamo la pagina</li>
         <li>Leggiamo cosa c'è: contatti, orari, prezzi, dati per Google</li>
         <li>Misuriamo la velocità da telefono (può servire fino a un minuto)</li>
@@ -102,48 +110,66 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
     </div>
   </section>
 
-  <section class="section sc-result" data-sc-result hidden aria-labelledby="sc-res-t" tabindex="-1">
+  <section class="sc-report" data-sc-result hidden aria-labelledby="sc-res-t" tabindex="-1">
     <div class="wrap">
       <p class="sc-sample-note" data-sc-sample-note hidden>Esempio su un sito inventato: numeri e pagina non sono di nessuna attività reale.</p>
-      <div class="sc-top">
-        <div class="sc-ring" data-sc-ring role="img">
-          <svg viewBox="0 0 160 160" aria-hidden="true">
-            <circle class="sc-ring__bg" cx="80" cy="80" r="70" />
-            <circle class="sc-ring__fg" cx="80" cy="80" r="70" data-sc-arc />
-          </svg>
-          <p class="sc-ring__n" aria-hidden="true"><span data-sc-total>0</span><small>su 100</small></p>
+
+      <header class="sc-rhead sc-in">
+        <div>
+          <p class="sc-rhead__k">Report del sito</p>
+          <h2 id="sc-res-t" class="sc-rhead__url" data-sc-url></h2>
+          <p class="sc-rhead__meta" data-sc-meta></p>
         </div>
-        <div class="sc-top__text">
-          <h2 id="sc-res-t" data-sc-verdict></h2>
-          <p class="sc-top__bands">Le fasce: sotto 50 molto da sistemare, da 50 a 74 buone basi, da 75 a 89 buono, da 90 in su ottimo.</p>
-          <p class="sc-top__url" data-sc-url></p>
+        <div class="sc-rhead__tools sc-noprint">
           <div class="field sc-top__sector">
             <label for="sc-sector-now">Valutato come</label>
             <select id="sc-sector-now" data-sc-sector-now>
               {sectors.map((s) => <option value={s.id}>{s.label}</option>)}
             </select>
           </div>
-          <p class="sc-top__note" data-sc-note></p>
-          <p><button type="button" class="link sc-linkbtn sc-noprint" data-sc-print>Stampa o salva in PDF</button></p>
+          <button type="button" class="link sc-linkbtn" data-sc-print>Stampa o salva in PDF</button>
         </div>
+      </header>
+
+      <div class="sc-grid">
+        <article class="sc-card sc-card--score sc-in" aria-labelledby="sc-score-t">
+          <h3 id="sc-score-t" class="sc-card__k">Punteggio</h3>
+          <div class="sc-gauge">
+            <div class="sc-ring" data-sc-ring role="img">
+              <svg viewBox="0 0 200 200" data-sc-arcs></svg>
+              <div class="sc-ring__c" aria-hidden="true">
+                <p class="sc-ring__n" data-sc-total>0</p>
+                <p class="sc-ring__w" data-sc-verdict></p>
+              </div>
+            </div>
+            <ul class="sc-legend" data-sc-cats></ul>
+          </div>
+        </article>
+
+        <article class="sc-card sc-card--sum sc-in" aria-labelledby="sc-sum-t">
+          <h3 id="sc-sum-t" class="sc-card__k">In sintesi</h3>
+          <p class="sc-sum" data-sc-summary></p>
+          <dl class="sc-hl" data-sc-highlights></dl>
+          <p class="sc-top__note" data-sc-note></p>
+          <p class="sc-top__bands">Fasce: sotto 50 molto da sistemare, da 50 a 74 discreto, da 75 a 89 buono, da 90 in su ottimo.</p>
+        </article>
       </div>
 
-      <div class="sc-cats" data-sc-cats></div>
+      <article class="sc-card sc-in" data-sc-why></article>
 
-      <div class="sc-block" data-sc-why></div>
-
-      <div class="sc-block">
-        <h2>Le 5 cose che valgono più punti</h2>
+      <article class="sc-card sc-in" aria-labelledby="sc-fix-t">
+        <h3 id="sc-fix-t" class="sc-card__h">Le 5 cose che valgono più punti</h3>
+        <p class="sc-climb" data-sc-climb></p>
         <ol class="sc-fixes" data-sc-fixes></ol>
-      </div>
+      </article>
 
-      <div class="sc-block" data-sc-flags-wrap>
-        <h2>Da verificare con chi ti segue</h2>
+      <article class="sc-card sc-in" data-sc-flags-wrap aria-labelledby="sc-flag-t">
+        <h3 id="sc-flag-t" class="sc-card__h">Da verificare con chi ti segue</h3>
         <p class="sc-sub">Non sono voti e non tolgono punti: sono informazioni che un commercialista o un consulente può confermare.</p>
         <ul class="sc-flags" data-sc-flags></ul>
-      </div>
+      </article>
 
-      <details class="sc-all">
+      <details class="sc-card sc-all sc-in">
         <summary>Tutti i controlli, uno per uno</summary>
         <div data-sc-all></div>
       </details>
@@ -305,6 +331,29 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
     cursor: pointer;
     text-align: left;
   }
+  .sc-real {
+    margin-top: 1rem;
+    display: grid;
+    gap: 0.4rem;
+    max-width: 30rem;
+    padding: 1rem 1.25rem;
+    border: 2px dashed var(--blu);
+    border-radius: 16px;
+  }
+  .sc-real__k {
+    font-weight: 600;
+    color: var(--blu);
+  }
+  .sc-real label {
+    font-weight: 600;
+  }
+  .sc-real__pick {
+    min-height: 48px;
+    border: 1px solid var(--filo);
+    border-radius: 10px;
+    padding: 0 0.75rem;
+    font: inherit;
+  }
   .sc-steps {
     margin: 1.5rem 0 0;
     padding: 0;
@@ -364,6 +413,162 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
     display: grid;
     gap: 2rem;
     align-items: center;
+    background: var(--blu);
+    color: #fff;
+    border-radius: 28px;
+    padding: clamp(1.5rem, 1rem + 3vw, 3.5rem);
+    --inchiostro: #fff;
+    --grafite: var(--on-dark-muted);
+    --filo: rgba(255, 255, 255, 0.22);
+  }
+  .sc-top h2 {
+    color: #fff;
+    font-size: clamp(1.9rem, 1.4rem + 2vw, 2.8rem);
+  }
+  .sc-top .link,
+  .sc-top label {
+    color: #fff;
+  }
+  .sc-top select {
+    color: var(--notte);
+  }
+  .sc-top__legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.9rem;
+    font-size: 0.95rem;
+    color: var(--on-dark-muted);
+  }
+  .sc-dot {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 50%;
+    margin-right: -0.5rem;
+    vertical-align: -0.05rem;
+  }
+  .sc-dot--pass,
+  .sc-seg--pass {
+    background: #5fd68e;
+    stroke: #5fd68e;
+  }
+  .sc-dot--partial,
+  .sc-seg--partial {
+    background: #ffc857;
+    stroke: #ffc857;
+  }
+  .sc-dot--fail,
+  .sc-seg--fail {
+    background: #ff7a6b;
+    stroke: #ff7a6b;
+  }
+  .sc-dot--unmeasured,
+  .sc-seg--unmeasured {
+    background: rgba(255, 255, 255, 0.28);
+    stroke: rgba(255, 255, 255, 0.28);
+  }
+  [data-sc-segs] circle,
+  [data-sc-scan-ring] circle {
+    fill: none;
+    stroke-width: 16;
+  }
+  [data-sc-segs] {
+    overflow: visible;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .sc-anim .sc-seg {
+      opacity: 0;
+      transition: opacity 0.35s var(--ease-out);
+      transition-delay: calc(var(--i) * 45ms);
+    }
+    .sc-anim.is-in .sc-seg {
+      opacity: 1;
+    }
+    .sc-scan__seg {
+      animation: sc-blink 1.6s var(--ease-out) infinite;
+      animation-delay: calc(var(--i) * 64ms);
+    }
+    @keyframes sc-blink {
+      0%,
+      100% {
+        opacity: 0.25;
+      }
+      40% {
+        opacity: 1;
+      }
+    }
+  }
+  .sc-scan {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    background: var(--blu);
+    color: #fff;
+    border-radius: 24px;
+    padding: 1.5rem;
+  }
+  .sc-scan[hidden] {
+    display: none;
+  }
+  .sc-scan__ring {
+    width: 96px;
+    height: 96px;
+    flex: none;
+    transform: rotate(-90deg);
+  }
+  .sc-scan__seg {
+    stroke: rgba(255, 255, 255, 0.85);
+  }
+  .sc-scan__k {
+    color: var(--on-dark-muted);
+    font-weight: 600;
+  }
+  .sc-scan__t {
+    font-weight: 700;
+    font-size: 1.2rem;
+    min-height: 2.6em;
+  }
+  .sc-climb {
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-top: 0.5rem !important;
+  }
+  .sc-climb strong {
+    color: var(--blu);
+    font-size: 1.4em;
+  }
+  .sc-fix__run {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--grafite);
+    margin-top: 0.25rem;
+  }
+  .sc-compare {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .sc-compare__n {
+    font-size: clamp(3.5rem, 2.5rem + 5vw, 6.5rem);
+    letter-spacing: -0.03em;
+  }
+  .sc-compare__n small {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--on-dark-muted);
+    margin-top: 0.4rem;
+  }
+  .sc-compare__arrow {
+    font-size: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+    color: var(--fuoco);
   }
   @media (min-width: 760px) {
     .sc-top {
@@ -381,6 +586,9 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
     width: 100%;
     height: 100%;
     transform: rotate(-90deg);
+  }
+  .sc-ring__n {
+    color: #fff;
   }
   .sc-ring circle {
     fill: none;
@@ -774,11 +982,244 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
     color: var(--inchiostro) !important;
   }
 
+
+  /* ---------- Report (the result), sleep-score style ---------- */
+  .sc-report {
+    background: var(--nebbia);
+    padding: clamp(2rem, 1.5rem + 3vw, 4.5rem) 0;
+    outline: none;
+  }
+  .sc-report .wrap {
+    display: grid;
+    gap: clamp(1rem, 0.75rem + 1vw, 1.5rem);
+  }
+  .sc-rhead {
+    display: grid;
+    gap: 1rem 2rem;
+    align-items: end;
+  }
+  @media (min-width: 900px) {
+    .sc-rhead {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+  }
+  .sc-rhead__k {
+    font-weight: 700;
+    color: var(--blu);
+  }
+  .sc-rhead__url {
+    font-size: clamp(1.9rem, 1.3rem + 2.4vw, 3.2rem);
+    overflow-wrap: anywhere;
+    margin-top: 0.25rem !important;
+  }
+  .sc-rhead__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    color: var(--grafite);
+    margin-top: 0.5rem !important;
+  }
+  .sc-rhead__tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.5rem 1.25rem;
+  }
+  .sc-grid {
+    display: grid;
+    gap: clamp(1rem, 0.75rem + 1vw, 1.5rem);
+  }
+  @media (min-width: 1000px) {
+    .sc-grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    }
+  }
+  .sc-card {
+    background: #fff;
+    border-radius: 28px;
+    padding: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
+  }
+  .sc-card__k {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--grafite);
+  }
+  .sc-card__h {
+    font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
+  }
+  .sc-card--score {
+    background: var(--notte);
+    color: #fff;
+    --inchiostro: #fff;
+    --grafite: var(--on-dark-muted);
+  }
+  .sc-gauge {
+    display: grid;
+    gap: 1.75rem;
+    align-items: center;
+    margin-top: 1rem;
+  }
+  .sc-legend {
+    width: 100%;
+  }
+  @media (min-width: 640px) {
+    .sc-legend {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.1rem 2rem;
+    }
+  }
+  .sc-report .sc-ring {
+    position: relative;
+    width: min(300px, 72vw);
+    aspect-ratio: 1;
+    justify-self: center;
+  }
+  .sc-report .sc-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: none;
+    overflow: visible;
+  }
+  .sc-arc__track {
+    fill: none;
+    stroke-width: 18;
+    opacity: 0.22;
+  }
+  .sc-arc__fill circle {
+    fill: none;
+    stroke-width: 18;
+  }
+  .sc-arc__fill {
+    transform-box: view-box;
+    transform-origin: 100px 100px;
+  }
+  .sc-ring__c {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+  }
+  .sc-report .sc-ring__n {
+    position: static;
+    font-size: clamp(3.75rem, 3rem + 3vw, 5rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: #fff;
+  }
+  .sc-ring__w {
+    font-weight: 700;
+    margin-top: 0.35rem !important;
+    color: var(--on-dark-muted);
+  }
+  .sc-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+  }
+  .sc-leg {
+    display: grid;
+    grid-template-columns: 0.75rem minmax(0, 1fr) auto;
+    gap: 0.25rem 0.6rem;
+    align-items: center;
+  }
+  .sc-leg__dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--c);
+  }
+  .sc-leg__name {
+    font-weight: 700;
+  }
+  .sc-leg__pts {
+    font-weight: 700;
+    color: var(--on-dark-muted);
+  }
+  .sc-leg .sc-bar {
+    grid-column: 2 / -1;
+    height: 6px;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .sc-leg .sc-bar i {
+    background: var(--c);
+  }
+  .sc-leg__note {
+    grid-column: 2 / -1;
+    font-size: 0.9rem;
+    color: var(--on-dark-muted);
+  }
+  .sc-sum {
+    font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.55rem);
+    font-weight: 600;
+    line-height: 1.35;
+    margin-top: 0.75rem !important;
+  }
+  .sc-hl {
+    display: grid;
+    gap: 0.25rem;
+    margin: 1.5rem 0 0;
+  }
+  .sc-hl dt {
+    color: var(--grafite);
+    font-size: 0.95rem;
+    margin-top: 0.75rem;
+  }
+  .sc-hl dd {
+    margin: 0;
+    font-weight: 700;
+  }
+  .sc-card--sum .sc-top__note {
+    margin-top: 1.5rem !important;
+  }
+  .sc-card--sum .sc-top__bands {
+    margin-top: 0.75rem !important;
+  }
+  .sc-report .sc-fix {
+    border-color: var(--filo);
+  }
+  .sc-report .sc-all {
+    margin-top: 0;
+    border-top: 0;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .sc-anim .sc-in {
+      opacity: 0;
+      transform: translateY(18px);
+      transition:
+        opacity 0.6s var(--ease-out),
+        transform 0.8s var(--ease-out);
+    }
+    .sc-anim .sc-in:nth-child(2) { transition-delay: 0.08s; }
+    .sc-anim .sc-in:nth-child(3) { transition-delay: 0.16s; }
+    .sc-anim .sc-grid .sc-in + .sc-in { transition-delay: 0.22s; }
+    .sc-anim.is-in .sc-in {
+      opacity: 1;
+      transform: none;
+    }
+    .sc-anim .sc-arc__fill {
+      transform: rotate(var(--from));
+      transition: transform 1.2s var(--ease-out);
+      transition-delay: calc(0.35s + var(--i) * 0.12s);
+    }
+    .sc-anim.is-in .sc-arc__fill {
+      transform: rotate(0deg);
+    }
+    .sc-anim .sc-leg .sc-bar i {
+      transition-delay: calc(0.5s + var(--i) * 0.08s);
+    }
+  }
+
   @media print {
     .site-header,
     .sticky,
     .sc-tool,
     .sc-cta,
+    .sc-rhead__tools,
     .sc-method,
     .ph,
     footer,
