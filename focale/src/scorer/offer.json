@@ -1,0 +1,49 @@
+{
+  "version": "2026-11-21",
+  "source": "Prices from Lorenzo's Website Scorer brief of 21 Nov 2026 (600 / 900 / 1.200 EUR, care 39 EUR a month). What each package includes is adapted from src/lib/plans.ts and must be confirmed by Lorenzo: the brief gives prices only.",
+  "packages": [
+    {
+      "id": "essenziale",
+      "name": "Essenziale",
+      "price": 600,
+      "forWhom": "Per lo studio che ha già le basi e vuole un sito veloce e chiaro.",
+      "includes": [
+        "Sito a pagina unica, scritto da noi",
+        "Prenota, Chiama e WhatsApp sempre a portata di pollice",
+        "Indirizzo, Google Maps e dati per Google",
+        "Privacy e cookie in regola"
+      ]
+    },
+    {
+      "id": "completo",
+      "name": "Completo",
+      "price": 900,
+      "forWhom": "Il sito completo che porta a prenotare.",
+      "includes": [
+        "Tutto l'Essenziale",
+        "Fino a 6 pagine: una per ogni disciplina",
+        "Orari, prezzi e lezione di prova in vista",
+        "Le tue recensioni Google sul sito",
+        "Collegato al sistema di prenotazione che usi già"
+      ]
+    },
+    {
+      "id": "su-misura",
+      "name": "Su misura",
+      "price": 1200,
+      "forWhom": "Per chi ha esigenze in più.",
+      "includes": [
+        "Tutto il Completo",
+        "Più lingue",
+        "Pannello per cambiare da solo orari, testi e foto",
+        "Pagine in più per corsi, eventi o sedi"
+      ]
+    }
+  ],
+  "care": {
+    "name": "Cura",
+    "pricePerMonth": 39,
+    "line": "Ogni mese rifacciamo questa analisi sul tuo sito e sistemiamo quello che scende, così il punteggio resta alto.",
+    "includes": ["Analisi mensile con questo stesso punteggio", "Aggiornamenti tecnici e copie di sicurezza", "Piccole modifiche a orari, prezzi e testi"]
+  }
+}
