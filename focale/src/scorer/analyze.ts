@@ -8,7 +8,7 @@ import { readPage } from "./page";
 import { perfFrom, runPsi, type PsiLike } from "./perf";
 import { buildReport, recommend, type Recommendation } from "./score";
 import { guessSector, resolveRubric, sectorIds } from "./sectors";
-import { safeFetch, type Resolver } from "./safe-fetch";
+import { safeFetch, ScorerError, type Resolver } from "./safe-fetch";
 import type { PageSignals, Report, Rubric, SectorId } from "./types";
 
 export const rubric = rubricJson as unknown as Rubric;
@@ -35,9 +35,19 @@ export async function analyze(
   deps: { resolve: Resolver; psiKey?: string; fetchImpl?: typeof fetch; psi?: (url: string) => Promise<PsiLike | null>; sector?: SectorId },
 ): Promise<FullAnalysis> {
   const fetched = await safeFetch(rawUrl, { resolve: deps.resolve, fetchImpl: deps.fetchImpl });
+  assertReadable(readPage(fetched.html, fetched.finalUrl));
   // Speed is measured on the final URL (after redirects); its failure never blocks the report.
   const psi = await (deps.psi ? deps.psi(fetched.finalUrl) : runPsi(fetched.finalUrl, deps.psiKey, deps.fetchImpl)).catch(() => null);
   return fromPartsAll(fetched.finalUrl, fetched.html, psi, { sector: deps.sector });
+}
+
+/**
+ * A page that arrives almost empty and is built later by JavaScript cannot be read fairly without a
+ * browser: rather than a wrong low score, we say so. (Parked domains and "coming soon" pages land here too.)
+ */
+export function assertReadable(page: PageSignals) {
+  if (page.text.length < 80 && page.links.length < 3)
+    throw new ScorerError("empty", "La pagina arriva quasi vuota e si costruisce dopo, con JavaScript: senza aprirla in un browser non possiamo leggerla in modo giusto, quindi preferiamo non darti un punteggio sbagliato. Scrivici e la guardiamo noi.");
 }
 
 /** Scores a page for every sector from its HTML and a PSI or Lighthouse result: no network. */

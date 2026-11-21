@@ -50,7 +50,8 @@ describe("booking", () => {
   it("online booking: platform link, booking word, or nothing", () => {
     expect(run("conv.primary", page('<a href="https://x.goteamup.com/s">Calendario</a>'))).toBe("pass");
     expect(run("conv.primary", page('<a href="/contatti">Prenota la tua lezione</a>'))).toBe("pass");
-    expect(run("conv.primary", page('<a href="/contatti">Contatti</a>'))).toBe("fail");
+    expect(run("conv.primary", page('<a href="/contatti">Contatti</a>'))).toBe("partial");
+    expect(run("conv.primary", page('<a href="/chi-siamo">Chi siamo</a>'))).toBe("fail");
     expect(run("conv.primary", page('<a href="tel:+39021234">Prenota al telefono</a>'))).toBe("fail");
   });
   it("early: in header or before the first h2", () => {
@@ -103,7 +104,7 @@ describe("trust", () => {
   it("https, reviews, team", () => {
     expect(run("trust.https", page("", "", "https://a.it/"))).toBe("pass");
     expect(run("trust.https", page("", "", "http://a.it/"))).toBe("fail");
-    expect(run("trust.reviews", page("", '<script type="application/ld+json">{"@type":"LocalBusiness","aggregateRating":{"@type":"AggregateRating","ratingValue":4.9}}</script>'))).toBe("pass");
+    expect(run("trust.reviews", page("", '<script type="application/ld+json">{"@type":"LocalBusiness","aggregateRating":{"@type":"AggregateRating","ratingValue":4.9}}</script>'))).toBe("partial");
     expect(run("trust.reviews", page('<script src="https://static.elfsight.com/platform.js"></script>'))).toBe("pass");
     expect(run("trust.reviews", page("<p>Leggi le recensioni dei clienti</p>"))).toBe("partial");
     expect(run("trust.reviews", page("<p>Benvenuti</p>"))).toBe("fail");
@@ -161,6 +162,30 @@ describe("no gaming", () => {
     const many = page(`<h1>Pilates a Milano ${"pilates milano ".repeat(50)}</h1>`);
     for (const sector of rubric.sectors.map((x) => x.id))
       for (const c of resolveRubric(rubric, sector).checks) if (c.category !== "speed" && c.id !== "a11y.lighthouse") expect(run(c.id, many, null, sector), `${sector} ${c.id}`).toBe(run(c.id, once, null, sector));
+  });
+});
+
+describe("bugs found by the sector review", () => {
+  it("a Contatti page is not the main action", () => {
+    for (const sec of ["edilizia", "salute", "professionisti", "immobiliare", "eventi", "altro"] as SectorId[]) {
+      expect(run("conv.primary", page('<a href="/contatti/">Contatti</a>'), null, sec), sec).toBe("partial");
+      expect(run("conv.primary", page('<a href="/contatti/">Contattaci</a>'), null, sec), sec).toBe("partial");
+    }
+  });
+  it("an OTA or an aggregator link never earns full points, whatever its text", () => {
+    expect(run("conv.primary", page('<a href="https://www.booking.com/hotel/it/x.html">Prenota su Booking.com</a>'), null, "ospitalita")).toBe("partial");
+    expect(run("conv.primary", page('<a href="https://www.classpass.com/studios/x">Prenota</a>'), null, "fitness")).toBe("partial");
+    expect(run("conv.primary", page('<a href="https://www.booking.com/x">Booking</a><a href="/prenota/">Prenota diretto</a>'), null, "ospitalita")).toBe("pass");
+  });
+  it("a jQuery toast plugin is not a restaurant booking system", () => {
+    expect(run("conv.primary", page('<script src="/js/jquery.toast.min.js"></script>'), null, "ristorazione")).toBe("fail");
+  });
+  it("the navigation word Menu is not a menu", () => {
+    expect(run("info.menu", page('<a href="#">Menu</a><p>Benvenuti</p>'), null, "ristorazione")).toBe("fail");
+    expect(run("info.menu", page('<a href="/menu/">Il menu</a>'), null, "ristorazione")).toBe("pass");
+  });
+  it("Ordine degli Psicologi counts as a credential", () => {
+    expect(run("trust.credentials", page("<p>Iscritta all'Ordine degli Psicologi della Lombardia, n. 1234</p>"), null, "salute")).toBe("pass");
   });
 });
 

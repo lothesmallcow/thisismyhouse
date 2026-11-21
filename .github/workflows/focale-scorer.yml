@@ -1,0 +1,39 @@
+# Focus Design site: Website Scorer checks on every change to focale/.
+# - unit tests: every rubric check (pass and fail), rubric integrity, determinism, SSRF guard,
+#   the two Pages Functions (consent, stored fields, rate limit);
+# - self-test: build the site, serve it, run Lighthouse (mobile) on our demo sites and on the scorer
+#   page, score them with the same rubric, and fail if any is below 90 (we never exempt ourselves).
+name: Focus Design scorer
+on:
+  push:
+    paths: ["focale/**", ".github/workflows/focale-scorer.yml"]
+  pull_request:
+    paths: ["focale/**", ".github/workflows/focale-scorer.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency: { group: focale-scorer-${{ github.ref }}, cancel-in-progress: true }
+jobs:
+  scorer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: focale
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: focale/package-lock.json
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Our sites score 90 or more
+        run: |
+          npx astro preview --port 4321 &
+          npx wait-on -t 60000 http://localhost:4321/ || sleep 10
+          CHROME_PATH=$(which google-chrome || which chromium || true) npm run scorer:selftest -- --no-write

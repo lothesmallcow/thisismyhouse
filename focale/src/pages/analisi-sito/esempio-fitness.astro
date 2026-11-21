@@ -1,0 +1,754 @@
+---
+/**
+ * Demo: "Studio Linea", an INVENTED pilates and yoga studio. It is the template we would build for
+ * a fitness studio, and the page the Website Scorer measures for the "fitness" projected score
+ * (scripts/scorer/selftest.mjs writes src/scorer/benchmark.json from it). Everything a visitor needs
+ * is on one page: what, where, the week's classes, prices, the trial, who teaches, how to arrive.
+ * Placeholders are honest: no invented reviews, people or photos; the phone, VAT and address are
+ * obviously fake. The schedule is the hero's picture: it is the first thing a member looks for.
+ */
+import Demo from "../../layouts/Demo.astro";
+import ReviewsEmpty from "../../components/demo/ReviewsEmpty.astro";
+
+const name = "Studio Linea";
+const tel = "+390200000000";
+const telShow = "02 0000 0000";
+const wa = "https://wa.me/390000000000?text=" + encodeURIComponent("Ciao, vorrei prenotare la lezione di prova");
+const book = "#prenota";
+const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Via Esempio 12, 20159 Milano");
+const reviews = "https://search.google.com/local/reviews?placeid=ESEMPIO";
+
+const classes = [
+  { k: "reformer", t: "Pilates reformer", d: "Sulle macchine, in gruppi di sei. Rinforza schiena e addome senza carichi pesanti.", who: "Per chi inizia e per chi ha già esperienza" },
+  { k: "mat", t: "Pilates matwork", d: "Sul tappetino, con piccoli attrezzi. Controllo, respiro e postura.", who: "Per tutti i livelli" },
+  { k: "yoga", t: "Yoga vinyasa", d: "Sequenze fluide legate al respiro. Si suda, poi si scioglie tutto.", who: "Livello base e intermedio" },
+  { k: "posturale", t: "Ginnastica posturale", d: "Movimenti lenti per collo, spalle e schiena di chi lavora seduto.", who: "Anche dopo un periodo fermo" },
+];
+const days = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+const week: Record<string, { h: string; c: string }[]> = {
+  Lunedì: [{ h: "7:30", c: "Reformer" }, { h: "13:00", c: "Matwork" }, { h: "18:30", c: "Reformer" }, { h: "19:45", c: "Yoga" }],
+  Martedì: [{ h: "9:00", c: "Posturale" }, { h: "18:00", c: "Reformer" }, { h: "19:15", c: "Matwork" }],
+  Mercoledì: [{ h: "7:30", c: "Reformer" }, { h: "13:00", c: "Yoga" }, { h: "18:30", c: "Reformer" }, { h: "19:45", c: "Matwork" }],
+  Giovedì: [{ h: "9:00", c: "Posturale" }, { h: "18:00", c: "Yoga" }, { h: "19:15", c: "Reformer" }],
+  Venerdì: [{ h: "7:30", c: "Reformer" }, { h: "13:00", c: "Matwork" }, { h: "18:30", c: "Yoga" }],
+  Sabato: [{ h: "10:00", c: "Reformer" }, { h: "11:15", c: "Matwork" }],
+};
+const prices = [
+  { t: "Lezione di prova", p: "15 €", d: "La prima lezione, su qualsiasi corso. Una volta sola, per conoscerci.", main: true },
+  { t: "Carnet 8 lezioni", p: "160 €", d: "Valido due mesi, su tutti i corsi. Prenoti quando vuoi." },
+  { t: "Mensile illimitato", p: "190 €", d: "Tutti i corsi, tutte le volte che vuoi, rinnovo mese per mese." },
+];
+const teachers = [
+  { r: "Pilates reformer e matwork", n: "Nome dell'insegnante" },
+  { r: "Yoga vinyasa", n: "Nome dell'insegnante" },
+  { r: "Ginnastica posturale", n: "Nome dell'insegnante" },
+];
+const hours = [
+  { d: "Lunedì a venerdì", h: "7:00 - 21:30" },
+  { d: "Sabato", h: "9:30 - 13:00" },
+  { d: "Domenica", h: "chiuso" },
+];
+
+const ld = {
+  "@context": "https://schema.org",
+  "@type": "ExerciseGym",
+  name,
+  description: "Studio di pilates reformer, matwork, yoga e posturale a Milano Isola.",
+  telephone: tel,
+  url: "https://www.focusdesign.it/analisi-sito/esempio-fitness/",
+  address: { "@type": "PostalAddress", streetAddress: "Via Esempio 12", postalCode: "20159", addressLocality: "Milano", addressCountry: "IT" },
+  openingHoursSpecification: [
+    { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "07:00", closes: "21:30" },
+    { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "09:30", closes: "13:00" },
+  ],
+  priceRange: "15 € - 190 €",
+};
+---
+<Demo
+  title="Pilates reformer e yoga a Milano Isola | Studio Linea (demo)"
+  description="Pilates reformer, matwork, yoga e posturale a Milano Isola. Orari della settimana, prezzi chiari e lezione di prova a 15 €. Prenoti online in un minuto."
+  themeColor="#0B5E55"
+  bodyClass="sl"
+>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(ld)} />
+
+  <header class="sl-head">
+    <div class="sl-wrap sl-head__in">
+      <a class="sl-logo" href="#top" aria-label="Studio Linea, inizio pagina">Studio <b>Linea</b></a>
+      <nav aria-label="Sezioni" class="sl-nav">
+        <a href="#corsi">Corsi</a>
+        <a href="#orari">Orari</a>
+        <a href="#prezzi">Prezzi</a>
+        <a href="#insegnanti">Insegnanti</a>
+        <a href="#dove">Dove siamo</a>
+      </nav>
+      <div class="sl-head__act">
+        <a class="sl-btn sl-btn--ghost sl-only-wide" href={`tel:${tel}`}>Chiama</a>
+        <a class="sl-btn" href={book}>Prenota</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="sl-hero" id="top">
+    <div class="sl-wrap sl-hero__grid">
+      <div class="sl-hero__text">
+        <p class="sl-kicker">Via Esempio 12, Milano Isola</p>
+        <h1>Pilates reformer e yoga a Milano Isola</h1>
+        <p class="sl-lead">Gruppi di sei persone al massimo, insegnanti che ti correggono per nome. La prima lezione costa 15 € e si prenota in un minuto.</p>
+        <div class="sl-hero__cta">
+          <a class="sl-btn sl-btn--big" href={book}>Prenota la lezione di prova</a>
+          <a class="sl-btn sl-btn--ghost sl-btn--big" href={wa}>Scrivici su WhatsApp</a>
+        </div>
+        <p class="sl-note">Niente iscrizione annuale. Disdici fino a 6 ore prima.</p>
+      </div>
+      <figure class="sl-today" aria-labelledby="oggi">
+        <figcaption id="oggi"><span>Lunedì allo studio</span><a href="#orari">Tutta la settimana</a></figcaption>
+        <ol>
+          {week["Lunedì"].map((c) => (
+            <li><time>{c.h}</time><span>{c.c === "Yoga" ? "Yoga vinyasa" : c.c === "Matwork" ? "Pilates matwork" : `Pilates ${c.c.toLowerCase()}`}</span><a href={book} aria-label={`Prenota ${c.c} delle ${c.h}`}>Prenota</a></li>
+          ))}
+        </ol>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sl-sec" id="corsi" aria-labelledby="corsi-t">
+    <div class="sl-wrap">
+      <h2 id="corsi-t">Quattro corsi, una sola idea: muoversi bene</h2>
+      <ul class="sl-classes">
+        {classes.map((c) => (
+          <li class={`sl-class sl-class--${c.k}`}>
+            <h3>{c.t}</h3>
+            <p>{c.d}</p>
+            <p class="sl-class__who">{c.who}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="sl-sec sl-sec--mist" id="orari" aria-labelledby="orari-t">
+    <div class="sl-wrap">
+      <h2 id="orari-t">Orari della settimana</h2>
+      <p class="sl-sub">Ogni lezione dura 50 minuti. Tocca un orario per prenotare.</p>
+      <div class="sl-week" role="list">
+        {days.map((d) => (
+          <div class="sl-day" role="listitem">
+            <h3>{d}</h3>
+            <ul>
+              {week[d].map((c) => (
+                <li><a href={book}><time>{c.h}</time> {c.c}</a></li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="sl-sec" id="prezzi" aria-labelledby="prezzi-t">
+    <div class="sl-wrap">
+      <h2 id="prezzi-t">Prezzi chiari, senza quota d'iscrizione</h2>
+      <ul class="sl-prices">
+        {prices.map((p) => (
+          <li class:list={["sl-price", { "sl-price--main": p.main }]}>
+            <h3>{p.t}</h3>
+            <p class="sl-price__n">{p.p}</p>
+            <p>{p.d}</p>
+            {p.main && <a class="sl-btn" href={book}>Prenota la prova</a>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="sl-sec sl-sec--mist" id="insegnanti" aria-labelledby="ins-t">
+    <div class="sl-wrap">
+      <h2 id="ins-t">Le insegnanti</h2>
+      <p class="sl-sub">Qui vanno le foto vere e due righe su ognuna: formazione, da quanti anni insegna, cosa ama del suo corso.</p>
+      <ul class="sl-teachers">
+        {teachers.map((t) => (
+          <li><span class="sl-teachers__ph" aria-hidden="true"></span><p class="sl-teachers__n">{t.n}</p><p>{t.r}</p></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="sl-sec" id="recensioni" aria-labelledby="rec-t">
+    <div class="sl-wrap sl-rev">
+      <h2 id="rec-t">Cosa dice chi viene da noi</h2>
+      <ReviewsEmpty text="Qui mostriamo le recensioni Google vere dello studio, collegate alla scheda. Non ne scriviamo mai di inventate." />
+      <a class="sl-link" href={reviews}>Leggi le recensioni su Google</a>
+    </div>
+  </section>
+
+  <section class="sl-sec sl-sec--ink" id="prenota" aria-labelledby="pren-t">
+    <div class="sl-wrap sl-book">
+      <div>
+        <h2 id="pren-t">Prenota la lezione di prova</h2>
+        <p>Nel sito vero questo pulsante apre il sistema di prenotazione che lo studio usa già, con i posti liberi in tempo reale.</p>
+      </div>
+      <div class="sl-book__act">
+        <a class="sl-btn sl-btn--big sl-btn--light" href="#orari">Scegli l'orario e prenota</a>
+        <a class="sl-btn sl-btn--big sl-btn--line" href={`tel:${tel}`}>Chiama {telShow}</a>
+        <a class="sl-btn sl-btn--big sl-btn--line" href={wa}>WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sl-sec" id="dove" aria-labelledby="dove-t">
+    <div class="sl-wrap sl-where">
+      <div>
+        <h2 id="dove-t">Dove siamo</h2>
+        <p class="sl-addr">Via Esempio 12, 20159 Milano</p>
+        <p>A 4 minuti a piedi dalla metro Isola (M5), a 8 da Garibaldi.</p>
+        <a class="sl-btn sl-btn--ghost" href={maps}>Come arrivare con Google Maps</a>
+      </div>
+      <div>
+        <h3>Orari della reception</h3>
+        <dl class="sl-hours">
+          {hours.map((h) => (<><dt>{h.d}</dt><dd>{h.h}</dd></>))}
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <footer class="sl-foot">
+    <div class="sl-wrap sl-foot__in">
+      <p><b>{name}</b> è un'attività inventata da Focus Design per mostrare come costruiamo il sito di uno studio. Nel sito vero qui ci sono ragione sociale, sede e partita IVA dello studio.</p>
+      <p>Studio Linea di Esempio, Via Esempio 12, 20159 Milano. P.IVA 00000000000 (esempio)</p>
+      <p class="sl-foot__links"><a href="/privacy/">Informativa privacy</a><a href="/cookie/">Cookie</a></p>
+    </div>
+  </footer>
+
+  <nav class="sl-bar" aria-label="Azioni rapide">
+    <a href={book}>Prenota</a>
+    <a href={`tel:${tel}`}>Chiama</a>
+    <a href={wa}>WhatsApp</a>
+  </nav>
+</Demo>
+
+<style is:global>
+  body.sl {
+    --sl-ink: #14262a;
+    --sl-soft: #46585b;
+    --sl-paper: #ffffff;
+    --sl-mist: #edf3f0;
+    --sl-line: #d4e0db;
+    --sl-teal: #0b5e55;
+    --sl-teal-2: #0e7a6e;
+    --sl-light: #c9efe4;
+    background: var(--sl-paper);
+    color: var(--sl-ink);
+    font-family: "Schibsted Grotesk", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  .sl h1,
+  .sl h2,
+  .sl h3 {
+    font-family: "Literata", Georgia, serif;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: var(--sl-ink);
+  }
+  .sl h1 {
+    font-size: clamp(2.3rem, 5.2vw, 4rem);
+    font-weight: 600;
+    max-width: 14ch;
+  }
+  .sl h2 {
+    font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+    font-weight: 600;
+    max-width: 22ch;
+  }
+  .sl h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .sl p {
+    margin: 0;
+  }
+  .sl-wrap {
+    width: min(1160px, 100% - 2.5rem);
+    margin-inline: auto;
+  }
+  .sl a {
+    color: inherit;
+  }
+
+  .sl-head {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.97);
+    border-bottom: 1px solid var(--sl-line);
+  }
+  body.sl:not(.in-frame) .sl-head {
+    top: var(--banner);
+  }
+  .sl-head__in {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 68px;
+  }
+  .sl-logo {
+    font-family: "Literata", Georgia, serif;
+    font-size: 1.35rem;
+    text-decoration: none;
+    margin-right: auto;
+  }
+  .sl-logo b {
+    color: var(--sl-teal);
+    font-weight: 700;
+  }
+  .sl-nav {
+    display: none;
+    gap: 1.4rem;
+  }
+  .sl-nav a {
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.6rem 0;
+  }
+  .sl-head__act {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .sl-only-wide {
+    display: none !important;
+  }
+  @media (min-width: 980px) {
+    .sl-nav {
+      display: flex;
+    }
+    .sl-only-wide {
+      display: inline-flex !important;
+    }
+  }
+
+  .sl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 1.25rem;
+    border-radius: 999px;
+    background: var(--sl-teal);
+    color: #fff !important;
+    font-weight: 600;
+    text-decoration: none;
+    border: 2px solid var(--sl-teal);
+    touch-action: manipulation;
+  }
+  .sl-btn--big {
+    min-height: 54px;
+    padding: 0 1.6rem;
+    font-size: 1.05rem;
+  }
+  .sl-btn--ghost {
+    background: transparent;
+    color: var(--sl-teal) !important;
+  }
+  .sl-btn--light {
+    background: var(--sl-light);
+    border-color: var(--sl-light);
+    color: var(--sl-ink) !important;
+  }
+  .sl-btn--line {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.7);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .sl-btn:hover {
+      background: var(--sl-teal-2);
+      border-color: var(--sl-teal-2);
+      color: #fff !important;
+    }
+    .sl-btn--light:hover {
+      background: #fff;
+      border-color: #fff;
+      color: var(--sl-ink) !important;
+    }
+    .sl-btn--line:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #fff;
+    }
+  }
+  .sl-btn:active {
+    transform: scale(0.98);
+  }
+
+  .sl-hero {
+    padding: clamp(2.5rem, 6vw, 5rem) 0 clamp(3rem, 6vw, 5.5rem);
+  }
+  .sl-hero__grid {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  @media (min-width: 900px) {
+    .sl-hero__grid {
+      grid-template-columns: 7fr 5fr;
+      gap: 4rem;
+    }
+  }
+  .sl-kicker {
+    color: var(--sl-teal);
+    font-weight: 600;
+    margin-bottom: 1rem !important;
+  }
+  .sl-lead {
+    font-size: 1.2rem;
+    color: var(--sl-soft);
+    max-width: 40ch;
+    margin-top: 1.25rem !important;
+  }
+  .sl-hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .sl-note {
+    margin-top: 1rem !important;
+    color: var(--sl-soft);
+    font-size: 0.95rem;
+  }
+
+  .sl-today {
+    margin: 0;
+    background: var(--sl-ink);
+    color: #fff;
+    border-radius: 22px;
+    padding: 1.5rem;
+  }
+  .sl-today figcaption {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    font-weight: 600;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .sl-today figcaption span {
+    font-family: "Literata", Georgia, serif;
+    font-size: 1.3rem;
+  }
+  .sl-today figcaption a {
+    color: var(--sl-light);
+    font-size: 0.95rem;
+  }
+  .sl-today ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .sl-today li {
+    display: grid;
+    grid-template-columns: 4.2rem 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .sl-today li:last-child {
+    border-bottom: 0;
+  }
+  .sl-today time {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .sl-today li a {
+    color: var(--sl-ink);
+    background: var(--sl-light);
+    border-radius: 999px;
+    padding: 0.55rem 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .sl-sec {
+    padding: clamp(3.5rem, 7vw, 6rem) 0;
+  }
+  .sl-sec--mist {
+    background: var(--sl-mist);
+  }
+  .sl-sec--ink {
+    background: var(--sl-teal);
+    color: #fff;
+  }
+  .sl-sec--ink h2 {
+    color: #fff;
+  }
+  .sl-sub {
+    color: var(--sl-soft);
+    margin-top: 0.75rem !important;
+    max-width: 60ch;
+  }
+
+  .sl-classes {
+    list-style: none;
+    padding: 0;
+    margin: 2.5rem 0 0;
+    display: grid;
+    gap: 1px;
+    background: var(--sl-line);
+    border: 1px solid var(--sl-line);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  @media (min-width: 760px) {
+    .sl-classes {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .sl-class {
+    background: #fff;
+    padding: 1.75rem;
+  }
+  .sl-class p {
+    margin-top: 0.5rem !important;
+    color: var(--sl-soft);
+  }
+  .sl-class .sl-class__who {
+    color: var(--sl-teal);
+    font-weight: 600;
+  }
+
+  .sl-week {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  @media (min-width: 900px) {
+    .sl-week {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+  .sl-day {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1rem;
+  }
+  .sl-day h3 {
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
+  }
+  .sl-day ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .sl-day a {
+    display: block;
+    padding: 0.55rem 0;
+    min-height: 44px;
+    text-decoration: none;
+    border-top: 1px solid var(--sl-line);
+  }
+  .sl-day time {
+    font-weight: 700;
+    color: var(--sl-teal);
+    margin-right: 0.3rem;
+  }
+
+  .sl-prices {
+    list-style: none;
+    padding: 0;
+    margin: 2.5rem 0 0;
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 860px) {
+    .sl-prices {
+      grid-template-columns: 1.2fr 1fr 1fr;
+    }
+  }
+  .sl-price {
+    border: 1px solid var(--sl-line);
+    border-radius: 20px;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .sl-price--main {
+    border: 2px solid var(--sl-teal);
+    background: var(--sl-mist);
+  }
+  .sl-price__n {
+    font-family: "Literata", Georgia, serif;
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: var(--sl-teal);
+  }
+  .sl-price .sl-btn {
+    align-self: flex-start;
+    margin-top: auto;
+  }
+
+  .sl-teachers {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 760px) {
+    .sl-teachers {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .sl-teachers li {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.25rem;
+  }
+  .sl-teachers__ph {
+    display: block;
+    aspect-ratio: 4 / 3;
+    border-radius: 14px;
+    border: 2px dashed var(--sl-line);
+    margin-bottom: 1rem;
+  }
+  .sl-teachers__n {
+    font-weight: 700;
+  }
+
+  .sl-rev {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+  .sl-link {
+    font-weight: 600;
+    color: var(--sl-teal) !important;
+    padding: 0.6rem 0;
+  }
+
+  .sl-book {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+  }
+  .sl-book p {
+    margin-top: 0.75rem !important;
+    max-width: 48ch;
+    color: #e6f4ef;
+  }
+  .sl-book__act {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  @media (min-width: 900px) {
+    .sl-book {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .sl-where {
+    display: grid;
+    gap: 2.5rem;
+  }
+  @media (min-width: 860px) {
+    .sl-where {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .sl-where p {
+    margin-top: 0.75rem !important;
+  }
+  .sl-where .sl-btn {
+    margin-top: 1.5rem;
+  }
+  .sl-addr {
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+  .sl-hours {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 2rem;
+    margin: 1rem 0 0;
+  }
+  .sl-hours dd {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .sl-foot {
+    background: var(--sl-ink);
+    color: #dfe9e6;
+    padding: 2.5rem 0 6rem;
+    font-size: 0.95rem;
+  }
+  .sl-foot__in {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .sl-foot__links {
+    display: flex;
+    gap: 1.5rem;
+  }
+  .sl-foot a {
+    color: #fff;
+    display: inline-block;
+    padding: 0.5rem 0;
+  }
+
+  .sl-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.6rem max(0.6rem, env(safe-area-inset-right)) calc(0.6rem + env(safe-area-inset-bottom)) max(0.6rem, env(safe-area-inset-left));
+    background: #fff;
+    border-top: 1px solid var(--sl-line);
+  }
+  .sl-bar a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 2px solid var(--sl-teal);
+    color: var(--sl-teal);
+  }
+  .sl-bar a:first-child {
+    background: var(--sl-teal);
+    color: #fff;
+  }
+  .in-frame .sl-bar {
+    position: sticky;
+  }
+  @media (min-width: 900px) {
+    .sl-bar {
+      display: none;
+    }
+    .sl-foot {
+      padding-bottom: 2.5rem;
+    }
+  }
+  @font-face {
+    font-family: "Literata";
+    font-style: normal;
+    font-weight: 200 900;
+    font-display: swap;
+    src: url("/fonts/literata-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+</style>

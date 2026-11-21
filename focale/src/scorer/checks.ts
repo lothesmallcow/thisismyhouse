@@ -95,9 +95,10 @@ function mainAction(p: PageSignals, v: Vocab) {
   const hosts = anywhere(v.hosts);
   const w = words(v.words);
   const pth = paths(v.paths);
+  const ota = anywhere(v.ota);
   for (const l of p.links) {
     const h = l.href.toLowerCase();
-    if (isTel(h) || h.startsWith("mailto:") || isWa(h)) continue;
+    if (isTel(h) || h.startsWith("mailto:") || isWa(h) || test(ota, h)) continue;
     const host = hostOf(hosts, h);
     if (host) return { kind: "host" as const, label: host.replace(/\.$/, "") };
     if (test(w, l.text) || (pth && pth.test(pathOf(h)))) return { kind: "link" as const, label: l.text.slice(0, 40) || l.href.slice(0, 40), early: l.early };
@@ -142,8 +143,9 @@ export const CHECKS: Record<string, Check> = {
     if (a?.kind === "form") return ok("C'è un modulo per scriverti dalla pagina.");
     const ota = anywhere(s.vocab.ota);
     const viaOta = p.links.find((l) => test(ota, l.href));
-    if (viaOta) return half(`Si prenota solo da ${hostOf(ota, viaOta.href)!.replace(/\.$/, "")}: su ogni prenotazione paghi la commissione.`);
-    if (p.links.some((l) => l.href.toLowerCase().startsWith("mailto:"))) return half("C'è solo un indirizzo email: niente pulsante o modulo per l'azione principale.");
+    if (viaOta) return half(`Si passa solo da ${hostOf(ota, viaOta.href)!.replace(/\.$/, "")}: il cliente è loro prima che tuo, e su ogni prenotazione paghi la commissione.`);
+    if (p.links.some((l) => /contatt/i.test(l.text) || /\/contatt/i.test(pathOf(l.href)))) return half("C'è solo una pagina contatti: nessun pulsante o modulo per il passo principale.");
+    if (p.links.some((l) => l.href.toLowerCase().startsWith("mailto:"))) return half("C'è solo un indirizzo email: niente pulsante o modulo per il passo principale.");
     return no("Non abbiamo trovato un modo diretto per fare il passo principale: solo il numero o nulla.");
   },
   "conv.early": (p, _perf, _r, s) => {
@@ -177,7 +179,7 @@ export const CHECKS: Record<string, Check> = {
     const items = distinct(s.vocab.menu, p.text);
     if (p.jsonLdKeys.includes("hasMenu") && !p.links.some((l) => isPdf(l.href))) return ok("Il menu è collegato nei dati per Google.");
     if (items.length >= 3 && PRICE.test(p.text)) return ok("Il menu è scritto sulla pagina, con i prezzi.");
-    const menuLink = p.links.find((l) => /men[uù]|carta/i.test(l.text) || /\/(menu|carta|menù)/i.test(l.href));
+    const menuLink = p.links.find((l) => /\/(menu|carta|menù)/i.test(pathOf(l.href)) || (/men[uù]|carta/i.test(l.text) && /\.pdf|\/[a-z]/i.test(l.href) && !/^#/.test(l.href)));
     if (menuLink && !isPdf(menuLink.href)) return ok("Il menu ha una sua pagina.");
     if (menuLink && isPdf(menuLink.href)) return half("Il menu c'è, ma in PDF: dal telefono si legge male e Google non lo legge.");
     if (items.length >= 3) return half("Si vedono piatti, ma senza prezzi.");
@@ -262,9 +264,9 @@ export const CHECKS: Record<string, Check> = {
 
   "trust.https": (p) => (p.https ? ok("Il sito usa una connessione sicura.") : no("Il sito non usa HTTPS: il browser lo segna come non sicuro.")),
   "trust.reviews": (p) => {
-    if (p.hasAggregateRating) return ok("Le recensioni sono nei dati strutturati.");
     if (REVIEW_VENDORS.some((x) => p.vendorBlob.includes(x))) return ok("C'è un riquadro di recensioni.");
     if (p.links.some((l) => /(search\.google\.com\/local\/(reviews|writereview)|g\.page\/r\/|\/maps\/place\/.*review|trustpilot\.com\/review|tripadvisor\.)/i.test(l.href) || (/recension/i.test(l.text) && isMaps(l.href)))) return ok("C'è un collegamento alle recensioni.");
+    if (p.hasAggregateRating) return half("C'è un voto medio nei dati per Google, ma sulla pagina non si vedono recensioni collegate a una fonte.");
     if (/\brecension/i.test(p.text)) return half("Si parla di recensioni, ma non le abbiamo trovate collegate o mostrate.");
     return no("Non abbiamo trovato recensioni sulla pagina.");
   },

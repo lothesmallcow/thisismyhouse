@@ -1,0 +1,160 @@
+{
+  "rubricVersion": "2.0.0",
+  "measuredAt": "2026-11-21",
+  "method": "Lighthouse locale (telefono simulato) sul sito costruito, poi la stessa griglia dell'analisi",
+  "templates": {
+    "fitness": {
+      "label": "Studio Linea (studio fitness dimostrativo)",
+      "path": "/analisi-sito/esempio-fitness/",
+      "total": 100,
+      "categories": [
+        {
+          "id": "speed",
+          "label": "Velocità e telefono",
+          "earned": 20,
+          "max": 20
+        },
+        {
+          "id": "conversion",
+          "label": "Percorso di prenotazione",
+          "earned": 32,
+          "max": 32
+        },
+        {
+          "id": "local",
+          "label": "Ricerca locale",
+          "earned": 15,
+          "max": 15
+        },
+        {
+          "id": "trust",
+          "label": "Fiducia",
+          "earned": 10,
+          "max": 10
+        },
+        {
+          "id": "a11y",
+          "label": "Accessibilità",
+          "earned": 8,
+          "max": 8
+        },
+        {
+          "id": "legal",
+          "label": "Basi legali",
+          "earned": 10,
+          "max": 10
+        },
+        {
+          "id": "content",
+          "label": "Chiarezza",
+          "earned": 5,
+          "max": 5
+        }
+      ]
+    },
+    "edilizia": {
+      "label": "Arcadi (impresa di ristrutturazioni dimostrativa)",
+      "path": "/lavori/arcadi-ristrutturazioni/demo/",
+      "total": 100,
+      "categories": [
+        {
+          "id": "speed",
+          "label": "Velocità e telefono",
+          "earned": 20,
+          "max": 20
+        },
+        {
+          "id": "conversion",
+          "label": "Richiesta di preventivo",
+          "earned": 30,
+          "max": 30
+        },
+        {
+          "id": "local",
+          "label": "Ricerca locale",
+          "earned": 13,
+          "max": 13
+        },
+        {
+          "id": "trust",
+          "label": "Fiducia",
+          "earned": 14,
+          "max": 14
+        },
+        {
+          "id": "a11y",
+          "label": "Accessibilità",
+          "earned": 8,
+          "max": 8
+        },
+        {
+          "id": "legal",
+          "label": "Basi legali",
+          "earned": 10,
+          "max": 10
+        },
+        {
+          "id": "content",
+          "label": "Chiarezza",
+          "earned": 5,
+          "max": 5
+        }
+      ]
+    },
+    "eventi": {
+      "label": "Villa Ortensia (location per matrimoni dimostrativa)",
+      "path": "/lavori/villa-ortensia/demo/",
+      "total": 96,
+      "categories": [
+        {
+          "id": "speed",
+          "label": "Velocità e telefono",
+          "earned": 20,
+          "max": 20
+        },
+        {
+          "id": "conversion",
+          "label": "Richiesta di disponibilità",
+          "earned": 29,
+          "max": 29
+        },
+        {
+          "id": "local",
+          "label": "Ricerca locale",
+          "earned": 13,
+          "max": 13
+        },
+        {
+          "id": "trust",
+          "label": "Fiducia",
+          "earned": 10.5,
+          "max": 15
+        },
+        {
+          "id": "a11y",
+          "label": "Accessibilità",
+          "earned": 8,
+          "max": 8
+        },
+        {
+          "id": "legal",
+          "label": "Basi legali",
+          "earned": 10,
+          "max": 10
+        },
+        {
+          "id": "content",
+          "label": "Chiarezza",
+          "earned": 5,
+          "max": 5
+        }
+      ]
+    }
+  },
+  "scorerPage": {
+    "label": "La pagina dell'analisi",
+    "path": "/analisi-sito/",
+    "technicalScore": 100,
+    "note": "Non è un'attività locale: misurata solo su velocità, accessibilità, basi legali e dati per Google."
+  }
+}

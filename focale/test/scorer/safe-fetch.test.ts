@@ -16,6 +16,13 @@ describe("url shape", () => {
   );
 });
 
+describe("not a site of one's own", () => {
+  it.each(["instagram.com/studio", "https://www.facebook.com/studio", "linktr.ee/studio", "https://www.booking.com/hotel/it/x.html", "maps.app.goo.gl/abc"])("%s is a profile, not scored", (u) => {
+    expect(() => normalizeUrl(u)).toThrow(expect.objectContaining({ code: "social" }));
+  });
+  it("a normal site is fine", () => expect(normalizeUrl("studiolinea.it").hostname).toBe("studiolinea.it"));
+});
+
 describe("private addresses", () => {
   it.each(["10.1.2.3", "172.16.0.1", "172.31.255.255", "192.168.1.1", "127.0.0.1", "169.254.169.254", "100.64.0.1", "0.0.0.0", "224.0.0.1", "::1", "::", "fc00::1", "fd12::1", "fe80::1", "::ffff:10.0.0.1", "::ffff:127.0.0.1", "64:ff9b::10.0.0.1", "2001:db8::1"])(
     "%s is private",

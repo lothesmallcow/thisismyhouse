@@ -78,3 +78,30 @@ export async function runPsi(url: string, key: string | undefined, fetchImpl: ty
     clearTimeout(t);
   }
 }
+
+/**
+ * The few numbers we keep for the day's cache: the same perfFrom() result, nothing else from the
+ * PSI answer (no screenshots, no resource lists, no page text).
+ */
+export function perfCacheable(res: PsiLike): PsiLike {
+  const a = res.lighthouseResult?.audits ?? {};
+  const pick = (k: string) => (a[k]?.numericValue == null ? undefined : { numericValue: a[k].numericValue });
+  const exp = (e: Experience) => {
+    if (!e?.metrics) return undefined;
+    const m: Record<string, Metric> = {};
+    for (const k of ["LARGEST_CONTENTFUL_PAINT_MS", "INTERACTION_TO_NEXT_PAINT", "CUMULATIVE_LAYOUT_SHIFT_SCORE"]) if (e.metrics[k]) m[k] = { percentile: e.metrics[k].percentile };
+    return { metrics: m, origin_fallback: e.origin_fallback };
+  };
+  const audits: Record<string, { numericValue?: number }> = {};
+  for (const k of ["largest-contentful-paint", "total-blocking-time", "cumulative-layout-shift", "total-byte-weight"]) {
+    const v = pick(k);
+    if (v) audits[k] = v;
+  }
+  return {
+    lighthouseResult: res.lighthouseResult
+      ? { lighthouseVersion: res.lighthouseResult.lighthouseVersion, audits, categories: { accessibility: { score: res.lighthouseResult.categories?.accessibility?.score ?? null } } }
+      : undefined,
+    loadingExperience: exp(res.loadingExperience),
+    originLoadingExperience: exp(res.originLoadingExperience),
+  };
+}

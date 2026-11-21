@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { rubric, fromParts, fromPartsAll } from "../../src/scorer/analyze";
+import { rubric, fromParts, fromPartsAll, assertReadable } from "../../src/scorer/analyze";
 import { guessSector, resolveRubric } from "../../src/scorer/sectors";
 import { readPage } from "../../src/scorer/page";
 import { CHECKS } from "../../src/scorer/checks";
 import offer from "../../src/scorer/offer.json";
+import { perfCacheable, perfFrom } from "../../src/scorer/perf";
 
 const fixture = (n: string) => readFileSync(new URL(`./fixtures/${n}`, import.meta.url), "utf8");
 const goodPsi = {
@@ -84,6 +85,22 @@ describe("report", () => {
   });
 });
 
+describe("fairness", () => {
+  it("an empty JavaScript shell is not scored", () => {
+    expect(() => assertReadable(readPage('<html><body><div id="root"></div><script src="/app.js"></script></body></html>', "https://a.it/"))).toThrow(/JavaScript/);
+    expect(() => assertReadable(readPage(fixture("old-studio.html"), "https://a.it/"))).not.toThrow();
+  });
+});
+
+describe("speed cache", () => {
+  it("keeps only the numbers, and they give the same speed data", () => {
+    const full = { ...goodPsi, lighthouseResult: { ...goodPsi.lighthouseResult, finalUrl: "x", audits: { ...goodPsi.lighthouseResult.audits, "screenshot-thumbnails": { details: { items: ["big"] } } } } };
+    const small = perfCacheable(full as never);
+    expect(JSON.stringify(small)).not.toContain("screenshot");
+    expect(perfFrom(small)).toEqual(perfFrom(full as never));
+  });
+});
+
 describe("sectors", () => {
   it("guesses the sector from the page's own words and schema, Altro when nothing matches", () => {
     const g = (h: string) => guessSector(rubric, readPage(h, "https://a.it/"));
@@ -92,6 +109,9 @@ describe("sectors", () => {
     expect(g('<script type="application/ld+json">{"@type":"Dentist"}</script><h1>Studio Rossi</h1>')).toBe("salute");
     expect(g("<title>Ristrutturazioni Milano | Edil Bianchi</title>")).toBe("edilizia");
     expect(g("<title>Mario Rossi</title><h1>Riparo biciclette</h1>")).toBe("altro");
+    expect(g("<title>Casa Lia</title><h1>Camera matrimoniale con bagni privati e giardino</h1><p>Bed and breakfast</p>")).toBe("ospitalita");
+    expect(g("<title>Hotel Riva con spa sul lago</title><h1>Hotel con spa</h1>")).toBe("ospitalita");
+    expect(g("<title>Trilocale in vendita, Milano</title><h1>Agenzia immobiliare: soggiorno, cucina, due bagni</h1>")).toBe("immobiliare");
   });
   it("scores every sector at once and keeps the visitor's choice", () => {
     const all = fromPartsAll("https://n.example.it/", fixture("new-studio.html"), goodPsi, { sector: "altro" });

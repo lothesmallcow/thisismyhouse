@@ -184,9 +184,28 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
   (Lorenzo: it settles exactly on the phone when you stop near it, scrolling stays free). Touch only:
   on computers Lenis drives the scroll and would fight CSS snapping.
 
+## Website Scorer (/analisi-sito/) — see docs/SCORER.md
+- Free private site report (score /100, top 5 fixes, legal flags) + "Cosa possiamo fare noi" + one CTA
+  (email with unticked consent). Engine in src/scorer/ (plain TS, shared by Pages Functions in functions/,
+  CLI and tests). Rubric src/scorer/rubric.json is versioned: change it, bump version; every sector
+  profile must total 100 (tests). Sectors: fitness, ospitalita, ristorazione, edilizia, salute, bellezza,
+  professionisti, immobiliare, negozio, eventi, altro. Flags have 0 points and never claim compliance.
+- Deterministic: HTML signals only (hidden text ignored), speed from CrUX else lab in wide bands, PSI
+  numbers cached per URL per day. Store only URL, score, email, consent record; never page content.
+  Reports are never published; no rankings or comparisons with named businesses.
+- Never exempt ourselves: `npm run scorer:selftest` (CI: .github/workflows/focale-scorer.yml) scores our
+  demos (Studio Linea fitness, Arcadi, Villa Ortensia) and the scorer page; all must be >= 90. It
+  writes src/scorer/benchmark.json, the only source of the "projected score". No demo = no number.
+- Prices in src/scorer/offer.json come from Lorenzo's Scorer brief (600/900/1.200 + Cura 39/month) and
+  CONFLICT with /prezzi/ and the "no monthly plan" rule above: Lorenzo must align them. Until then the
+  page is linked from the footer only.
+- Render report strings with textContent only: "found" sentences quote the analysed page.
+- prospects/ (batch CLI output) is git-ignored: other businesses' results stay private.
+- reports/Requisiti siti per settore.md: per-sector requirements and build checklists for future sites.
+
 ## Scripts
 dev, build, preview, check, check:placeholders, predeploy, screens, screens:demo, lighthouse, a11y,
-nuova-anteprima, logo, illustrazioni.
+nuova-anteprima, logo, illustrazioni, test, scorer, scorer:batch, scorer:selftest.
 
 ## Rules learned while building
 - Demo photos could not be downloaded from this environment: demos use generated illustrations

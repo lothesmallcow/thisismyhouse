@@ -9,7 +9,7 @@
  */
 
 export class ScorerError extends Error {
-  constructor(public code: "url" | "blocked" | "unreachable" | "not-html" | "too-slow" | "status", message: string) {
+  constructor(public code: "url" | "blocked" | "unreachable" | "not-html" | "too-slow" | "status" | "social" | "empty", message: string) {
     super(message);
   }
 }
@@ -38,9 +38,13 @@ export function normalizeUrl(raw: string): URL {
     throw new ScorerError("url", "Questo non sembra l'indirizzo di un sito.");
   }
   checkUrlShape(u);
+  if (SOCIAL.test(u.hostname)) throw new ScorerError("social", "Questo è un profilo social o una pagina di link, non un sito tuo: il punteggio non avrebbe senso. Se il sito non c'è ancora, è proprio quello che possiamo fare.");
   u.hash = "";
   return u;
 }
+
+/** Profiles and link pages: not a site of one's own, so there is nothing fair to score. */
+const SOCIAL = /(^|\.)(instagram\.com|facebook\.com|fb\.com|tiktok\.com|linktr\.ee|linkin\.bio|beacons\.ai|business\.site|x\.com|twitter\.com|linkedin\.com|youtube\.com|wa\.me|t\.me|booking\.com|airbnb\.[a-z.]+|tripadvisor\.[a-z.]+|thefork\.[a-z.]+|miodottore\.it|treatwell\.it|google\.com|maps\.app\.goo\.gl|g\.page)$/i;
 
 function checkUrlShape(u: URL) {
   if (u.protocol !== "http:" && u.protocol !== "https:") throw new ScorerError("url", "Funziona solo con indirizzi http o https.");

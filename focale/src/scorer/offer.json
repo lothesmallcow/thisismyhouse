@@ -1,15 +1,15 @@
 {
   "version": "2026-11-21",
-  "source": "Prices from Lorenzo's Website Scorer brief of 21 Nov 2026 (600 / 900 / 1.200 EUR, care 39 EUR a month). What each package includes is adapted from src/lib/plans.ts and must be confirmed by Lorenzo: the brief gives prices only.",
+  "source": "Prices from Lorenzo's Website Scorer brief of 21 Nov 2026 (600 / 900 / 1.200 EUR, care 39 EUR a month). They differ from src/lib/plans.ts and /prezzi/ (390 / 690 / 1.190, no monthly plan): Lorenzo must align them. What each package includes is adapted from src/lib/plans.ts and must be confirmed by Lorenzo: the brief gives prices only. Lines starting with @ are filled per sector from sectorLines.",
   "packages": [
     {
       "id": "essenziale",
       "name": "Essenziale",
       "price": 600,
-      "forWhom": "Per lo studio che ha già le basi e vuole un sito veloce e chiaro.",
+      "forWhom": "Per chi ha già le basi e vuole un sito veloce e chiaro.",
       "includes": [
         "Sito a pagina unica, scritto da noi",
-        "Prenota, Chiama e WhatsApp sempre a portata di pollice",
+        "@action",
         "Indirizzo, Google Maps e dati per Google",
         "Privacy e cookie in regola"
       ]
@@ -18,13 +18,13 @@
       "id": "completo",
       "name": "Completo",
       "price": 900,
-      "forWhom": "Il sito completo che porta a prenotare.",
+      "forWhom": "Il sito completo che porta richieste.",
       "includes": [
         "Tutto l'Essenziale",
-        "Fino a 6 pagine: una per ogni disciplina",
-        "Orari, prezzi e lezione di prova in vista",
+        "Fino a 6 pagine",
+        "@info",
         "Le tue recensioni Google sul sito",
-        "Collegato al sistema di prenotazione che usi già"
+        "@link"
       ]
     },
     {
@@ -35,8 +35,8 @@
       "includes": [
         "Tutto il Completo",
         "Più lingue",
-        "Pannello per cambiare da solo orari, testi e foto",
-        "Pagine in più per corsi, eventi o sedi"
+        "Pannello per cambiare da solo testi e foto",
+        "Pagine in più per servizi, eventi o sedi"
       ]
     }
   ],
@@ -44,6 +44,67 @@
     "name": "Cura",
     "pricePerMonth": 39,
     "line": "Ogni mese rifacciamo questa analisi sul tuo sito e sistemiamo quello che scende, così il punteggio resta alto.",
-    "includes": ["Analisi mensile con questo stesso punteggio", "Aggiornamenti tecnici e copie di sicurezza", "Piccole modifiche a orari, prezzi e testi"]
+    "includes": [
+      "Analisi mensile con questo stesso punteggio",
+      "Aggiornamenti tecnici e copie di sicurezza",
+      "Piccole modifiche a orari, prezzi e testi"
+    ]
+  },
+  "sectorLines": {
+    "fitness": {
+      "@action": "Prenota, Chiama e WhatsApp sempre a portata di pollice",
+      "@info": "Orari, prezzi e lezione di prova in vista",
+      "@link": "Collegato al sistema di prenotazione che usi già"
+    },
+    "ospitalita": {
+      "@action": "Prenota, Chiama e WhatsApp sempre a portata di pollice",
+      "@info": "Camere, prezzi e vantaggi di chi prenota da te",
+      "@link": "Collegato al tuo sistema di prenotazione o a una richiesta con le date"
+    },
+    "ristorazione": {
+      "@action": "Prenota, Chiama e Come arrivare sempre in vista",
+      "@info": "Menu scritto sul sito, con prezzi e orari",
+      "@link": "Collegato a TheFork, all'asporto o a WhatsApp"
+    },
+    "edilizia": {
+      "@action": "Preventivo, Chiama e WhatsApp sempre in vista",
+      "@info": "Lavori fatti con prima e dopo, zone servite",
+      "@link": "Modulo di preventivo con le foto dal telefono"
+    },
+    "salute": {
+      "@action": "Prenota, Chiama e Come arrivare sempre in vista",
+      "@info": "Prestazioni, titoli e iscrizione all'albo in vista",
+      "@link": "Collegato al calendario o alla piattaforma che usi già"
+    },
+    "bellezza": {
+      "@action": "Prenota, Chiama e WhatsApp sempre a portata di pollice",
+      "@info": "Trattamenti e listino in vista",
+      "@link": "Collegato all'agenda che usi già (Treatwell, Fresha, Booksy)"
+    },
+    "professionisti": {
+      "@action": "Chiama, scrivi e chiedi una consulenza in un tocco",
+      "@info": "Aree di attività, titoli e iscrizione all'albo in vista",
+      "@link": "Modulo breve per chiedere una consulenza"
+    },
+    "immobiliare": {
+      "@action": "Chiama, WhatsApp e richiesta di informazioni sempre in vista",
+      "@info": "Immobili in vetrina e richiesta di valutazione",
+      "@link": "Collegato al gestionale che usi per gli annunci"
+    },
+    "negozio": {
+      "@action": "Chiama, WhatsApp e Come arrivare sempre in vista",
+      "@info": "Orari, prodotti e marchi in vista",
+      "@link": "Ordini o richieste di disponibilità su WhatsApp"
+    },
+    "eventi": {
+      "@action": "Richiesta di disponibilità, Chiama e WhatsApp sempre in vista",
+      "@info": "Galleria degli eventi, capienza e fasce di prezzo",
+      "@link": "Modulo con data, ospiti e tipo di evento"
+    },
+    "altro": {
+      "@action": "Chiama, WhatsApp e contatto sempre in vista",
+      "@info": "Servizi, orari e prezzi in vista",
+      "@link": "Modulo di contatto breve"
+    }
   }
 }

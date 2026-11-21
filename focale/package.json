@@ -25,7 +25,7 @@
     "test": "vitest run",
     "scorer": "tsx scripts/scorer/cli.ts",
     "scorer:batch": "tsx scripts/scorer/batch.ts",
-    "scorer:selftest": "node scripts/scorer/selftest.mjs"
+    "scorer:selftest": "tsx scripts/scorer/selftest.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

@@ -8,6 +8,7 @@
 import Demo from "../../../layouts/Demo.astro";
 import { Image } from "astro:assets";
 import { site } from "../../../config/site";
+import { telHref } from "../../../lib/util";
 
 const img = import.meta.glob<{ default: ImageMetadata }>("../../../assets/demo/villa-ortensia/*.jpg", { eager: true });
 const pic = (n: string) => img[`../../../assets/demo/villa-ortensia/${n}.jpg`].default;
@@ -35,6 +36,16 @@ const nav = [
   { href: "#fasce", t: "Fasce di prezzo" },
 ];
 const waHref = `https://wa.me/${site.whatsappNumber}`;
+const address = "Via Esempio 1, 22021 Bellagio (CO)";
+const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+const reviewsHref = "https://search.google.com/local/reviews?placeid=ESEMPIO";
+const ld = {
+  "@context": "https://schema.org",
+  "@type": "EventVenue",
+  name: "Villa Ortensia (attività dimostrativa)",
+  address: { "@type": "PostalAddress", streetAddress: "Via Esempio 1", postalCode: "22021", addressLocality: "Bellagio", addressCountry: "IT" },
+  maximumAttendeeCapacity: 180,
+};
 ---
 <Demo
   title="Villa Ortensia | Matrimoni sul Lago di Como (demo)"
@@ -42,6 +53,7 @@ const waHref = `https://wa.me/${site.whatsappNumber}`;
   fonts={["/fonts/demo/cormorant-500.woff2", "/fonts/demo/jost.woff2"]}
   themeColor="#56646b"
 >
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(ld)} />
   <style is:global>
     @font-face {
       font-family: "Cormorant Garamond";
@@ -255,10 +267,19 @@ const waHref = `https://wa.me/${site.whatsappNumber}`;
             <p class="vo-foot__h">Scriveteci</p>
             <ul>
               <li><a href={waHref} target="_blank" rel="noopener">WhatsApp, rispondiamo in giornata</a></li>
+              <li><a href={telHref()}>Chiamaci</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="vo-foot__h">Dove siamo</p>
+            <ul>
+              <li><p>{address}</p></li>
+              <li><a href={mapsHref}>Come arrivare</a></li>
+              <li><a href={reviewsHref}>Le recensioni su Google</a></li>
             </ul>
           </div>
         </div>
-        <p class="vo-foot__note">Villa Ortensia è un'attività inventata. Progetto dimostrativo di Focus Design.</p>
+        <p class="vo-foot__note">Villa Ortensia è un'attività inventata: indirizzo e partita IVA sono d'esempio (P.IVA 00000000000). Progetto dimostrativo di Focus Design. <a href="/privacy/">Informativa privacy</a></p>
       </div>
     </footer>
   </div>
@@ -884,7 +905,7 @@ const waHref = `https://wa.me/${site.whatsappNumber}`;
   }
   @media (min-width: 760px) {
     .vo-foot__cols {
-      grid-template-columns: 1.4fr 1fr 1fr;
+      grid-template-columns: 1.4fr 1fr 1fr 1fr;
     }
   }
   .vo-foot__tag {

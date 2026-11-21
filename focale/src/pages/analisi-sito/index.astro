@@ -1,0 +1,749 @@
+---
+/**
+ * /analisi-sito/: the free Website Scorer. The visitor pastes an address (and may pick a sector);
+ * /api/score fetches the page safely, measures speed and returns the report for every sector.
+ * The report is drawn by scripts/scorer-ui.ts. It is private: shown only to whoever asked, never
+ * published or stored. The only thing saved is the optional request at the end (email + consent).
+ * A sample result, computed at build time from an INVENTED old-style studio page, shows how the
+ * report looks without running a real analysis (and is what the static preview can show).
+ */
+import Base from "../../layouts/Base.astro";
+import PageHead from "../../components/PageHead.astro";
+import { rubric, fromPartsAll } from "../../scorer/analyze";
+import offer from "../../scorer/offer.json";
+import benchmark from "../../scorer/benchmark.json";
+import { CONSENT } from "../../scorer/consent";
+import { breadcrumbs } from "../../lib/schema";
+import sampleHtml from "../../../test/scorer/fixtures/old-studio.html?raw";
+
+// Invented page and invented lab numbers, clearly labelled as an example on the page.
+const samplePsi = {
+  lighthouseResult: {
+    lighthouseVersion: "13.0.0",
+    audits: {
+      "largest-contentful-paint": { numericValue: 5200 },
+      "total-blocking-time": { numericValue: 740 },
+      "cumulative-layout-shift": { numericValue: 0.18 },
+      "total-byte-weight": { numericValue: 4_600_000 },
+    },
+    categories: { accessibility: { score: 0.71 } },
+  },
+};
+const sample = fromPartsAll("http://www.studio-esempio.it/", sampleHtml, samplePsi, { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
+const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
+const data = { sectors, offer, benchmark, consent: CONSENT, sample, rubricVersion: rubric.version };
+const best = (benchmark.templates as unknown as Record<string, { total: number; label: string; path: string }>).fitness;
+
+const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)).size;
+---
+<Base
+  title="Analisi gratuita del sito: quanto lavora il tuo sito? | Focus Design"
+  description="Incolla l'indirizzo del tuo sito: velocità da telefono, contatti, Google e basi legali, con un punteggio su 100 e le 5 cose da sistemare. Gratis."
+  jsonLd={[breadcrumbs([{ name: "Analisi del sito", path: "/analisi-sito/" }])]}
+  bodyClass="sc-page"
+>
+  <PageHead
+    label="Analisi del sito"
+    title="Quanto lavora il tuo sito? Scoprilo in un minuto."
+    lead="Incolla l'indirizzo: controlliamo velocità da telefono, contatti, Google e basi legali, con la stessa griglia che usiamo sui nostri siti. Gratis e senza email: il risultato lo vedi solo tu."
+  >
+    <div class="sc-mini" slot="visual" aria-label={`Il nostro sito d'esempio per uno studio fitness: ${best.total} su 100`}>
+      <p class="sc-mini__k">Il nostro sito d'esempio, misurato con la stessa griglia</p>
+      <p class="sc-mini__n"><span>{best.total}</span><small>su 100</small></p>
+      <p class="sc-mini__t">{best.label}</p>
+      <a class="link" href={best.path}>Guarda il sito d'esempio</a>
+    </div>
+  </PageHead>
+
+  <section class="section sc-tool" id="analisi" aria-labelledby="sc-tool-t">
+    <div class="wrap">
+      <h2 id="sc-tool-t" class="sc-visually-hidden">Analizza il tuo sito</h2>
+      <form class="sc-form" data-sc-form novalidate>
+        <div class="field sc-form__url">
+          <label for="sc-url">Indirizzo del sito</label>
+          <input id="sc-url" name="url" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="www.iltuosito.it" required aria-describedby="sc-url-hint sc-error" />
+          <p class="hint" id="sc-url-hint">Basta l'indirizzo, anche senza https://</p>
+        </div>
+        <div class="field sc-form__sector">
+          <label for="sc-sector">Settore</label>
+          <select id="sc-sector" name="sector">
+            <option value="">Lo capiamo noi dalla pagina</option>
+            {sectors.map((s) => <option value={s.id}>{s.label}</option>)}
+          </select>
+        </div>
+        <button class="btn btn--primary btn--big sc-form__go" type="submit">Analizza il sito</button>
+        <p class="error sc-form__error" id="sc-error" role="alert" data-sc-error></p>
+      </form>
+      <p class="sc-privacy">Il risultato lo vedi solo tu: non lo pubblichiamo e non salviamo la pagina. Guardiamo solo la pagina che indichi, come la vede chiunque.</p>
+      <p class="sc-sample-row"><button type="button" class="link sc-linkbtn" data-sc-sample>Non hai un sito a portata di mano? Guarda un esempio di risultato</button></p>
+
+      <ol class="sc-steps" data-sc-steps hidden aria-live="polite">
+        <li>Apriamo la pagina</li>
+        <li>Leggiamo cosa c'è: contatti, orari, prezzi, dati per Google</li>
+        <li>Misuriamo la velocità da telefono (può servire fino a un minuto)</li>
+        <li>Calcoliamo il punteggio</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section sc-result" data-sc-result hidden aria-labelledby="sc-res-t" tabindex="-1">
+    <div class="wrap">
+      <p class="sc-sample-note" data-sc-sample-note hidden>Esempio su un sito inventato: numeri e pagina non sono di nessuna attività reale.</p>
+      <div class="sc-top">
+        <div class="sc-ring" data-sc-ring role="img">
+          <svg viewBox="0 0 160 160" aria-hidden="true">
+            <circle class="sc-ring__bg" cx="80" cy="80" r="70" />
+            <circle class="sc-ring__fg" cx="80" cy="80" r="70" data-sc-arc />
+          </svg>
+          <p class="sc-ring__n" aria-hidden="true"><span data-sc-total>0</span><small>su 100</small></p>
+        </div>
+        <div class="sc-top__text">
+          <h2 id="sc-res-t" data-sc-verdict></h2>
+          <p class="sc-top__url" data-sc-url></p>
+          <div class="field sc-top__sector">
+            <label for="sc-sector-now">Valutato come</label>
+            <select id="sc-sector-now" data-sc-sector-now>
+              {sectors.map((s) => <option value={s.id}>{s.label}</option>)}
+            </select>
+          </div>
+          <p class="sc-top__note" data-sc-note></p>
+          <p><button type="button" class="link sc-linkbtn sc-noprint" data-sc-print>Stampa o salva in PDF</button></p>
+        </div>
+      </div>
+
+      <div class="sc-cats" data-sc-cats></div>
+
+      <div class="sc-block">
+        <h2>Le 5 cose che valgono più punti</h2>
+        <ol class="sc-fixes" data-sc-fixes></ol>
+      </div>
+
+      <div class="sc-block" data-sc-flags-wrap>
+        <h2>Da verificare con chi ti segue</h2>
+        <p class="sc-sub">Non sono voti e non tolgono punti: sono informazioni che un commercialista o un consulente può confermare.</p>
+        <ul class="sc-flags" data-sc-flags></ul>
+      </div>
+
+      <details class="sc-all">
+        <summary>Tutti i controlli, uno per uno</summary>
+        <div data-sc-all></div>
+      </details>
+    </div>
+  </section>
+
+  <section class="section section--sole sc-offer" data-sc-offer hidden aria-labelledby="sc-offer-t">
+    <div class="wrap">
+      <div class="hs-head">
+        <h2 id="sc-offer-t">Cosa possiamo fare noi</h2>
+        <p class="lead" data-sc-proj-lead></p>
+      </div>
+      <div class="sc-proj" data-sc-proj></div>
+      <ul class="hs-price__plans sc-plans" data-sc-plans></ul>
+      <p class="sc-reason" data-sc-reason></p>
+      <div class="sc-care" data-sc-care></div>
+    </div>
+  </section>
+
+  <section class="section sc-cta" data-sc-cta hidden aria-labelledby="sc-cta-t">
+    <div class="wrap sc-cta__in">
+      <div>
+        <h2 id="sc-cta-t">Vuoi vedere il tuo sito rifatto, prima di decidere?</h2>
+        <p class="lead">Lasciaci l'email: prepariamo un'anteprima gratuita del tuo nuovo sito e te la mandiamo insieme a questi risultati. Nessun impegno, nessuna newsletter.</p>
+      </div>
+      <form class="sc-lead" data-sc-lead novalidate>
+        <div class="field">
+          <label for="sc-email">La tua email</label>
+          <input id="sc-email" name="email" type="email" autocomplete="email" required aria-describedby="sc-lead-error" />
+        </div>
+        <input type="text" name="website" class="sc-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <label class="check">
+          <input type="checkbox" name="consent" data-sc-consent />
+          <span>{CONSENT.text.replace(" Ho letto l'informativa privacy.", "")} Ho letto l'<a class="link" href="/privacy/" target="_blank" rel="noopener">informativa privacy</a>.</span>
+        </label>
+        <button class="btn btn--primary btn--big" type="submit">Voglio l'anteprima gratuita</button>
+        <p class="error" id="sc-lead-error" role="alert" data-sc-lead-error></p>
+        <p class="sc-lead__ok" data-sc-lead-ok hidden role="status">Fatto. Ti scriviamo entro due giorni lavorativi con l'anteprima.</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="section section--pietra sc-method" aria-labelledby="sc-method-t">
+    <div class="wrap sc-method__in">
+      <h2 id="sc-method-t">Come calcoliamo il punteggio</h2>
+      <div class="sc-method__cols">
+        <div>
+          <h3>Stessa pagina, stesso punteggio</h3>
+          <p>Usiamo {checkCount} controlli automatici, scritti in una griglia pubblica (versione {rubric.version}). Ogni controllo vale dei punti e dice cosa ha trovato. Per la velocità usiamo i dati delle persone che visitano davvero il sito, quando Google li ha; altrimenti una prova da telefono letta in fasce larghe, così il risultato non cambia da una volta all'altra per pochi millisecondi.</p>
+        </div>
+        <div>
+          <h3>Ogni settore ha la sua griglia</h3>
+          <p>Un ristorante ha bisogno del menu, un'impresa edile dei lavori fatti, un B&amp;B della prenotazione diretta. Le basi (velocità, Google, legale) sono uguali per tutti; il resto cambia con il settore. Se il tuo non c'è, scegli "Altro": controlliamo solo quello che serve a qualsiasi attività.</p>
+        </div>
+        <div>
+          <h3>Cosa non possiamo vedere</h3>
+          <p>Non sappiamo quante richieste ricevi, e nessun punteggio te le promette. Non diciamo se sei in regola con la legge: segnaliamo solo cosa si vede sulla pagina. Guardiamo la pagina che indichi, non tutto il sito.</p>
+        </div>
+      </div>
+      <p class="sc-method__self">Lo usiamo anche su di noi: i nostri siti d'esempio devono fare almeno 90, e lo controlliamo a ogni modifica.</p>
+    </div>
+  </section>
+
+  <script type="application/json" id="sc-data" set:html={JSON.stringify(data)} />
+</Base>
+
+<script>
+  import { initScorer } from "../../scripts/scorer-ui";
+  initScorer();
+</script>
+
+<style is:global>
+  .sc-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .sc-mini {
+    background: var(--blu);
+    color: #fff;
+    border-radius: 24px;
+    padding: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    display: grid;
+    gap: 0.5rem;
+    max-width: 26rem;
+    justify-self: end;
+    align-self: center;
+    width: 100%;
+  }
+  .sc-mini .link {
+    color: #fff;
+  }
+  .sc-mini__k {
+    color: var(--on-dark-muted);
+    font-weight: 600;
+  }
+  .sc-mini__n {
+    font-weight: 800;
+    font-size: clamp(4rem, 3rem + 4vw, 6.5rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .sc-mini__n small {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    margin-left: 0.5rem;
+  }
+  .sc-mini__t {
+    font-weight: 600;
+  }
+
+  .sc-tool {
+    padding-top: 0 !important;
+  }
+  .sc-form {
+    display: grid;
+    gap: 1rem;
+    background: var(--nebbia);
+    border: 1px solid var(--filo);
+    border-radius: 24px;
+    padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+  }
+  @media (min-width: 900px) {
+    .sc-form {
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto;
+      align-items: start;
+    }
+    .sc-form__go {
+      margin-top: 1.9rem;
+    }
+    .sc-form__error {
+      grid-column: 1 / -1;
+    }
+  }
+  .sc-form .field {
+    margin: 0;
+  }
+  .sc-form__error:empty,
+  .sc-lead .error:empty {
+    display: none;
+  }
+  .sc-privacy {
+    color: var(--grafite);
+    margin-top: 1rem !important;
+    max-width: 70ch;
+  }
+  .sc-sample-row {
+    margin-top: 0.25rem !important;
+  }
+  .sc-linkbtn {
+    background: none;
+    border: 0;
+    padding: 0.6rem 0;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+  .sc-steps {
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .sc-steps li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    color: var(--grafite);
+  }
+  .sc-steps li::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--filo);
+    flex: none;
+  }
+  .sc-steps li.is-now {
+    color: var(--inchiostro);
+    font-weight: 600;
+  }
+  .sc-steps li.is-now::before {
+    border-color: var(--blu);
+    background: var(--blu);
+  }
+  .sc-steps li.is-done::before {
+    border-color: var(--blu);
+    background: var(--pesca);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .sc-steps li.is-now::before {
+      animation: sc-pulse 1.2s var(--ease-out) infinite;
+    }
+    @keyframes sc-pulse {
+      50% {
+        transform: scale(1.35);
+        opacity: 0.6;
+      }
+    }
+  }
+
+  .sc-result {
+    outline: none;
+  }
+  .sc-sample-note {
+    background: var(--pesca);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem !important;
+  }
+  .sc-top {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+  }
+  @media (min-width: 760px) {
+    .sc-top {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 3rem;
+    }
+  }
+  .sc-ring {
+    position: relative;
+    width: min(240px, 64vw);
+    aspect-ratio: 1;
+    margin: 0;
+  }
+  .sc-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .sc-ring circle {
+    fill: none;
+    stroke-width: 14;
+  }
+  .sc-ring__bg {
+    stroke: var(--filo);
+  }
+  .sc-ring__fg {
+    stroke: var(--sc-c, var(--blu));
+    stroke-linecap: round;
+    stroke-dasharray: 439.82;
+    stroke-dashoffset: 439.82;
+  }
+  .sc-ring__n {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    font-weight: 800;
+    font-size: clamp(3.5rem, 2.5rem + 3vw, 4.75rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .sc-ring__n small {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--grafite);
+    margin-top: 0.35rem;
+  }
+  .sc-ring[data-band="low"] {
+    --sc-c: #b3261a;
+  }
+  .sc-ring[data-band="mid"] {
+    --sc-c: #9a5b00;
+  }
+  .sc-ring[data-band="good"] {
+    --sc-c: var(--blu);
+  }
+  .sc-ring[data-band="top"] {
+    --sc-c: #1d6b3a;
+  }
+  .sc-top__text {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+  }
+  .sc-top__url {
+    color: var(--grafite);
+    overflow-wrap: anywhere;
+  }
+  .sc-top__sector {
+    margin: 0;
+    min-width: min(100%, 22rem);
+  }
+  .sc-top__note {
+    color: var(--grafite);
+    max-width: 62ch;
+  }
+  .sc-top__note:empty {
+    display: none;
+  }
+
+  .sc-cats {
+    display: grid;
+    gap: 0.9rem 2.5rem;
+    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
+  }
+  @media (min-width: 760px) {
+    .sc-cats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .sc-cat__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-weight: 600;
+  }
+  .sc-cat__row span:last-child {
+    font-variant-numeric: tabular-nums;
+    color: var(--grafite);
+    white-space: nowrap;
+  }
+  .sc-bar {
+    height: 10px;
+    border-radius: 99px;
+    background: var(--filo);
+    overflow: hidden;
+    margin-top: 0.4rem;
+  }
+  .sc-bar i {
+    display: block;
+    height: 100%;
+    background: var(--blu);
+    border-radius: 99px;
+    transform-origin: left center;
+    transform: scaleX(var(--v, 0));
+  }
+  .sc-bar--after i {
+    background: #1d6b3a;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .sc-anim .sc-bar i {
+      transform: scaleX(0);
+      transition: transform 0.9s var(--ease-out);
+    }
+    .sc-anim.is-in .sc-bar i {
+      transform: scaleX(var(--v, 0));
+    }
+    .sc-anim .sc-ring {
+      opacity: 0;
+      transform: scale(0.94);
+      transition:
+        opacity 0.5s var(--ease-out),
+        transform 0.7s var(--ease-out);
+    }
+    .sc-anim.is-in .sc-ring {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .sc-block {
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+  }
+  .sc-sub {
+    color: var(--grafite);
+    margin-top: 0.5rem !important;
+    max-width: 62ch;
+  }
+  .sc-fixes {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 0;
+    display: grid;
+    gap: 1rem;
+  }
+  .sc-fix {
+    display: grid;
+    gap: 0.5rem 1.5rem;
+    border: 1px solid var(--filo);
+    border-radius: 20px;
+    padding: 1.25rem 1.5rem;
+  }
+  @media (min-width: 760px) {
+    .sc-fix {
+      grid-template-columns: 7rem minmax(0, 1fr);
+    }
+  }
+  .sc-fix__gain {
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: var(--blu);
+    line-height: 1.1;
+  }
+  .sc-fix__gain small {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--grafite);
+  }
+  .sc-fix h3 {
+    font-size: 1.2rem;
+  }
+  .sc-fix p {
+    margin-top: 0.35rem !important;
+  }
+  .sc-fix__found {
+    color: var(--grafite);
+  }
+  .sc-fix__do {
+    font-weight: 600;
+  }
+  .sc-flags {
+    list-style: none;
+    padding: 0;
+    margin: 1.25rem 0 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .sc-flag {
+    border-left: 4px solid var(--filo);
+    padding: 0.25rem 0 0.25rem 1rem;
+  }
+  .sc-flag--warn {
+    border-color: #9a5b00;
+  }
+  .sc-flag p {
+    margin-top: 0.25rem !important;
+    color: var(--grafite);
+  }
+  .sc-all {
+    margin-top: 2.5rem;
+    border-top: 1px solid var(--filo);
+    padding-top: 1rem;
+  }
+  .sc-all summary {
+    cursor: pointer;
+    font-weight: 700;
+    padding: 0.75rem 0;
+    min-height: 44px;
+  }
+  .sc-all h3 {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+  }
+  .sc-all ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+  }
+  .sc-all li {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--filo);
+  }
+  .sc-all li span:last-child {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--grafite);
+  }
+  .sc-all small {
+    display: block;
+    color: var(--grafite);
+  }
+  .sc-mark {
+    font-weight: 800;
+  }
+  .sc-mark--pass {
+    color: #1d6b3a;
+  }
+  .sc-mark--partial {
+    color: #9a5b00;
+  }
+  .sc-mark--fail {
+    color: #b3261a;
+  }
+
+  .sc-proj {
+    display: grid;
+    gap: 1rem;
+    max-width: 44rem;
+    margin-bottom: clamp(2rem, 1.5rem + 2vw, 3rem);
+  }
+  .sc-proj .sc-cat__row span:last-child {
+    color: var(--on-dark-muted);
+  }
+  .sc-offer .sc-bar {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  .sc-offer .sc-bar i {
+    background: #fff;
+  }
+  .sc-offer .sc-bar--after i {
+    background: var(--fuoco);
+  }
+  .sc-proj a {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    display: inline-block;
+    padding: 0.4rem 0;
+  }
+  .sc-plans {
+    margin-top: 1rem !important;
+  }
+  .sc-offer .hs-plan {
+    color: var(--notte);
+    --inchiostro: var(--notte);
+    --grafite: #4a5572;
+  }
+  .sc-offer .hs-plan--rec {
+    background: #fff;
+    border: 3px solid var(--fuoco);
+  }
+  .sc-offer .hs-plan ul {
+    margin: 0.75rem 0 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+  .sc-plan__mine {
+    font-size: var(--fs-micro);
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: var(--fuoco);
+    color: var(--notte);
+  }
+  .sc-reason {
+    margin-top: 1.5rem !important;
+    font-weight: 600;
+    max-width: 62ch;
+  }
+  .sc-care {
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    padding-top: 1.5rem;
+    max-width: 62ch;
+  }
+  .sc-care p + p {
+    margin-top: 0.4rem !important;
+  }
+
+  .sc-cta__in {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .sc-cta__in {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 4rem;
+      align-items: start;
+    }
+  }
+  .sc-lead {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+  .sc-lead .field {
+    width: 100%;
+    margin: 0;
+  }
+  .sc-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+  }
+  .sc-lead__ok {
+    font-weight: 700;
+    color: #1d6b3a;
+  }
+
+  .sc-method__cols {
+    display: grid;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  @media (min-width: 900px) {
+    .sc-method__cols {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .sc-method h3 {
+    font-size: 1.15rem;
+  }
+  .sc-method p {
+    margin-top: 0.5rem !important;
+    color: var(--grafite);
+  }
+  .sc-method__self {
+    margin-top: 2rem !important;
+    font-weight: 600;
+    color: var(--inchiostro) !important;
+  }
+
+  @media print {
+    .site-header,
+    .sticky,
+    .sc-tool,
+    .sc-cta,
+    .sc-method,
+    .ph,
+    footer,
+    .sc-noprint {
+      display: none !important;
+    }
+    .sc-all {
+      display: block;
+    }
+    .sc-all > div {
+      display: block !important;
+    }
+    .sc-offer {
+      background: #fff !important;
+      color: #000 !important;
+    }
+  }
+</style>
