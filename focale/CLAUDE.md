@@ -12,24 +12,28 @@ The project folder is still called `focale/` (the first working name).
 - Studio voice: first person plural ("noi") on Focus Design pages. Never claim a big team, offices or invented staff.
 - No fake proof: no testimonials, stars, client logos/counts, countdowns, invented stats. `Reviews` renders nothing while `site.reviews` is empty.
 - Founders counter is static text from config, never animated.
-- No monthly plan (the old "Cura") anywhere: Lorenzo can't guarantee ongoing maintenance yet. Don't promise it, not even as a bonus.
+- Prices (Lorenzo, 21 Nov 2026): Essenziale 600 €, Completo 900 € (key `professionale`), Su misura 1.200 €, plus the optional
+  "Cura del sito" at 39 €/month (site.care). Founders' programme off (foundersSpotsLeft 0). All from src/config/site.ts.
 - No dark patterns, no popups, nothing pre-ticked.
 - Personal/contact data lives only in `src/config/site.ts` as `[DA COMPILARE: ...]` placeholders. Prices, days, percentages are always read from config.
 - Privacy: no cookies or storage, self-hosted fonts, third parties only Web3Forms, optional Apps Script, optional Cloudflare beacon.
+- Avoid the generic AI look, but the theme is now deliberately Apple-like (Lorenzo): see "Design tokens".
 - WCAG 2.2 AA, 44px targets, reduced motion respected, content readable before JS.
 - Avoid the generic AI look (see brief section 1): no gradients/blobs/glass, no identical card grids, no all-caps eyebrows, no middle-dot strings, no emoji icons, no Inter/Roboto.
 
-## Design tokens ("Officina", from reports/Layout e call to action.md)
-White paper #FFFFFF · navy ink #0B1B3F · brand blue #13307A (bands, recommended plan, icons, eyebrows) ·
-secondary text #4A5572 · alt surface #F1F4FA · hairlines #DDE3EF · orange #FF6A1F ONLY for primary buttons
-(navy text on it, never white: 2.86:1). Old token names are kept as aliases (--mandarino now = brand blue).
-Navy bands (.section--sole / .on-navy) flip the colour tokens so components inside read white.
-Type: Schibsted Grotesk variable (400-900) only, self-hosted. H1 800, H2/H3 700, body 400 at 17-18 px,
-buttons 600 at 17 px; nothing below 400; no global tabular-nums (it widens punctuation in this font).
-Eyebrows: short, brand blue, sentence case (no all-caps). Buttons: pill, 52-56 px primary, 48 px outline.
-One action everywhere: "Voglio l'anteprima gratuita" (sticky bar: "Anteprima gratuita").
-Logo: "focus" 800 + "design" 400 in Schibsted outlines (npm run logo); favicon navy with orange point.
-The Arcadi demo has its own Archivo @font-face (it's a different business).
+## Design tokens: theme "Mela" (Lorenzo, 21 Nov 2026, from his Claude Design file "Analisi del sito v4")
+Apple-like: white #FFFFFF, text #1D1D1F, secondary #6E6E73, light grey surfaces #F5F5F7, hairlines #E8E8ED, ONE accent
+blue #0071E3 (hover #0077ED, links and small blue text #0066CC: #0071E3 is too light for small text on tints).
+No navy, no light blue, no orange. Old token names are kept as aliases (--blu, --fuoco, --mandarino are the blue).
+Type: Geist variable, self-hosted (public/fonts/geist-*.woff2, SIL OFL, credits in docs/CREDITI.md), capped at 600 in
+its @font-face so old 700/800 requests render semibold; titles big, tight (-0.04/-0.05em); Geist Mono for small numbers.
+Buttons: blue, white text, 14 px corners, 56 px, an arrow → after the label (CSS ::after on .btn--primary);
+secondary buttons light grey without border. Fields: light grey, no border, 14 px corners, 60 px.
+Cards: white or light grey, 22 px corners, no shadows; the featured card (recommended plan) is blue with white text
+and a white button. The old navy bands (.section--sole, .on-navy, footer, mobile menu) are light grey or white with
+dark text; --on-dark-muted is white on blue cards and grey inside bands. Layouts and motion are unchanged.
+The demo sites keep their own looks. OG images (pages/og) are white with a blue button (Satori still uses the
+Schibsted TTFs: it cannot read woff2).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
 - Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right) capped so the navy
@@ -196,9 +200,10 @@ The Arcadi demo has its own Archivo @font-face (it's a different business).
 - Never exempt ourselves: `npm run scorer:selftest` (CI: .github/workflows/focale-scorer.yml) scores our
   demos (Studio Linea fitness, Arcadi, Villa Ortensia) and the scorer page; all must be >= 90. It
   writes src/scorer/benchmark.json, the only source of the "projected score". No demo = no number.
-- Prices in src/scorer/offer.json come from Lorenzo's Scorer brief (600/900/1.200 + Cura 39/month) and
-  CONFLICT with /prezzi/ and the "no monthly plan" rule above: Lorenzo must align them. Until then the
-  page is linked from the footer only.
+- The page is the Claude Design file "Analisi del sito v4" (Lorenzo) wired to the engine: screens start,
+  waiting (ring builds while check names go by), report (ring by category, summary, fixes with the score
+  climbing, flags, every check), error (by API `code`). Prices in offer.json = site.ts (600/900/1.200 + Cura).
+  The "→ N" comparison uses benchmark.json only; without a measured demo for the sector it shows no number.
 - Render report strings with textContent only: "found" sentences quote the analysed page.
 - prospects/ (batch CLI output) is git-ignored: other businesses' results stay private.
 - reports/Requisiti siti per settore.md: per-sector requirements and build checklists for future sites.

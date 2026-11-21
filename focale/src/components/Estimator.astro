@@ -548,7 +548,7 @@ const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra $
       $("[data-est-days]").textContent = r.daysMin === r.daysMax ? String(r.daysMin) : `${r.daysMin}-${r.daysMax}`;
       const up = $("[data-est-up]");
       up.hidden = !r.upgraded;
-      up.textContent = r.upgraded ? `${r.upgraded} La stima parte dal Professionale.` : "";
+      up.textContent = r.upgraded ? `${r.upgraded} La stima parte dal Completo.` : "";
       $("[data-est-lines]").replaceChildren(...r.lines.map((l) => li(l.label, money(l.min, l.max))));
       $("[data-est-apart]").replaceChildren(...r.apart.map((t) => li(t)));
       $<HTMLAnchorElement>("[data-est-cta]").href = `/anteprima-gratuita?pacchetto=${r.plan}`;

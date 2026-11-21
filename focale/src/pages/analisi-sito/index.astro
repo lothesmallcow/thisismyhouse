@@ -1,15 +1,14 @@
 ---
 /**
- * /analisi-sito/: the free Website Scorer. The visitor pastes an address (and may pick a sector);
- * /api/score fetches the page safely, measures speed and returns the report for every sector.
- * The report is drawn by scripts/scorer-ui.ts. It is private: shown only to whoever asked, never
- * published or stored. The only thing saved is the optional request at the end (email + consent).
- * A sample result, computed at build time from an INVENTED old-style studio page, shows how the
- * report looks without running a real analysis (and is what the static preview can show).
+ * /analisi-sito/: the free site report, as designed in Claude Design ("Analisi del sito v4",
+ * Lorenzo, 21 Nov 2026) and wired to the real engine. Four states: start, waiting, report, error.
+ * /api/score fetches the page safely, measures speed and returns the report for every sector; the
+ * client (scripts/scorer-ui.ts) draws it. Reports are private: shown only to whoever asked.
+ * The two examples are computed at build time from INVENTED pages, and say so.
  */
 import Base from "../../layouts/Base.astro";
-import PageHead from "../../components/PageHead.astro";
 import { rubric, fromPartsAll } from "../../scorer/analyze";
+import { resolveRubric } from "../../scorer/sectors";
 import offer from "../../scorer/offer.json";
 import benchmark from "../../scorer/benchmark.json";
 import { CONSENT } from "../../scorer/consent";
@@ -17,223 +16,177 @@ import { breadcrumbs } from "../../lib/schema";
 import sampleHtml from "../../../test/scorer/fixtures/old-studio.html?raw";
 import goodHtml from "../../../test/scorer/fixtures/new-studio.html?raw";
 
-// Invented page and invented lab numbers, clearly labelled as an example on the page.
-const samplePsi = {
+// Invented pages with invented lab numbers: the page labels them as examples.
+const lab = (lcp: number, tbt: number, cls: number, bytes: number, a11y: number) => ({
   lighthouseResult: {
     lighthouseVersion: "13.0.0",
     audits: {
-      "largest-contentful-paint": { numericValue: 5200 },
-      "total-blocking-time": { numericValue: 740 },
-      "cumulative-layout-shift": { numericValue: 0.18 },
-      "total-byte-weight": { numericValue: 4_600_000 },
+      "largest-contentful-paint": { numericValue: lcp },
+      "total-blocking-time": { numericValue: tbt },
+      "cumulative-layout-shift": { numericValue: cls },
+      "total-byte-weight": { numericValue: bytes },
     },
-    categories: { accessibility: { score: 0.71 } },
+    categories: { accessibility: { score: a11y } },
   },
-};
-const sample = fromPartsAll("http://www.studio-esempio.it/", sampleHtml, samplePsi, { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
-const goodPsi = {
-  lighthouseResult: {
-    lighthouseVersion: "13.0.0",
-    audits: {
-      "largest-contentful-paint": { numericValue: 2900 },
-      "total-blocking-time": { numericValue: 120 },
-      "cumulative-layout-shift": { numericValue: 0.02 },
-      "total-byte-weight": { numericValue: 1_400_000 },
-    },
-    categories: { accessibility: { score: 0.93 } },
-  },
-};
-const sampleGood = fromPartsAll("https://www.studio-esempio-due.it/", goodHtml, goodPsi, { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
-const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
-const checkTitles = [...new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.title))];
-const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, checkTitles, rubricVersion: rubric.version };
-const best = (benchmark.templates as unknown as Record<string, { total: number; label: string; path: string }>).fitness;
+});
+const sample = fromPartsAll("http://www.studio-esempio.it/", sampleHtml, lab(5200, 740, 0.18, 4_600_000, 0.71), { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
+const sampleGood = fromPartsAll("https://www.studio-esempio-due.it/", goodHtml, lab(2900, 120, 0.02, 1_400_000, 0.93), { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
 
-const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)).size;
+const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
+// For the waiting ring: each sector's categories, weights and check titles.
+const skeleton = Object.fromEntries(
+  rubric.sectors.map((s) => {
+    const r = resolveRubric(rubric, s.id);
+    return [s.id, r.categories.filter((c) => c.weight > 0).map((c) => ({ id: c.id, label: c.label, weight: c.weight, checks: r.checks.filter((x) => x.category === c.id && x.points > 0).map((x) => x.title) }))];
+  }),
+);
+const checkCount = resolveRubric(rubric, "fitness").checks.filter((c) => c.points > 0).length;
+const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, skeleton, checkCount, rubricVersion: rubric.version };
 ---
 <Base
-  title="Analisi gratuita del sito: quanto lavora il tuo sito? | Focus Design"
-  description="Incolla l'indirizzo del tuo sito: velocità da telefono, contatti, Google e basi legali, con un punteggio su 100 e le 5 cose da sistemare. Gratis."
+  title="Quanto lavora il tuo sito? Analisi gratuita | Focus Design"
+  description="Incolla l'indirizzo: apriamo il sito come un cliente dal telefono, facciamo i controlli e ti diamo un voto su 100, con cosa sistemare per primo. Gratis."
   jsonLd={[breadcrumbs([{ name: "Analisi del sito", path: "/analisi-sito/" }])]}
-  bodyClass="sc-page"
+  bodyClass="az-page"
 >
-  <PageHead
-    label="Analisi del sito"
-    title="Quanto lavora il tuo sito? Scoprilo in un minuto."
-    lead="Incolla l'indirizzo: controlliamo velocità da telefono, contatti, Google e basi legali, con la stessa griglia che usiamo sui nostri siti. Gratis e senza email: il risultato lo vedi solo tu."
-  >
-    <div class="sc-mini" slot="visual" aria-label={`Il nostro sito d'esempio per uno studio fitness: ${best.total} su 100`}>
-      <p class="sc-mini__k">Il nostro sito d'esempio, misurato con la stessa griglia</p>
-      <p class="sc-mini__n"><span>{best.total}</span><small>su 100</small></p>
-      <p class="sc-mini__t">{best.label}</p>
-      <a class="link" href={best.path}>Guarda il sito d'esempio</a>
-    </div>
-  </PageHead>
-
-  <section class="section sc-tool" id="analisi" aria-labelledby="sc-tool-t">
-    <div class="wrap">
-      <h2 id="sc-tool-t" class="sc-visually-hidden">Analizza il tuo sito</h2>
-      <form class="sc-form" data-sc-form novalidate>
-        <div class="field sc-form__url">
-          <label for="sc-url">Indirizzo del sito</label>
-          <input id="sc-url" name="url" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="www.iltuosito.it" required aria-describedby="sc-url-hint sc-error" />
-          <p class="hint" id="sc-url-hint">Basta l'indirizzo, anche senza https://</p>
+  <!-- Start -->
+  <section class="az-screen az-narrow" data-az-screen="inizio" aria-labelledby="az-h1">
+    <div class="az-stack az-stack--40">
+      <div class="az-stack az-stack--16">
+        <h1 id="az-h1" class="az-mega">Quanto lavora il tuo sito?</h1>
+        <p class="az-lead">Apriamo il sito come un cliente dal telefono, facciamo {checkCount} controlli e ti diamo un voto su 100.</p>
+      </div>
+      <form class="az-stack az-stack--12" data-az-form novalidate>
+        <label for="az-url" class="sr-only">Indirizzo del sito</label>
+        <div class="az-row">
+          <input id="az-url" name="url" class="az-input" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="www.nomeattivita.it" aria-describedby="az-url-err" />
+          <button type="submit" class="az-btn"><span>Analizza</span><span aria-hidden="true">→</span></button>
         </div>
-        <div class="field sc-form__sector">
-          <label for="sc-sector">Settore</label>
-          <select id="sc-sector" name="sector">
-            <option value="">Lo capiamo noi dalla pagina</option>
+        <p id="az-url-err" class="az-err" role="alert" data-az-url-err hidden></p>
+        <div class="az-inline">
+          <label for="az-sector">Settore</label>
+          <select id="az-sector" name="sector" class="az-select">
+            <option value="">Automatico</option>
             {sectors.map((s) => <option value={s.id}>{s.label}</option>)}
           </select>
         </div>
-        <button class="btn btn--primary btn--big sc-form__go" type="submit">Analizza il sito</button>
-        <p class="error sc-form__error" id="sc-error" role="alert" data-sc-error></p>
       </form>
-      <p class="sc-privacy">Il risultato lo vedi solo tu: non lo pubblichiamo e non salviamo la pagina. Guardiamo solo la pagina che indichi, come la vede chiunque.</p>
-      <p class="sc-sample-row">Non hai un sito a portata di mano? Guarda un esempio su un sito inventato:
-        <button type="button" class="link sc-linkbtn" data-sc-sample="old">uno vecchio</button> oppure
-        <button type="button" class="link sc-linkbtn" data-sc-sample="good">uno quasi a posto</button></p>
-
-      <div class="sc-scan" data-sc-scan hidden aria-hidden="true">
-        <svg class="sc-scan__ring" viewBox="0 0 160 160" data-sc-scan-ring></svg>
-        <div>
-          <p class="sc-scan__k">Controlliamo</p>
-          <p class="sc-scan__t" data-sc-scan-t></p>
-        </div>
+      <div class="az-inline az-examples">
+        <span>Vedi un esempio:</span>
+        <a href="#voto-12" data-az-sample="old">voto {sample.results.fitness.report.total}</a>
+        <a href="#voto-97" data-az-sample="good">voto {sampleGood.results.fitness.report.total}</a>
       </div>
-      <ol class="sc-steps sc-visually-hidden" data-sc-steps hidden aria-live="polite">
-        <li>Apriamo la pagina</li>
-        <li>Leggiamo cosa c'è: contatti, orari, prezzi, dati per Google</li>
-        <li>Misuriamo la velocità da telefono (può servire fino a un minuto)</li>
-        <li>Calcoliamo il punteggio</li>
-      </ol>
+      <p class="az-note">Il risultato lo vedi solo tu: non lo pubblichiamo e non salviamo la pagina.</p>
     </div>
   </section>
 
-  <section class="sc-report" data-sc-result hidden aria-labelledby="sc-res-t" tabindex="-1">
-    <div class="wrap">
-      <p class="sc-sample-note" data-sc-sample-note hidden>Esempio su un sito inventato: numeri e pagina non sono di nessuna attività reale.</p>
+  <!-- Waiting -->
+  <section class="az-screen az-narrow az-center" data-az-screen="attesa" hidden aria-live="polite">
+    <p class="az-mono" data-az-wait-url></p>
+    <div class="az-wait-ring"><svg viewBox="0 0 300 300" aria-hidden="true" data-az-wait-ring></svg></div>
+    <p class="az-wait-cat" data-az-wait-cat></p>
+    <div class="az-wait-check" data-az-wait-check></div>
+    <button type="button" class="az-linkbtn" data-az-restart>Annulla</button>
+  </section>
 
-      <header class="sc-rhead sc-in">
-        <div>
-          <p class="sc-rhead__k">Report del sito</p>
-          <h2 id="sc-res-t" class="sc-rhead__url" data-sc-url></h2>
-          <p class="sc-rhead__meta" data-sc-meta></p>
-        </div>
-        <div class="sc-rhead__tools sc-noprint">
-          <div class="field sc-top__sector">
-            <label for="sc-sector-now">Valutato come</label>
-            <select id="sc-sector-now" data-sc-sector-now>
-              {sectors.map((s) => <option value={s.id}>{s.label}</option>)}
-            </select>
-          </div>
-          <button type="button" class="link sc-linkbtn" data-sc-print>Stampa o salva in PDF</button>
-        </div>
-      </header>
+  <!-- Error -->
+  <section class="az-screen az-narrow" data-az-screen="errore" hidden aria-labelledby="az-err-t">
+    <div class="az-stack az-stack--20">
+      <p class="az-mono" data-az-err-url></p>
+      <h1 id="az-err-t" class="az-h1" data-az-err-title></h1>
+      <p class="az-err-text" data-az-err-text></p>
+      <p class="az-err-todo" data-az-err-todo></p>
+      <div><button type="button" class="az-btn az-btn--56" data-az-restart><span>Riprova con un altro indirizzo</span><span aria-hidden="true">→</span></button></div>
+    </div>
+  </section>
 
-      <div class="sc-grid">
-        <article class="sc-card sc-card--score sc-in" aria-labelledby="sc-score-t">
-          <h3 id="sc-score-t" class="sc-card__k">Punteggio</h3>
-          <div class="sc-gauge">
-            <div class="sc-ring" data-sc-ring role="img">
-              <svg viewBox="0 0 200 200" data-sc-arcs></svg>
-              <div class="sc-ring__c" aria-hidden="true">
-                <p class="sc-ring__n" data-sc-total>0</p>
-                <p class="sc-ring__w" data-sc-verdict></p>
-              </div>
+  <!-- Report -->
+  <div data-az-screen="report" hidden>
+    <main class="az-report" aria-labelledby="az-rep-t">
+      <p class="az-sample" data-az-sample-note hidden>Esempio su un sito inventato: numeri e pagina non sono di nessuna attività reale.</p>
+
+      <section class="az-stack az-stack--14" data-parte="testata">
+        <h1 id="az-rep-t" class="az-url" data-az-url></h1>
+        <div class="az-meta">
+          <span data-az-meta></span>
+          <span aria-hidden="true">·</span>
+          <label for="az-sector-now" class="sr-only">Valutato come</label>
+          <select id="az-sector-now" class="az-select az-select--40" data-az-sector-now>
+            {sectors.map((s) => <option value={s.id}>{s.label}</option>)}
+          </select>
+          <button type="button" class="az-ghost az-noprint" data-az-print>Stampa o salva in PDF</button>
+          <button type="button" class="az-ghost az-noprint" data-az-restart>Nuova analisi</button>
+        </div>
+        <p class="az-small" data-az-note></p>
+      </section>
+
+      <section class="az-score" data-parte="voto">
+        <div class="az-score__ring">
+          <div class="az-ring" role="img" data-az-ring-wrap>
+            <svg viewBox="0 0 300 300" aria-hidden="true" data-az-ring></svg>
+            <div class="az-ring__c" aria-hidden="true">
+              <span class="az-ring__n" data-az-total>0</span>
+              <span class="az-ring__w" data-az-verdict></span>
+              <span class="az-ring__s">su 100</span>
             </div>
-            <ul class="sc-legend" data-sc-cats></ul>
           </div>
-        </article>
-
-        <article class="sc-card sc-card--sum sc-in" aria-labelledby="sc-sum-t">
-          <h3 id="sc-sum-t" class="sc-card__k">In sintesi</h3>
-          <p class="sc-sum" data-sc-summary></p>
-          <dl class="sc-hl" data-sc-highlights></dl>
-          <p class="sc-top__note" data-sc-note></p>
-          <p class="sc-top__bands">Fasce: sotto 50 molto da sistemare, da 50 a 74 discreto, da 75 a 89 buono, da 90 in su ottimo.</p>
-        </article>
-      </div>
-
-      <article class="sc-card sc-in" data-sc-why></article>
-
-      <article class="sc-card sc-in" aria-labelledby="sc-fix-t">
-        <h3 id="sc-fix-t" class="sc-card__h">Le 5 cose che valgono più punti</h3>
-        <p class="sc-climb" data-sc-climb></p>
-        <ol class="sc-fixes" data-sc-fixes></ol>
-      </article>
-
-      <article class="sc-card sc-in" data-sc-flags-wrap aria-labelledby="sc-flag-t">
-        <h3 id="sc-flag-t" class="sc-card__h">Da verificare con chi ti segue</h3>
-        <p class="sc-sub">Non sono voti e non tolgono punti: sono informazioni che un commercialista o un consulente può confermare.</p>
-        <ul class="sc-flags" data-sc-flags></ul>
-      </article>
-
-      <details class="sc-card sc-all sc-in">
-        <summary>Tutti i controlli, uno per uno</summary>
-        <div data-sc-all></div>
-      </details>
-    </div>
-  </section>
-
-  <section class="section section--sole sc-offer" data-sc-offer hidden aria-labelledby="sc-offer-t">
-    <div class="wrap">
-      <div class="hs-head">
-        <h2 id="sc-offer-t">Cosa possiamo fare noi</h2>
-        <p class="lead" data-sc-proj-lead></p>
-      </div>
-      <div class="sc-proj" data-sc-proj></div>
-      <ul class="hs-price__plans sc-plans" data-sc-plans></ul>
-      <p class="sc-reason" data-sc-reason></p>
-      <div class="sc-care" data-sc-care></div>
-    </div>
-  </section>
-
-  <section class="section sc-cta" data-sc-cta hidden aria-labelledby="sc-cta-t">
-    <div class="wrap sc-cta__in">
-      <div>
-        <h2 id="sc-cta-t">Vuoi vedere il tuo sito rifatto, prima di decidere?</h2>
-        <p class="lead">Lasciaci l'email: prepariamo un'anteprima gratuita del tuo nuovo sito e te la mandiamo insieme a questi risultati. Nessun impegno, nessuna newsletter.</p>
-      </div>
-      <form class="sc-lead" data-sc-lead novalidate>
-        <div class="field">
-          <label for="sc-email">La tua email</label>
-          <input id="sc-email" name="email" type="email" autocomplete="email" required aria-describedby="sc-lead-error" />
         </div>
-        <input type="text" name="website" class="sc-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
-        <label class="check">
-          <input type="checkbox" name="consent" data-sc-consent />
-          <span>{CONSENT.text.replace(" Ho letto l'informativa privacy.", "")} Ho letto l'<a class="link" href="/privacy/" target="_blank" rel="noopener">informativa privacy</a>.</span>
+        <ul class="az-cats" data-az-cats></ul>
+      </section>
+
+      <p class="az-sintesi" data-parte="sintesi" data-az-summary></p>
+
+      <section class="az-stack az-stack--24" data-parte="correzioni" data-az-fixes-wrap>
+        <div class="az-split">
+          <h2 class="az-h2" data-az-fixes-title>Da sistemare per prime</h2>
+          <p class="az-climb"><span data-az-climb-from></span> <span class="az-blue">→ <span data-az-climb-to></span></span></p>
+        </div>
+        <ol class="az-fixes" data-az-fixes></ol>
+      </section>
+
+      <section class="az-stack az-stack--12" data-parte="avvisi" data-az-flags-wrap>
+        <h2 class="az-h-small">Da verificare · non tolgono punti</h2>
+        <ul class="az-flags" data-az-flags></ul>
+      </section>
+
+      <section class="az-stack az-stack--20" data-parte="controlli">
+        <h2 class="az-h2">Tutti i controlli</h2>
+        <div class="az-allcats" data-az-all></div>
+      </section>
+    </main>
+
+    <section class="az-offer" data-parte="offerta" aria-labelledby="az-offer-t">
+      <div class="az-offer__in">
+        <h2 id="az-offer-t" class="sr-only">Cosa possiamo fare noi</h2>
+        <p class="az-compare" data-az-compare></p>
+        <p class="az-compare-note" data-az-compare-note></p>
+        <div class="az-packs" data-az-packs></div>
+        <p class="az-reason" data-az-reason></p>
+        <p class="az-care">{offer.care.line}</p>
+      </div>
+    </section>
+
+    <section class="az-invite" data-parte="invito" aria-labelledby="az-inv-t">
+      <h2 id="az-inv-t" class="az-h1">Vuoi vedere come diventerebbe?</h2>
+      <p class="az-lead az-lead--19">Ti mandiamo gratis un'anteprima della prima pagina rifatta. Decidi dopo.</p>
+      <p class="az-sent" role="status" data-az-sent hidden></p>
+      <form class="az-stack az-stack--14 az-noprint" data-az-lead novalidate>
+        <label for="az-email" class="sr-only">La tua email</label>
+        <div class="az-row">
+          <input id="az-email" name="email" class="az-input az-input--18" type="email" autocomplete="email" placeholder="La tua email" aria-describedby="az-lead-err" />
+          <button type="submit" class="az-btn"><span>Invia</span><span aria-hidden="true">→</span></button>
+        </div>
+        <input type="text" name="website" class="az-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <label class="az-consent">
+          <input type="checkbox" name="consent" data-az-consent />
+          <span>{CONSENT.text} <a href="/privacy/">Informativa privacy</a></span>
         </label>
-        <button class="btn btn--primary btn--big" type="submit">Voglio l'anteprima gratuita</button>
-        <p class="error" id="sc-lead-error" role="alert" data-sc-lead-error></p>
-        <p class="sc-lead__ok" data-sc-lead-ok hidden role="status">Fatto. Ti scriviamo entro due giorni lavorativi con l'anteprima.</p>
+        <p id="az-lead-err" class="az-err" role="alert" data-az-lead-err hidden></p>
       </form>
-    </div>
-  </section>
+    </section>
+  </div>
 
-  <section class="section section--pietra sc-method" aria-labelledby="sc-method-t">
-    <div class="wrap sc-method__in">
-      <h2 id="sc-method-t">Come calcoliamo il punteggio</h2>
-      <div class="sc-method__cols">
-        <div>
-          <h3>Stessa pagina, stesso punteggio</h3>
-          <p>Usiamo {checkCount} controlli automatici, scritti in una griglia pubblica (versione {rubric.version}). Ogni controllo vale dei punti e dice cosa ha trovato. Per la velocità usiamo i dati delle persone che visitano davvero il sito, quando Google li ha; altrimenti una prova da telefono letta in fasce larghe, così il risultato non cambia da una volta all'altra per pochi millisecondi.</p>
-        </div>
-        <div>
-          <h3>Ogni settore ha la sua griglia</h3>
-          <p>Un ristorante ha bisogno del menu, un'impresa edile dei lavori fatti, un B&amp;B della prenotazione diretta. Le basi (velocità, Google, legale) sono uguali per tutti; il resto cambia con il settore. Se il tuo non c'è, scegli "Altro": controlliamo solo quello che serve a qualsiasi attività.</p>
-        </div>
-        <div>
-          <h3>Cosa non possiamo vedere</h3>
-          <p>Non sappiamo quante richieste ricevi, e nessun punteggio te le promette. Non diciamo se sei in regola con la legge: segnaliamo solo cosa si vede sulla pagina. Guardiamo la pagina che indichi, non tutto il sito.</p>
-        </div>
-      </div>
-      <p class="sc-method__self">Lo usiamo anche su di noi: i nostri siti d'esempio devono fare almeno 90, e lo controlliamo a ogni modifica.</p>
-    </div>
-  </section>
-
-  <script type="application/json" id="sc-data" set:html={JSON.stringify(data)} />
+  <script type="application/json" id="az-data" set:html={JSON.stringify(data)} />
 </Base>
 
 <script>
@@ -242,999 +195,757 @@ const checkCount = new Set(rubric.checks.filter((c) => !c.flag).map((c) => c.id)
 </script>
 
 <style is:global>
-  .sc-visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
+  .az-page main#contenuto,
+  .az-page {
+    --az-ink: #1d1d1f;
+    --az-soft: #6e6e73;
+    --az-grey: #f5f5f7;
+    --az-line: #e8e8ed;
+    --az-blue: #0071e3;
+    --az-blue-h: #0077ed;
+    --az-link: #0066cc;
+    --az-track: #ededf0;
   }
-  .sc-mini {
-    background: var(--blu);
-    color: #fff;
-    border-radius: 24px;
-    padding: clamp(1.5rem, 1rem + 2vw, 2.5rem);
-    display: grid;
-    gap: 0.5rem;
-    max-width: 26rem;
-    justify-self: end;
-    align-self: center;
-    width: 100%;
+  .az-page [hidden] {
+    display: none !important;
   }
-  .sc-mini .link {
-    color: #fff;
+  .az-screen {
+    padding: 72px 20px 120px;
   }
-  .sc-mini__k {
-    color: var(--on-dark-muted);
-    font-weight: 600;
+  .az-narrow {
+    max-width: 720px;
+    margin: 0 auto;
   }
-  .sc-mini__n {
-    font-weight: 800;
-    font-size: clamp(4rem, 3rem + 4vw, 6.5rem);
-    line-height: 1;
-    letter-spacing: -0.03em;
-  }
-  .sc-mini__n small {
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    margin-left: 0.5rem;
-  }
-  .sc-mini__t {
-    font-weight: 600;
-  }
-
-  .sc-tool {
-    padding-top: 0 !important;
-  }
-  .sc-form {
-    display: grid;
-    gap: 1rem;
-    background: var(--nebbia);
-    border: 1px solid var(--filo);
-    border-radius: 24px;
-    padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
-  }
-  @media (min-width: 900px) {
-    .sc-form {
-      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto;
-      align-items: start;
-    }
-    .sc-form__go {
-      margin-top: 1.9rem;
-    }
-    .sc-form__error {
-      grid-column: 1 / -1;
-    }
-  }
-  .sc-form .field {
-    margin: 0;
-  }
-  .sc-form__error:empty,
-  .sc-lead .error:empty {
-    display: none;
-  }
-  .sc-privacy {
-    color: var(--grafite);
-    margin-top: 1rem !important;
-    max-width: 70ch;
-  }
-  .sc-sample-row {
-    margin-top: 0.25rem !important;
-  }
-  .sc-linkbtn {
-    background: none;
-    border: 0;
-    padding: 0.6rem 0;
-    font: inherit;
-    cursor: pointer;
-    text-align: left;
-  }
-  .sc-real {
-    margin-top: 1rem;
-    display: grid;
-    gap: 0.4rem;
-    max-width: 30rem;
-    padding: 1rem 1.25rem;
-    border: 2px dashed var(--blu);
-    border-radius: 16px;
-  }
-  .sc-real__k {
-    font-weight: 600;
-    color: var(--blu);
-  }
-  .sc-real label {
-    font-weight: 600;
-  }
-  .sc-real__pick {
-    min-height: 48px;
-    border: 1px solid var(--filo);
-    border-radius: 10px;
-    padding: 0 0.75rem;
-    font: inherit;
-  }
-  .sc-steps {
-    margin: 1.5rem 0 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: 0.5rem;
-  }
-  .sc-steps li {
+  .az-center {
     display: flex;
-    gap: 0.75rem;
+    flex-direction: column;
     align-items: center;
-    color: var(--grafite);
+    gap: 28px;
+    text-align: center;
+    padding-top: 56px;
   }
-  .sc-steps li::before {
-    content: "";
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 2px solid var(--filo);
-    flex: none;
+  .az-stack {
+    display: flex;
+    flex-direction: column;
   }
-  .sc-steps li.is-now {
-    color: var(--inchiostro);
+  .az-stack--40 { gap: 40px; }
+  .az-stack--24 { gap: 24px; }
+  .az-stack--20 { gap: 20px; }
+  .az-stack--16 { gap: 16px; }
+  .az-stack--14 { gap: 14px; }
+  .az-stack--12 { gap: 12px; }
+  .az-mega {
+    margin: 0;
     font-weight: 600;
+    font-size: clamp(48px, 9vw, 88px);
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+    text-wrap: balance;
   }
-  .sc-steps li.is-now::before {
-    border-color: var(--blu);
-    background: var(--blu);
+  .az-h1 {
+    margin: 0;
+    font-weight: 600;
+    font-size: clamp(40px, 7vw, 64px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
   }
-  .sc-steps li.is-done::before {
-    border-color: var(--blu);
-    background: var(--pesca);
+  .az-h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: clamp(30px, 4.5vw, 44px);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .sc-steps li.is-now::before {
-      animation: sc-pulse 1.2s var(--ease-out) infinite;
-    }
-    @keyframes sc-pulse {
-      50% {
-        transform: scale(1.35);
-        opacity: 0.6;
-      }
-    }
+  .az-h-small {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--az-soft);
+    letter-spacing: 0;
   }
-
-  .sc-result {
+  .az-lead {
+    margin: 0;
+    font-size: 20px;
+    color: var(--az-soft);
+  }
+  .az-lead--19 {
+    font-size: 19px;
+    margin-top: -12px !important;
+  }
+  .az-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .az-input {
+    flex: 1 1 280px;
+    height: 60px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 14px;
+    font: inherit;
+    font-size: 19px;
+    color: var(--az-ink);
+    background: var(--az-grey);
     outline: none;
   }
-  .sc-sample-note {
-    background: var(--pesca);
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
+  .az-input--18 {
+    flex-basis: 260px;
+    font-size: 18px;
+  }
+  .az-input:focus-visible {
+    box-shadow: 0 0 0 2px var(--az-ink);
+  }
+  .az-input[aria-invalid="true"] {
+    box-shadow: 0 0 0 2px #c2261b;
+  }
+  .az-btn {
+    flex: 0 0 auto;
+    height: 60px;
+    padding: 0 26px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--az-blue);
+    color: #fff;
+    font: inherit;
+    font-size: 17px;
     font-weight: 600;
-    margin-bottom: 1.5rem !important;
-  }
-  .sc-top {
-    display: grid;
-    gap: 2rem;
-    align-items: center;
-    background: var(--blu);
-    color: #fff;
-    border-radius: 28px;
-    padding: clamp(1.5rem, 1rem + 3vw, 3.5rem);
-    --inchiostro: #fff;
-    --grafite: var(--on-dark-muted);
-    --filo: rgba(255, 255, 255, 0.22);
-  }
-  .sc-top h2 {
-    color: #fff;
-    font-size: clamp(1.9rem, 1.4rem + 2vw, 2.8rem);
-  }
-  .sc-top .link,
-  .sc-top label {
-    color: #fff;
-  }
-  .sc-top select {
-    color: var(--notte);
-  }
-  .sc-top__legend {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem 0.9rem;
-    font-size: 0.95rem;
-    color: var(--on-dark-muted);
-  }
-  .sc-dot {
-    display: inline-block;
-    width: 0.8rem;
-    height: 0.8rem;
-    border-radius: 50%;
-    margin-right: -0.5rem;
-    vertical-align: -0.05rem;
-  }
-  .sc-dot--pass,
-  .sc-seg--pass {
-    background: #5fd68e;
-    stroke: #5fd68e;
-  }
-  .sc-dot--partial,
-  .sc-seg--partial {
-    background: #ffc857;
-    stroke: #ffc857;
-  }
-  .sc-dot--fail,
-  .sc-seg--fail {
-    background: #ff7a6b;
-    stroke: #ff7a6b;
-  }
-  .sc-dot--unmeasured,
-  .sc-seg--unmeasured {
-    background: rgba(255, 255, 255, 0.28);
-    stroke: rgba(255, 255, 255, 0.28);
-  }
-  [data-sc-segs] circle,
-  [data-sc-scan-ring] circle {
-    fill: none;
-    stroke-width: 16;
-  }
-  [data-sc-segs] {
-    overflow: visible;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .sc-anim .sc-seg {
-      opacity: 0;
-      transition: opacity 0.35s var(--ease-out);
-      transition-delay: calc(var(--i) * 45ms);
-    }
-    .sc-anim.is-in .sc-seg {
-      opacity: 1;
-    }
-    .sc-scan__seg {
-      animation: sc-blink 1.6s var(--ease-out) infinite;
-      animation-delay: calc(var(--i) * 64ms);
-    }
-    @keyframes sc-blink {
-      0%,
-      100% {
-        opacity: 0.25;
-      }
-      40% {
-        opacity: 1;
-      }
-    }
-  }
-  .sc-scan {
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-    background: var(--blu);
-    color: #fff;
-    border-radius: 24px;
-    padding: 1.5rem;
+    gap: 12px;
   }
-  .sc-scan[hidden] {
-    display: none;
+  .az-btn--56 {
+    height: 56px;
+    padding: 0 24px;
   }
-  .sc-scan__ring {
-    width: 96px;
-    height: 96px;
-    flex: none;
-    transform: rotate(-90deg);
+  .az-btn:focus-visible {
+    outline: 2px solid var(--az-ink);
+    outline-offset: 3px;
   }
-  .sc-scan__seg {
-    stroke: rgba(255, 255, 255, 0.85);
-  }
-  .sc-scan__k {
-    color: var(--on-dark-muted);
-    font-weight: 600;
-  }
-  .sc-scan__t {
-    font-weight: 700;
-    font-size: 1.2rem;
-    min-height: 2.6em;
-  }
-  .sc-climb {
-    font-weight: 700;
-    font-size: 1.15rem;
-    margin-top: 0.5rem !important;
-  }
-  .sc-climb strong {
-    color: var(--blu);
-    font-size: 1.4em;
-  }
-  .sc-fix__run {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--grafite);
-    margin-top: 0.25rem;
-  }
-  .sc-compare {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
-    font-weight: 800;
-    line-height: 1;
-  }
-  .sc-compare__n {
-    font-size: clamp(3.5rem, 2.5rem + 5vw, 6.5rem);
-    letter-spacing: -0.03em;
-  }
-  .sc-compare__n small {
-    display: block;
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    color: var(--on-dark-muted);
-    margin-top: 0.4rem;
-  }
-  .sc-compare__arrow {
-    font-size: clamp(2rem, 1.5rem + 2vw, 3.5rem);
-    color: var(--fuoco);
-  }
-  @media (min-width: 760px) {
-    .sc-top {
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 3rem;
+  @media (hover: hover) and (pointer: fine) {
+    .az-btn:hover {
+      background: var(--az-blue-h);
     }
   }
-  .sc-ring {
-    position: relative;
-    width: min(240px, 64vw);
-    aspect-ratio: 1;
+  .az-btn[disabled] {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .az-err {
     margin: 0;
+    color: #c2261b;
+    font-size: 15px;
   }
-  .sc-ring svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
+  .az-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    font-size: 15px;
+    color: var(--az-soft);
   }
-  .sc-ring__n {
-    color: #fff;
+  .az-select {
+    height: 44px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--az-ink);
+    background: var(--az-grey);
+    max-width: 100%;
   }
-  .sc-ring circle {
-    fill: none;
-    stroke-width: 14;
+  .az-select--40 {
+    height: 40px;
   }
-  .sc-ring__bg {
-    stroke: var(--filo);
+  .az-examples a,
+  .az-page a.az-link,
+  .az-consent a {
+    color: var(--az-link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
   }
-  .sc-ring__fg {
-    stroke: var(--sc-c, var(--blu));
-    stroke-linecap: round;
-    stroke-dasharray: 439.82;
-    stroke-dashoffset: 439.82;
+  .az-examples a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
-  .sc-ring__n {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-content: center;
-    text-align: center;
-    font-weight: 800;
-    font-size: clamp(3.5rem, 2.5rem + 3vw, 4.75rem);
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
+  .az-note {
+    margin: 0;
+    font-size: 15px;
+    color: var(--az-soft);
   }
-  .sc-ring__n small {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--grafite);
-    margin-top: 0.35rem;
+  .az-real {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 20px;
+    border-radius: 14px;
+    background: var(--az-grey);
+    font-size: 15px;
   }
-  .sc-ring[data-band="low"] {
-    --sc-c: #b3261a;
-  }
-  .sc-ring[data-band="mid"] {
-    --sc-c: #9a5b00;
-  }
-  .sc-ring[data-band="good"] {
-    --sc-c: var(--blu);
-  }
-  .sc-ring[data-band="top"] {
-    --sc-c: #1d6b3a;
-  }
-  .sc-top__text {
-    display: grid;
-    gap: 0.75rem;
-    justify-items: start;
-  }
-  .sc-top__bands {
-    color: var(--grafite);
-    font-size: 0.95rem;
-  }
-  .sc-top__url {
-    color: var(--grafite);
+  .az-mono {
+    margin: 0;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 14px;
+    color: var(--az-soft);
     overflow-wrap: anywhere;
   }
-  .sc-top__sector {
-    margin: 0;
-    min-width: min(100%, 22rem);
+  .az-linkbtn {
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--az-link);
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
   }
-  .sc-top__note {
-    color: var(--grafite);
-    max-width: 62ch;
+  .az-wait-ring {
+    width: min(100%, 260px);
+    aspect-ratio: 1;
   }
-  .sc-top__note:empty {
-    display: none;
+  .az-wait-cat {
+    margin: 0 0 -16px;
+    font-size: 15px;
+    color: var(--az-soft);
   }
-
-  .sc-cats {
-    display: grid;
-    gap: 0.9rem 2.5rem;
-    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
-  }
-  @media (min-width: 760px) {
-    .sc-cats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-  .sc-cat__note {
-    margin-top: 0.4rem !important;
-    color: var(--grafite);
-    font-size: 0.95rem;
-  }
-  .sc-why {
-    list-style: none;
-    padding: 0;
-    margin: 1.25rem 0 0;
-    display: grid;
-    gap: 0;
-    max-width: 52rem;
-  }
-  .sc-why li {
-    display: grid;
-    grid-template-columns: 4rem minmax(0, 1fr);
-    gap: 1rem;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--filo);
-  }
-  .sc-why__pts {
-    font-weight: 800;
-    color: #b3261a;
-  }
-  .sc-why small {
-    display: block;
-    color: var(--grafite);
-    margin-top: 0.15rem;
-  }
-  .sc-cat__row {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+  .az-wait-check {
+    min-height: 64px;
     font-weight: 600;
+    font-size: clamp(24px, 4.5vw, 32px);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    max-width: 520px;
   }
-  .sc-cat__row span:last-child {
-    color: var(--grafite);
-    white-space: nowrap;
-  }
-  .sc-bar {
-    height: 10px;
-    border-radius: 99px;
-    background: var(--filo);
-    overflow: hidden;
-    margin-top: 0.4rem;
-  }
-  .sc-bar i {
+  .az-wait-check > span {
     display: block;
-    height: 100%;
-    background: var(--blu);
-    border-radius: 99px;
-    transform-origin: left center;
-    transform: scaleX(var(--v, 0));
-  }
-  .sc-bar--after i {
-    background: #1d6b3a;
   }
   @media (prefers-reduced-motion: no-preference) {
-    .sc-anim .sc-bar i {
-      transform: scaleX(0);
-      transition: transform 0.9s var(--ease-out);
+    .az-wait-check > span {
+      animation: azIn 420ms ease both;
     }
-    .sc-anim.is-in .sc-bar i {
-      transform: scaleX(var(--v, 0));
-    }
-    .sc-anim .sc-ring {
+  }
+  @keyframes azIn {
+    from {
       opacity: 0;
-      transform: scale(0.94);
-      transition:
-        opacity 0.5s var(--ease-out),
-        transform 0.7s var(--ease-out);
+      transform: translateY(8px);
     }
-    .sc-anim.is-in .sc-ring {
+    to {
       opacity: 1;
       transform: none;
     }
   }
+  .az-err-text {
+    margin: 0;
+    font-size: 19px;
+    max-width: 560px;
+  }
+  .az-err-todo {
+    margin: 0;
+    font-size: 17px;
+    color: var(--az-soft);
+    max-width: 560px;
+  }
 
-  .sc-block {
-    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+  /* Report */
+  .az-report {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 24px 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 96px;
   }
-  .sc-sub {
-    color: var(--grafite);
-    margin-top: 0.5rem !important;
-    max-width: 62ch;
+  .az-sample {
+    margin: 24px 0 -72px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: #e8f1fd;
+    color: #0058b0;
+    font-size: 15px;
+    font-weight: 500;
   }
-  .sc-fixes {
-    list-style: none;
-    padding: 0;
-    margin: 1.5rem 0 0;
-    display: grid;
-    gap: 1rem;
-  }
-  .sc-fix {
-    display: grid;
-    gap: 0.5rem 1.5rem;
-    border: 1px solid var(--filo);
-    border-radius: 20px;
-    padding: 1.25rem 1.5rem;
-  }
-  @media (min-width: 760px) {
-    .sc-fix {
-      grid-template-columns: 7rem minmax(0, 1fr);
-    }
-  }
-  .sc-fix__gain {
-    font-weight: 800;
-    font-size: 1.6rem;
-    color: var(--blu);
-    line-height: 1.1;
-  }
-  .sc-fix__gain small {
-    display: block;
-    font-size: 0.85rem;
+  .az-url {
+    margin: 0;
     font-weight: 600;
-    color: var(--grafite);
+    font-size: clamp(36px, 6.5vw, 72px);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    overflow-wrap: anywhere;
   }
-  .sc-fix h3 {
-    font-size: 1.2rem;
+  .az-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    font-size: 15px;
+    color: var(--az-soft);
   }
-  .sc-fix p {
-    margin-top: 0.35rem !important;
-  }
-  .sc-fix__found {
-    color: var(--grafite);
-  }
-  .sc-fix__do {
-    font-weight: 600;
-  }
-  .sc-flags {
-    list-style: none;
-    padding: 0;
-    margin: 1.25rem 0 0;
-    display: grid;
-    gap: 0.75rem;
-  }
-  .sc-flag {
-    border-left: 4px solid var(--filo);
-    padding: 0.25rem 0 0.25rem 1rem;
-  }
-  .sc-flag--warn {
-    border-color: #9a5b00;
-  }
-  .sc-flag p {
-    margin-top: 0.25rem !important;
-    color: var(--grafite);
-  }
-  .sc-all {
-    margin-top: 2.5rem;
-    border-top: 1px solid var(--filo);
-    padding-top: 1rem;
-  }
-  .sc-all summary {
+  .az-ghost {
+    height: 40px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--az-soft);
+    font: inherit;
+    font-size: 15px;
     cursor: pointer;
-    font-weight: 700;
-    padding: 0.75rem 0;
-    min-height: 44px;
   }
-  .sc-all h3 {
-    margin-top: 1.5rem;
-    font-size: 1.1rem;
-  }
-  .sc-all ul {
-    list-style: none;
-    padding: 0;
-    margin: 0.5rem 0 0;
-  }
-  .sc-all li {
-    display: grid;
-    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
-    gap: 0.75rem;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid var(--filo);
-  }
-  .sc-all li span:last-child {
-    white-space: nowrap;
-    color: var(--grafite);
-  }
-  .sc-all small {
-    display: block;
-    color: var(--grafite);
-  }
-  .sc-mark {
-    font-weight: 800;
-  }
-  .sc-mark--pass {
-    color: #1d6b3a;
-  }
-  .sc-mark--partial {
-    color: #9a5b00;
-  }
-  .sc-mark--fail {
-    color: #b3261a;
-  }
-
-  .sc-proj {
-    display: grid;
-    gap: 1rem;
-    max-width: 44rem;
-    margin-bottom: clamp(2rem, 1.5rem + 2vw, 3rem);
-  }
-  .sc-proj .sc-cat__row span:last-child {
-    color: var(--on-dark-muted);
-  }
-  .sc-offer .sc-bar {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  .sc-offer .sc-bar i {
-    background: #fff;
-  }
-  .sc-offer .sc-bar--after i {
-    background: var(--fuoco);
-  }
-  .sc-proj a {
-    color: #fff;
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
-    display: inline-block;
-    padding: 0.4rem 0;
-  }
-  .sc-plans {
-    margin-top: 1rem !important;
-  }
-  .sc-offer .hs-plan {
-    color: var(--notte);
-    --inchiostro: var(--notte);
-    --grafite: #4a5572;
-  }
-  .sc-offer .hs-plan--rec {
-    background: #fff;
-    border: 3px solid var(--fuoco);
-  }
-  .sc-offer .hs-plan ul {
-    margin: 0.75rem 0 0;
-    padding-left: 1.1rem;
-    display: grid;
-    gap: 0.35rem;
-  }
-  .sc-plan__mine {
-    font-size: var(--fs-micro);
-    font-weight: 700;
-    padding: 0.25rem 0.6rem;
-    border-radius: 999px;
-    background: var(--fuoco);
-    color: var(--notte);
-  }
-  .sc-reason {
-    margin-top: 1.5rem !important;
-    font-weight: 600;
-    max-width: 62ch;
-  }
-  .sc-care {
-    margin-top: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.25);
-    padding-top: 1.5rem;
-    max-width: 62ch;
-  }
-  .sc-care p + p {
-    margin-top: 0.4rem !important;
-  }
-
-  .sc-cta__in {
-    display: grid;
-    gap: 2rem;
-  }
-  @media (min-width: 900px) {
-    .sc-cta__in {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 4rem;
-      align-items: start;
+  @media (hover: hover) and (pointer: fine) {
+    .az-ghost:hover {
+      background: var(--az-grey);
+      color: var(--az-ink);
     }
   }
-  .sc-lead {
-    display: grid;
-    gap: 1rem;
-    justify-items: start;
+  .az-small {
+    margin: 0;
+    font-size: 15px;
+    color: var(--az-soft);
+    max-width: 720px;
   }
-  .sc-lead .field {
+  .az-small:empty {
+    display: none;
+  }
+  .az-score {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: 48px 80px;
+    align-items: center;
+    margin-top: -48px;
+  }
+  .az-score__ring {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .az-ring {
+    position: relative;
+    width: min(100%, 360px);
+    aspect-ratio: 1;
+  }
+  .az-ring svg {
+    position: absolute;
+    inset: 0;
     width: 100%;
+    height: 100%;
+  }
+  .az-ring__c {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .az-ring__n {
+    font-weight: 600;
+    font-size: clamp(96px, 22vw, 140px);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+    font-variant-numeric: tabular-nums;
+  }
+  .az-ring__w {
+    font-size: 17px;
+    font-weight: 500;
+    margin-top: 10px;
+  }
+  .az-ring__s {
+    font-size: 13px;
+    color: var(--az-soft);
+    margin-top: 2px;
+  }
+  .az-cats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .az-cat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .az-cat__top {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .az-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: none;
+    align-self: center;
+  }
+  .az-cat__name {
+    flex: 1;
+    font-weight: 500;
+  }
+  .az-num {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 14px;
+    color: var(--az-soft);
+    white-space: nowrap;
+  }
+  .az-num b {
+    color: var(--az-ink);
+    font-weight: 400;
+  }
+  .az-bar {
+    height: 8px;
+    border-radius: 8px;
+    background: var(--az-track);
+    overflow: hidden;
+  }
+  .az-bar > i {
+    display: block;
+    height: 100%;
+    border-radius: 8px;
+    transform-origin: left center;
+    transform: scaleX(0);
+    transition: transform 1300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .az-cat__line {
+    font-size: 14px;
+    color: var(--az-soft);
+  }
+  .az-sintesi {
+    margin: -32px 0 0;
+    font-size: clamp(21px, 2.6vw, 28px);
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    max-width: 820px;
+    text-wrap: pretty;
+  }
+  .az-split {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .az-climb {
+    margin: 0;
+    font-weight: 600;
+    font-size: clamp(24px, 3.5vw, 32px);
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .az-blue {
+    color: var(--az-blue);
+  }
+  .az-fixes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .az-fix {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 22px 0;
+    border-top: 1px solid var(--az-line);
+  }
+  .az-fix h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+  .az-fix__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .az-fix__body p {
     margin: 0;
   }
-  .sc-hp {
+  .az-soft {
+    color: var(--az-soft);
+  }
+  .az-we {
+    color: var(--az-blue);
+    font-weight: 500;
+  }
+  .az-gain {
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #e8f1fd;
+    color: #0058b0;
+  }
+  @media (max-width: 520px) {
+    .az-fix {
+      grid-template-columns: 28px minmax(0, 1fr);
+    }
+    .az-gain {
+      grid-column: 2;
+      justify-self: start;
+      font-size: 18px;
+    }
+  }
+  .az-flags {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .az-flags li {
+    background: var(--az-grey);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .az-flags li span:first-child {
+    font-weight: 500;
+  }
+  .az-flags li span + span {
+    font-size: 15px;
+    color: var(--az-soft);
+  }
+  .az-allcats {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .az-allcat__h {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+  .az-allcat__h h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    flex: 1;
+    letter-spacing: 0;
+  }
+  .az-check {
+    border-top: 1px solid var(--az-line);
+  }
+  .az-check summary {
+    list-style: none;
+    cursor: pointer;
+    min-height: 52px;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .az-check summary::-webkit-details-marker {
+    display: none;
+  }
+  .az-check summary > span:nth-child(2) {
+    flex: 1;
+    min-width: 0;
+  }
+  .az-plus {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--az-grey);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    transition: transform 0.25s ease;
+  }
+  .az-check[open] .az-plus {
+    transform: rotate(45deg);
+  }
+  .az-check__body {
+    padding: 0 0 18px 24px;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .az-check__body p {
+    margin: 0;
+  }
+
+  /* Offer */
+  .az-offer {
+    background: var(--az-grey);
+    margin-top: 120px;
+  }
+  .az-offer__in {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 88px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+  .az-compare {
+    margin: 0;
+    font-weight: 600;
+    font-size: clamp(88px, 18vw, 200px);
+    line-height: 0.85;
+    letter-spacing: -0.06em;
+    font-variant-numeric: tabular-nums;
+  }
+  .az-compare--small {
+    font-size: clamp(44px, 8vw, 88px);
+  }
+  .az-compare-note {
+    margin: -24px 0 0;
+    font-size: 19px;
+    color: var(--az-soft);
+    max-width: 560px;
+  }
+  .az-packs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 12px;
+  }
+  .az-pack {
+    background: #fff;
+    color: var(--az-ink);
+    border-radius: 22px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .az-pack--rec {
+    background: var(--az-blue);
+    color: #fff;
+  }
+  .az-pack__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+  }
+  .az-pack h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+  .az-pack__tag {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--az-blue);
+  }
+  .az-pack__price {
+    margin: 0;
+    font-weight: 600;
+    font-size: 52px;
+    line-height: 1;
+    letter-spacing: -0.05em;
+  }
+  .az-pack__desc {
+    margin: 0;
+    color: var(--az-soft);
+  }
+  .az-pack--rec .az-pack__desc {
+    color: #fff;
+  }
+  .az-pack ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 15px;
+  }
+  .az-pack li {
+    display: flex;
+    gap: 8px;
+  }
+  .az-reason {
+    margin: -24px 0 0;
+    font-size: 17px;
+    max-width: 720px;
+  }
+  .az-care {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  /* Invite */
+  .az-invite {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 96px 20px 128px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .az-sent {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .az-consent {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--az-soft);
+    line-height: 1.45;
+  }
+  .az-consent input {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    flex: none;
+    accent-color: var(--az-blue);
+  }
+  .az-hp {
     position: absolute;
     left: -9999px;
     width: 1px;
     height: 1px;
   }
-  .sc-lead__ok {
-    font-weight: 700;
-    color: #1d6b3a;
-  }
-
-  .sc-method__cols {
-    display: grid;
-    gap: 2rem;
-    margin-top: 2rem;
-  }
-  @media (min-width: 900px) {
-    .sc-method__cols {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+  @media (prefers-reduced-motion: reduce) {
+    .az-page .az-bar > i,
+    .az-page .az-plus,
+    .az-page circle {
+      transition: none !important;
     }
   }
-  .sc-method h3 {
-    font-size: 1.15rem;
-  }
-  .sc-method p {
-    margin-top: 0.5rem !important;
-    color: var(--grafite);
-  }
-  .sc-method__self {
-    margin-top: 2rem !important;
-    font-weight: 600;
-    color: var(--inchiostro) !important;
-  }
-
-
-  /* ---------- Report (the result), sleep-score style ---------- */
-  .sc-report {
-    background: var(--nebbia);
-    padding: clamp(2rem, 1.5rem + 3vw, 4.5rem) 0;
-    outline: none;
-  }
-  .sc-report .wrap {
-    display: grid;
-    gap: clamp(1rem, 0.75rem + 1vw, 1.5rem);
-  }
-  .sc-rhead {
-    display: grid;
-    gap: 1rem 2rem;
-    align-items: end;
-  }
-  @media (min-width: 900px) {
-    .sc-rhead {
-      grid-template-columns: minmax(0, 1fr) auto;
-    }
-  }
-  .sc-rhead__k {
-    font-weight: 700;
-    color: var(--blu);
-  }
-  .sc-rhead__url {
-    font-size: clamp(1.9rem, 1.3rem + 2.4vw, 3.2rem);
-    overflow-wrap: anywhere;
-    margin-top: 0.25rem !important;
-  }
-  .sc-rhead__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1.25rem;
-    color: var(--grafite);
-    margin-top: 0.5rem !important;
-  }
-  .sc-rhead__tools {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    gap: 0.5rem 1.25rem;
-  }
-  .sc-grid {
-    display: grid;
-    gap: clamp(1rem, 0.75rem + 1vw, 1.5rem);
-  }
-  @media (min-width: 1000px) {
-    .sc-grid {
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    }
-  }
-  .sc-card {
-    background: #fff;
-    border-radius: 28px;
-    padding: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
-  }
-  .sc-card__k {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--grafite);
-  }
-  .sc-card__h {
-    font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
-  }
-  .sc-card--score {
-    background: var(--notte);
-    color: #fff;
-    --inchiostro: #fff;
-    --grafite: var(--on-dark-muted);
-  }
-  .sc-gauge {
-    display: grid;
-    gap: 1.75rem;
-    align-items: center;
-    margin-top: 1rem;
-  }
-  .sc-legend {
-    width: 100%;
-  }
-  @media (min-width: 640px) {
-    .sc-legend {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.1rem 2rem;
-    }
-  }
-  .sc-report .sc-ring {
-    position: relative;
-    width: min(300px, 72vw);
-    aspect-ratio: 1;
-    justify-self: center;
-  }
-  .sc-report .sc-ring svg {
-    width: 100%;
-    height: 100%;
-    transform: none;
-    overflow: visible;
-  }
-  .sc-arc__track {
-    fill: none;
-    stroke-width: 18;
-    opacity: 0.22;
-  }
-  .sc-arc__fill circle {
-    fill: none;
-    stroke-width: 18;
-  }
-  .sc-arc__fill {
-    transform-box: view-box;
-    transform-origin: 100px 100px;
-  }
-  .sc-ring__c {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-content: center;
-    text-align: center;
-  }
-  .sc-report .sc-ring__n {
-    position: static;
-    font-size: clamp(3.75rem, 3rem + 3vw, 5rem);
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    color: #fff;
-  }
-  .sc-ring__w {
-    font-weight: 700;
-    margin-top: 0.35rem !important;
-    color: var(--on-dark-muted);
-  }
-  .sc-legend {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 0.9rem;
-  }
-  .sc-leg {
-    display: grid;
-    grid-template-columns: 0.75rem minmax(0, 1fr) auto;
-    gap: 0.25rem 0.6rem;
-    align-items: center;
-  }
-  .sc-leg__dot {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 50%;
-    background: var(--c);
-  }
-  .sc-leg__name {
-    font-weight: 700;
-  }
-  .sc-leg__pts {
-    font-weight: 700;
-    color: var(--on-dark-muted);
-  }
-  .sc-leg .sc-bar {
-    grid-column: 2 / -1;
-    height: 6px;
-    margin: 0;
-    background: rgba(255, 255, 255, 0.14);
-  }
-  .sc-leg .sc-bar i {
-    background: var(--c);
-  }
-  .sc-leg__note {
-    grid-column: 2 / -1;
-    font-size: 0.9rem;
-    color: var(--on-dark-muted);
-  }
-  .sc-sum {
-    font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.55rem);
-    font-weight: 600;
-    line-height: 1.35;
-    margin-top: 0.75rem !important;
-  }
-  .sc-hl {
-    display: grid;
-    gap: 0.25rem;
-    margin: 1.5rem 0 0;
-  }
-  .sc-hl dt {
-    color: var(--grafite);
-    font-size: 0.95rem;
-    margin-top: 0.75rem;
-  }
-  .sc-hl dd {
-    margin: 0;
-    font-weight: 700;
-  }
-  .sc-card--sum .sc-top__note {
-    margin-top: 1.5rem !important;
-  }
-  .sc-card--sum .sc-top__bands {
-    margin-top: 0.75rem !important;
-  }
-  .sc-report .sc-fix {
-    border-color: var(--filo);
-  }
-  .sc-report .sc-all {
-    margin-top: 0;
-    border-top: 0;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .sc-anim .sc-in {
-      opacity: 0;
-      transform: translateY(18px);
-      transition:
-        opacity 0.6s var(--ease-out),
-        transform 0.8s var(--ease-out);
-    }
-    .sc-anim .sc-in:nth-child(2) { transition-delay: 0.08s; }
-    .sc-anim .sc-in:nth-child(3) { transition-delay: 0.16s; }
-    .sc-anim .sc-grid .sc-in + .sc-in { transition-delay: 0.22s; }
-    .sc-anim.is-in .sc-in {
-      opacity: 1;
-      transform: none;
-    }
-    .sc-anim .sc-arc__fill {
-      transform: rotate(var(--from));
-      transition: transform 1.2s var(--ease-out);
-      transition-delay: calc(0.35s + var(--i) * 0.12s);
-    }
-    .sc-anim.is-in .sc-arc__fill {
-      transform: rotate(0deg);
-    }
-    .sc-anim .sc-leg .sc-bar i {
-      transition-delay: calc(0.5s + var(--i) * 0.08s);
-    }
-  }
-
   @media print {
+    .az-noprint,
     .site-header,
     .sticky,
-    .sc-tool,
-    .sc-cta,
-    .sc-rhead__tools,
-    .sc-method,
-    .ph,
     footer,
-    .sc-noprint {
+    .az-invite {
       display: none !important;
     }
-    .sc-all {
-      display: block;
-    }
-    .sc-all > div {
-      display: block !important;
-    }
-    .sc-offer {
-      background: #fff !important;
-      color: #000 !important;
+    .az-page * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
   }
 </style>

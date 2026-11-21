@@ -55,6 +55,8 @@ describe("/api/score", () => {
     expect(priv.status).toBe(400);
     const social = await score({ request: req("/api/score", { url: "instagram.com/studio" }, undefined, "198.51.100.9"), env: {} });
     expect(social.status).toBe(400);
-    expect((await social.json()).error).toMatch(/profilo social/);
+    const body = await social.json();
+    expect(body.error).toMatch(/profilo social/);
+    expect(body.code).toBe("social");
   });
 });

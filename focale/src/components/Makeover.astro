@@ -541,8 +541,8 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
     margin-top: 1.5rem;
     padding: 0.35rem 0.35rem 0.35rem 1.1rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: #fff;
+    border: 1px solid var(--filo);
   }
   /* Computers: a clear gap between the laptop's front edge and the bar. */
   @media (min-width: 900px) {
@@ -556,7 +556,7 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
     min-width: 0;
     font-size: 0.9375rem;
     font-weight: 600;
-    color: #fff;
+    color: var(--inchiostro);
   }
   .mk__b {
     grid-area: 1 / 1;
@@ -607,22 +607,22 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
     min-width: 5.25rem;
     height: 44px;
     padding: 0 1.1rem;
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    border: 1px solid var(--filo);
     border-radius: 999px;
     background: transparent;
-    color: #fff;
+    color: var(--inchiostro);
     font: 600 0.9375rem/1 var(--font);
     cursor: pointer;
     touch-action: manipulation;
   }
   .mk__side[aria-pressed="true"] {
-    background: #fff;
-    border-color: #fff;
-    color: var(--notte);
+    background: var(--inchiostro);
+    border-color: var(--inchiostro);
+    color: #fff;
   }
   @media (hover: hover) and (pointer: fine) {
     .mk__side:hover {
-      border-color: #fff;
+      border-color: var(--inchiostro);
     }
   }
   .mk__ctl {
@@ -638,15 +638,15 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
     place-items: center;
     width: 44px;
     height: 44px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    border: 1px solid var(--filo);
     border-radius: 50%;
     background: transparent;
-    color: #fff;
+    color: var(--inchiostro);
     cursor: pointer;
   }
   @media (hover: hover) and (pointer: fine) {
     .mk__btn:hover {
-      border-color: #fff;
+      border-color: var(--inchiostro);
     }
   }
   .mk__btn svg {
@@ -660,9 +660,9 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
     opacity: 0.3;
   }
   .mk__btn[aria-pressed="true"] {
-    background: #fff;
-    border-color: #fff;
-    color: var(--notte);
+    background: var(--inchiostro);
+    border-color: var(--inchiostro);
+    color: #fff;
   }
 
   /* ---------- Phones: title, the film big, then the button ---------- */
@@ -695,7 +695,7 @@ const beatsOf = (d: (typeof devices)[number]): { t: string; tone?: "bad" | "good
       margin-top: 1.1rem;
     }
     .mk__lead {
-      margin-top: -0.75rem;
+      margin-top: 0;
       font-size: 1rem;
     }
   }

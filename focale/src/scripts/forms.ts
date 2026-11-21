@@ -91,7 +91,7 @@ export function initPreviewForm() {
     const r = form.querySelector<HTMLInputElement>(`input[name="attivita"][data-settore="${CSS.escape(settore)}"]`);
     if (r) r.checked = true;
   }
-  const labels: Record<string, string> = { essenziale: "Essenziale", professionale: "Professionale", "su-misura": "Su misura" };
+  const labels: Record<string, string> = { essenziale: "Essenziale", professionale: "Completo", "su-misura": "Su misura" };
   const pacchetto = params.get("pacchetto");
   const pkgLine = form.querySelector<HTMLElement>("[data-package]")!;
   if (pacchetto && labels[pacchetto]) {

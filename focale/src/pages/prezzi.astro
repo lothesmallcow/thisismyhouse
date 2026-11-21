@@ -45,7 +45,7 @@ const service = {
 ---
 <Base
   title={`Prezzi dei siti web per piccole imprese | ${site.brand}`}
-  description={`Prezzi chiari e scritti: Essenziale, Professionale e Su misura. Prezzo fondatori per i primi ${site.foundersSpotsTotal} clienti.`}
+  description={`Prezzi chiari e scritti: Essenziale ${site.prices.essenziale.standard} €, Completo ${site.prices.professionale.standard} €, Su misura ${site.prices.suMisura.standard} €. Cura del sito facoltativa a ${site.care.pricePerMonth} € al mese.`}
   jsonLd={[breadcrumbs([{ name: "Prezzi", path: "/prezzi/" }]), service]}
 >
   <PageHead

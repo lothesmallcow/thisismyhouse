@@ -4,11 +4,13 @@
  * the estimator; "Non sai cosa scegliere?" to a message on WhatsApp (or the contact page).
  */
 import { whatsappHref } from "../lib/util";
+import { site } from "../config/site";
 interface Props {
   estimatorHref?: string;
 }
 const { estimatorHref = "/prezzi/#stima" } = Astro.props;
 ---
+<p class="ph-care"><b>{site.care.name}, facoltativa: {site.care.pricePerMonth}&nbsp;€ al mese.</b> {site.care.line}</p>
 <div class="ph-help">
   <div class="ph-help__item">
     <p><b>Nessun pacchetto fa per te?</b> Rispondi a qualche domanda e calcoliamo una stima del tuo preventivo.</p>
@@ -22,6 +24,10 @@ const { estimatorHref = "/prezzi/#stima" } = Astro.props;
   </div>
 </div>
 <style>
+  .ph-care {
+    margin-top: 1.5rem !important;
+    font-weight: 500;
+  }
   .ph-help {
     display: grid;
     gap: 1rem;

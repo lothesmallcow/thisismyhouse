@@ -24,11 +24,19 @@ export const site = {
   vatNote: "[DA COMPILARE: nota IVA concordata con il commercialista]",
   jurisdiction: "Milano",
   foundersSpotsTotal: 5,
-  foundersSpotsLeft: 5,
+  // Founders' programme off (Lorenzo, 21 Nov 2026: one price list). Set spots left > 0 and founders
+  // prices below the standard ones to turn it back on.
+  foundersSpotsLeft: 0,
   prices: {
-    essenziale: { founders: 390, standard: 590 },
-    professionale: { founders: 690, standard: 990 },
-    suMisura: { founders: 1190, standard: 1690 },
+    essenziale: { founders: 600, standard: 600 },
+    professionale: { founders: 900, standard: 900 }, // shown as "Completo"
+    suMisura: { founders: 1200, standard: 1200 },
+  },
+  /** Optional care plan (Lorenzo, 21 Nov 2026). */
+  care: {
+    name: "Cura del sito",
+    pricePerMonth: 39,
+    line: "Aggiornamenti, copie di sicurezza e piccole modifiche.",
   },
   previewHours: 72,
   deliveryDays: { essenziale: 7, professionale: 10 },

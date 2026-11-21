@@ -35,7 +35,7 @@ export const json = (body: unknown, status = 200) =>
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" },
   });
 
-export const fail = (status: number, error: string) => json({ error }, status);
+export const fail = (status: number, error: string, code?: string) => json(code ? { error, code } : { error }, status);
 
 /** Only our own pages may call the API: a browser always sends Origin on a POST. */
 export function sameOrigin(request: Request): boolean {

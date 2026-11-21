@@ -67,16 +67,17 @@ const year = new Date().getFullYear();
   </div>
 </footer>
 <style>
-  /* Deep navy footer: the tokens flip so everything inside reads white. */
+  /* Light grey footer (theme "Mela"): dark text, hairlines, small secondary labels. */
   .ftr {
-    background: var(--notte);
-    color: #fff;
-    --carta: var(--notte);
-    --inchiostro: #ffffff;
-    --grafite: var(--on-dark-muted);
-    --filo: rgba(255, 255, 255, 0.22);
-    --nebbia: rgba(255, 255, 255, 0.08);
-    --mandarino: #8ea4ff;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    --carta: #f5f5f7;
+    --inchiostro: #1d1d1f;
+    --grafite: #6e6e73;
+    --filo: #e8e8ed;
+    --nebbia: #ffffff;
+    --mandarino: #0071e3;
+    --on-dark-muted: #6e6e73;
 
     padding: clamp(3rem, 2rem + 3vw, 5rem) 0 1.5rem;
   }
@@ -103,7 +104,7 @@ const year = new Date().getFullYear();
   }
   .ftr__where {
     margin: 1rem 0 2rem !important;
-    color: var(--on-dark-muted);
+    color: var(--grafite);
   }
   .ftr__cols {
     display: grid;
@@ -125,7 +126,7 @@ const year = new Date().getFullYear();
     font-weight: 500;
     font-stretch: 100%;
     letter-spacing: 0;
-    color: var(--on-dark-muted);
+    color: var(--grafite);
     margin-bottom: 1rem;
   }
   .ftr ul {

@@ -33,20 +33,20 @@ export const GET: APIRoute = async ({ props }) => {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between",
-      backgroundColor: "#13307A",
+      backgroundColor: "#FFFFFF",
       padding: "64px 72px",
       fontFamily: "Schibsted",
-      color: "#FFFFFF",
+      color: "#1D1D1F",
     },
     [
       { type: "img", props: { src: `data:image/svg+xml;base64,${Buffer.from(logoSvg).toString("base64")}`, width: Math.round((vw / vh) * logoH), height: logoH } },
       h("div", { display: "flex", flexDirection: "column", gap: "18px" }, [
-        page.kicker ? h("div", { fontSize: "28px", color: "#C7D0E8", fontWeight: 400 }, page.kicker) : null,
+        page.kicker ? h("div", { fontSize: "28px", color: "#6E6E73", fontWeight: 400 }, page.kicker) : null,
         h("div", { fontSize: `${size}px`, lineHeight: 1, fontWeight: 800, maxWidth: "900px", letterSpacing: "-0.02em" }, page.title),
       ].filter(Boolean)),
       h("div", { display: "flex", justifyContent: "space-between", alignItems: "center" }, [
-        h("div", { fontSize: "24px", fontWeight: 400, color: "#C7D0E8" }, "Siti web che portano richieste"),
-        h("div", { fontSize: "24px", fontWeight: 800, color: "#0B1B3F", backgroundColor: "#FF6A1F", padding: "12px 26px", borderRadius: "999px" }, "Anteprima gratis in 72 ore"),
+        h("div", { fontSize: "24px", fontWeight: 400, color: "#6E6E73" }, "Siti web che portano richieste"),
+        h("div", { fontSize: "24px", fontWeight: 800, color: "#FFFFFF", backgroundColor: "#0071E3", padding: "14px 28px", borderRadius: "14px" }, "Anteprima gratis in 72 ore"),
       ]),
     ],
   );

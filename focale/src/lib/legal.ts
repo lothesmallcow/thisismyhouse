@@ -33,7 +33,7 @@ export const condizioni: LegalDoc = {
     {
       h: "5. Tempi",
       p: [
-        "I tempi indicati ({deliveryDays.essenziale} giorni lavorativi per Essenziale, {deliveryDays.professionale} per Professionale, concordati per Su misura) partono dal giorno in cui riceviamo l'acconto, le foto e le informazioni necessarie. Se qualcosa manca, i tempi si spostano dello stesso numero di giorni, e te lo diciamo subito.",
+        "I tempi indicati ({deliveryDays.essenziale} giorni lavorativi per Essenziale, {deliveryDays.professionale} per Completo, concordati per Su misura) partono dal giorno in cui riceviamo l'acconto, le foto e le informazioni necessarie. Se qualcosa manca, i tempi si spostano dello stesso numero di giorni, e te lo diciamo subito.",
       ],
     },
     {

@@ -15,7 +15,7 @@ const SECTORS = new Set(rubric.sectors.map((s) => s.id));
 
 export const onRequestPost = async ({ request, env }: Ctx) => {
   if (!sameOrigin(request)) return fail(403, "Richiesta non ammessa.");
-  if (await rateLimited(request, env, "score", 12)) return fail(429, "Hai fatto molte analisi nell'ultima ora. Riprova più tardi.");
+  if (await rateLimited(request, env, "score", 12)) return fail(429, "Hai fatto molte analisi nell'ultima ora. Riprova più tardi.", "limit");
 
   let body: { url?: unknown; sector?: unknown };
   try {
@@ -41,8 +41,8 @@ export const onRequestPost = async ({ request, env }: Ctx) => {
     const result = await analyze(url.toString(), { resolve: dohResolver(), psi, sector });
     return json(result);
   } catch (e) {
-    if (e instanceof ScorerError) return fail(e.code === "blocked" || e.code === "url" || e.code === "social" ? 400 : 422, e.message);
-    return fail(502, "Non siamo riusciti ad analizzare il sito. Riprova tra qualche minuto.");
+    if (e instanceof ScorerError) return fail(e.code === "blocked" || e.code === "url" || e.code === "social" ? 400 : 422, e.message, e.code);
+    return fail(502, "Non siamo riusciti ad analizzare il sito. Riprova tra qualche minuto.", "server");
   }
 };
 

@@ -92,7 +92,7 @@ export function estimate(a: Answers, s: Costs, foundersOpen: boolean, custom: Cu
   }
   const size: Size = plan === "professionale" && a.size === "una" ? "completo" : a.size;
   const base = foundersOpen ? s.prices[plan].founders : s.prices[plan].standard;
-  const planName = plan === "essenziale" ? "Essenziale" : "Professionale";
+  const planName = plan === "essenziale" ? "Essenziale" : "Completo";
   const lines: Line[] = [{ label: `Pacchetto ${planName}`, min: base, max: base }];
   let days = s.deliveryDays[plan];
   const add = (label: string, p: { min: number; max: number; days: number }) => {

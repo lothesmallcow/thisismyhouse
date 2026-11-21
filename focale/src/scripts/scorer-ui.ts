@@ -1,9 +1,10 @@
 /**
- * The Website Scorer page: sends the address to /api/score, then draws the report it returns.
- * Every string from the analysed page is inserted as text (never as HTML): "found" sentences can
- * quote the page's own title or headings. Motion: the ring fades and scales in and the bars grow
- * with transform only, inside prefers-reduced-motion: no-preference (CSS); the number counts up
- * only when motion is allowed. No layout shift: the result section is shown once, fully built.
+ * The analysis page (/analisi-sito/), as designed in Claude Design and wired to the real engine.
+ * Screens: start, waiting, report, error. /api/score returns the report for every sector, so the
+ * "Valutato come" switch recalculates without a new fetch. Every string from the analysed page is
+ * inserted as text, never as HTML: "found" sentences can quote the page's own title or headings.
+ * Motion: the ring fills and the bars grow once (the ring by stroke length, the bars by scaleX), the
+ * number counts up; nothing moves when the visitor asks for reduced motion.
  */
 import type { FullAnalysis } from "../scorer/analyze";
 import type { Report, SectorId } from "../scorer/types";
@@ -15,554 +16,457 @@ interface Pkg {
   forWhom: string;
   includes: string[];
 }
+interface SkelCat {
+  id: string;
+  label: string;
+  weight: number;
+  checks: string[];
+}
 interface Data {
   sectors: { id: SectorId; label: string }[];
-  offer: {
-    packages: Pkg[];
-    care: { name: string; pricePerMonth: number; line: string; includes: string[] };
-    sectorLines: Record<string, Record<string, string>>;
-  };
-  benchmark: { templates: Record<string, { label: string; path: string; total: number; categories?: { id: string; label: string; earned: number; max: number }[] }> };
+  offer: { packages: Pkg[]; care: { line: string } };
+  benchmark: { templates: Record<string, { label: string; path: string; total: number }> };
   consent: { version: string; text: string };
   sample: FullAnalysis;
   sampleGood: FullAnalysis;
-  checkTitles: string[];
-  rubricVersion: string;
+  skeleton: Record<string, SkelCat[]>;
+  checkCount: number;
 }
 
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel)!;
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SVG = "http://www.w3.org/2000/svg";
+const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const euro = (n: number) => `${n.toLocaleString("it-IT")} €`;
-const pts = (n: number) => (Math.round(n * 10) / 10).toLocaleString("it-IT");
+const host = (u: string) => u.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
 
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, ...kids: (Node | string | null | undefined)[]) {
+/** One colour per category, as in the design: same lightness and chroma, different hue. */
+const HUE: Record<string, number> = { speed: 35, conversion: 80, local: 135, trust: 180, a11y: 240, legal: 290, content: 345 };
+const colour = (id: string) => `oklch(0.72 0.15 ${HUE[id] ?? 250})`;
+const STATUS_COLOUR: Record<string, string> = { pass: "#34C759", partial: "#FF9F0A", fail: "#FF3B30", unmeasured: "#AEAEB2" };
+const STATUS_WORD: Record<string, string> = { pass: "Superato", partial: "In parte", fail: "Non superato", unmeasured: "Non misurato" };
+
+const verdict = (v: number) => (v >= 90 ? "Ottimo" : v >= 75 ? "Buono" : v >= 50 ? "Discreto" : "Da sistemare");
+
+function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, ...kids: (Node | string | null | undefined | false)[]) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (k === "class") e.className = v;
     else e.setAttribute(k, v);
   }
-  for (const k of kids) if (k != null) e.append(typeof k === "string" ? document.createTextNode(k) : k);
+  for (const k of kids) if (k) e.append(typeof k === "string" ? document.createTextNode(k) : k);
   return e;
 }
 
-function band(total: number) {
-  if (total >= 90) return { id: "top", text: "Ottimo" };
-  if (total >= 75) return { id: "good", text: "Buono" };
-  if (total >= 50) return { id: "mid", text: "Discreto" };
-  return { id: "low", text: "Da sistemare" };
-}
-
-/** One colour per category, the same in the ring, the legend and the bars. */
-const CAT_COLOR: Record<string, string> = {
-  speed: "#5aa2ff",
-  conversion: "#ff9446",
-  local: "#3cc9ae",
-  trust: "#b08cff",
-  a11y: "#ffd23f",
-  legal: "#ff7aa0",
-  content: "#94da5c",
-};
-
 /**
- * The score ring, like a sleep score: one arc per category, its length the category's weight, filled
- * as far as its points. Each fill grows by rotating inside a wedge that clips it (transform only).
+ * The ring: one arc per category, its length the category's weight, filled as far as its points.
+ * Returns the fill circles so the caller can grow them.
  */
-function drawArcs(svg: SVGSVGElement, report: Report) {
-  const R = 80;
-  const C2 = 2 * Math.PI * R;
-  const gap = 5;
-  const cats = report.categories.map((c) => {
-    const weight = report.checks.filter((x) => x.category === c.id && x.max > 0).reduce((t, x) => t + x.max, 0);
-    return { c, weight, ratio: weight ? Math.min(1, c.earned / weight) : 0 };
-  }).filter((x) => x.weight > 0);
-  const total = cats.reduce((t, x) => t + x.weight, 0) || 100;
-  const pt = (deg: number, r: number) => `${100 + r * Math.cos((deg * Math.PI) / 180)} ${100 + r * Math.sin((deg * Math.PI) / 180)}`;
-  const mk = (tag: string, attrs: Record<string, string>) => {
-    const e = document.createElementNS(SVG, tag);
-    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
-    return e;
-  };
-  const defs = mk("defs", {});
-  const root = mk("g", { transform: "rotate(-90 100 100)" });
-  let acc = 0;
-  cats.forEach(({ c, weight, ratio }, i) => {
-    const span = (weight / total) * 360;
-    const start = acc + gap / 2;
-    const len = Math.max(0.5, span - gap);
-    acc += span;
-    const color = CAT_COLOR[c.id] ?? "#fff";
-    const dash = (deg: number) => `${(deg / 360) * C2} ${C2}`;
-    const off = String(-(start / 360) * C2);
-    root.append(mk("circle", { cx: "100", cy: "100", r: String(R), class: "sc-arc__track", stroke: color, "stroke-dasharray": dash(len), "stroke-dashoffset": off }));
-    const id = `sc-w${i}`;
-    const clip = mk("clipPath", { id });
-    clip.append(mk("path", { d: `M100 100 L${pt(start, 110)} A110 110 0 ${len > 180 ? 1 : 0} 1 ${pt(start + len, 110)} Z` }));
-    defs.append(clip);
-    const fillDeg = len * ratio;
-    const holder = mk("g", { "clip-path": `url(#${id})` });
-    const fill = mk("g", { class: "sc-arc__fill" });
-    (fill as SVGGElement).style.setProperty("--from", `${-fillDeg}deg`);
-    (fill as SVGGElement).style.setProperty("--i", String(i));
-    if (fillDeg > 0) fill.append(mk("circle", { cx: "100", cy: "100", r: String(R), stroke: color, "stroke-dasharray": dash(fillDeg), "stroke-dashoffset": off }));
-    const t = mk("title", {});
-    t.textContent = `${c.label}: ${pts(c.earned)} su ${weight}`;
-    holder.append(fill, t);
-    root.append(holder);
-  });
-  svg.replaceChildren(defs, root);
-}
-
-const SVG = "http://www.w3.org/2000/svg";
-const C = 2 * Math.PI * 70;
-
-/** Ring segments: one arc per item, length proportional to its weight, small gaps between. */
-function segments(svg: SVGSVGElement, items: { w: number; cls: string; title?: string }[], gapDeg = 1.6) {
-  const total = items.reduce((t, x) => t + x.w, 0) || 1;
-  const gap = (gapDeg / 360) * C;
-  let at = 0;
-  svg.replaceChildren(
-    ...items.map((x, i) => {
-      const len = (x.w / total) * C;
+function drawRing(svg: SVGSVGElement, segs: { weight: number; frac: number; colour: string; delay?: number; dur?: number }[]) {
+  const R = 124;
+  const C = 2 * Math.PI * R;
+  const gap = 6;
+  const total = segs.reduce((t, s) => t + s.weight, 0) || 100;
+  let start = 0;
+  const fills: { c: SVGCircleElement; len: number; frac: number }[] = [];
+  const parts: SVGCircleElement[] = [];
+  segs.forEach((s) => {
+    const len = (s.weight / total) * C - gap;
+    const off = String(-(start + gap / 2));
+    start += (s.weight / total) * C;
+    const mk = (stroke: string, dash: string) => {
       const c = document.createElementNS(SVG, "circle");
-      c.setAttribute("cx", "80");
-      c.setAttribute("cy", "80");
-      c.setAttribute("r", "70");
-      c.setAttribute("class", x.cls);
-      c.style.setProperty("--i", String(i));
-      c.setAttribute("stroke-dasharray", `${Math.max(0.5, len - gap)} ${C}`);
-      c.setAttribute("stroke-dashoffset", String(-at));
-      if (x.title) {
-        const t = document.createElementNS(SVG, "title");
-        t.textContent = x.title;
-        c.append(t);
-      }
-      at += len;
+      for (const [k, v] of Object.entries({ cx: "150", cy: "150", r: String(R), fill: "none", "stroke-width": "22", transform: "rotate(-90 150 150)", "stroke-dashoffset": off, stroke, "stroke-dasharray": dash })) c.setAttribute(k, v);
       return c;
-    }),
-  );
-}
-
-function bar(ratio: number, after = false) {
-  const i = el("i");
-  i.style.setProperty("--v", String(Math.max(0, Math.min(1, ratio))));
-  return el("div", { class: `sc-bar${after ? " sc-bar--after" : ""}`, "aria-hidden": "true" }, i);
+    };
+    parts.push(mk("#EDEDF0", `${len} ${C}`));
+    const f = mk(s.colour, `0 ${C}`);
+    f.style.transition = `stroke-dasharray ${s.dur ?? 1300}ms cubic-bezier(.2,.7,.2,1) ${s.delay ?? 0}ms`;
+    parts.push(f);
+    fills.push({ c: f, len, frac: Math.max(0, Math.min(1, s.frac)) });
+  });
+  svg.replaceChildren(...parts);
+  return {
+    fill(now = false) {
+      for (const { c, len, frac } of fills) {
+        if (now) c.style.transition = "none";
+        c.setAttribute("stroke-dasharray", `${len * frac} ${2 * Math.PI * R}`);
+      }
+    },
+  };
 }
 
 export function initScorer() {
-  const data = JSON.parse($("#sc-data").textContent || "{}") as Data;
-  const form = $<HTMLFormElement>("[data-sc-form]");
-  const err = $("[data-sc-error]");
-  const steps = $("[data-sc-steps]");
-  const result = $("[data-sc-result]");
-  const offerSec = $("[data-sc-offer]");
-  const cta = $("[data-sc-cta]");
-  const sectorNow = $<HTMLSelectElement>("[data-sc-sector-now]");
+  const data = JSON.parse($("#az-data").textContent || "{}") as Data;
+  const screens = document.querySelectorAll<HTMLElement>("[data-az-screen]");
+  const show = (name: string) => {
+    screens.forEach((s) => (s.hidden = s.dataset.azScreen !== name));
+    window.scrollTo({ top: 0 });
+  };
   let current: FullAnalysis | null = null;
   let isSample = false;
-  let busy = false;
+  let shown = 0;
+  let raf = 0;
+  const timers: number[] = [];
+  const clearTimers = () => {
+    timers.splice(0).forEach((t) => window.clearTimeout(t));
+    cancelAnimationFrame(raf);
+  };
+  const later = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
 
-  // Progress: the server does everything in one request, so the list moves on typical timings and
-  // waits on the speed step (the slow one) until the answer arrives. No percentages, no fake bar.
-  let stepTimer = 0;
-  const setStep = (n: number) => {
-    steps.querySelectorAll("li").forEach((li, i) => {
-      li.classList.toggle("is-done", i < n);
-      li.classList.toggle("is-now", i === n);
-      if (i === n) li.setAttribute("aria-current", "step");
-      else li.removeAttribute("aria-current");
-    });
+  /* ---------- Start ---------- */
+  const form = $<HTMLFormElement>("[data-az-form]");
+  const urlInput = $<HTMLInputElement>("#az-url");
+  const urlErr = $("[data-az-url-err]");
+  const sectorPick = $<HTMLSelectElement>("#az-sector");
+  const setUrlErr = (msg: string) => {
+    urlErr.textContent = msg;
+    urlErr.hidden = !msg;
+    if (msg) urlInput.setAttribute("aria-invalid", "true");
+    else urlInput.removeAttribute("aria-invalid");
   };
-  const scan = $("[data-sc-scan]");
-  const scanT = $("[data-sc-scan-t]");
-  let scanTimer = 0;
-  segments($<SVGSVGElement>("[data-sc-scan-ring]"), data.checkTitles.map(() => ({ w: 1, cls: "sc-scan__seg" })), 4);
-  const startSteps = () => {
-    steps.hidden = false;
-    scan.hidden = false;
-    let k = 0;
-    scanT.textContent = data.checkTitles[0];
-    window.clearInterval(scanTimer);
-    if (!reduced()) scanTimer = window.setInterval(() => (scanT.textContent = data.checkTitles[++k % data.checkTitles.length]), 700);
-    setStep(0);
-    let n = 0;
-    window.clearInterval(stepTimer);
-    stepTimer = window.setInterval(() => {
-      if (n < 2) setStep(++n);
-    }, 1800);
-  };
-  const stopSteps = () => {
-    window.clearInterval(stepTimer);
-    window.clearInterval(scanTimer);
-    scan.hidden = true;
-    setStep(3);
-    window.setTimeout(() => (steps.hidden = true), 400);
-  };
+  urlInput.addEventListener("input", () => setUrlErr(""));
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (busy) return;
-    const url = (form.elements.namedItem("url") as HTMLInputElement).value.trim();
-    const sector = (form.elements.namedItem("sector") as HTMLSelectElement).value || undefined;
-    const input = form.elements.namedItem("url") as HTMLInputElement;
-    if (!url) {
-      err.textContent = "Scrivi l'indirizzo del sito.";
-      input.setAttribute("aria-invalid", "true");
-      input.focus();
+    const raw = urlInput.value.trim();
+    if (!raw || !/\.[a-z]{2,}/i.test(raw)) {
+      setUrlErr("Scrivi l'indirizzo completo, per esempio www.nomeattivita.it");
+      urlInput.focus();
       return;
     }
-    input.removeAttribute("aria-invalid");
-    err.textContent = "";
-    busy = true;
-    const btn = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
-    btn.disabled = true;
-    btn.textContent = "Analisi in corso";
-    startSteps();
+    const sector = (sectorPick.value || undefined) as SectorId | undefined;
+    const done = startWaiting(host(raw.toLowerCase()), sector ?? "fitness");
     try {
-      const r = await fetch("/api/score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url, sector }) });
+      const r = await fetch("/api/score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: raw, sector }) });
       const body = await r.json().catch(() => null);
-      if (!r.ok || !body || body.error) throw new Error(body?.error || "Non siamo riusciti ad analizzare il sito. Riprova tra qualche minuto.");
+      if (!r.ok || !body || body.error) {
+        await done();
+        showError(host(raw), body?.code ?? (r.status === 404 ? "preview" : r.status === 429 ? "limit" : "server"), body?.error);
+        return;
+      }
+      await done();
       isSample = false;
-      show(body as FullAnalysis);
-    } catch (x) {
-      const offline = x instanceof TypeError || (x as Error).message.includes("JSON");
-      err.textContent = offline
-        ? realEl
-          ? "In questa pagina di prova l'analisi dal vivo non parte: scegli un sito vero qui sotto, o scrivi l'indirizzo in chat e lo analizziamo."
-          : "L'analisi dal vivo non risponde da qui. Riprova tra poco, o guarda l'esempio qui sotto."
-        : (x as Error).message;
-    } finally {
-      stopSteps();
-      busy = false;
-      btn.disabled = false;
-      btn.textContent = "Analizza il sito";
+      openReport(body as FullAnalysis);
+    } catch {
+      await done();
+      showError(host(raw), "preview");
     }
   });
 
-  document.querySelectorAll<HTMLButtonElement>("[data-sc-sample]").forEach((b) =>
-    b.addEventListener("click", () => {
-      isSample = true;
-      show(b.dataset.scSample === "good" ? data.sampleGood : data.sample);
+  const openSample = (which: string) => {
+    clearTimers();
+    isSample = true;
+    openReport(which === "good" ? data.sampleGood : data.sample);
+  };
+  document.querySelectorAll<HTMLAnchorElement>("[data-az-sample]").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      openSample(a.dataset.azSample!);
     }),
   );
-  // Private test page only: real sites analysed in advance, injected as #sc-real (never in the public build).
+  if (location.hash === "#voto-12") openSample("old");
+  if (location.hash === "#voto-97") openSample("good");
+
+  document.querySelectorAll<HTMLButtonElement>("[data-az-restart]").forEach((b) =>
+    b.addEventListener("click", () => {
+      clearTimers();
+      show("inizio");
+      urlInput.focus({ preventScroll: true });
+    }),
+  );
+
+  // Private test page only: real sites analysed in advance (#sc-real, never in the public build).
   const realEl = document.getElementById("sc-real");
   if (realEl) {
     const real = JSON.parse(realEl.textContent || "[]") as FullAnalysis[];
     const pick = el(
       "select",
-      { id: "sc-real-pick", class: "sc-real__pick" },
+      { id: "az-real", class: "az-select" },
       el("option", { value: "" }, "Scegli un sito"),
-      ...real.map((r, i) => el("option", { value: String(i) }, `${r.page.finalUrl.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")} (${r.results[r.chosen].report.total})`)),
+      ...real.map((r, i) => el("option", { value: String(i) }, `${host(r.page.finalUrl)} (${r.results[r.chosen].report.total})`)),
     );
     pick.addEventListener("change", () => {
       const r = real[Number((pick as HTMLSelectElement).value)];
       if (!r) return;
       isSample = false;
-      show(r);
+      openReport(r);
     });
-    $("[data-sc-sample]").closest("p")!.after(
-      el(
-        "div",
-        { class: "sc-real" },
-        el("p", { class: "sc-real__k" }, "Pagina di prova privata: siti veri analizzati davvero, con il motore vero. Non condividere."),
-        el("label", { for: "sc-real-pick" }, "Siti veri già analizzati"),
-        pick,
-      ),
-    );
+    $(".az-examples").after(el("div", { class: "az-real" }, el("label", { for: "az-real" }, "Pagina di prova: siti veri già analizzati con il motore vero"), pick));
   }
 
-  $("[data-sc-print]").addEventListener("click", () => {
-    const all = $<HTMLDetailsElement>(".sc-all");
-    all.open = true;
-    window.print();
-  });
+  /* ---------- Waiting: the ring builds while the names of the checks go by ---------- */
+  function startWaiting(address: string, sector: string): () => Promise<void> {
+    clearTimers();
+    show("attesa");
+    $("[data-az-wait-url]").textContent = address;
+    const cats = data.skeleton[sector] ?? data.skeleton.fitness;
+    const all = cats.flatMap((c) => c.checks.map((t) => ({ t, c })));
+    const ringSvg = $<SVGSVGElement>("[data-az-wait-ring]");
+    const catEl = $("[data-az-wait-cat]");
+    const checkEl = $("[data-az-wait-check]");
+    const started = performance.now();
+    let idx = 0;
+    let finished = false;
+    const step = () => {
+      if (finished) return;
+      if (idx >= all.length) {
+        catEl.textContent = "Velocità e telefono";
+        checkEl.replaceChildren(el("span", {}, "Misuriamo la velocità da telefono"));
+        return;
+      }
+      const cur = all[idx];
+      const ring = drawRing(
+        ringSvg,
+        cats.map((c) => ({ weight: c.weight, frac: all.slice(0, idx + 1).filter((x) => x.c.id === c.id).length / c.checks.length, colour: colour(c.id), dur: 500 })),
+      );
+      ring.fill(true);
+      catEl.textContent = cur.c.label;
+      checkEl.replaceChildren(el("span", {}, cur.t));
+      idx += 1;
+      later(reduced() ? 900 : 650, step);
+    };
+    step();
+    // Resolve once the answer is in: at least 1,5 s on screen, so the switch never flickers.
+    return () =>
+      new Promise<void>((res) => {
+        const wait = Math.max(0, 1500 - (performance.now() - started));
+        window.setTimeout(() => {
+          finished = true;
+          clearTimers();
+          res();
+        }, wait);
+      });
+  }
+
+  /* ---------- Error ---------- */
+  const ERRORS: Record<string, { title: string; todo: string }> = {
+    social: { title: "Questo è un profilo social, non un sito tuo", todo: "Incolla l'indirizzo del sito, per esempio www.nomeattivita.it. Se un sito non ce l'hai, possiamo partire da zero." },
+    unreachable: { title: "Il sito non risponde", todo: "Controlla che l'indirizzo sia scritto giusto e che il sito si apra dal tuo telefono, poi riprova tra qualche minuto." },
+    "too-slow": { title: "Il sito non risponde", todo: "Il sito ci ha messo troppo ad aprirsi. Riprova tra qualche minuto." },
+    status: { title: "Il sito risponde con un errore", todo: "Controlla che la pagina si apra dal tuo telefono, poi riprova." },
+    url: { title: "Questo indirizzo non sembra giusto", todo: "Scrivi l'indirizzo completo, per esempio www.nomeattivita.it." },
+    blocked: { title: "Questo indirizzo non si può analizzare", todo: "Analizziamo solo siti pubblici, con un nome a dominio: per esempio www.nomeattivita.it." },
+    "not-html": { title: "Questo indirizzo non porta a una pagina web", todo: "Incolla l'indirizzo della pagina principale del sito." },
+    empty: { title: "La pagina arriva vuota", todo: "Scrivici su WhatsApp con l'indirizzo: la guardiamo noi a mano." },
+    limit: { title: "Hai fatto molte analisi in poco tempo", todo: "Riprova tra un'ora. Se ti serve prima, scrivici." },
+    preview: { title: "L'analisi dal vivo non è attiva qui", todo: "Questa è un'anteprima senza server: guarda un esempio (voto 12 o voto 97), oppure riprova sul sito pubblicato." },
+    server: { title: "Non siamo riusciti ad analizzare il sito", todo: "Riprova tra qualche minuto." },
+  };
+  function showError(address: string, code: string, message?: string) {
+    const e = ERRORS[code] ?? ERRORS.server;
+    $("[data-az-err-url]").textContent = address;
+    $("[data-az-err-title]").textContent = e.title;
+    $("[data-az-err-text]").textContent = message || (code === "preview" ? "Qui il sito non può aprire altre pagine per misurarle." : "");
+    $("[data-az-err-todo]").textContent = e.todo;
+    show("errore");
+  }
+
+  /* ---------- Report ---------- */
+  const sectorNow = $<HTMLSelectElement>("[data-az-sector-now]");
   sectorNow.addEventListener("change", () => {
     if (current) render(current, sectorNow.value as SectorId, false);
   });
+  $("[data-az-print]").addEventListener("click", () => {
+    document.querySelectorAll<HTMLDetailsElement>(".az-check").forEach((d) => (d.open = true));
+    window.print();
+  });
 
-  function show(full: FullAnalysis) {
+  function openReport(full: FullAnalysis) {
     current = full;
+    shown = 0;
+    show("report");
     render(full, full.chosen, true);
-    result.hidden = false;
-    offerSec.hidden = false;
-    cta.hidden = false;
-    result.focus({ preventScroll: true });
-    result.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" });
   }
 
-  function render(full: FullAnalysis, sector: SectorId, animate: boolean) {
-    const { report, recommendation } = full.results[sector];
-    sectorNow.value = sector;
-    $("[data-sc-sample-note]").hidden = !isSample;
-    drawTop(report, full, sector, animate);
-    drawCats(report);
-    drawWhy(report);
-    drawFixes(report);
-    drawFlags(report);
-    drawAll(report);
-    drawOffer(report, recommendation, sector);
-    const wrap = result;
-    wrap.classList.add("sc-anim");
-    wrap.classList.remove("is-in");
-    offerSec.classList.add("sc-anim");
-    offerSec.classList.remove("is-in");
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        wrap.classList.add("is-in");
-        offerSec.classList.add("is-in");
-      }),
-    );
-  }
-
-  function drawTop(report: Report, full: FullAnalysis, sector: SectorId, animate: boolean) {
-    const ring = $("[data-sc-ring]");
-    const b = band(report.total);
-    ring.dataset.band = b.id;
-    ring.setAttribute("aria-label", `Punteggio ${report.total} su 100: ${b.text.toLowerCase()}`);
-    drawArcs($<SVGSVGElement>("[data-sc-arcs]"), report);
-    $("[data-sc-verdict]").textContent = b.text;
-    $("[data-sc-url]").textContent = report.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
-    const when = new Date(report.measuredAt).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
-    const speedSrc = report.perfSource === "field" ? "velocità dalle visite reali" : report.perfSource === "lab" ? "velocità da una prova da telefono" : "velocità non misurata";
-    $("[data-sc-meta]").replaceChildren(el("span", {}, report.sectorLabel), el("span", {}, `analizzato il ${when}`), el("span", {}, speedSrc));
-
-    const notes: string[] = [];
-    if (full.guessed === sector && sector !== "altro") notes.push("Il settore l'abbiamo capito dalla pagina: se non è giusto, cambialo in alto e il punteggio si ricalcola subito.");
-    if (sector === "altro") notes.push("Con \"Altro\" controlliamo solo quello che serve a qualsiasi attività.");
-    if (report.partial) notes.push("Questa volta la velocità non è stata misurata: il voto conta solo i controlli misurati.");
-    $("[data-sc-note]").textContent = notes.join(" ");
-
-    // Summary in words: strongest and weakest category, the first fix, how many checks passed.
-    const scored = report.categories.filter((c) => c.max > 0);
-    const byRatio = [...scored].sort((a, c) => c.earned / c.max - a.earned / a.max);
-    const best = byRatio[0];
-    const worst = [...scored].sort((a, c) => c.max - c.earned - (a.max - a.earned))[0];
-    const passed = report.checks.filter((c) => c.max > 0 && c.status === "pass").length;
-    const measured = report.checks.filter((c) => c.max > 0 && c.status !== "unmeasured").length;
-    $("[data-sc-summary]").textContent =
-      report.total >= 90
-        ? `Il sito fa bene quasi tutto quello che controlliamo: ${report.total} punti su 100.`
-        : `Il sito prende ${report.total} punti su 100. Va meglio in ${best.label.toLowerCase()}, perde di più in ${worst.label.toLowerCase()}: da lì viene la maggior parte dei punti mancanti.`;
-    const hl: [string, string][] = [
-      ["Punto forte", `${best.label} (${pts(best.earned)} su ${best.max})`],
-      ["Da sistemare per primo", report.fixes[0] ? `${report.fixes[0].title} (+${pts(report.fixes[0].gain)} punti)` : "Niente di urgente"],
-      ["Controlli superati in pieno", `${passed} su ${measured}`],
-    ];
-    $("[data-sc-highlights]").replaceChildren(...hl.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]));
-
-    const n = $("[data-sc-total]");
-    if (!animate || reduced()) {
-      n.textContent = String(report.total);
+  function countTo(target: number) {
+    const n = $("[data-az-total]");
+    cancelAnimationFrame(raf);
+    if (reduced()) {
+      n.textContent = String(target);
+      shown = target;
       return;
     }
+    const from = shown;
     const t0 = performance.now();
-    const dur = 1400;
     const tick = (t: number) => {
-      const k = Math.min(1, (t - t0) / dur);
-      n.textContent = String(Math.round(report.total * (1 - Math.pow(1 - k, 3))));
-      if (k < 1) requestAnimationFrame(tick);
+      const p = Math.min(1, (t - t0) / 1500);
+      shown = Math.round(from + (target - from) * (1 - Math.pow(1 - p, 3)));
+      n.textContent = String(shown);
+      if (p < 1) raf = requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
   }
 
-  // The legend under the ring: colour, name, points, a bar in the same colour, where the points went.
-  function drawCats(report: Report) {
-    const box = $("[data-sc-cats]");
-    box.replaceChildren(
-      ...report.categories
-        .filter((c) => report.checks.some((x) => x.category === c.id && x.max > 0))
-        .map((c, i) => {
-          const weight = report.checks.filter((x) => x.category === c.id && x.max > 0).reduce((t, x) => t + x.max, 0);
-          const lost = report.checks.filter((x) => x.category === c.id && x.max > 0 && x.status !== "unmeasured" && x.earned < x.max);
-          const notMeasured = report.checks.some((x) => x.category === c.id && x.status === "unmeasured");
-          const note = !c.max
-            ? "Non misurata questa volta."
-            : lost.length
-              ? `Persi ${pts(c.max - c.earned)} punti in ${lost.length} ${lost.length === 1 ? "controllo" : "controlli"}.`
-              : notMeasured ? "Pieno nella parte misurata." : "Tutti i punti.";
-          const li = el(
-            "li",
-            { class: "sc-leg" },
-            el("span", { class: "sc-leg__dot", "aria-hidden": "true" }),
-            el("span", { class: "sc-leg__name" }, c.label),
-            el("span", { class: "sc-leg__pts" }, c.max ? `${pts(c.earned)}/${weight}` : "n.m."),
-            bar(weight ? c.earned / weight : 0),
-            el("span", { class: "sc-leg__note" }, note),
-          );
-          li.style.setProperty("--c", CAT_COLOR[c.id] ?? "#fff");
-          li.style.setProperty("--i", String(i));
-          return li;
-        }),
-    );
-  }
+  function render(full: FullAnalysis, sector: SectorId, first: boolean) {
+    const { report: r, recommendation } = full.results[sector];
+    sectorNow.value = sector;
+    $("[data-az-sample-note]").hidden = !isSample;
+    const motion = !reduced();
 
-  // "Perché 63 e non 100": every lost point, heaviest first, each with what we found.
-  function drawWhy(report: Report) {
-    const box = $("[data-sc-why]");
-    const lost = report.checks
-      .filter((x) => x.max > 0 && x.status !== "unmeasured" && x.earned < x.max)
-      .sort((a, b) => b.max - b.earned - (a.max - a.earned));
-    const passed = report.checks.filter((x) => x.max > 0 && x.status === "pass").length;
-    const measured = report.checks.filter((x) => x.max > 0 && x.status !== "unmeasured").length;
-    const head = el("h3", { class: "sc-card__h" }, report.total >= 100 ? "Perché 100" : `Perché ${report.total} e non 100`);
-    const intro = el(
-      "p",
-      { class: "sc-sub" },
-      report.total >= 100
-        ? `Tutti i ${measured} controlli misurati sono pieni. 100 vuol dire che non abbiamo trovato niente da sistemare, non che il sito porti per forza più clienti.`
-        : `Il punteggio è la somma di ${measured} controlli, ognuno con i suoi punti (in tutto 100). Ne hai superati ${passed} in pieno; i punti mancanti vengono ${lost.length === 1 ? "da questo controllo" : `da questi ${lost.length}, dal più pesante`}.` +
-          (report.partial ? " Alcuni controlli non sono stati misurati: il voto è la quota dei punti misurati." : ""),
-    );
-    const list = el(
-      "ul",
-      { class: "sc-why" },
-      ...lost.map((x) =>
-        el(
-          "li",
-          {},
-          el("span", { class: "sc-why__pts" }, `−${pts(x.max - x.earned)}`),
-          el("span", {}, el("strong", {}, x.title), x.status === "partial" ? " (in parte)" : "", el("small", {}, x.found)),
-        ),
-      ),
-    );
-    box.replaceChildren(head, intro, ...(lost.length ? [list] : []));
-  }
+    // Header
+    $("[data-az-url]").textContent = host(r.url);
+    const when = new Date(r.measuredAt).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+    const speed = r.perfSource === "field" ? "velocità dalle visite reali degli ultimi 28 giorni" : r.perfSource === "lab" ? "velocità misurata come da telefono su 4G" : "velocità non misurata questa volta";
+    $("[data-az-meta]").textContent = `${when} · ${speed}`;
+    const notes: string[] = [];
+    if (full.guessed === sector && sector !== "altro") notes.push("Il settore l'abbiamo capito dalla pagina: se non è giusto, cambialo qui sopra e il voto si ricalcola.");
+    if (sector === "altro") notes.push("Con \"Altro\" controlliamo solo quello che serve a qualsiasi attività.");
+    if (r.partial) notes.push("La velocità questa volta non è stata misurata: il voto conta solo i controlli misurati.");
+    $("[data-az-note]").textContent = notes.join(" ");
 
-  function drawFixes(report: Report) {
-    const box = $("[data-sc-fixes]");
-    if (!report.fixes.length) {
-      $("[data-sc-climb]").textContent = "";
-      box.replaceChildren(el("li", { class: "sc-fix" }, el("p", {}, "Niente da recuperare: tutti i controlli misurati sono pieni.")));
-      return;
-    }
-    // Running total: what the score becomes as each fix is added (scaled when speed was not measured).
-    const measuredMax = report.checks.filter((c) => c.max > 0 && c.status !== "unmeasured").reduce((t, c) => t + c.max, 0) || 100;
-    const k = 100 / measuredMax;
-    let run = report.total;
-    const runs = report.fixes.map((f) => (run = Math.min(100, Math.round(run + f.gain * k))));
-    $("[data-sc-climb]").replaceChildren("Sistemando queste ", String(report.fixes.length), " cose passi da ", el("strong", {}, String(report.total)), " a ", el("strong", {}, String(runs[runs.length - 1] ?? report.total)), ".");
-    box.replaceChildren(
-      ...report.fixes.map((f, i) =>
-        el(
-          "li",
-          { class: "sc-fix" },
-          el("p", { class: "sc-fix__gain" }, `+${pts(f.gain)}`, el("small", {}, "punti"), el("span", { class: "sc-fix__run" }, `poi sei a ${runs[i]}`)),
-          el(
-            "div",
-            {},
-            el("h3", {}, f.title),
-            el("p", { class: "sc-fix__found" }, f.found),
-            el("p", {}, f.why),
-            el("p", { class: "sc-fix__do" }, `Cosa facciamo noi: ${f.fix}`),
-          ),
-        ),
-      ),
+    // Ring and categories
+    const cats = r.categories
+      .map((c) => {
+        const weight = r.checks.filter((x) => x.category === c.id && x.max > 0).reduce((t, x) => t + x.max, 0);
+        return { ...c, weight };
+      })
+      .filter((c) => c.weight > 0);
+    const ring = drawRing(
+      $<SVGSVGElement>("[data-az-ring]"),
+      cats.map((c, i) => ({ weight: c.weight, frac: c.earned / c.weight, colour: colour(c.id), delay: motion ? i * 110 : 0 })),
     );
-  }
-
-  function drawFlags(report: Report) {
-    const box = $("[data-sc-flags]");
-    $("[data-sc-flags-wrap]").hidden = !report.flags.length;
-    box.replaceChildren(
-      ...report.flags.map((f) =>
-        el("li", { class: `sc-flag${f.status === "flag-warn" ? " sc-flag--warn" : ""}` }, el("strong", {}, f.title), el("p", {}, f.found), el("p", {}, f.why)),
-      ),
-    );
-  }
-
-  function drawAll(report: Report) {
-    const box = $("[data-sc-all]");
-    const mark = { pass: ["✓", "superato"], partial: ["~", "in parte"], fail: ["✗", "da sistemare"], unmeasured: ["?", "non misurato"] } as Record<string, [string, string]>;
-    box.replaceChildren(
-      ...report.categories.flatMap((cat) => [
-        el("h3", {}, cat.label),
-        el(
-          "ul",
-          {},
-          ...report.checks
-            .filter((c) => c.category === cat.id && c.max > 0)
-            .map((c) => {
-              const [sym, word] = mark[c.status] ?? ["", ""];
-              return el(
-                "li",
-                {},
-                el("span", { class: `sc-mark sc-mark--${c.status}`, "aria-label": word }, sym),
-                el("span", {}, c.title, el("small", {}, c.found)),
-                el("span", {}, `${pts(c.earned)}/${c.max}`),
-              );
-            }),
-        ),
-      ]),
-    );
-  }
-
-  function drawOffer(report: Report, rec: { packageId: string; reason: string }, sector: SectorId) {
-    const tpl = data.benchmark.templates[sector];
-    const lead = $("[data-sc-proj-lead]");
-    const proj = $("[data-sc-proj]");
-    if (tpl) {
-      lead.textContent = `Abbiamo misurato con la stessa griglia il sito d'esempio che abbiamo costruito per questo settore. È un numero misurato, non una promessa: sul tuo dipende anche da foto, testi e recensioni vere.`;
-      const link = el("a", { href: tpl.path }, `Guarda ${tpl.label}`);
-      proj.replaceChildren(
-        el(
-          "p",
-          { class: "sc-compare", "aria-label": `Il tuo sito oggi ${report.total}, il nostro sito d'esempio ${tpl.total}` },
-          el("span", { class: "sc-compare__n" }, String(report.total), el("small", {}, "il tuo sito oggi")),
-          el("span", { class: "sc-compare__arrow", "aria-hidden": "true" }, "→"),
-          el("span", { class: "sc-compare__n" }, String(tpl.total), el("small", {}, "il sito che costruiamo noi")),
-        ),
-        el("div", {}, el("p", { class: "sc-cat__row" }, el("span", {}, "Il tuo sito oggi"), el("span", {}, `${report.total} su 100`)), bar(report.total / 100)),
-        el("div", {}, el("p", { class: "sc-cat__row" }, el("span", {}, "Il sito che costruiamo noi, misurato"), el("span", {}, `${tpl.total} su 100`)), bar(tpl.total / 100, true)),
-        el("p", {}, link),
-      );
-    } else {
-      lead.textContent = "Per questo settore non abbiamo ancora un sito d'esempio misurato, quindi non ti diamo un numero inventato. Sistemiamo i punti qui sopra con lo stesso metodo che porta i nostri siti d'esempio sopra 90.";
-      proj.replaceChildren();
-    }
-
-    const lines = data.offer.sectorLines[sector] ?? data.offer.sectorLines.altro;
-    const middle = data.offer.packages[1]?.id;
-    $("[data-sc-plans]").replaceChildren(
-      ...data.offer.packages.map((p) => {
-        const mine = p.id === rec.packageId;
+    const v = verdict(r.total);
+    $("[data-az-ring-wrap]").setAttribute("aria-label", `Voto ${r.total} su 100, ${v.toLowerCase()}`);
+    $("[data-az-verdict]").textContent = v;
+    $("[data-az-cats]").replaceChildren(
+      ...cats.map((c, i) => {
+        const lost = r.checks.filter((x) => x.category === c.id && x.max > 0 && x.status !== "unmeasured" && x.earned < x.max);
+        const line = !c.max ? "Non misurata questa volta" : lost.length ? `Persi ${fmt(c.max - c.earned)} punti in ${lost.length} ${lost.length === 1 ? "controllo" : "controlli"}` : "Tutti i punti presi";
+        const fill = el("i");
+        fill.style.background = colour(c.id);
+        fill.style.transitionDelay = motion ? `${i * 110}ms` : "0ms";
+        fill.dataset.scale = String(Math.min(1, c.earned / c.weight));
+        const dot = el("span", { class: "az-dot", "aria-hidden": "true" });
+        dot.style.background = colour(c.id);
         return el(
           "li",
-          { class: `hs-plan${p.id === middle ? " hs-plan--rec" : ""}` },
-          el("div", { class: "hs-plan__top" }, el("h3", {}, p.name), mine ? el("span", { class: "sc-plan__mine" }, "Consigliato per te") : null),
-          el("p", { class: "hs-plan__for" }, p.forWhom),
-          el("p", { class: "hs-plan__num" }, euro(p.price)),
-          el("ul", {}, ...p.includes.map((i) => el("li", {}, i.startsWith("@") ? (lines[i] ?? "") : i))),
+          { class: "az-cat" },
+          el("div", { class: "az-cat__top" }, dot, el("span", { class: "az-cat__name" }, c.label), el("span", { class: "az-num" }, el("b", {}, fmt(c.earned)), `/${fmt(c.weight)}`)),
+          el("div", { class: "az-bar", "aria-hidden": "true" }, fill),
+          el("span", { class: "az-cat__line" }, line),
         );
       }),
     );
-    $("[data-sc-reason]").textContent = `Perché te lo consigliamo: ${rec.reason}`;
-    const care = data.offer.care;
-    $("[data-sc-care]").replaceChildren(
-      el("p", {}, el("strong", {}, `${care.name}, ${euro(care.pricePerMonth)} al mese`), ` (facoltativa). ${care.line}`),
-      el("p", {}, care.includes.join(". ") + "."),
+    const grow = () => {
+      ring.fill(!motion);
+      document.querySelectorAll<HTMLElement>(".az-bar > i").forEach((i) => (i.style.transform = `scaleX(${i.dataset.scale})`));
+    };
+    if (first && motion) window.setTimeout(grow, 120);
+    else grow();
+    countTo(r.total);
+
+    // Summary sentence
+    const byRatio = [...cats].filter((c) => c.max > 0).sort((a, b) => b.earned / b.weight - a.earned / a.weight || b.weight - a.weight);
+    const byLost = [...cats].sort((a, b) => b.weight - b.earned - (a.weight - a.earned));
+    const lostAny = r.checks.some((x) => x.max > 0 && x.status !== "unmeasured" && x.earned < x.max);
+    $("[data-az-summary]").textContent = lostAny
+      ? `Il sito prende ${r.total} punti su 100. Va meglio in ${byRatio[0].label.toLowerCase()}, perde di più in ${byLost[0].label.toLowerCase()}.`
+      : `Il sito prende ${r.total} punti su 100: tutti i controlli misurati superati.`;
+
+    // Fixes, with the score climbing
+    const measuredMax = r.checks.filter((c) => c.max > 0 && c.status !== "unmeasured").reduce((t, c) => t + c.max, 0) || 100;
+    const k = 100 / measuredMax;
+    let run = r.total;
+    const after = r.fixes.map((f) => (run = Math.min(100, Math.round(run + f.gain * k))));
+    const dopo = after[after.length - 1] ?? r.total;
+    $("[data-az-fixes-wrap]").hidden = !r.fixes.length;
+    $("[data-az-fixes-title]").textContent = r.fixes.length === 1 ? "La cosa che vale più punti" : "Da sistemare per prime";
+    $("[data-az-climb-from]").textContent = String(r.total);
+    $("[data-az-climb-to]").textContent = String(dopo);
+    $("[data-az-fixes]").replaceChildren(
+      ...r.fixes.map((f, i) =>
+        el(
+          "li",
+          { class: "az-fix" },
+          el("span", { class: "az-num" }, String(i + 1).padStart(2, "0")),
+          el("div", { class: "az-fix__body" }, el("h3", {}, f.title), el("p", { class: "az-soft" }, cap(f.found)), el("p", {}, el("span", { class: "az-we" }, "Noi: "), f.fix)),
+          el("span", { class: "az-gain" }, `+${fmt(f.gain)}`),
+        ),
+      ),
     );
+
+    // Flags that need a look (the ones that are fine are left out)
+    const warn = r.flags.filter((f) => f.status === "flag-warn");
+    $("[data-az-flags-wrap]").hidden = !warn.length;
+    $("[data-az-flags]").replaceChildren(...warn.map((f) => el("li", {}, el("span", {}, cap(f.found)), el("span", {}, f.why))));
+
+    // Every check, by category
+    $("[data-az-all]").replaceChildren(
+      ...cats.map((c) => {
+        const dot = el("span", { class: "az-dot", "aria-hidden": "true" });
+        dot.style.background = colour(c.id);
+        return el(
+          "div",
+          {},
+          el("div", { class: "az-allcat__h" }, dot, el("h3", {}, c.label)),
+          ...r.checks
+            .filter((x) => x.category === c.id && x.max > 0)
+            .map((x) => {
+              const sd = el("span", { class: "az-dot", role: "img", "aria-label": STATUS_WORD[x.status] ?? "" });
+              sd.style.background = STATUS_COLOUR[x.status] ?? "#AEAEB2";
+              const fix = r.fixes.find((f) => f.id === x.id);
+              return el(
+                "details",
+                { class: "az-check" },
+                el("summary", {}, sd, el("span", {}, x.title), el("span", { class: "az-num" }, `${fmt(x.earned)}/${fmt(x.max)}`), el("span", { class: "az-plus az-noprint", "aria-hidden": "true" }, "+")),
+                el("div", { class: "az-check__body" }, el("p", {}, cap(x.found)), fix ? el("p", { class: "az-soft" }, fix.why) : null, fix ? el("p", {}, el("span", { class: "az-we" }, "Noi: "), fix.fix) : null),
+              );
+            }),
+        );
+      }),
+    );
+
+    // What we can do: our own demo for this sector, measured with the same rubric, or no number at all
+    const tpl = data.benchmark.templates[sector];
+    const compare = $("[data-az-compare]");
+    if (tpl) {
+      compare.className = "az-compare";
+      compare.replaceChildren(`${r.total} `, el("span", { class: "az-blue" }, `→ ${tpl.total}`));
+      $("[data-az-compare-note]").replaceChildren(
+        `Il nostro sito d'esempio per questo settore prende ${tpl.total} con la stessa griglia di ${r.checks.filter((x) => x.max > 0).length} controlli. È da lì che partiamo. `,
+        el("a", { class: "az-link", href: tpl.path }, "Guardalo"),
+      );
+    } else {
+      compare.className = "az-compare az-compare--small";
+      compare.replaceChildren(`${r.total} `, el("span", { class: "az-blue" }, `→ ${dopo}`));
+      $("[data-az-compare-note]").textContent = `Con le correzioni qui sopra arrivi a ${dopo}. Per questo settore non abbiamo ancora un sito d'esempio misurato, quindi non ti diamo un numero inventato.`;
+    }
+    const rec = recommendation.packageId === "su-misura" ? "su-misura" : recommendation.packageId;
+    $("[data-az-packs]").replaceChildren(
+      ...data.offer.packages.map((p) => {
+        const mine = p.id === rec;
+        return el(
+          "div",
+          { class: `az-pack${mine ? " az-pack--rec" : ""}`, "data-pacchetto": p.id },
+          el("div", { class: "az-pack__top" }, el("h3", {}, p.name), mine ? el("span", { class: "az-pack__tag" }, "Consigliato") : null),
+          el("p", { class: "az-pack__price" }, euro(p.price)),
+          el("p", { class: "az-pack__desc" }, p.forWhom),
+          el("ul", {}, ...p.includes.map((i) => el("li", {}, el("span", { "aria-hidden": "true" }, "✓"), el("span", {}, i)))),
+        );
+      }),
+    );
+    const recName = data.offer.packages.find((p) => p.id === rec)?.name ?? "";
+    $("[data-az-reason]").textContent = recName ? `Perché ${recName}: ${recommendation.reason}` : "";
   }
 
-  // The one call to action: email + consent (unticked), sent only with the box ticked.
-  const leadForm = $<HTMLFormElement>("[data-sc-lead]");
-  const leadErr = $("[data-sc-lead-error]");
+  /* ---------- The one call to action ---------- */
+  const leadForm = $<HTMLFormElement>("[data-az-lead]");
+  const leadErr = $("[data-az-lead-err]");
+  const setLeadErr = (msg: string | (Node | string)[]) => {
+    if (typeof msg === "string") leadErr.textContent = msg;
+    else leadErr.replaceChildren(...msg);
+    leadErr.hidden = typeof msg === "string" ? !msg : !msg.length;
+  };
   leadForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = (leadForm.elements.namedItem("email") as HTMLInputElement).value.trim();
-    const consent = $<HTMLInputElement>("[data-sc-consent]").checked;
-    leadErr.textContent = "";
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      leadErr.textContent = "Controlla l'indirizzo email.";
-      return;
-    }
-    if (!consent) {
-      leadErr.textContent = "Senza il consenso non possiamo scriverti: spunta la casella se vuoi riceverla.";
-      return;
-    }
-    if (isSample || !current) {
-      leadErr.textContent = "Questo è un esempio: analizza prima il tuo sito, poi chiedici l'anteprima.";
-      return;
-    }
+    const consent = $<HTMLInputElement>("[data-az-consent]").checked;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setLeadErr("Controlla la email: sembra incompleta.");
+    if (!consent) return setLeadErr("Per mandarti l'anteprima ci serve il tuo consenso.");
+    if (isSample || !current) return setLeadErr("Questo è un esempio: analizza prima il tuo sito, poi chiedici l'anteprima.");
+    setLeadErr("");
     const sector = sectorNow.value as SectorId;
     const btn = leadForm.querySelector<HTMLButtonElement>("button[type=submit]")!;
     btn.disabled = true;
@@ -582,16 +486,17 @@ export function initScorer() {
       });
       const body = await r.json().catch(() => null);
       if (r.status === 503 || r.status === 404) {
-        // Storage not set up yet (or the static preview): the site's own request form still works.
-        leadErr.replaceChildren("Da qui la richiesta non parte ancora. ", el("a", { class: "link", href: "/anteprima-gratuita/" }, "Chiedi l'anteprima con il modulo"), ` e scrivi l'indirizzo ${current.page.finalUrl}.`);
+        setLeadErr(["Da qui la richiesta non parte ancora. ", el("a", { class: "az-link", href: "/anteprima-gratuita/" }, "Chiedi l'anteprima con il modulo"), ` e scrivi l'indirizzo ${host(current.page.finalUrl)}.`]);
         btn.disabled = false;
         return;
       }
       if (!r.ok) throw new Error(body?.error || "Non siamo riusciti a inviare la richiesta. Riprova tra poco.");
-      $("[data-sc-lead-ok]").hidden = false;
-      leadForm.querySelectorAll("input, button").forEach((x) => ((x as HTMLInputElement).disabled = true));
+      leadForm.hidden = true;
+      const sent = $("[data-az-sent]");
+      sent.textContent = `Ricevuto. Ti scriviamo a ${email}.`;
+      sent.hidden = false;
     } catch (x) {
-      leadErr.textContent = (x as Error).message;
+      setLeadErr((x as Error).message);
       btn.disabled = false;
     }
   });

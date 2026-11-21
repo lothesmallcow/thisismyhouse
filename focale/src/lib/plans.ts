@@ -38,7 +38,7 @@ export const plans: Plan[] = [
   {
     key: "professionale",
     slug: "professionale",
-    name: "Professionale",
+    name: "Completo",
     forWhom: "Il sito completo per farti scegliere.",
     founders: site.prices.professionale.founders,
     standard: site.prices.professionale.standard,
@@ -64,7 +64,7 @@ export const plans: Plan[] = [
     standard: site.prices.suMisura.standard,
     from: true,
     recommended: false,
-    intro: "Tutto il Professionale, più:",
+    intro: "Tutto il Completo, più:",
     features: [
       "Richieste di disponibilità o prenotazioni",
       "Più lingue",
@@ -77,6 +77,6 @@ export const plans: Plan[] = [
 
 export const planLabel: Record<string, string> = {
   essenziale: "Essenziale",
-  professionale: "Professionale",
+  professionale: "Completo",
   "su-misura": "Su misura",
 };

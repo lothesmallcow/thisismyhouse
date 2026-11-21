@@ -25,3 +25,8 @@
 - Our changes, at runtime: the dark aluminium back to silver, the screen plain black (the live HTML screen sits on
   top), and the faces of `LidMesh` turned backwards removed: they draw the maker's logo on the lid (trademark).
   "MacBook" and Apple are trademarks of Apple Inc.; the site claims no affiliation (footer).
+
+## Geist e Geist Mono
+
+Caratteri Geist e Geist Mono di Vercel, licenza SIL Open Font License 1.1, ospitati sul sito (public/fonts/geist-*.woff2).
+Presi dal file di Claude Design "Analisi del sito v4" (che li includeva da Google Fonts).
