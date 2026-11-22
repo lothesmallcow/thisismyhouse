@@ -15,6 +15,7 @@
     "predeploy": "npm run build && node scripts/check-placeholders.mjs --strict",
     "screens": "node scripts/screens.mjs",
     "screens:demo": "node scripts/demo-shots.mjs",
+    "dead-space": "node scripts/dead-space.mjs",
     "lighthouse": "node scripts/lighthouse.mjs",
     "a11y": "node scripts/a11y.mjs",
     "nuova-anteprima": "node scripts/nuova-anteprima.mjs",
