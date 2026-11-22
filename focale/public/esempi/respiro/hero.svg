@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000">
-  <rect width="800" height="1000" fill="#e8ddcf"/>
+  <rect width="800" height="1000" fill="#d9e1e3"/>
   <!-- arched window -->
-  <path d="M250 640 V330 a150 150 0 0 1 300 0 V640 Z" fill="#f7f1e8"/>
-  <path d="M250 640 V330 a150 150 0 0 1 300 0 V640" fill="none" stroke="#d9cbb8" stroke-width="14"/>
-  <line x1="400" y1="180" x2="400" y2="640" stroke="#d9cbb8" stroke-width="8"/>
-  <line x1="250" y1="420" x2="550" y2="420" stroke="#d9cbb8" stroke-width="8"/>
+  <path d="M250 640 V330 a150 150 0 0 1 300 0 V640 Z" fill="#f4f7f7"/>
+  <path d="M250 640 V330 a150 150 0 0 1 300 0 V640" fill="none" stroke="#bccacd" stroke-width="14"/>
+  <line x1="400" y1="180" x2="400" y2="640" stroke="#bccacd" stroke-width="8"/>
+  <line x1="250" y1="420" x2="550" y2="420" stroke="#bccacd" stroke-width="8"/>
   <!-- light on the floor -->
-  <path d="M250 640 L550 640 L700 1000 L330 1000 Z" fill="#f2e9dc"/>
-  <rect y="640" width="800" height="6" fill="#d6c6b1"/>
+  <path d="M250 640 L550 640 L700 1000 L330 1000 Z" fill="#e7eded"/>
+  <rect y="640" width="800" height="6" fill="#b9c6c9"/>
   <!-- plant -->
-  <rect x="610" y="560" width="90" height="90" rx="10" fill="#b8865e"/>
+  <rect x="610" y="560" width="90" height="90" rx="10" fill="#8c9a9f"/>
   <g fill="#6f7a57">
     <ellipse cx="655" cy="470" rx="22" ry="70" transform="rotate(-18 655 470)"/>
     <ellipse cx="625" cy="500" rx="18" ry="60" transform="rotate(-48 625 500)"/>
@@ -18,13 +18,13 @@
   </g>
   <!-- reformer -->
   <g>
-    <rect x="120" y="760" width="560" height="26" rx="13" fill="#8a6a4f"/>
-    <rect x="300" y="728" width="190" height="34" rx="10" fill="#efe6da" stroke="#cdbba4" stroke-width="4"/>
-    <rect x="135" y="700" width="18" height="86" rx="9" fill="#8a6a4f"/>
-    <rect x="646" y="690" width="18" height="96" rx="9" fill="#8a6a4f"/>
-    <line x1="660" y1="696" x2="560" y2="742" stroke="#6f5640" stroke-width="5"/>
-    <rect x="140" y="786" width="16" height="60" rx="6" fill="#6f5640"/>
-    <rect x="644" y="786" width="16" height="60" rx="6" fill="#6f5640"/>
+    <rect x="120" y="760" width="560" height="26" rx="13" fill="#3a464c"/>
+    <rect x="300" y="728" width="190" height="34" rx="10" fill="#eef2f2" stroke="#b3a06a" stroke-width="4"/>
+    <rect x="135" y="700" width="18" height="86" rx="9" fill="#3a464c"/>
+    <rect x="646" y="690" width="18" height="96" rx="9" fill="#3a464c"/>
+    <line x1="660" y1="696" x2="560" y2="742" stroke="#2b353a" stroke-width="5"/>
+    <rect x="140" y="786" width="16" height="60" rx="6" fill="#2b353a"/>
+    <rect x="644" y="786" width="16" height="60" rx="6" fill="#2b353a"/>
   </g>
-  <circle cx="160" cy="210" r="46" fill="#f2c9a8" opacity=".55"/>
+  <circle cx="160" cy="210" r="46" fill="#f1e3b8" opacity=".55"/>
 </svg>
