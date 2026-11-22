@@ -1,1 +1,0 @@
-ALTER TABLE `profile` ADD `career_goal` text;
