@@ -13,7 +13,7 @@ import offer from "../../scorer/offer.json";
 import benchmark from "../../scorer/benchmark.json";
 import { CONSENT } from "../../scorer/consent";
 import { breadcrumbs } from "../../lib/schema";
-import { sample, sampleGood } from "../../scorer/samples";
+import { examples } from "../../scorer/samples";
 import ExampleSite from "../../components/ExampleSite.astro";
 
 const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
@@ -25,7 +25,7 @@ const skeleton = Object.fromEntries(
   }),
 );
 const checkCount = resolveRubric(rubric, "fitness").checks.filter((c) => c.points > 0).length;
-const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, skeleton, checkCount, rubricVersion: rubric.version };
+const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.map((e) => ({ key: e.key, full: e.full })), skeleton, checkCount, rubricVersion: rubric.version };
 ---
 <Base
   title="Quanto lavora il tuo sito? Analisi gratuita | Focus Design"
@@ -57,8 +57,7 @@ const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, 
       </form>
       <div class="az-inline az-examples">
         <span>Vedi un esempio:</span>
-        <a href="#voto-esempio" data-az-sample="old">voto {sample.results.fitness.report.total}</a>
-        <a href="#voto-ottimo" data-az-sample="good">voto {sampleGood.results.fitness.report.total}</a>
+        {examples.map((e) => <a href={`#voto-${e.key}`} data-az-sample={e.key}>{e.label.toLowerCase()} ({e.full.results.fitness.report.total})</a>)}
       </div>
       <p class="az-note">Il risultato lo vedi solo tu: non lo pubblichiamo e non salviamo la pagina.</p>
     </div>
@@ -119,11 +118,13 @@ const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, 
 
       <p class="az-sintesi" data-parte="sintesi" data-az-summary></p>
 
-      <section class="az-stack az-stack--24" data-parte="sito" data-az-site hidden>
-        <h2 class="az-h2" id="az-site-t">Dove si vede sul sito</h2>
-        <p class="az-small">Il sito d'esempio dentro un telefono: ogni numero è un punto perso. Tocca un punto e il telefono va dove si trova. <a class="az-link" href="/esempi/respiro/" target="_blank" rel="noopener">Apri il sito dal vivo</a></p>
-        <ExampleSite id="az-site" />
-      </section>
+      {examples.map((e) => (
+        <section class="az-stack az-stack--24" data-parte="sito" data-az-site={e.key} hidden>
+          <h2 class="az-h2" id={`az-site-${e.key}-t`}>{e.pins === "won" ? "Dove prende i punti" : "Dove si vede sul sito"}</h2>
+          <p class="az-small">Il sito d'esempio dentro un telefono: ogni numero è un punto {e.pins === "won" ? "preso" : "perso"}. Tocca un punto e il telefono va dove si trova. <a class="az-link" href={e.path} target="_blank" rel="noopener">Apri il sito dal vivo</a></p>
+          <ExampleSite example={e.key} id={`az-site-${e.key}`} />
+        </section>
+      ))}
 
       <section class="az-stack az-stack--24" data-parte="correzioni" data-az-fixes-wrap>
         <div class="az-split">

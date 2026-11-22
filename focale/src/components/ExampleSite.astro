@@ -1,46 +1,58 @@
 ---
 /**
- * The invented example site ("Respiro", public/esempi/respiro/) inside a phone, with a numbered pin on
- * every spot that costs points, next to the list of those points. Picking a point scrolls the phone to
- * its spot and rings it. On narrow widths the list becomes a stepper (one point at a time, ‹ ›).
+ * One of the invented example sites (src/scorer/samples.ts) inside a phone, with a numbered pin on every
+ * spot that costs points (or, for the good one, earns them), next to the list of those points. Picking a
+ * point scrolls the phone to its spot and rings it. On narrow widths the list becomes a stepper (‹ ›).
  * When in view it walks through the points by itself until the visitor takes over (not with reduced motion).
- * Positions come from scripts/example-shot.mjs (src/scorer/respiro-spots.json); points from the real
- * report of that page (src/scorer/samples.ts), so pins, list and report always agree.
+ * Shots and positions come from scripts/example-shot.mjs (src/assets/esempi/<key>.png, src/scorer/spots/<key>.json);
+ * points from the real report of that page, so pins, list and report always agree.
  */
 import { Image } from "astro:assets";
-import shot from "../assets/esempi/respiro-telefono.png";
-import spots from "../scorer/respiro-spots.json";
-import { sample } from "../scorer/samples";
+import shotVecchio from "../assets/esempi/vecchio.png";
+import shotCurato from "../assets/esempi/curato.png";
+import shotBene from "../assets/esempi/fatto-bene.png";
+import spotsVecchio from "../scorer/spots/vecchio.json";
+import spotsCurato from "../scorer/spots/curato.json";
+import spotsBene from "../scorer/spots/fatto-bene.json";
+import { exampleOf, type ExampleKey } from "../scorer/samples";
 
 interface Props {
+  example: ExampleKey;
   /** How many points to show (the heaviest first). Default: all that have a spot. */
   limit?: number;
-  /** Heading id prefix, so two copies on one page stay unique. */
+  /** Id prefix, so two copies on one page stay unique (the list is labelled by `${id}-t`). */
   id: string;
 }
-const { limit = 99, id } = Astro.props;
-
-const report = sample.results.fitness.report;
+const { example, limit = 99, id } = Astro.props;
+const media = {
+  vecchio: { shot: shotVecchio, spots: spotsVecchio, alt: "Il sito inventato del Centro Sport visto dal telefono: una pagina da computer rimpicciolita, con testata scura, menu, foto della sala e tre colonne di testo piccolo." },
+  curato: { shot: shotCurato, spots: spotsCurato, alt: "Il sito inventato dello studio Respiro visto dal telefono: foto della sala, titolo elegante, metodo, insegnanti, recensioni e contatti." },
+  "fatto-bene": { shot: shotBene, spots: spotsBene, alt: "Lo stesso studio Respiro, sito sistemato, visto dal telefono: pulsante Prenota in alto, prezzi, orari, recensioni e contatti con un tocco." },
+}[example];
+const ex = exampleOf(example);
+const won = ex.pins === "won";
+const report = ex.full.results.fitness.report;
 const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
+const value = (c: (typeof report.checks)[number]) => (won ? c.earned : c.max - c.earned);
 const items = report.checks
-  .filter((c) => c.max - c.earned > 0)
-  .sort((a, b) => b.max - b.earned - (a.max - a.earned))
-  .map((c) => ({ c, spot: spots.spots.find((s) => s.ids.includes(c.id)) }))
+  .filter((c) => c.max > 0 && (won ? c.status === "pass" : c.max - c.earned > 0))
+  .sort((a, b) => value(b) - value(a))
+  .map((c) => ({ c, spot: media.spots.spots.find((s) => s.ids.includes(c.id)) }))
   .filter((x) => x.spot)
   // one pin per spot: the heaviest point that sits there
   .filter((x, i, all) => all.findIndex((y) => y.spot === x.spot) === i)
   .slice(0, limit);
-const ratio = spots.height / spots.width;
+const ratio = media.spots.height / media.spots.width;
 ---
-<div class="xs" data-xs data-ratio={ratio}>
+<div class={`xs${won ? " xs--won" : ""}`} data-xs data-ratio={ratio}>
  <div class="xs__in">
   <div class="xs__device">
     <div class="xs__screen" data-xs-screen>
       <div class="xs__page" data-xs-page>
-        <Image src={shot} alt="Il sito inventato dello studio Respiro, come si vede dal telefono: foto della sala, titolo, metodo, insegnanti, recensioni e contatti." widths={[300, 600]} sizes="300px" loading="lazy" />
+        <Image src={media.shot} alt={media.alt} widths={[300, 600]} sizes="300px" loading="lazy" />
         <span class="xs__ring" data-xs-ring aria-hidden="true"></span>
         {items.map((x, i) => (
-          <span class="xs__pin" data-xs-pin={i} aria-hidden="true" style={`left: ${Math.min(0.9, x.spot!.x + x.spot!.w) * 100}%; top: ${x.spot!.y * 100}%`}>{i + 1}</span>
+          <span class="xs__pin" data-xs-pin={i} aria-hidden="true" style={`left: ${(x.spot!.w > 0.6 ? x.spot!.x + 0.05 : Math.min(0.9, x.spot!.x + x.spot!.w)) * 100}%; top: ${x.spot!.y * 100}%`}>{i + 1}</span>
         ))}
       </div>
     </div>
@@ -56,7 +68,7 @@ const ratio = spots.height / spots.width;
               <span class="xs__title">{x.c.title}</span>
               <span class="xs__found">{x.c.found}</span>
             </span>
-            <span class="xs__pts"><span class="sr-only">punti persi: </span>−{fmt(x.c.max - x.c.earned)}</span>
+            <span class="xs__pts"><span class="sr-only">{won ? "punti presi: " : "punti persi: "}</span>{won ? "+" : "−"}{fmt(value(x.c))}</span>
           </button>
         </li>
       ))}
@@ -151,7 +163,7 @@ const ratio = spots.height / spots.width;
     aspect-ratio: 9 / 18.5;
     overflow: hidden;
     border-radius: 36px;
-    background: #f4efe8;
+    background: #fff;
     -webkit-mask-image: -webkit-radial-gradient(white, black);
   }
   .xs__page {
@@ -266,6 +278,18 @@ const ratio = spots.height / spots.width;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+  }
+  .xs--won .xs__pin.is-active,
+  .xs--won .xs__item.is-active .xs__num {
+    background: #1f8a3b;
+  }
+  .xs--won .xs__ring {
+    border-color: #1f8a3b;
+    background: rgb(31 138 59 / 0.08);
+  }
+  .xs--won .xs__pts {
+    background: #e6f4ea;
+    color: #17692d;
   }
   .xs__step {
     display: flex;

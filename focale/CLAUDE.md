@@ -39,15 +39,16 @@ Schibsted TTFs: it cannot read woff2).
 - Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right); then (Lorenzo, 22 Nov
   2026, replacing the phone/laptop makeover film, which he found useless there) the analysis entry `.hs-check`
   (grey band: a search-style bar, form GET to /analisi-sito/?url=..., which fills the address and starts at once;
-  under it ReportTeaser.astro: "Bello da vedere. 51 su 100." The example is "Respiro" (Lorenzo, 22 Nov 2026: a site
-  that LOOKS well made but loses points), an invented pilates studio at public/esempi/respiro/ (banner says so,
-  noindex, its analytics tag is inert type="text/plain"). ExampleSite.astro shows it in a phone with numbered pins
-  on each spot that costs points ([data-why] in its HTML; positions from `node scripts/example-shot.mjs` after a
-  build, which also writes src/assets/esempi/respiro-telefono.png); picking a point scrolls the phone there; narrow =
-  one point at a time with ‹ ›; it walks through the points when in view until touched. The same block appears in
-  the report when the example is open ("Dove si vede sul sito"). Score ring, "51 → 74", link to
-  /analisi-sito/?esempio=1#voto-esempio. Examples come from src/scorer/samples.ts (Respiro's speed numbers are
-  simulated and the report says so). Re-run example-shot.mjs whenever the Respiro page changes), "Per chi lavoriamo" (3 sector
+  under it ReportTeaser.astro: three example reports as tabs (Lorenzo, 22 Nov 2026): "Brutto" (Centro Sport, an old
+  theme made for computers, no phone setting, 14), "Curato, con difetti" (Respiro, looks polished but loses points, 51),
+  "Fatto bene" (the same Respiro fixed, same style, 97). All three are INVENTED sites in public/esempi/ (banner says so,
+  noindex, analytics tags inert type="text/plain"), scored at build time by the real engine (src/scorer/samples.ts:
+  `examples`; speed numbers simulated and the report says so). ExampleSite.astro shows a site in a phone with numbered
+  pins on each spot ([data-why] in its HTML): red for points lost, green for points won (the good one). Shots and
+  positions: `node scripts/example-shot.mjs` after a build (mobile emulation; writes src/assets/esempi/<key>.png and
+  src/scorer/spots/<key>.json); re-run it whenever an example page changes. Picking a point scrolls the phone there;
+  narrow = one point at a time with ‹ ›; it walks through the points when in view until touched. The report shows the
+  same block for the open example ("Dove si vede sul sito"). Links: /analisi-sito/?esempio=<key>#voto-<key>), "Per chi lavoriamo" (3 sector
   cards with demo screenshots), "Cosa ricevi" bento, 4 steps with timings, prices (per-plan CTA, recommended plan
   navy), Lo studio, FAQ, closing band on navy with the 3-step PreviewForm embedded. Nothing pins, no ambient
   motion (living background, ticker and colour floods were removed). Section blocks (.hs-*) live in global.css

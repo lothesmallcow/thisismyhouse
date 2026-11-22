@@ -27,8 +27,8 @@ interface Data {
   offer: { packages: Pkg[]; care: { line: string } };
   benchmark: { templates: Record<string, { label: string; path: string; total: number }> };
   consent: { version: string; text: string };
-  sample: FullAnalysis;
-  sampleGood: FullAnalysis;
+  /** The invented examples (src/scorer/samples.ts): vecchio, curato, fatto-bene. */
+  examples: { key: string; full: FullAnalysis }[];
   skeleton: Record<string, SkelCat[]>;
   checkCount: number;
 }
@@ -158,7 +158,7 @@ export function initScorer() {
   const openSample = (which: string) => {
     clearTimers();
     isSample = true;
-    openReport(which === "good" ? data.sampleGood : data.sample);
+    openReport((data.examples.find((e) => e.key === which) ?? data.examples[0]).full);
   };
   document.querySelectorAll<HTMLAnchorElement>("[data-az-sample]").forEach((a) =>
     a.addEventListener("click", (e) => {
@@ -302,7 +302,9 @@ export function initScorer() {
     sectorNow.value = sector;
     $("[data-az-sample-note]").hidden = !isSample;
     // The invented example site in a phone, with its pins: only for that example.
-    $("[data-az-site]").hidden = !(isSample && full === data.sample);
+    document.querySelectorAll<HTMLElement>("[data-az-site]").forEach((s) => {
+      s.hidden = !(isSample && data.examples.find((e) => e.key === s.dataset.azSite)?.full === full);
+    });
     const motion = !reduced();
 
     // Header
@@ -502,18 +504,23 @@ export function initScorer() {
   });
 
   /* ---------- Deep links: run last, once everything above exists ---------- */
-  // #voto-esempio / #voto-ottimo (or ?esempio=1 / 2, which survive previews that drop the hash)
+  // #voto-<key> (or ?esempio=<key>, which survives previews that drop the hash), key = vecchio | curato | fatto-bene
   // open an example report; ?url=... (from the home's box) starts an analysis straight away.
   const params = new URLSearchParams(location.search);
   const totalOf = (f: FullAnalysis) => String(f.results[f.chosen].report.total);
-  const pickSample = (v: string | null) =>
-    !v ? "" : ["esempio", "1", totalOf(data.sample), "12"].includes(v) ? "old" : ["ottimo", "2", totalOf(data.sampleGood), "97"].includes(v) ? "good" : "";
+  // Keys, plus the names and numbers older links used.
+  const alias: Record<string, string> = { esempio: "curato", "1": "curato", "12": "vecchio", ottimo: "fatto-bene", "2": "fatto-bene", "97": "fatto-bene" };
+  const pickSample = (v: string | null) => {
+    if (!v) return "";
+    const hit = data.examples.find((e) => e.key === v || totalOf(e.full) === v);
+    return hit?.key ?? (alias[v] && data.examples.some((e) => e.key === alias[v]) ? alias[v] : "");
+  };
   // #voto-esempio, #voto-ottimo (and the score numbers, for old links) or ?esempio=1 / 2
-  const sampleFromLink = () => pickSample(location.hash.match(/^#voto-(\w+)$/)?.[1] ?? null) || pickSample(params.get("esempio"));
+  const sampleFromLink = () => pickSample(location.hash.match(/^#voto-([\w-]+)$/)?.[1] ?? null) || pickSample(params.get("esempio"));
   const linked = sampleFromLink();
   if (linked) openSample(linked);
   window.addEventListener("hashchange", () => {
-    const w = pickSample(location.hash.match(/^#voto-(\w+)$/)?.[1] ?? null);
+    const w = pickSample(location.hash.match(/^#voto-([\w-]+)$/)?.[1] ?? null);
     if (w) openSample(w);
   });
   const fromHome = params.get("url");

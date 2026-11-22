@@ -1,97 +1,152 @@
 ---
 /**
- * Home: the example report next to the site it judges. The site ("Respiro", invented, says so) looks
- * polished, yet scores about half: the card shows the score ring, then the site in a phone with a pin
- * on every spot that costs points (ExampleSite.astro), the climb after the first five fixes, and the
- * way into the full report. Everything comes from the real engine run on that page at build time.
+ * Home: three example reports, one tab each (Lorenzo, 22 Nov 2026): an ugly old site, a polished one that
+ * misses what makes people book, and the same studio done right. Each tab: headline with the score, the
+ * ring, the site in a phone with pins (ExampleSite.astro), the climb and the way into the full report.
+ * All three sites are invented (src/scorer/samples.ts) and scored by the real engine at build time.
  */
-import { sample } from "../scorer/samples";
+import { examples } from "../scorer/samples";
 import ExampleSite from "./ExampleSite.astro";
 
-const r = sample.results.fitness.report;
 const HUE: Record<string, number> = { speed: 35, conversion: 80, local: 135, trust: 180, a11y: 240, legal: 290, content: 345 };
 const col = (id: string) => `oklch(0.72 0.15 ${HUE[id] ?? 250})`;
 const verdict = (v: number) => (v >= 90 ? "Ottimo" : v >= 75 ? "Buono" : v >= 50 ? "Discreto" : "Da sistemare");
-
-const measuredMax = r.checks.filter((c) => c.max > 0 && c.status !== "unmeasured").reduce((t, c) => t + c.max, 0) || 100;
-const after = Math.min(100, Math.round(r.total + r.fixes.reduce((t, f) => t + f.gain, 0) * (100 / measuredMax)));
-const lostTotal = Math.round(r.checks.reduce((t, c) => t + Math.max(0, c.max - c.earned), 0));
-
-const cats = r.categories.filter((c) => c.max > 0);
 const R = 120;
 const C = 2 * Math.PI * R;
 const GAP = 8;
-const total = cats.reduce((t, c) => t + c.max, 0) || 100;
-let start = 0;
-const arcs = cats.map((c) => {
-  const len = (c.max / total) * C - GAP;
-  const off = -(start + GAP / 2);
-  start += (c.max / total) * C;
-  return { id: c.id, len, off, got: len * (c.earned / c.max) };
+
+const tabs = examples.map((e) => {
+  const r = e.full.results.fitness.report;
+  const measuredMax = r.checks.filter((c) => c.max > 0 && c.status !== "unmeasured").reduce((t, c) => t + c.max, 0) || 100;
+  const after = Math.min(100, Math.round(r.total + r.fixes.reduce((t, f) => t + f.gain, 0) * (100 / measuredMax)));
+  const cats = r.categories.filter((c) => c.max > 0);
+  const total = cats.reduce((t, c) => t + c.max, 0) || 100;
+  let start = 0;
+  const arcs = cats.map((c) => {
+    const len = (c.max / total) * C - GAP;
+    const off = -(start + GAP / 2);
+    start += (c.max / total) * C;
+    return { id: c.id, len, off, got: len * (c.earned / c.max) };
+  });
+  const fixes = r.fixes.length;
+  const climbLabel = fixes === 1 ? "Con l'ultima correzione" : `Con le prime ${fixes} correzioni`;
+  return { e, r, after, arcs, fixes, climbLabel };
 });
-const host = r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
 ---
 <div class="rt" data-rt>
-  <div class="rt__top">
-    <div class="rt__say">
-      <p class="rt__pill">Esempio su un sito inventato: {host}</p>
-      <h3 class="rt__h">Bello da vedere.<br />{r.total} su 100.</h3>
-      <p class="rt__line">Il sito sembra curato, ma perde {lostTotal} punti in cose che a colpo d'occhio non si notano. Tocca un punto e guarda dove si trova.</p>
-    </div>
-    <div class="rt__ring" role="img" aria-label={`Voto ${r.total} su 100: ${verdict(r.total)}`}>
-      <svg viewBox="0 0 300 300" aria-hidden="true" focusable="false">
-        {arcs.map((a) => (
-          <>
-            <circle class="rt__arc" cx="150" cy="150" r={R} stroke="#EDEDF0" stroke-dasharray={`${a.len} ${C}`} stroke-dashoffset={a.off} />
-            {a.got > 0.5 && <circle class="rt__arc rt__fill" cx="150" cy="150" r={R} stroke={col(a.id)} stroke-dasharray={`${a.got} ${C}`} stroke-dashoffset={a.off} />}
-          </>
-        ))}
-      </svg>
-      <span class="rt__score" aria-hidden="true">
-        <span class="rt__n" data-rt-n data-to={r.total}>{r.total}</span>
-        <span class="rt__w">{verdict(r.total)}</span>
-      </span>
-    </div>
+  <div class="rt__tabs" role="tablist" aria-label="Tre siti d'esempio">
+    {tabs.map(({ e, r }, i) => (
+      <button type="button" role="tab" class="rt__tab" id={`rt-tab-${e.key}`} aria-controls={`rt-panel-${e.key}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1} data-rt-tab={i}>
+        <span class="rt__tab-l">{e.label}</span>
+        <span class="rt__tab-n">{r.total}</span>
+      </button>
+    ))}
   </div>
 
-  <h4 class="sr-only" id="home-xs-t">Dove perde punti</h4>
-  <ExampleSite id="home-xs" limit={6} />
+  {tabs.map(({ e, r, after, arcs, fixes, climbLabel }, i) => (
+    <div class="rt__panel" role="tabpanel" id={`rt-panel-${e.key}`} aria-labelledby={`rt-tab-${e.key}`} hidden={i !== 0} data-rt-panel={i}>
+      <div class="rt__top">
+        <div class="rt__say">
+          <p class="rt__pill">Sito inventato per l'esempio</p>
+          <h3 class="rt__h">{e.say}<br />{r.total} su 100.</h3>
+          <p class="rt__line">{e.line}</p>
+        </div>
+        <div class="rt__ring" role="img" aria-label={`Voto ${r.total} su 100: ${verdict(r.total)}`}>
+          <svg viewBox="0 0 300 300" aria-hidden="true" focusable="false">
+            {arcs.map((a) => (
+              <>
+                <circle class="rt__arc" cx="150" cy="150" r={R} stroke="#EDEDF0" stroke-dasharray={`${a.len} ${C}`} stroke-dashoffset={a.off} />
+                {a.got > 0.5 && <circle class="rt__arc rt__fill" cx="150" cy="150" r={R} stroke={col(a.id)} stroke-dasharray={`${a.got} ${C}`} stroke-dashoffset={a.off} />}
+              </>
+            ))}
+          </svg>
+          <span class="rt__score" aria-hidden="true">
+            <span class="rt__n" data-rt-n data-to={r.total}>{r.total}</span>
+            <span class="rt__w">{verdict(r.total)}</span>
+          </span>
+        </div>
+      </div>
 
-  <div class="rt__end">
-    <p class="rt__climb">
-      <span class="rt__climb-t">Con le prime {r.fixes.length} correzioni</span>
-      <span class="rt__climb-n"><span>{r.total}</span><span class="rt__arrow" aria-hidden="true">→</span><span class="sr-only">diventa</span><span class="rt__to">{after}</span></span>
-    </p>
-    <div class="rt__links">
-      <a class="btn btn--secondary rt__cta" href="/analisi-sito/?esempio=1#voto-esempio">Apri il report completo</a>
-      <a class="textlink" href="/esempi/respiro/" target="_blank" rel="noopener">Guarda il sito d'esempio dal vivo</a>
+      <h4 class="sr-only" id={`rt-xs-${e.key}-t`}>{e.pins === "won" ? "Dove prende i punti" : "Dove perde i punti"}</h4>
+      <ExampleSite example={e.key} id={`rt-xs-${e.key}`} limit={6} />
+
+      <div class="rt__end">
+        {fixes > 0 ? (
+          <p class="rt__climb">
+            <span class="rt__climb-t">{climbLabel}</span>
+            <span class="rt__climb-n"><span>{r.total}</span><span class="rt__arrow" aria-hidden="true">→</span><span class="sr-only">diventa</span><span class="rt__to">{after}</span></span>
+          </p>
+        ) : (
+          <p class="rt__climb"><span class="rt__climb-t">Tutti i controlli superati.</span></p>
+        )}
+        <div class="rt__links">
+          <a class="btn btn--secondary rt__cta" href={`/analisi-sito/?esempio=${e.key}#voto-${e.key}`}>Apri il report completo</a>
+          <a class="textlink" href={e.path} target="_blank" rel="noopener">Guarda il sito dal vivo</a>
+        </div>
+      </div>
     </div>
-  </div>
+  ))}
 </div>
 
 <script>
   const card = document.querySelector<HTMLElement>("[data-rt]");
-  if (card && window.matchMedia("(prefers-reduced-motion: no-preference)").matches && "IntersectionObserver" in window) {
-    card.classList.add("rt--wait");
-    const n = card.querySelector<HTMLElement>("[data-rt-n]")!;
-    const to = Number(n.dataset.to);
-    n.textContent = "0";
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        io.disconnect();
-        requestAnimationFrame(() => card.classList.remove("rt--wait"));
-        const t0 = performance.now() + 200;
-        const tick = (t: number) => {
-          const p = Math.max(0, Math.min(1, (t - t0) / 1400));
-          n.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
-          if (p < 1) requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      },
-      { threshold: 0.25 },
-    );
-    io.observe(card);
+  if (card) {
+    const tabs = [...card.querySelectorAll<HTMLButtonElement>("[data-rt-tab]")];
+    const panels = [...card.querySelectorAll<HTMLElement>("[data-rt-panel]")];
+    const motion = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
+    const played = new Set<HTMLElement>();
+    let inView = false;
+
+    // The ring fills and the number counts up the first time a panel is seen.
+    const play = (panel: HTMLElement) => {
+      if (!motion || played.has(panel)) return;
+      played.add(panel);
+      const n = panel.querySelector<HTMLElement>("[data-rt-n]")!;
+      const to = Number(n.dataset.to);
+      panel.classList.add("rt--wait");
+      n.textContent = "0";
+      requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.remove("rt--wait")));
+      const t0 = performance.now() + 200;
+      const tick = (t: number) => {
+        const p = Math.max(0, Math.min(1, (t - t0) / 1400));
+        n.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    if (motion) panels.forEach((p) => !p.hidden && p.classList.add("rt--wait"));
+
+    const select = (i: number, focus = false) => {
+      tabs.forEach((t, j) => {
+        t.setAttribute("aria-selected", String(i === j));
+        t.tabIndex = i === j ? 0 : -1;
+      });
+      panels.forEach((p, j) => (p.hidden = i !== j));
+      if (focus) tabs[i].focus();
+      if (inView) play(panels[i]);
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener("click", () => select(i));
+      t.addEventListener("keydown", (e) => {
+        const k = e.key;
+        if (k !== "ArrowRight" && k !== "ArrowLeft" && k !== "Home" && k !== "End") return;
+        e.preventDefault();
+        const n = tabs.length;
+        select(k === "Home" ? 0 : k === "End" ? n - 1 : (i + (k === "ArrowRight" ? 1 : -1) + n) % n, true);
+      });
+    });
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((e) => e.isIntersecting)) return;
+          inView = true;
+          io.disconnect();
+          play(panels.find((p) => !p.hidden)!);
+        },
+        { threshold: 0.2 },
+      );
+      io.observe(card);
+    }
   }
 </script>
 
@@ -103,6 +158,72 @@ const host = r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
     padding: clamp(1.25rem, 0.5rem + 2.5vw, 3rem);
     border-radius: var(--radius-card);
     background: #fff;
+  }
+
+  /* Tabs: a segmented control */
+  .rt__tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    border-radius: 16px;
+    background: var(--nebbia);
+  }
+  .rt__tab {
+    display: grid;
+    gap: 0.1rem;
+    justify-items: center;
+    min-height: 56px;
+    padding: 0.5rem;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    font: inherit;
+    color: var(--grafite);
+    cursor: pointer;
+    text-align: center;
+  }
+  .rt__tab[aria-selected="true"] {
+    background: #fff;
+    color: var(--inchiostro);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+  }
+  .rt__tab:focus-visible {
+    outline: 2px solid var(--inchiostro);
+    outline-offset: 2px;
+  }
+  .rt__tab-l {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .rt__tab-n {
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+  }
+  @container (min-width: 620px) {
+    .rt__tab {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+    .rt__tab-l {
+      font-size: 0.9375rem;
+    }
+    .rt__tab-n {
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      background: var(--nebbia);
+    }
+  }
+
+  .rt__panel {
+    display: grid;
+    gap: 2rem;
+  }
+  .rt__panel[hidden] {
+    display: none;
   }
   .rt__top {
     display: grid;
@@ -192,6 +313,7 @@ const host = r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
+    min-height: 4.5rem;
     padding: 1rem 1.25rem;
     border-radius: 16px;
     background: var(--nebbia);
@@ -231,7 +353,11 @@ const host = r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
       transition: stroke-dasharray 1.3s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s;
     }
     .rt--wait .rt__fill {
+      transition: none;
       stroke-dasharray: 0 800;
+    }
+    .rt__tab {
+      transition: background-color 0.2s, color 0.2s;
     }
   }
 </style>
