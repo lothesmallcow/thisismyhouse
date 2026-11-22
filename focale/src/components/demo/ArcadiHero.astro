@@ -3,6 +3,8 @@
  * Arcadi Ristrutturazioni hero. Laid out with container queries so the same markup works in
  * the home phone mockup, in the renovation demo (desktop frame and phone frame) and on the
  * full demo site. Grid areas mirror OldSite so each new piece sits exactly on the old one.
+ * Look: the demo's "La casa che cambia" identity (Zilla Slab + Fira Sans, white, bottle green,
+ * oak, rounded corners). Keep it in step with pages/lavori/arcadi-ristrutturazioni/demo.astro.
  */
 import { Image } from "astro:assets";
 import photo from "../../assets/demo/arcadi-ristrutturazioni/bagno-dopo.jpg";
@@ -23,7 +25,7 @@ const QuoteEl = quoteHref ? "a" : "span";
 <div class:list={["ah-wrap", cls]}>
   <div class="ah">
     <div class="ah__header" data-piece="header">
-      <span class="ah__logo">ARCADI<small>Ristrutturazioni</small></span>
+      <span class="ah__logo">Arcadi<small>Ristrutturazioni</small></span>
       <span class="ah__phone">
         <span class="ah__phone-label">Chiama</span>
         <span class="ah__call" aria-hidden="true">
@@ -56,21 +58,44 @@ const QuoteEl = quoteHref ? "a" : "span";
   </div>
 </div>
 <style>
+  @font-face {
+    font-family: "Zilla Arcadi";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 700;
+    src: url("/fonts/demo/zilla-slab-700.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Fira Arcadi";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url("/fonts/demo/fira-sans-400.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Fira Arcadi";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 600;
+    src: url("/fonts/demo/fira-sans-600.woff2") format("woff2");
+  }
   .ah-wrap {
     container-type: inline-size;
     width: 100%;
     height: 100%;
   }
   .ah {
-    --o: #c4510e;
-    --o-text: #a8430b;
-    --ink: #1d1f21;
-    --bg: #f2f2f0;
+    --o: #1e3b34;
+    --o-text: #85562f;
+    --ink: #1e3b34;
+    --bg: #fff;
+    --oak: #e1c4a4;
+    --zilla: "Zilla Arcadi", Rockwell, Georgia, serif;
     height: 100%;
     box-sizing: border-box;
     background: var(--bg);
     color: var(--ink);
-    font-family: var(--font-head);
+    font-family: "Fira Arcadi", system-ui, sans-serif;
     display: grid;
     grid-template-columns: 1fr;
     grid-template-areas: "header" "photo" "title" "text" "cta" "extra" "foot";
@@ -88,26 +113,24 @@ const QuoteEl = quoteHref ? "a" : "span";
     padding: min(12px, 3.08cqi) min(18px, 4.62cqi);
   }
   .ah__logo {
-    font-weight: 900;
-    font-stretch: 68%;
-    font-size: min(26px, 6.67cqi);
-    letter-spacing: 0.02em;
+    font-family: var(--zilla);
+    font-weight: 700;
+    font-size: min(24px, 6.15cqi);
     line-height: 1;
     display: flex;
     flex-direction: column;
   }
   .ah__logo small {
+    font-family: "Fira Arcadi", system-ui, sans-serif;
     font-size: min(11px, 2.82cqi);
-    font-weight: 700;
-    font-stretch: 100%;
-    letter-spacing: 0.08em;
-    color: var(--o-text);
+    font-weight: 400;
+    color: #55595d;
   }
   .ah__phone {
     display: flex;
     align-items: center;
     gap: min(8px, 2.05cqi);
-    font-weight: 700;
+    font-weight: 600;
     font-size: min(15px, 3.85cqi);
   }
   .ah__phone-label {
@@ -125,6 +148,8 @@ const QuoteEl = quoteHref ? "a" : "span";
   .ah__photo {
     grid-area: photo;
     overflow: hidden;
+    margin: 0 min(12px, 3.08cqi);
+    border-radius: min(22px, 5.64cqi);
   }
   .ah__photo img {
     width: 100%;
@@ -139,16 +164,15 @@ const QuoteEl = quoteHref ? "a" : "span";
   }
   .ah__kicker {
     font-size: min(13px, 3.33cqi);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--o-text);
     margin-bottom: min(8px, 2.05cqi);
   }
   .ah__h1 {
-    font-family: var(--font-head);
-    font-weight: 820;
-    font-stretch: 108%;
+    font-family: var(--zilla);
+    font-weight: 700;
     font-size: min(36px, 9.23cqi);
-    line-height: 1;
+    line-height: 1.05;
     letter-spacing: -0.01em;
     color: var(--ink);
     margin: 0;
@@ -160,7 +184,7 @@ const QuoteEl = quoteHref ? "a" : "span";
     line-height: 1.45;
     padding: min(12px, 3.08cqi) min(18px, 4.62cqi) 0;
     color: #3f4347;
-    font-weight: 450;
+    font-weight: 400;
     margin: 0;
   }
   .ah__cta {
@@ -174,8 +198,8 @@ const QuoteEl = quoteHref ? "a" : "span";
     place-items: center;
     min-height: min(52px, 13.33cqi);
     padding: 0 min(16px, 4.10cqi);
-    border-radius: min(4px, 1.03cqi);
-    font-weight: 750;
+    border-radius: min(14px, 3.59cqi);
+    font-weight: 600;
     font-size: min(17px, 4.36cqi);
     text-decoration: none;
     color: inherit;
@@ -199,9 +223,9 @@ const QuoteEl = quoteHref ? "a" : "span";
     font-weight: 600;
   }
   .ah__extra li {
-    padding: min(6px, 1.54cqi) min(10px, 2.56cqi);
-    background: #e2e2de;
-    border-radius: 3px;
+    padding: min(6px, 1.54cqi) min(12px, 3.08cqi);
+    background: var(--oak);
+    border-radius: 999px;
   }
   .ah__foot {
     grid-area: foot;
@@ -220,13 +244,14 @@ const QuoteEl = quoteHref ? "a" : "span";
       display: inline;
     }
     .ah__header {
-      border-bottom: 1px solid #dcdcd8;
+      border-bottom: 1px solid #ece6df;
     }
     .ah__h1 {
       font-size: 32px;
     }
     .ah__photo {
       margin: 16px 0 0 18px;
+      border-radius: 22px;
     }
     .ah__photo img {
       aspect-ratio: 4 / 3;
@@ -287,7 +312,7 @@ const QuoteEl = quoteHref ? "a" : "span";
     }
     .ah__foot {
       padding: 18px 40px;
-      border-top: 1px solid #dcdcd8;
+      border-top: 1px solid #ece6df;
       font-size: 14px;
     }
   }
