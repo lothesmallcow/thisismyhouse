@@ -6,7 +6,6 @@
 import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
 import PreviewForm from "../components/PreviewForm.astro";
-import ReportTeaser from "../components/ReportTeaser.astro";
 import { Image } from "astro:assets";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
@@ -54,12 +53,8 @@ const steps = [
 
     <section class="section hs-check" id="analisi" aria-labelledby="check-t">
       <div class="wrap hs-check__in">
-        <div class="hs-check__text" data-in>
-          <p class="eyebrow">Analisi gratuita</p>
-          <h2 id="check-t">Quanto lavora il tuo sito oggi?</h2>
-        </div>
+        <h2 id="check-t" data-in>Quanto lavora il tuo sito oggi?</h2>
         <div class="hs-check__go" data-in style="--d: 0.06s">
-          <p class="lead">Incolla l'indirizzo: in un minuto ti diamo un voto su 100 e le cose da sistemare per prime. Il risultato lo vedi solo tu.</p>
           <form class="hs-check__form" action="/analisi-sito/" method="get">
             <label for="check-url" class="sr-only">Indirizzo del tuo sito</label>
             <div class="hs-check__row">
@@ -67,10 +62,7 @@ const steps = [
               <button class="btn btn--primary btn--big" type="submit">Analizza</button>
             </div>
           </form>
-          <p class="hs-check__note">Gratis e senza registrarti.</p>
-        </div>
-        <div class="hs-check__example" data-in style="--d: 0.12s">
-          <ReportTeaser />
+          <p class="hs-check__note">Un voto su 100 in un minuto, gratis. <a class="textlink" href="/analisi-sito/#esempi">Guarda tre esempi</a></p>
         </div>
       </div>
     </section>

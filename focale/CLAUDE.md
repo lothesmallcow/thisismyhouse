@@ -39,7 +39,8 @@ Schibsted TTFs: it cannot read woff2).
 - Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right); then (Lorenzo, 22 Nov
   2026, replacing the phone/laptop makeover film, which he found useless there) the analysis entry `.hs-check`
   (grey band: a search-style bar, form GET to /analisi-sito/?url=..., which fills the address and starts at once;
-  under it ReportTeaser.astro: three example reports as tabs (Lorenzo, 22 Nov 2026): "Brutto" (Centro Sport, an old
+  then a link to the examples. (Lorenzo, 22 Nov 2026: the analysis is minimal on the home, big only on /analisi-sito/:
+  the three example tabs now live on the analysis start screen, #esempi.) ReportTeaser.astro: three example reports as tabs (Lorenzo, 22 Nov 2026): "Brutto" (Centro Sport, an old
   theme made for computers, no phone setting, 14), "Curato, con difetti" (Respiro, looks polished but loses points, 51),
   "Fatto bene" (the same Respiro fixed, same style, 97). All three are INVENTED sites in public/esempi/ (banner says so,
   noindex, analytics tags inert type="text/plain"), scored at build time by the real engine (src/scorer/samples.ts:
@@ -150,6 +151,10 @@ Schibsted TTFs: it cannot read woff2).
   Banned everywhere: one italic/coloured accent word in a headline, cream + thin serif + terracotta, sage, indigo,
   eyebrow labels above every heading, decorative 01/02 numbering, stat strips, an arrow on every button.
   Re-shoot their screenshots with `npm run screens:demo` (needs the built site on localhost:4321).
+- Fewer small details, more punch (Lorenzo, 22 Nov 2026: "nei piccoli dettagli pesi troppo, specialmente nelle pagine
+  secondarie"): no eyebrow/sec__label/ph__label above titles (hidden site-wide, the home hero keeps its line), no
+  repeated "Gratis e senza impegno" micro notes, few secondary links; bigger titles (--fs-h2 up to 3.75rem, --fs-display
+  up to 5.75rem).
 - Home sections alternate white and grey (#f5f5f7) with one padding; two white sections in a row share one gap.
   Makeover.astro, ProjectFilm.astro and the laptop model are no longer on any page (kept in the repo).
 - Lavori: the first project is a REAL client's site, Casa Turati 3 (Paolo's apartment in Milan, permission

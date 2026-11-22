@@ -15,6 +15,7 @@ import { CONSENT } from "../../scorer/consent";
 import { breadcrumbs } from "../../lib/schema";
 import { examples } from "../../scorer/samples";
 import ExampleSite from "../../components/ExampleSite.astro";
+import ReportTeaser from "../../components/ReportTeaser.astro";
 import { BANDS, SCORE_DISCLAIMER } from "../../scorer/scale";
 
 const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
@@ -56,12 +57,12 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
           </select>
         </div>
       </form>
-      <div class="az-inline az-examples">
-        <span>Vedi un esempio:</span>
-        {examples.map((e) => <a href={`#voto-${e.key}`} data-az-sample={e.key}>{e.label.toLowerCase()} ({e.full.results.fitness.report.total})</a>)}
-      </div>
       <p class="az-note">Il risultato lo vedi solo tu: non lo pubblichiamo e non salviamo la pagina.</p>
       <p class="az-note az-note--fine">{SCORE_DISCLAIMER}</p>
+    </div>
+    <div class="az-wide" id="esempi">
+      <h2 class="az-h2 az-wide__t">Tre siti d'esempio, tre voti</h2>
+      <ReportTeaser />
     </div>
   </section>
 
@@ -393,6 +394,16 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     min-height: 44px;
     display: inline-flex;
     align-items: center;
+  }
+  /* The three example reports, big, only here (Lorenzo, 22 Nov 2026: small on the home, big on the analysis page). */
+  .az-wide {
+    width: min(1240px, calc(100vw - 2rem));
+    margin: clamp(3rem, 2rem + 3vw, 5rem) 0 0 calc(50% - min(620px, 50vw - 1rem));
+    display: grid;
+    gap: 1.5rem;
+  }
+  .az-wide :global(.rt) {
+    background: #f5f5f7;
   }
   .az-note {
     margin: 0;
