@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Respiro | Home</title>
+<meta name="description" content="Benvenuti in Respiro. Un luogo dove il movimento diventa ascolto.">
+<meta name="robots" content="noindex, nofollow">
+<!-- Invented example for the Focus Design site report. The analytics tag below is INERT on purpose
+     (type="text/plain": the browser never fetches it). It is here because many real sites load one
+     without asking consent, and the example report shows that. No request leaves this page. -->
+<script type="text/plain" src="https://www.googletagmanager.com/gtag/js?id=G-ESEMPIO"></script>
+<script type="text/plain">window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-ESEMPIO');</script>
+<style>
+@font-face{font-family:"Fraunces";src:url(../../fonts/demo/fraunces.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces";src:url(../../fonts/demo/fraunces-italic.woff2) format("woff2");font-style:italic;font-weight:100 900;font-display:swap}
+@font-face{font-family:"Jost";src:url(../../fonts/demo/jost.woff2) format("woff2");font-weight:100 900;font-display:swap}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:Jost,system-ui,sans-serif;background:#f4efe8;color:#3d342c;font-size:17px;line-height:1.6}
+a{color:inherit}
+.fd{position:sticky;top:0;z-index:5;padding:.45rem 1rem;background:#1d1d1f;color:#fff;font:500 12px/1.4 system-ui,sans-serif;text-align:center}
+.fd a{color:#9ecbff}
+header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;max-width:1200px;margin:0 auto}
+.logo{font-family:Fraunces,serif;font-size:1.6rem;font-style:italic;letter-spacing:.02em;text-decoration:none}
+nav{display:flex;gap:1.75rem;font-size:.95rem;letter-spacing:.08em}
+nav a{text-decoration:none}
+.burger{display:none;width:28px;height:14px;border-top:2px solid;border-bottom:2px solid}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:3rem;align-items:center;max-width:1200px;margin:0 auto;padding:2rem 1.5rem 5rem}
+.hero h1{font-family:Fraunces,serif;font-weight:300;font-size:clamp(2.6rem,6vw,4.8rem);line-height:1.02;letter-spacing:-.02em}
+.hero h1 em{font-style:italic;color:#9a6b4b}
+.lead{margin:1.5rem 0 2.25rem;max-width:30ch;color:#b9afa4;font-size:1.05rem;font-weight:300}
+.btn{display:inline-block;padding:1rem 2rem;border:1px solid #3d342c;border-radius:999px;text-decoration:none;letter-spacing:.12em;font-size:.8rem;text-transform:uppercase}
+.hero img{width:100%;border-radius:220px 220px 24px 24px;display:block}
+section{max-width:1200px;margin:0 auto;padding:4.5rem 1.5rem}
+.kick{font-size:.75rem;letter-spacing:.25em;text-transform:uppercase;color:#9a6b4b;margin-bottom:1rem}
+h2{font-family:Fraunces,serif;font-weight:300;font-size:clamp(2rem,4vw,3rem);line-height:1.1;margin-bottom:1.5rem}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.5rem}
+.three h3{font-family:Fraunces,serif;font-weight:400;font-size:1.4rem;margin-bottom:.5rem}
+.three p,.soft{color:#a89d91;font-weight:300}
+.band{background:#e8ddcf;max-width:none}
+.band>div{max-width:1200px;margin:0 auto}
+.team{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.5rem}
+.av{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;font-family:Fraunces,serif;font-size:2.4rem;color:#fff;margin-bottom:1rem}
+.q{font-family:Fraunces,serif;font-style:italic;font-weight:300;font-size:1.5rem;line-height:1.35;max-width:28ch}
+.q+p{margin-top:.75rem;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;color:#a89d91}
+.quotes{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:2rem}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
+.info p{margin-bottom:.75rem}
+footer{border-top:1px solid #ddd1c2;max-width:1200px;margin:0 auto;padding:2rem 1.5rem 3rem;display:flex;justify-content:space-between;font-size:.85rem;color:#a89d91}
+@media (max-width:760px){
+  nav{display:none}.burger{display:block}
+  .hero{grid-template-columns:1fr;padding-top:.5rem;gap:2rem}
+  .hero img{order:-1;border-radius:160px 160px 20px 20px}
+  .three,.team,.quotes,.info{grid-template-columns:1fr}
+  section{padding:3.5rem 1.5rem}
+  footer{flex-direction:column;gap:.75rem}
+  .team{gap:1.25rem}
+  .team>div{display:grid;grid-template-columns:72px 1fr;column-gap:1rem;align-items:center}
+  .team .av{width:72px;height:72px;font-size:1.6rem;margin:0;grid-row:span 2}
+}
+</style>
+</head>
+<body>
+<p class="fd">Sito inventato da Focus Design per spiegare l'analisi. Non è un'attività reale. <a href="/analisi-sito/?esempio=1#voto-esempio">Torna al report</a></p>
+<header>
+  <a class="logo" href="#">respiro</a>
+  <nav aria-label="Menu"><a href="#metodo">IL METODO</a><a href="#studio">LO STUDIO</a><a href="#insegnanti">INSEGNANTI</a><a href="#contatti">CONTATTI</a></nav>
+  <span class="burger" aria-hidden="true"></span>
+</header>
+
+<main>
+<div class="hero">
+  <div>
+    <h1 data-why="content.whatwhere">Respira. Allunga. <em>Ritrova il centro.</em></h1>
+    <p class="lead" data-why="a11y.lighthouse">Un luogo dove il movimento diventa ascolto, e ogni lezione un piccolo ritorno a te.</p>
+    <a class="btn" href="#metodo" data-why="conv.early">Scopri il metodo</a>
+  </div>
+  <img src="hero.svg" alt="La sala dello studio con la luce che entra dalla finestra ad arco" data-why="speed.lcp speed.weight speed.interaction">
+</div>
+
+<section id="metodo">
+  <p class="kick">Il metodo</p>
+  <h2>Pilates reformer e matwork, con calma e precisione.</h2>
+  <div class="three">
+    <div><h3>Reformer</h3><p>Il lettino a molle accompagna ogni movimento: forza profonda senza fretta.</p></div>
+    <div><h3>Matwork</h3><p>Il corpo come unico attrezzo. Respirazione, controllo, fluidità.</p></div>
+    <div><h3>Postura</h3><p>Percorsi per la schiena e per chi passa la giornata alla scrivania.</p></div>
+  </div>
+</section>
+
+<section class="band" id="studio"><div>
+  <p class="kick">Lo studio</p>
+  <h2>Sei reformer, luce naturale, il silenzio di un cortile.</h2>
+  <p class="soft" style="max-width:52ch">Lezioni in piccoli gruppi, mai più di sei persone. La prima lezione di prova è con un insegnante tutto per te, per capire da dove partire.</p>
+</div></section>
+
+<section id="insegnanti">
+  <p class="kick">Le insegnanti</p>
+  <h2>Chi ti accompagna.</h2>
+  <div class="team">
+    <div><div class="av" style="background:#9a6b4b">M</div><h3>Marta</h3><p class="soft">Insegnante di pilates reformer, ex danzatrice.</p></div>
+    <div><div class="av" style="background:#6f7a57">E</div><h3>Elena</h3><p class="soft">Insegnante di matwork e posturale.</p></div>
+    <div><div class="av" style="background:#b8865e">S</div><h3>Sara</h3><p class="soft">Insegnante di pilates in gravidanza e dopo il parto.</p></div>
+  </div>
+</section>
+
+<section class="band"><div>
+  <p class="kick">Le vostre recensioni</p>
+  <div class="quotes" data-why="trust.reviews">
+    <div><p class="q">"Un'ora qui e la settimana cambia colore."</p><p>Giulia</p></div>
+    <div><p class="q">"Finalmente un posto dove nessuno ha fretta."</p><p>Andrea</p></div>
+  </div>
+</div></section>
+
+<section>
+  <p class="kick">Lezioni</p>
+  <h2>Un percorso su misura per te.</h2>
+  <p class="soft" data-why="info.prices">Ogni percorso è personalizzato: scrivici e ti prepariamo una proposta pensata per te.</p>
+  <p class="soft" data-why="info.hours">Il calendario delle lezioni lo trovi nella nostra app, dopo l'iscrizione allo studio.</p>
+</section>
+
+<section id="contatti">
+  <p class="kick">Contatti</p>
+  <h2>Vieni a trovarci.</h2>
+  <div class="info">
+    <div>
+      <p data-why="local.maps">Via dell'Esempio 7<br>20159 Milano</p>
+      <p data-why="contact.tel">Tel. 02 0000 0000</p>
+    </div>
+    <div>
+      <p><a href="mailto:ciao@respiro-esempio.it" data-why="conv.primary">ciao@respiro-esempio.it</a></p>
+      <p data-why="contact.whatsapp"><a href="https://www.instagram.com/">Instagram</a></p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer data-why="legal.cookie">
+  <span>© Respiro Pilates Studio</span>
+  <a href="#privacy">Privacy Policy</a>
+</footer>
+</body>
+</html>

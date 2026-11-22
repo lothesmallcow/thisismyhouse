@@ -1,0 +1,352 @@
+---
+/**
+ * The invented example site ("Respiro", public/esempi/respiro/) inside a phone, with a numbered pin on
+ * every spot that costs points, next to the list of those points. Picking a point scrolls the phone to
+ * its spot and rings it. On narrow widths the list becomes a stepper (one point at a time, ‹ ›).
+ * When in view it walks through the points by itself until the visitor takes over (not with reduced motion).
+ * Positions come from scripts/example-shot.mjs (src/scorer/respiro-spots.json); points from the real
+ * report of that page (src/scorer/samples.ts), so pins, list and report always agree.
+ */
+import { Image } from "astro:assets";
+import shot from "../assets/esempi/respiro-telefono.png";
+import spots from "../scorer/respiro-spots.json";
+import { sample } from "../scorer/samples";
+
+interface Props {
+  /** How many points to show (the heaviest first). Default: all that have a spot. */
+  limit?: number;
+  /** Heading id prefix, so two copies on one page stay unique. */
+  id: string;
+}
+const { limit = 99, id } = Astro.props;
+
+const report = sample.results.fitness.report;
+const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
+const items = report.checks
+  .filter((c) => c.max - c.earned > 0)
+  .sort((a, b) => b.max - b.earned - (a.max - a.earned))
+  .map((c) => ({ c, spot: spots.spots.find((s) => s.ids.includes(c.id)) }))
+  .filter((x) => x.spot)
+  // one pin per spot: the heaviest point that sits there
+  .filter((x, i, all) => all.findIndex((y) => y.spot === x.spot) === i)
+  .slice(0, limit);
+const ratio = spots.height / spots.width;
+---
+<div class="xs" data-xs data-ratio={ratio}>
+ <div class="xs__in">
+  <div class="xs__device">
+    <div class="xs__screen" data-xs-screen>
+      <div class="xs__page" data-xs-page>
+        <Image src={shot} alt="Il sito inventato dello studio Respiro, come si vede dal telefono: foto della sala, titolo, metodo, insegnanti, recensioni e contatti." widths={[300, 600]} sizes="300px" loading="lazy" />
+        <span class="xs__ring" data-xs-ring aria-hidden="true"></span>
+        {items.map((x, i) => (
+          <span class="xs__pin" data-xs-pin={i} aria-hidden="true" style={`left: ${Math.min(0.9, x.spot!.x + x.spot!.w) * 100}%; top: ${x.spot!.y * 100}%`}>{i + 1}</span>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <div class="xs__side">
+    <ol class="xs__list" aria-labelledby={`${id}-t`}>
+      {items.map((x, i) => (
+        <li class="xs__item" data-xs-item={i}>
+          <button type="button" class="xs__btn" data-xs-go={i} data-y={x.spot!.y} data-h={x.spot!.h} data-x={x.spot!.x} data-w={x.spot!.w} aria-pressed={i === 0 ? "true" : "false"}>
+            <span class="xs__num" aria-hidden="true">{i + 1}</span>
+            <span class="xs__txt">
+              <span class="xs__title">{x.c.title}</span>
+              <span class="xs__found">{x.c.found}</span>
+            </span>
+            <span class="xs__pts"><span class="sr-only">punti persi: </span>−{fmt(x.c.max - x.c.earned)}</span>
+          </button>
+        </li>
+      ))}
+    </ol>
+    <div class="xs__step" data-xs-step>
+      <button type="button" class="xs__arrow" data-xs-prev aria-label="Punto precedente">‹</button>
+      <span class="xs__count" data-xs-count aria-live="polite">1 di {items.length}</span>
+      <button type="button" class="xs__arrow" data-xs-next aria-label="Punto successivo">›</button>
+    </div>
+  </div>
+ </div>
+</div>
+
+<script>
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll<HTMLElement>("[data-xs]").forEach((root) => {
+    const screen = root.querySelector<HTMLElement>("[data-xs-screen]")!;
+    const page = root.querySelector<HTMLElement>("[data-xs-page]")!;
+    const ring = root.querySelector<HTMLElement>("[data-xs-ring]")!;
+    const btns = [...root.querySelectorAll<HTMLButtonElement>("[data-xs-go]")];
+    const items = [...root.querySelectorAll<HTMLElement>("[data-xs-item]")];
+    const pins = [...root.querySelectorAll<HTMLElement>("[data-xs-pin]")];
+    const count = root.querySelector<HTMLElement>("[data-xs-count]")!;
+    const ratio = Number(root.dataset.ratio);
+    let active = 0;
+    let auto = 0;
+    let touched = false;
+
+    const go = (i: number) => {
+      active = (i + btns.length) % btns.length;
+      const b = btns[active];
+      const [x, y, w, h] = ["x", "y", "w", "h"].map((k) => Number(b.dataset[k]));
+      const pageH = screen.clientWidth * ratio;
+      const target = Math.max(0, Math.min(pageH - screen.clientHeight, y * pageH + (h * pageH) / 2 - screen.clientHeight * 0.42));
+      page.style.transform = `translateY(${-target}px)`;
+      Object.assign(ring.style, { left: `${x * 100}%`, top: `${y * 100}%`, width: `${w * 100}%`, height: `${h * 100}%` });
+      ring.classList.remove("is-on");
+      void ring.offsetWidth;
+      ring.classList.add("is-on");
+      btns.forEach((x, j) => x.setAttribute("aria-pressed", String(j === active)));
+      items.forEach((x, j) => x.classList.toggle("is-active", j === active));
+      pins.forEach((x, j) => x.classList.toggle("is-active", j === active));
+      count.textContent = `${active + 1} di ${btns.length}`;
+    };
+    const stop = () => {
+      touched = true;
+      window.clearInterval(auto);
+    };
+    btns.forEach((b, i) => {
+      b.addEventListener("click", () => (stop(), go(i)));
+      b.addEventListener("mouseenter", () => touched && go(i));
+    });
+    root.querySelector("[data-xs-prev]")!.addEventListener("click", () => (stop(), go(active - 1)));
+    root.querySelector("[data-xs-next]")!.addEventListener("click", () => (stop(), go(active + 1)));
+    root.addEventListener("pointerdown", () => stop(), { once: true });
+    // Also when the block is shown later (the report page reveals it) or resized.
+    new ResizeObserver(() => screen.clientWidth && go(active)).observe(screen);
+
+    go(0);
+    if (!reduce && "IntersectionObserver" in window) {
+      new IntersectionObserver(
+        (entries) => {
+          window.clearInterval(auto);
+          if (touched || !entries[0].isIntersecting) return;
+          auto = window.setInterval(() => go(active + 1), 3200);
+        },
+        { threshold: 0.5 },
+      ).observe(root);
+    }
+  });
+</script>
+
+<style>
+  .xs {
+    container-type: inline-size;
+  }
+  .xs__in {
+    display: grid;
+    gap: 1.5rem;
+    justify-items: center;
+  }
+
+  /* Phone */
+  .xs__device {
+    width: min(100%, 300px);
+    padding: 10px;
+    border-radius: 46px;
+    background: #1d1d1f;
+  }
+  .xs__screen {
+    position: relative;
+    aspect-ratio: 9 / 18.5;
+    overflow: hidden;
+    border-radius: 36px;
+    background: #f4efe8;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+  }
+  .xs__page {
+    position: relative;
+  }
+  .xs__page :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .xs__ring {
+    position: absolute;
+    margin: -6px;
+    padding: 6px;
+    box-sizing: content-box;
+    border: 2.5px solid #ff3b30;
+    border-radius: 12px;
+    background: rgb(255 59 48 / 0.08);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .xs__ring.is-on {
+    opacity: 1;
+  }
+  .xs__pin {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    margin: -13px 0 0 -13px;
+    border-radius: 50%;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 0 0 3px #fff;
+  }
+  .xs__pin.is-active {
+    background: #ff3b30;
+  }
+
+  /* List (wide) / stepper (narrow) */
+  .xs__side {
+    width: 100%;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .xs__list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .xs__btn {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 0.85rem;
+    align-items: start;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 0;
+    border-radius: 16px;
+    background: transparent;
+    font: inherit;
+    color: var(--inchiostro);
+    text-align: left;
+    cursor: pointer;
+  }
+  .xs__btn:focus-visible {
+    outline: 2px solid var(--inchiostro);
+    outline-offset: 2px;
+  }
+  .xs__item.is-active .xs__btn {
+    background: var(--nebbia);
+  }
+  .xs__num {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  .xs__item.is-active .xs__num {
+    background: #e0352b;
+  }
+  .xs__txt {
+    display: grid;
+    gap: 0.2rem;
+    padding-top: 0.15rem;
+  }
+  .xs__title {
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .xs__found {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--grafite);
+  }
+  .xs__pts {
+    margin-top: 0.1rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: #fdecea;
+    color: #b42318;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .xs__step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+  .xs__arrow {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--nebbia);
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--inchiostro);
+    cursor: pointer;
+  }
+  .xs__count {
+    min-width: 4.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--grafite);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Narrow: one point at a time under the phone */
+  @container (max-width: 619px) {
+    .xs__item:not(.is-active) {
+      display: none;
+    }
+    .xs__item .xs__btn {
+      background: var(--nebbia);
+      cursor: default;
+    }
+  }
+  /* Wide: phone left, the whole list right */
+  @container (min-width: 620px) {
+    .xs__in {
+      grid-template-columns: 300px minmax(0, 1fr);
+      align-items: center;
+      justify-items: stretch;
+      gap: 2rem;
+    }
+    /* A long list (the report page): the phone stays in view while the list scrolls. */
+    .xs__in:has(.xs__item:nth-child(8)) {
+      align-items: start;
+    }
+    .xs__in:has(.xs__item:nth-child(8)) .xs__device {
+      position: sticky;
+      top: 96px;
+    }
+    .xs__step {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .xs__page {
+      transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .xs__ring.is-on {
+      animation: xs-ring 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.45s both;
+    }
+    .xs__btn {
+      transition: background-color 0.2s;
+    }
+  }
+  @keyframes xs-ring {
+    from {
+      opacity: 0;
+      transform: scale(1.06);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .xs__btn:hover {
+      background: var(--nebbia);
+    }
+  }
+</style>

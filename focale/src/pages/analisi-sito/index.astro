@@ -14,6 +14,7 @@ import benchmark from "../../scorer/benchmark.json";
 import { CONSENT } from "../../scorer/consent";
 import { breadcrumbs } from "../../lib/schema";
 import { sample, sampleGood } from "../../scorer/samples";
+import ExampleSite from "../../components/ExampleSite.astro";
 
 const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
 // For the waiting ring: each sector's categories, weights and check titles.
@@ -56,8 +57,8 @@ const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, 
       </form>
       <div class="az-inline az-examples">
         <span>Vedi un esempio:</span>
-        <a href="#voto-12" data-az-sample="old">voto {sample.results.fitness.report.total}</a>
-        <a href="#voto-97" data-az-sample="good">voto {sampleGood.results.fitness.report.total}</a>
+        <a href="#voto-esempio" data-az-sample="old">voto {sample.results.fitness.report.total}</a>
+        <a href="#voto-ottimo" data-az-sample="good">voto {sampleGood.results.fitness.report.total}</a>
       </div>
       <p class="az-note">Il risultato lo vedi solo tu: non lo pubblichiamo e non salviamo la pagina.</p>
     </div>
@@ -86,7 +87,7 @@ const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, 
   <!-- Report -->
   <div data-az-screen="report" hidden>
     <main class="az-report" aria-labelledby="az-rep-t">
-      <p class="az-sample" data-az-sample-note hidden>Esempio su un sito inventato: numeri e pagina non sono di nessuna attività reale.</p>
+      <p class="az-sample" data-az-sample-note hidden>Esempio su un sito inventato: la pagina e i numeri non sono di nessuna attività reale, le misure di velocità sono simulate.</p>
 
       <section class="az-stack az-stack--14" data-parte="testata">
         <h1 id="az-rep-t" class="az-url" data-az-url></h1>
@@ -117,6 +118,12 @@ const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, 
       </section>
 
       <p class="az-sintesi" data-parte="sintesi" data-az-summary></p>
+
+      <section class="az-stack az-stack--24" data-parte="sito" data-az-site hidden>
+        <h2 class="az-h2" id="az-site-t">Dove si vede sul sito</h2>
+        <p class="az-small">Il sito d'esempio dentro un telefono: ogni numero è un punto perso. Tocca un punto e il telefono va dove si trova. <a class="az-link" href="/esempi/respiro/" target="_blank" rel="noopener">Apri il sito dal vivo</a></p>
+        <ExampleSite id="az-site" />
+      </section>
 
       <section class="az-stack az-stack--24" data-parte="correzioni" data-az-fixes-wrap>
         <div class="az-split">

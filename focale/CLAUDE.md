@@ -39,9 +39,15 @@ Schibsted TTFs: it cannot read woff2).
 - Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right); then (Lorenzo, 22 Nov
   2026, replacing the phone/laptop makeover film, which he found useless there) the analysis entry `.hs-check`
   (grey band: a search-style bar, form GET to /analisi-sito/?url=..., which fills the address and starts at once;
-  beside it ReportTeaser.astro, a living sleep-score-style card of the invented example: ring by category with
-  solid = points taken and light = points the first five fixes win back, verdict, category bars, "12 → 42",
-  whole card links to /analisi-sito/?esempio=12#voto-12; examples come from src/scorer/samples.ts), "Per chi lavoriamo" (3 sector
+  under it ReportTeaser.astro: "Bello da vedere. 51 su 100." The example is "Respiro" (Lorenzo, 22 Nov 2026: a site
+  that LOOKS well made but loses points), an invented pilates studio at public/esempi/respiro/ (banner says so,
+  noindex, its analytics tag is inert type="text/plain"). ExampleSite.astro shows it in a phone with numbered pins
+  on each spot that costs points ([data-why] in its HTML; positions from `node scripts/example-shot.mjs` after a
+  build, which also writes src/assets/esempi/respiro-telefono.png); picking a point scrolls the phone there; narrow =
+  one point at a time with ‹ ›; it walks through the points when in view until touched. The same block appears in
+  the report when the example is open ("Dove si vede sul sito"). Score ring, "51 → 74", link to
+  /analisi-sito/?esempio=1#voto-esempio. Examples come from src/scorer/samples.ts (Respiro's speed numbers are
+  simulated and the report says so). Re-run example-shot.mjs whenever the Respiro page changes), "Per chi lavoriamo" (3 sector
   cards with demo screenshots), "Cosa ricevi" bento, 4 steps with timings, prices (per-plan CTA, recommended plan
   navy), Lo studio, FAQ, closing band on navy with the 3-step PreviewForm embedded. Nothing pins, no ambient
   motion (living background, ticker and colour floods were removed). Section blocks (.hs-*) live in global.css

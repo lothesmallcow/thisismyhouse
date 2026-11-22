@@ -301,6 +301,8 @@ export function initScorer() {
     const { report: r, recommendation } = full.results[sector];
     sectorNow.value = sector;
     $("[data-az-sample-note]").hidden = !isSample;
+    // The invented example site in a phone, with its pins: only for that example.
+    $("[data-az-site]").hidden = !(isSample && full === data.sample);
     const motion = !reduced();
 
     // Header
@@ -500,21 +502,19 @@ export function initScorer() {
   });
 
   /* ---------- Deep links: run last, once everything above exists ---------- */
-  // #voto-12 / #voto-97 (or ?esempio=12 / ?esempio=97, which survive previews that drop the hash)
+  // #voto-esempio / #voto-ottimo (or ?esempio=1 / 2, which survive previews that drop the hash)
   // open an example report; ?url=... (from the home's box) starts an analysis straight away.
   const params = new URLSearchParams(location.search);
-  const sampleFromLink = () => {
-    const h = location.hash;
-    const q = params.get("esempio");
-    if (h === "#voto-12" || q === "12") return "old";
-    if (h === "#voto-97" || q === "97") return "good";
-    return "";
-  };
+  const totalOf = (f: FullAnalysis) => String(f.results[f.chosen].report.total);
+  const pickSample = (v: string | null) =>
+    !v ? "" : ["esempio", "1", totalOf(data.sample), "12"].includes(v) ? "old" : ["ottimo", "2", totalOf(data.sampleGood), "97"].includes(v) ? "good" : "";
+  // #voto-esempio, #voto-ottimo (and the score numbers, for old links) or ?esempio=1 / 2
+  const sampleFromLink = () => pickSample(location.hash.match(/^#voto-(\w+)$/)?.[1] ?? null) || pickSample(params.get("esempio"));
   const linked = sampleFromLink();
   if (linked) openSample(linked);
   window.addEventListener("hashchange", () => {
-    if (location.hash === "#voto-12") openSample("old");
-    else if (location.hash === "#voto-97") openSample("good");
+    const w = pickSample(location.hash.match(/^#voto-(\w+)$/)?.[1] ?? null);
+    if (w) openSample(w);
   });
   const fromHome = params.get("url");
   if (fromHome && !linked) {
