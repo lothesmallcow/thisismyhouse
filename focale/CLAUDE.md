@@ -140,10 +140,16 @@ Schibsted TTFs: it cannot read woff2).
   use setText() from demo-motion so split headings survive.
   Each demo has ITS OWN personality (Lorenzo, 22 Nov 2026: "they all look the same, same italic, same layout"; research
   in reports/Pattern AI e personalità dei siti.md). Never give two demos the same type, layout archetype or signature:
-  Arcadi "Il cartello di cantiere" (document/catalogue: Archivo variable condensed headings + IBM Plex Mono for data
-  only, plaster grey #e4e3df, ink, minio #c8461c, zero radius, the hero is a construction-site sign with label/value
-  rows; works as a ruled catalogue). Villa Ortensia "La pianta della villa" (architectural/asymmetric: Bodoni Moda
-  UPRIGHT only + Hanken Grotesk, plaster pink #ebd8cf, lake ink #1c2a33, ortensia #4b5fa6, arched pictures, an SVG floor
+  Arcadi "La casa che cambia" (Lorenzo, 22 Nov 2026, replacing "Il cartello di cantiere": he disliked the black sign
+  box and the grey, square, document look; the work carries the site: Zilla Slab 600/700 headings + Fira Sans text,
+  white walls, bottle green #1e3b34 from the kitchen doors, oak #c99d73 / light oak #e1c4a4 band from floors and
+  vanity tops, rounded corners everywhere (22 px pictures/panels, 14 px buttons/fields), no rules, no mono. The hero
+  is a full-width before/after of the Lambrate bathroom over the first screen (components/demo/Compare.astro: range
+  input, line moved by transform, one sweep on load with motion), the headline on a white "piece of wall" cut into its
+  bottom-left. Services: a list that picks one big picture (rail on phones). Works: bento of six sliders on green, the
+  kitchen featured 2x2. "Come lavoriamo": the same bathroom four times, a little more finished at each phase, on an
+  oak dot track. Zones as big white chips on the oak band; quote form a white sheet on green.)
+  Villa Ortensia "La pianta della villa" (architectural/asymmetric: Bodoni Moda UPRIGHT only + Hanken Grotesk, plaster pink #ebd8cf, lake ink #1c2a33, ortensia #4b5fa6, arched pictures, an SVG floor
   plan that navigates the spaces, seasons and prices as an invitation card; components/demo/VillaPlan.astro). Studio
   Linea "L'orario è la pagina" (index/timetable: Sofia Sans Extra Condensed + Sofia Sans, white, ink, yellow #FFD400
   only as a surface with black text, the weekly timetable is the hero with today highlighted, day tabs on phones,
@@ -262,7 +268,8 @@ nuova-anteprima, logo, illustrazioni, test, scorer, scorer:batch, scorer:selftes
   Stylesheets are inlined (`inlineStylesheets: "always"`) for the same reason.
 - Hero fades start at opacity 0.01 so the paragraph counts as painted for LCP.
 - Preview link: `node scripts/export-artifact.mjs` writes `preview/` (relative links, `_astro` renamed `assets`).
-- Arcadi orange: #c4510e for button backgrounds (white text 4.6:1), #a8430b for small text.
+- Arcadi colours: bottle green #1e3b34 for buttons and text (white on it 12.1:1); oak #c99d73 only as a fill with green
+  text (4.9:1); #85562f for small oak-coloured text on white (6.2:1).
 - Scoped Astro styles don't reach child component roots: style `<Icon class>` via `:global()`.
 
 ## Phases

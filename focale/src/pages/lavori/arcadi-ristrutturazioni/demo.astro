@@ -1,14 +1,16 @@
 ---
 /**
- * Arcadi Ristrutturazioni (invented): direction "Il cartello di cantiere".
- * Document/catalogue archetype taken from the trade's own objects: the construction-site sign
- * with its fixed rows (the hero), the itemised written quote (the working phases), the job
- * catalogue (works with zone and days), the letterhead (footer). One superfamily, Archivo
- * (condensed headings, normal-width text), IBM Plex Mono only for real data. Plaster grey,
- * white, ink and one accent: minio, the red-orange primer. Zero radius, no shadows.
+ * Arcadi Ristrutturazioni (invented): direction "La casa che cambia".
+ * The work carries the site: the hero IS a finished bathroom you drag from before to after,
+ * across the whole first screen, with the headline set on a piece of white wall cut into it.
+ * The same bathroom then changes step by step in "Come lavoriamo", and the finished jobs are a
+ * gallery of big sliders (one featured kitchen, five more). Materials from the illustrations:
+ * white walls, the bottle green of the kitchen doors, the oak of floors and vanity tops.
+ * Type: Zilla Slab (bold slab, the workshop's sign-painted letter) with Fira Sans for text,
+ * the pair it was drawn with. Rounded corners everywhere (one radius family), no rules, no mono.
  */
 import Demo from "../../../layouts/Demo.astro";
-import BeforeAfter from "../../../components/demo/BeforeAfter.astro";
+import Compare from "../../../components/demo/Compare.astro";
 import { Image } from "astro:assets";
 import { site } from "../../../config/site";
 import { telHref, isPlaceholder } from "../../../lib/util";
@@ -22,19 +24,22 @@ const services = [
   { t: "Appartamenti chiavi in mano", d: "Progetto, pratiche e cantiere: ti consegniamo la casa pronta da abitare.", img: "soggiorno-dopo" },
   { t: "Infissi e serramenti", d: "Finestre nuove che isolano davvero, posate in giornata.", img: "infissi-dopo" },
 ];
+// The first job is the featured one in the gallery; the hero bathroom closes the list.
 const works = [
-  { b: "bagno-prima", a: "bagno-dopo", tipo: "Bagno", zona: "Lambrate", giorni: 9, c: "Bagno, zona Lambrate, 9 giorni di lavoro", alt: "bagno in zona Lambrate" },
-  { b: "cucina-prima", a: "cucina-dopo", tipo: "Cucina", zona: "Città Studi", giorni: 12, c: "Cucina, zona Città Studi, 12 giorni di lavoro", alt: "cucina in zona Città Studi" },
-  { b: "soggiorno-prima", a: "soggiorno-dopo", tipo: "Soggiorno", zona: "NoLo", giorni: 15, c: "Soggiorno, NoLo, 15 giorni di lavoro", alt: "soggiorno a NoLo" },
-  { b: "infissi-prima", a: "infissi-dopo", tipo: "Finestre", zona: "Porta Romana", giorni: 1, c: "Finestre, Porta Romana, 1 giorno di lavoro", alt: "finestre a Porta Romana" },
-  { b: "vasca-prima", a: "vasca-dopo", tipo: "Bagno con vasca", zona: "Isola", giorni: 10, c: "Bagno con vasca, Isola, 10 giorni di lavoro", alt: "bagno con vasca all'Isola" },
-  { b: "camera-prima", a: "camera-dopo", tipo: "Camera", zona: "Sesto San Giovanni", giorni: 7, c: "Camera, Sesto San Giovanni, 7 giorni di lavoro", alt: "camera a Sesto San Giovanni" },
+  { b: "cucina-prima", a: "cucina-dopo", tipo: "Cucina", zona: "Città Studi", giorni: 12, alt: "cucina in zona Città Studi" },
+  { b: "soggiorno-prima", a: "soggiorno-dopo", tipo: "Soggiorno", zona: "NoLo", giorni: 15, alt: "soggiorno a NoLo" },
+  { b: "vasca-prima", a: "vasca-dopo", tipo: "Bagno con vasca", zona: "Isola", giorni: 10, alt: "bagno con vasca all'Isola" },
+  { b: "infissi-prima", a: "infissi-dopo", tipo: "Finestre", zona: "Porta Romana", giorni: 1, alt: "finestre a Porta Romana" },
+  { b: "camera-prima", a: "camera-dopo", tipo: "Camera", zona: "Sesto San Giovanni", giorni: 7, alt: "camera a Sesto San Giovanni" },
+  { b: "bagno-prima", a: "bagno-dopo", tipo: "Bagno", zona: "Lambrate", giorni: 9, alt: "bagno in zona Lambrate" },
 ];
+const days = (n: number) => `${n} ${n === 1 ? "giorno" : "giorni"} di lavoro`;
+// Each phase shows the same bathroom a little further on: how much of the finished room is in.
 const how = [
-  { t: "Sopralluogo", d: "Veniamo a vedere entro 48 ore, gratis. Misuriamo e ascoltiamo." },
-  { t: "Preventivo scritto", d: "Voce per voce, con i tempi. Quello che firmi è quello che paghi." },
-  { t: "Cantiere pulito e puntuale", d: "Proteggiamo pavimenti e mobili, puliamo ogni sera, ti aggiorniamo ogni venerdì." },
-  { t: "Consegna e garanzia", d: "Controlliamo tutto insieme. Due anni di garanzia sui lavori." },
+  { t: "Sopralluogo", d: "Veniamo a vedere entro 48 ore, gratis. Misuriamo e ascoltiamo.", done: 0 },
+  { t: "Preventivo scritto", d: "Voce per voce, con i tempi. Quello che firmi è quello che paghi.", done: 34 },
+  { t: "Cantiere pulito e puntuale", d: "Proteggiamo pavimenti e mobili, puliamo ogni sera, ti aggiorniamo ogni venerdì.", done: 67 },
+  { t: "Consegna e garanzia", d: "Controlliamo tutto insieme. Due anni di garanzia sui lavori.", done: 100 },
 ];
 const nav = [
   { href: "#servizi", t: "Servizi" },
@@ -44,15 +49,8 @@ const nav = [
   { href: "#preventivo", t: "Preventivo" },
 ];
 const zones = ["Città Studi", "Lambrate", "NoLo", "Porta Romana", "Navigli", "Isola", "Sesto San Giovanni"];
-// The site sign: the firm's standing facts (they used to be a separate row of big numbers).
-const sign = [
-  { k: "Lavori", v: "Bagni, cucine, appartamenti, infissi" },
-  { k: "Sopralluogo", v: "Entro 48 ore, gratuito" },
-  { k: "Preventivo", v: "Scritto, voce per voce" },
-  { k: "Garanzia", v: "2 anni sui lavori" },
-  { k: "Zona", v: `Milano e prima cintura, ${zones.length} zone` },
-  { k: "Referente", v: "Uno solo, dal preventivo alla consegna" },
-];
+// The firm's standing facts, said once in the hero.
+const facts = ["Sopralluogo entro 48 ore, gratuito", "Preventivo scritto, voce per voce", "Garanzia di 2 anni sui lavori"];
 // Demo: calls and messages go to Focus Design, never to a real business.
 const tel = telHref();
 const hasPhone = !isPlaceholder(site.phoneDisplay);
@@ -68,25 +66,27 @@ const ld = {
   address: { "@type": "PostalAddress", streetAddress: "Via Esempio 8", postalCode: "20133", addressLocality: "Milano", addressCountry: "IT" },
   areaServed: zones.map((z) => ({ "@type": "Place", name: z })),
 };
+const phoneIcon = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5.5 3.5h3l1.5 4.25-2 1.25a11 11 0 0 0 7 7l1.25-2 4.25 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3.5 5.5a2 2 0 0 1 2-2Z"></path></svg>`;
 ---
 <Demo
   title="Arcadi Ristrutturazioni | Ristrutturazioni a Milano (demo)"
   description="Sito dimostrativo di Focus Design per un'impresa di ristrutturazioni inventata a Milano."
-  themeColor="#e4e3df"
-  fonts={["/fonts/demo/archivo-wdth-wght.woff2", "/fonts/demo/plex-mono-400.woff2", "/fonts/demo/plex-mono-500.woff2"]}
+  themeColor="#ffffff"
+  fonts={["/fonts/demo/zilla-slab-700.woff2", "/fonts/demo/fira-sans-400.woff2"]}
 >
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(ld)} />
   <div class="ar">
     <header class="ar-top" data-dh>
-      <div class="ar-wrap ar-top__in">
+      <div class="ar-top__bar">
         <a class="ar-name" href="#">Arcadi <span>Ristrutturazioni</span></a>
         <nav class="ar-nav-main" aria-label="Menu">
           {nav.map((n) => <a href={n.href}>{n.t}</a>)}
         </nav>
         <a class="ar-top__tel" href={tel}>
-          {hasPhone && <span class="ar-top__k">Tel.</span>}
+          <Fragment set:html={phoneIcon} />
           <span>{phoneLabel}</span>
         </a>
+        <a class="ar-btn ar-btn--green ar-top__cta" href="#preventivo">Preventivo</a>
         <button type="button" class="ar-burger" data-menu aria-controls="ar-menu" aria-expanded="false">
           <span class="ar-burger__lines" aria-hidden="true"><i></i><i></i></span>
           <span class="sr-only">Menu</span>
@@ -98,115 +98,124 @@ const ld = {
         {nav.map((n) => <a href={n.href}>{n.t}</a>)}
       </nav>
       <div class="ar-menu__cta">
-        <a class="ar-btn ar-btn--minio" href="#preventivo">Chiedi un preventivo</a>
-        <a class="ar-btn" href={tel}>Chiama ora</a>
+        <a class="ar-btn ar-btn--green" href="#preventivo">Chiedi un preventivo</a>
+        <a class="ar-btn ar-btn--line" href={tel}>Chiama ora</a>
       </div>
     </div>
 
     <section class="ar-hero" aria-labelledby="ar-h1">
-      <div class="ar-hero__text">
-        <h1 id="ar-h1" data-split="load">Ristrutturiamo case a Milano. Bene, e nei tempi detti.</h1>
-        <p class="ar-hero__sub">Quello che firmi nel preventivo è quello che paghi. Il cantiere lo puliamo ogni sera e ti aggiorniamo ogni venerdì.</p>
-        <div class="ar-hero__cta">
-          <a class="ar-btn ar-btn--minio" href="#preventivo" data-magnetic>Chiedi un preventivo</a>
-          <a class="ar-btn" href={tel}>Chiama ora</a>
-        </div>
-      </div>
-      <aside class="ar-sign" aria-labelledby="ar-sign-h">
-        <p class="ar-sign__head" id="ar-sign-h"><span>Impresa esecutrice</span> Arcadi Ristrutturazioni</p>
-        <dl class="ar-sign__rows">
-          {
-            sign.map((r) => (
-              <div>
-                <dt>{r.k}</dt>
-                <dd>{r.v}</dd>
-              </div>
-            ))
-          }
-        </dl>
-      </aside>
-      <div class="ar-hero__media" aria-hidden="true">
-        <Image src={pic("bagno-prima")} alt="" widths={[800, 1400, 1800]} sizes="100vw" loading="eager" class="ar-hero__img" />
-        <div class="ar-hero__after">
-          <Image src={pic("bagno-dopo")} alt="" widths={[800, 1400, 1800]} sizes="100vw" loading="eager" fetchpriority="high" class="ar-hero__img" />
-        </div>
-        <span class="ar-hero__tag ar-hero__tag--prima">Prima</span>
-        <span class="ar-hero__tag ar-hero__tag--dopo">Dopo</span>
-      </div>
-    </section>
-
-    <section class="ar-sec ar-sec--white" id="servizi" aria-labelledby="h-servizi">
-      <div class="ar-wrap ar-svc">
-        <div class="ar-svc__side">
-          <h2 id="h-servizi" data-split>Cosa facciamo</h2>
-          <p class="ar-lead">Dallo smontaggio alla finitura, impianti compresi. Per ogni lavoro hai un preventivo scritto e un solo referente.</p>
-          <div class="ar-svc__big">
-            <Image src={pic("camera-dopo")} alt="Una camera finita: finestra nuova, pareti chiare e parquet" widths={[480, 800, 1000]} sizes="34vw" />
+      <Compare
+        class="ar-hero__cmp"
+        before={pic("bagno-prima")}
+        after={pic("bagno-dopo")}
+        alt="bagno in zona Lambrate"
+        label="Bagno, zona Lambrate, 9 giorni di lavoro"
+        widths={[640, 960, 1280, 1600]}
+        sizes="(max-width: 899px) 180vw, 100vw"
+        eager
+        intro="load"
+      />
+      <div class="ar-wrap ar-hero__body">
+        <div class="ar-hero__card">
+          <h1 id="ar-h1" data-split="load">Ristrutturiamo case a Milano. Bene, e nei tempi detti.</h1>
+          <p class="ar-hero__sub">Quello che firmi nel preventivo è quello che paghi. Il cantiere lo puliamo ogni sera e ti aggiorniamo ogni venerdì.</p>
+          <div class="ar-hero__cta">
+            <a class="ar-btn ar-btn--green" href="#preventivo" data-magnetic>Chiedi un preventivo</a>
+            <a class="ar-btn ar-btn--line" href={tel}><Fragment set:html={phoneIcon} />Chiama ora</a>
           </div>
         </div>
-        <ul class="ar-svc__list" data-rise-group>
-          {
-            services.map((s) => (
-              <li class="ar-svc__item">
-                <div class="ar-svc__pic">
-                  <Image src={pic(s.img)} alt="" widths={[240, 480]} sizes="(min-width: 900px) 240px, 104px" />
-                </div>
-                <div>
+        <div class="ar-hero__aside">
+          <p class="ar-hero__job"><strong>Questo è un bagno a Lambrate, finito in 9 giorni.</strong> Trascina la linea sulla foto per vedere com'era.</p>
+          <ul class="ar-facts">
+            {facts.map((f) => <li>{f}</li>)}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="ar-sec" id="servizi" aria-labelledby="h-servizi">
+      <div class="ar-wrap ar-svc">
+        <div class="ar-svc__text">
+          <h2 id="h-servizi" data-split>Cosa facciamo</h2>
+          <p class="ar-lead">Dallo smontaggio alla finitura, impianti compresi. Per ogni lavoro hai un preventivo scritto e un solo referente.</p>
+          <ul class="ar-svc__list d-rail" aria-label="I nostri lavori" tabindex="0">
+            {
+              services.map((s, i) => (
+                <li class:list={["ar-svc__item", { "is-on": i === 0 }]} data-svc={i}>
+                  <div class="ar-svc__pic">
+                    <Image src={pic(s.img)} alt="" widths={[480, 800]} sizes="82vw" loading="lazy" />
+                  </div>
                   <h3>{s.t}</h3>
                   <p>{s.d}</p>
-                </div>
-              </li>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div class="ar-svc__stage" aria-hidden="true" data-wipe>
+          {
+            services.map((s, i) => (
+              <Image src={pic(s.img)} alt="" widths={[800, 1200, 1600]} sizes="(min-width: 1300px) 720px, 56vw" loading="lazy" class:list={["ar-svc__shot", { "is-on": i === 0 }]} data-shot={i} />
             ))
           }
-        </ul>
+        </div>
       </div>
     </section>
 
-    <section class="ar-sec" id="lavori" aria-labelledby="h-lavori">
+    <section class="ar-sec ar-sec--green" id="lavori" aria-labelledby="h-lavori">
       <div class="ar-wrap">
-        <div class="ar-doc__head ar-doc__head--jobs">
+        <div class="ar-head">
           <h2 id="h-lavori" data-split>Lavori finiti, prima e dopo</h2>
-          <p class="ar-lead">Sei cantieri chiusi. Trascina la linea su ogni foto per confrontare.</p>
+          <p class="ar-lead">Sei cantieri chiusi a Milano. Trascina la linea su ogni foto per confrontare.</p>
         </div>
-        <ol class="ar-jobs d-more">
+        <ol class="ar-gal d-more">
           {
-            works.map((w) => (
-              <li class="ar-job">
-                <div class="ar-job__meta">
-                  <h3>{w.tipo}</h3>
-                  <dl class="ar-job__data">
-                    <div>
-                      <dt>Zona</dt>
-                      <dd>{w.zona}</dd>
-                    </div>
-                    <div>
-                      <dt>Durata</dt>
-                      <dd>{w.giorni} {w.giorni === 1 ? "giorno" : "giorni"}</dd>
-                    </div>
-                  </dl>
-                </div>
-                <BeforeAfter before={pic(w.b)} after={pic(w.a)} caption={w.c} alt={w.alt} />
+            works.map((w, i) => (
+              <li class:list={["ar-gal__item", { "ar-gal__item--big": i === 0 }]}>
+                <Compare
+                  before={pic(w.b)}
+                  after={pic(w.a)}
+                  alt={w.alt}
+                  label={`${w.tipo}, ${w.zona}, ${days(w.giorni)}`}
+                  widths={i === 0 ? [640, 960, 1280, 1600] : [480, 800]}
+                  sizes={i === 0 ? "(min-width: 900px) 66vw, 100vw" : "(min-width: 900px) 33vw, 100vw"}
+                  intro={i === 0 ? "view" : undefined}
+                >
+                  <figcaption class="ar-gal__cap">
+                    <h3>{w.tipo}, {w.zona}</h3>
+                    <span>{days(w.giorni)}</span>
+                  </figcaption>
+                </Compare>
               </li>
             ))
           }
         </ol>
-        <button type="button" class="d-more-btn ar-btn ar-more">Altri {works.length - 3} lavori</button>
+        <button type="button" class="d-more-btn ar-btn ar-btn--oak ar-more">Altri {works.length - 3} lavori</button>
       </div>
     </section>
 
-    <section class="ar-sec ar-sec--white" id="come-lavoriamo" aria-labelledby="h-come">
+    <section class="ar-sec" id="come-lavoriamo" aria-labelledby="h-come">
       <div class="ar-wrap">
-        <div class="ar-doc__head ar-doc__head--fasi">
+        <div class="ar-head">
           <h2 id="h-come" data-split>Come lavoriamo</h2>
-          <p class="ar-lead">Quattro fasi, sempre le stesse. Sai sempre a che punto siamo.</p>
+          <p class="ar-lead">Quattro fasi, sempre le stesse. Sai sempre a che punto siamo, e la casa cambia sotto i tuoi occhi.</p>
         </div>
-        <ol class="ar-fasi" data-rise-group>
+        <ol class="ar-steps" data-rise-group>
           {
-            how.map((h, i) => (
-              <li>
-                <span class="ar-fasi__n">Fase {i + 1}</span>
-                <h3>{h.t}</h3>
-                <p>{h.d}</p>
+            how.map((h) => (
+              <li class="ar-step" style={`--done: ${h.done}`}>
+                <div class="ar-step__pic" aria-hidden="true">
+                  <Image src={pic("bagno-prima")} alt="" widths={[480, 800]} sizes="(min-width: 900px) 300px, 120px" loading="lazy" />
+                  <div class="ar-step__after">
+                    <Image src={pic("bagno-dopo")} alt="" widths={[480, 800]} sizes="(min-width: 900px) 300px, 120px" loading="lazy" />
+                  </div>
+                  {h.done > 0 && h.done < 100 && <span class="ar-step__seam"></span>}
+                </div>
+                <span class="ar-step__dot" aria-hidden="true"></span>
+                <div class="ar-step__text">
+                  <h3>{h.t}</h3>
+                  <p>{h.d}</p>
+                </div>
               </li>
             ))
           }
@@ -214,48 +223,48 @@ const ld = {
       </div>
     </section>
 
-    <section class="ar-sec" id="zone" aria-labelledby="h-zone">
+    <section class="ar-sec ar-sec--oak" id="zone" aria-labelledby="h-zone">
       <div class="ar-wrap ar-zone">
-        <div class="ar-doc__head ar-doc__head--zone">
+        <div class="ar-zone__text">
           <h2 id="h-zone" data-split>Dove lavoriamo</h2>
-          <p class="ar-lead">Milano e prima cintura, {zones.length} zone.</p>
+          <p class="ar-lead">Milano e prima cintura, {zones.length} zone. Sopralluogo gratuito in tutte.</p>
+          <p class="ar-zone__addr">La sede è in {address}.</p>
+          <a class="ar-btn ar-btn--green" href={mapsHref}>Come arrivare</a>
         </div>
         <ul class="ar-zones" aria-label="Le zone">{zones.map((z) => <li>{z}</li>)}</ul>
-        <p class="ar-zone__note">
-          <span>Sede: {address}.</span>
-          <span>Sopralluogo gratuito in tutte le zone.</span>
-          <a href={mapsHref}>Come arrivare</a>
-        </p>
       </div>
     </section>
 
-    <section class="ar-sec ar-sec--white" id="preventivo" aria-labelledby="h-prev">
-      <div class="ar-wrap ar-quote-grid">
-        <div class="ar-quote-side">
+    <section class="ar-sec ar-sec--green ar-sec--quote" id="preventivo" aria-labelledby="h-prev">
+      <div class="ar-wrap ar-quote">
+        <div class="ar-quote__side">
           <h2 id="h-prev" data-split>Chiedi un preventivo</h2>
           <p class="ar-lead">Tre domande. Ti rispondiamo su WhatsApp in giornata, con un giorno per il sopralluogo.</p>
-          <dl class="ar-quote-alt">
-            <div>
-              <dt>Preferisci parlare?</dt>
-              <dd><a href={tel}>{phoneLabel}</a></dd>
-            </div>
-            <div>
-              <dt>O scrivere?</dt>
-              <dd><a href={waHref} target="_blank" rel="noopener">WhatsApp</a></dd>
-            </div>
-          </dl>
+          <div class="ar-quote__alt">
+            <a class="ar-alt" href={tel}>
+              <span class="ar-alt__k">Preferisci parlare?</span>
+              <span class="ar-alt__v">{phoneLabel}</span>
+            </a>
+            <a class="ar-alt" href={waHref} target="_blank" rel="noopener">
+              <span class="ar-alt__k">O scrivere?</span>
+              <span class="ar-alt__v">WhatsApp</span>
+            </a>
+          </div>
         </div>
         <form class="ar-form" data-demo-form data-wa={site.whatsappNumber} data-heading="Richiesta di preventivo dal sito" data-err="Completa questo campo per continuare." novalidate>
-          <p class="ar-form__progress" data-dprogress data-tpl="Passo {n} di 3">Passo 1 di 3</p>
+          <div class="ar-form__top">
+            <p class="ar-form__progress" data-dprogress data-tpl="Passo {n} di 3">Passo 1 di 3</p>
+            <span class="ar-form__bar" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
           <fieldset data-dstep>
             <legend tabindex="-1">Che lavoro devi fare?</legend>
-            <div class="ar-opts">
+            <div class="ar-opts ar-opts--big">
               {["Bagno", "Cucina", "Appartamento", "Infissi", "Altro"].map((o) => (
                 <label class="ar-opt"><input type="radio" name="lavoro" value={o} data-label="Lavoro" required /><span>{o}</span></label>
               ))}
             </div>
             <p class="ar-err" data-derr="lavoro" aria-live="polite"></p>
-            <div class="ar-nav"><button type="button" class="ar-btn ar-btn--minio" data-dnext>Avanti</button></div>
+            <div class="ar-nav"><button type="button" class="ar-btn ar-btn--green" data-dnext>Avanti</button></div>
           </fieldset>
           <fieldset data-dstep>
             <legend tabindex="-1">Dove e quanto?</legend>
@@ -280,7 +289,7 @@ const ld = {
               </div>
               <p class="ar-err" data-derr="inizio" aria-live="polite"></p>
             </fieldset>
-            <div class="ar-nav"><button type="button" class="ar-btn" data-dback>Indietro</button><button type="button" class="ar-btn ar-btn--minio" data-dnext>Avanti</button></div>
+            <div class="ar-nav"><button type="button" class="ar-btn ar-btn--line" data-dback>Indietro</button><button type="button" class="ar-btn ar-btn--green" data-dnext>Avanti</button></div>
           </fieldset>
           <fieldset data-dstep>
             <legend tabindex="-1">A chi rispondiamo?</legend>
@@ -288,7 +297,7 @@ const ld = {
             <p class="ar-err" data-derr="nome" aria-live="polite"></p>
             <label class="ar-field">Telefono <input name="telefono" type="tel" autocomplete="tel" required data-label="Telefono" /></label>
             <p class="ar-err" data-derr="telefono" aria-live="polite"></p>
-            <div class="ar-nav"><button type="button" class="ar-btn" data-dback>Indietro</button><button type="submit" class="ar-btn ar-btn--minio">Invia su WhatsApp</button></div>
+            <div class="ar-nav"><button type="button" class="ar-btn ar-btn--line" data-dback>Indietro</button><button type="submit" class="ar-btn ar-btn--green">Invia su WhatsApp</button></div>
             <p class="ar-small">Si apre WhatsApp con il messaggio già scritto. Questo è un sito dimostrativo: il messaggio arriva a Focus Design, non a un'impresa.</p>
           </fieldset>
         </form>
@@ -329,85 +338,95 @@ const ld = {
     </footer>
 
     <a class="ar-sticky" href={tel}>
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5.5 3.5h3l1.5 4.25-2 1.25a11 11 0 0 0 7 7l1.25-2 4.25 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3.5 5.5a2 2 0 0 1 2-2Z"></path></svg>
+      <Fragment set:html={phoneIcon} />
       Chiama ora
     </a>
   </div>
 </Demo>
 
 <style is:global>
-  /* Arcadi's own type: one superfamily (Archivo, width and weight axes) plus a mono for data. */
+  /* Arcadi's own type: Zilla Slab (bold, for headings) with Fira Sans for text. */
   @font-face {
-    font-family: "Archivo Arcadi";
+    font-family: "Zilla Arcadi";
     font-style: normal;
     font-display: swap;
-    font-weight: 100 900;
-    font-stretch: 62% 125%;
-    src: url("/fonts/demo/archivo-wdth-wght.woff2") format("woff2-variations"), url("/fonts/demo/archivo-wdth-wght.woff2") format("woff2");
+    font-weight: 700;
+    src: url("/fonts/demo/zilla-slab-700.woff2") format("woff2");
   }
   @font-face {
-    font-family: "Plex Mono Arcadi";
+    font-family: "Zilla Arcadi";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 600;
+    src: url("/fonts/demo/zilla-slab-600.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Fira Arcadi";
     font-style: normal;
     font-display: swap;
     font-weight: 400;
-    src: url("/fonts/demo/plex-mono-400.woff2") format("woff2");
+    src: url("/fonts/demo/fira-sans-400.woff2") format("woff2");
   }
   @font-face {
-    font-family: "Plex Mono Arcadi";
+    font-family: "Fira Arcadi";
     font-style: normal;
     font-display: swap;
-    font-weight: 500;
-    src: url("/fonts/demo/plex-mono-500.woff2") format("woff2");
+    font-weight: 600;
+    src: url("/fonts/demo/fira-sans-600.woff2") format("woff2");
   }
   body.demo {
-    --font-head: "Archivo Arcadi", "Arial Narrow", Arial, sans-serif;
+    --font-head: "Fira Arcadi", "Segoe UI", system-ui, sans-serif;
     --font: var(--font-head);
-    background: #e4e3df;
+    background: #ffffff;
   }
-  /* Anchors land under the banner and the ruled header strip. */
+  /* Anchors land under the banner and the floating header. */
   html {
     scroll-padding-top: 120px;
   }
 </style>
 <style>
-  /* ================= Tokens ================= */
+  /* ================= Tokens: named after where they come from ================= */
   .ar {
-    --intonaco: #e4e3df; /* plaster: the page surface */
-    --bianco: #ffffff; /* the sign, the quote sheet */
-    --inchiostro: #151515; /* text and rules */
-    --grafite: #46464a; /* secondary text: 7.1:1 on plaster, 9.4:1 on white */
-    --riga: #b3b1aa; /* hairlines */
-    --minio: #c8461c; /* minium primer: button fills, white text 4.8:1 */
-    --minio-hover: #ad3b16;
-    --minio-scuro: #9e3412; /* minio for small text: 5.5:1 on plaster, 7.1:1 on white */
-    --mono: "Plex Mono Arcadi", ui-monospace, "SFMono-Regular", Menlo, monospace;
-    --pad: clamp(18px, 4.5vw, 40px);
-    --max: 1240px;
-    --sec: clamp(48px, 5vw, 72px); /* two sections meet with at most 144 px of empty band */
-    --top-h: 56px;
-    background: var(--intonaco);
-    color: var(--inchiostro);
+    --parete: #ffffff; /* white walls */
+    --anta: #1e3b34; /* bottle green of the kitchen doors: text, buttons, bands (white on it 12.1:1) */
+    --anta-2: #2b4d45; /* hover, surfaces inside green bands */
+    --anta-notte: #152b25; /* footer */
+    --rovere: #c99d73; /* oak of floors and vanity tops: fills with green text (4.9:1) */
+    --rovere-chiaro: #e1c4a4; /* light oak: band surface (green text 7.7:1) */
+    --rovere-scuro: #85562f; /* oak for small text on white (6.2:1) */
+    --corpo: #24302c; /* body text */
+    --grigio: #55625e; /* secondary text (6.4:1 on white) */
+    --nebbia: #c4d0cc; /* secondary text on green (7.6:1) */
+    --slab: "Zilla Arcadi", Rockwell, "Roboto Slab", Georgia, serif;
+    --r: 22px; /* pictures, cards, panels */
+    --r-s: 14px; /* buttons, fields, chips */
+    --pad: clamp(18px, 4.5vw, 48px);
+    --max: 1280px;
+    --sec: clamp(48px, 5vw, 72px); /* two bands meet with at most 144 px of empty space */
+    background: var(--parete);
+    color: var(--corpo);
     font-family: var(--font-head);
     font-size: 18px;
-    font-weight: 400;
-    font-stretch: 100%;
     line-height: 1.55;
-    letter-spacing: 0;
   }
   @media (max-width: 899px) {
     .ar {
       padding-bottom: 64px; /* room for the call bar */
       font-size: 17px;
+      --sec: 40px;
     }
   }
   .ar ::selection {
-    background: var(--minio);
-    color: var(--bianco);
+    background: var(--anta);
+    color: var(--parete);
   }
   .ar :focus-visible {
-    outline: 3px solid var(--minio-scuro);
-    outline-offset: 2px;
-    border-radius: 0;
+    outline: 3px solid var(--anta);
+    outline-offset: 3px;
+  }
+  .ar-sec--green :focus-visible,
+  .ar-foot :focus-visible {
+    outline-color: var(--rovere-chiaro);
   }
   .ar-wrap {
     max-width: calc(var(--max) + 2 * var(--pad));
@@ -418,61 +437,115 @@ const ld = {
   .ar h2,
   .ar h3,
   .ar legend {
-    font-family: var(--font-head);
-    font-stretch: 75%;
-    letter-spacing: -0.005em;
-    color: var(--inchiostro);
+    font-family: var(--slab);
+    font-weight: 700;
+    color: var(--anta);
+    letter-spacing: -0.01em;
   }
   .ar h2 {
-    font-weight: 800;
-    font-size: clamp(2.25rem, 1.3rem + 3vw, 4.25rem);
+    font-size: clamp(2.25rem, 1.2rem + 3.3vw, 4.75rem);
     line-height: 0.98;
   }
   .ar h3 {
-    font-weight: 700;
-    font-size: clamp(1.45rem, 1.1rem + 0.9vw, 2rem);
-    line-height: 1.05;
+    font-weight: 600;
+    font-size: clamp(1.45rem, 1.15rem + 0.8vw, 2rem);
+    line-height: 1.08;
   }
   .ar-sec {
     padding-block: var(--sec);
   }
-  .ar-sec--white {
-    background: var(--bianco);
+  .ar-sec--green {
+    background: var(--anta);
+    color: var(--parete);
+  }
+  .ar-sec--green h2,
+  .ar-sec--green h3 {
+    color: var(--parete);
+  }
+  .ar-sec--oak {
+    background: var(--rovere-chiaro);
   }
   .ar-lead {
-    margin-top: 1rem;
-    max-width: 44ch;
-    color: var(--grafite);
-    font-size: 1.125rem;
+    margin-top: 1.1rem;
+    max-width: 40ch;
+    color: var(--grigio);
+    font-size: 1.1875rem;
+    line-height: 1.5;
+  }
+  @media (min-width: 600px) and (max-width: 899px) {
+    .ar-lead {
+      max-width: none;
+    }
+  }
+  .ar-sec--green .ar-lead {
+    color: var(--nebbia);
+  }
+  .ar-sec--oak .ar-lead {
+    color: var(--anta);
+  }
+  /* Section heads: title left, intro right, both on the content's columns. */
+  .ar-head {
+    margin-bottom: clamp(28px, 3.5vw, 48px);
+  }
+  @media (min-width: 900px) {
+    .ar-head {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: clamp(16px, 2vw, 24px);
+      align-items: end;
+    }
+    .ar-head h2 {
+      grid-column: 1 / 3;
+    }
+    .ar-head .ar-lead {
+      margin: 0;
+    }
   }
 
-  /* ================= Buttons: rectangles, solid ink or solid minio ================= */
+  /* ================= Buttons: rounded, solid, no arrows ================= */
   .ar-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 52px;
-    padding: 0 1.35rem;
-    border: 0;
-    border-radius: 0;
-    background: var(--inchiostro);
-    color: var(--bianco);
+    gap: 0.55rem;
+    min-height: 56px;
+    padding: 0 1.5rem;
+    border: 2px solid transparent;
+    border-radius: var(--r-s);
     font: inherit;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 1.0625rem;
+    line-height: 1.2;
     text-decoration: none;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
   }
-  .ar-btn--minio {
-    background: var(--minio);
+  .ar-btn--green {
+    background: var(--anta);
+    color: var(--parete);
+  }
+  .ar-btn--line {
+    background: var(--parete);
+    color: var(--anta);
+    border-color: var(--anta);
+  }
+  .ar-btn--oak {
+    background: var(--rovere);
+    color: var(--anta);
   }
   @media (hover: hover) and (pointer: fine) {
-    .ar-btn:hover {
-      background: #333;
+    .ar-btn--green:hover {
+      background: var(--anta-2);
     }
-    .ar-btn--minio:hover {
-      background: var(--minio-hover);
+    .ar-btn--line:hover {
+      background: var(--anta);
+      color: var(--parete);
+    }
+    .ar-btn--oak:hover {
+      background: var(--rovere-chiaro);
     }
   }
   @media (hover: none), (pointer: coarse) {
@@ -481,86 +554,98 @@ const ld = {
     }
   }
 
-  /* ================= Header: a thin ruled strip ================= */
+  /* ================= Header: a floating white bar with rounded ends ================= */
   .ar-top {
-    background: var(--intonaco);
-    border-bottom: 2px solid var(--inchiostro);
+    padding: 12px max(var(--pad), env(safe-area-inset-left)) 0;
+    pointer-events: none;
   }
-  .ar-top__in {
+  .ar-top__bar {
+    pointer-events: auto;
     display: flex;
-    align-items: stretch;
-    min-height: var(--top-h);
+    align-items: center;
+    gap: 0.5rem;
+    max-width: calc(var(--max) + 24px);
+    min-height: 64px;
+    margin: 0 auto;
+    padding: 0 8px 0 20px;
+    background: var(--parete);
+    border-radius: 18px;
+    box-shadow: 0 2px 10px rgba(21, 43, 37, 0.1);
+    transition: box-shadow 0.35s ease;
+  }
+  :global(.is-solid) .ar-top__bar {
+    box-shadow: 0 8px 28px rgba(21, 43, 37, 0.16);
   }
   .ar-name {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 0.3em;
     margin-right: auto;
-    font-stretch: 72%;
-    font-weight: 800;
-    font-size: 1.375rem;
+    padding: 10px 0;
+    font-family: var(--slab);
+    font-weight: 700;
+    font-size: 1.5rem;
     line-height: 1;
-    color: var(--inchiostro);
+    color: var(--anta);
     text-decoration: none;
     white-space: nowrap;
   }
   .ar-name span {
-    font-weight: 500;
+    font-family: var(--font-head);
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--grigio);
   }
   .ar-nav-main {
     display: none;
-    align-items: stretch;
   }
   .ar-nav-main a {
     display: flex;
     align-items: center;
-    padding: 0 0.9rem;
-    color: var(--inchiostro);
+    min-height: 48px;
+    padding: 0 0.8rem;
+    border-radius: 10px;
+    color: var(--anta);
     text-decoration: none;
-    font-weight: 500;
     font-size: 1rem;
-    background: linear-gradient(var(--minio), var(--minio)) 50% 100% / 0 4px no-repeat;
-    transition: background-size 0.3s ease;
+    transition: background-color 0.2s ease;
   }
   @media (hover: hover) and (pointer: fine) {
     .ar-nav-main a:hover {
-      background-size: calc(100% - 1.8rem) 4px;
+      background: #eef1ef;
     }
   }
   .ar-top__tel {
-    display: flex;
+    display: none;
     align-items: center;
-    gap: 0.5em;
-    padding: 0 0 0 0.9rem;
-    margin-left: 0.4rem;
-    border-left: 1px solid var(--inchiostro);
-    font-family: var(--mono);
-    font-weight: 500;
-    font-size: 0.9375rem;
-    color: var(--inchiostro);
+    gap: 0.45rem;
+    min-height: 48px;
+    padding: 0 0.8rem;
+    color: var(--anta);
+    font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
   }
-  .ar-top__k {
-    color: var(--grafite);
-    font-weight: 400;
+  .ar-top__cta {
+    display: none;
+    min-height: 48px;
+    padding: 0 1.1rem;
   }
   .ar-burger {
     display: grid;
     place-items: center;
     width: 48px;
-    margin-left: 0.6rem;
-    margin-right: -6px;
+    height: 48px;
     border: 0;
-    border-left: 1px solid var(--inchiostro);
-    background: transparent;
-    color: var(--inchiostro);
+    border-radius: 12px;
+    background: var(--anta);
+    color: var(--parete);
     cursor: pointer;
   }
   .ar-burger__lines {
     display: grid;
-    gap: 7px;
-    width: 22px;
+    gap: 6px;
+    width: 20px;
   }
   .ar-burger__lines i {
     display: block;
@@ -568,10 +653,10 @@ const ld = {
     background: currentColor;
   }
   .ar-burger[aria-expanded="true"] .ar-burger__lines i:first-child {
-    transform: translateY(4.5px) rotate(45deg);
+    transform: translateY(4px) rotate(45deg);
   }
   .ar-burger[aria-expanded="true"] .ar-burger__lines i:last-child {
-    transform: translateY(-4.5px) rotate(-45deg);
+    transform: translateY(-4px) rotate(-45deg);
   }
   @media (prefers-reduced-motion: no-preference) {
     .ar-burger__lines i {
@@ -579,27 +664,27 @@ const ld = {
     }
   }
   @media (max-width: 420px) {
-    .ar-name {
-      font-size: 1.2rem;
-    }
-    .ar-top__tel {
-      font-size: 0.875rem;
-      padding-left: 0.7rem;
+    .ar-name span {
+      display: none;
     }
   }
-  @media (min-width: 1060px) {
+  @media (min-width: 640px) {
+    .ar-top__tel {
+      display: flex;
+    }
+  }
+  @media (min-width: 1100px) {
     .ar-nav-main {
       display: flex;
+    }
+    .ar-top__cta {
+      display: inline-flex;
     }
     .ar-burger {
       display: none;
     }
-    .ar-top__tel {
-      padding-left: 1.25rem;
-      margin-left: 0.9rem;
-    }
   }
-  /* Phone menu: the same ruled sheet, big condensed entries. */
+  /* Phone menu: white sheet, big slab entries. */
   .ar-menu {
     position: fixed;
     inset: 0;
@@ -607,29 +692,25 @@ const ld = {
     display: grid;
     align-content: start;
     gap: 2rem;
-    padding: calc(var(--banner) + var(--top-h) + 1.5rem) var(--pad) 2rem;
-    background: var(--intonaco);
-    color: var(--inchiostro);
+    padding: calc(var(--banner) + 100px) var(--pad) 2rem;
+    background: var(--parete);
     overflow-y: auto;
   }
   .ar-menu nav {
     display: grid;
-    border-top: 2px solid var(--inchiostro);
   }
   .ar-menu nav a {
     display: block;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid var(--inchiostro);
-    color: inherit;
+    padding: 0.35rem 0;
+    color: var(--anta);
     text-decoration: none;
-    font-weight: 800;
-    font-stretch: 72%;
-    font-size: clamp(2rem, 9vw, 2.75rem);
-    line-height: 1.1;
+    font-family: var(--slab);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 9vw, 2.9rem);
+    line-height: 1.15;
   }
   .ar-menu__cta {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 0.6rem;
   }
   @media (prefers-reduced-motion: no-preference) {
@@ -644,421 +725,346 @@ const ld = {
     }
   }
 
-  /* ================= Hero: text, the site sign, and the photo it is hung on ================= */
+  /* ================= Hero: the finished bathroom fills the first screen ================= */
   .ar-hero {
+    overflow-x: clip;
+    padding-top: var(--banner);
+  }
+  .ar-hero :global(.ar-hero__cmp) {
+    --knob: 68px;
+    --tag-top: 98px;
+    --tag-x: max(var(--pad), 16px);
+    height: max(440px, calc(100svh - var(--banner) - 170px));
+    max-height: 900px;
+  }
+  .ar-hero :global(.ar-hero__cmp .cmp__media) {
+    border-radius: 0;
+  }
+  .ar-hero :global(.ar-hero__cmp .cmp__tag) {
+    padding: 8px 16px;
+    font-size: 16px;
+  }
+  .ar-hero__body {
+    position: relative;
+    z-index: 2;
     display: grid;
-    grid-template-columns:
-      [full-start] minmax(var(--pad), 1fr)
-      [in-start] minmax(0, 700px)
-      [mid] minmax(0, 540px)
-      [in-end] minmax(var(--pad), 1fr)
-      [full-end];
-    padding-top: calc(var(--banner) + var(--top-h) + clamp(28px, 4.5vw, 64px));
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    column-gap: clamp(24px, 3vw, 48px);
   }
-  .ar-hero__text {
-    grid-column: in-start / mid;
-    grid-row: 1;
-    padding-right: clamp(32px, 5vw, 72px);
-    padding-bottom: clamp(32px, 3vw, 44px);
+  /* A piece of white wall cut into the picture: it runs out to the left edge of the screen. */
+  .ar-hero__card {
+    position: relative;
+    margin-top: -150px;
+    padding: 34px 44px 0 0;
+    background: var(--parete);
+    border-radius: 0 var(--r) 0 0;
   }
-  .ar .ar-hero__text h1 {
-    font-weight: 800;
-    font-stretch: 72%;
-    font-size: clamp(2.5rem, 1.1rem + 4.4vw, 5.5rem);
-    line-height: 0.94;
-    letter-spacing: -0.01em;
-    max-width: 17ch;
+  .ar-hero__card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 100%;
+    width: 50vw;
+    background: var(--parete);
+  }
+  .ar .ar-hero__card h1 {
+    font-size: clamp(2.5rem, 0.6rem + 3.3vw, 3.6rem);
+    line-height: 1;
+    letter-spacing: -0.015em;
   }
   .ar-hero__sub {
-    margin-top: 1.5rem;
-    max-width: 40ch;
+    margin-top: 1rem;
+    max-width: 50ch;
+    color: var(--grigio);
     font-size: 1.1875rem;
-    color: var(--grafite);
   }
   .ar-hero__cta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem;
-    margin-top: 2rem;
+    gap: 0.75rem;
+    margin-top: 1.6rem;
   }
-  /* The sign: white board, thick black frame, fixed rows like the ones on site hoardings. */
-  /* It hangs over the top of the photo by --hang, like a sign fixed to the site hoarding. */
-  .ar-sign {
-    --hang: clamp(56px, 7vw, 112px);
-    grid-column: mid / in-end;
-    grid-row: 1;
-    align-self: end;
-    margin-bottom: calc(-1 * var(--hang));
-    position: relative;
-    z-index: 2;
-    background: var(--bianco);
-    border: 8px solid var(--inchiostro);
+  .ar-hero__aside {
+    padding-top: 28px;
   }
-  .ar-sign__head {
-    padding: 1.1rem 1.4rem 1.25rem;
-    background: var(--inchiostro);
-    color: var(--bianco);
-    font-weight: 800;
-    font-stretch: 72%;
-    font-size: clamp(1.75rem, 1.1rem + 1.6vw, 2.75rem);
-    line-height: 1;
+  .ar-hero__job {
+    color: var(--grigio);
   }
-  .ar-sign__head span {
+  .ar-hero__job strong {
     display: block;
-    margin-bottom: 0.45rem;
-    font-family: var(--mono);
-    font-weight: 400;
-    font-stretch: 100%;
-    font-size: 0.8125rem;
-    line-height: 1.3;
-    color: #d9d8d3;
+    color: var(--anta);
+    font-family: var(--slab);
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1.15;
+    margin-bottom: 0.35rem;
   }
-  .ar-sign__rows {
-    margin: 0;
-    font-family: var(--mono);
-    font-size: 1rem;
-    line-height: 1.4;
-  }
-  .ar-sign__rows div {
+  .ar-facts {
     display: grid;
-    grid-template-columns: 8.5rem minmax(0, 1fr);
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+    padding: 0;
+    list-style: none;
   }
-  .ar-sign__rows div + div {
-    border-top: 1px solid var(--inchiostro);
-  }
-  .ar-sign__rows dt {
-    padding: 1.15rem 0.75rem 1.15rem 1.4rem;
-    border-right: 1px solid var(--inchiostro);
-    font-weight: 400;
-    color: var(--grafite);
-  }
-  .ar-sign__rows dd {
-    margin: 0;
-    padding: 1.15rem 1.4rem 1.15rem 0.9rem;
-    font-weight: 500;
-  }
-  .ar-hero__media {
-    grid-column: full-start / full-end;
-    grid-row: 2;
+  .ar-facts li {
     position: relative;
-    height: clamp(300px, 36vw, 560px);
-    overflow: hidden;
-    background: #cfcdc7;
+    padding-left: 2rem;
+    color: var(--anta);
+    font-weight: 600;
   }
-  .ar-hero__media :global(.ar-hero__img) {
+  /* Oak tick, drawn with borders. */
+  .ar-facts li::before {
+    content: "";
+    position: absolute;
+    left: 0.25rem;
+    top: 0.3em;
+    width: 0.5rem;
+    height: 0.85rem;
+    border: solid var(--rovere-scuro);
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+  }
+  @media (max-width: 899px) {
+    .ar-hero :global(.ar-hero__cmp) {
+      --knob: 56px;
+      --tag-top: 92px;
+      height: max(320px, 52svh);
+    }
+    .ar-hero__body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ar-hero__card {
+      margin-top: -28px;
+      margin-inline: calc(-1 * var(--pad));
+      padding: 26px var(--pad) 0;
+      border-radius: var(--r) var(--r) 0 0;
+    }
+    .ar-hero__card::before {
+      content: none;
+    }
+    .ar .ar-hero__card h1 {
+      font-size: clamp(2.125rem, 1.2rem + 3.6vw, 3rem);
+      line-height: 1.02;
+    }
+    .ar-hero__sub {
+      font-size: 1.0625rem;
+    }
+    .ar-hero__aside {
+      padding-top: 32px;
+    }
+  }
+  @media (max-width: 599px) {
+    .ar-hero__cta {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.6rem;
+      margin-top: 1.3rem;
+    }
+    .ar-hero__job strong {
+      font-size: 1.375rem;
+    }
+  }
+  @media (min-width: 900px) and (max-width: 1199px) {
+    .ar-hero__body {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    }
+  }
+  /* Tablets: words beside the facts, so no half-empty row under the picture. */
+  @media (min-width: 600px) and (max-width: 899px) {
+    .ar-hero__body {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    }
+    .ar-hero__card {
+      margin-inline: calc(-1 * var(--pad)) 0;
+      padding: 26px 24px 0 var(--pad);
+      border-radius: 0 var(--r) 0 0;
+    }
+  }
+
+  /* ================= Services: the list drives one big picture ================= */
+  .ar-svc {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(28px, 4vw, 64px);
+    align-items: stretch;
+  }
+  .ar-svc__text {
+    min-width: 0;
+  }
+  .ar-svc__list {
+    margin: clamp(24px, 3vw, 40px) 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 6px;
+  }
+  .ar-svc__item {
+    position: relative;
+    padding: 16px 20px 18px 24px;
+    border-radius: var(--r-s);
+    transition: background-color 0.3s ease;
+  }
+  .ar-svc__item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 18px;
+    bottom: 18px;
+    width: 4px;
+    border-radius: 4px;
+    background: var(--rovere);
+    transform: scaleY(0);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ar-svc__item.is-on {
+    background: #f3ece3;
+  }
+  .ar-svc__item.is-on::before {
+    transform: scaleY(1);
+  }
+  .ar-svc__item p {
+    margin-top: 0.35rem;
+    color: var(--grigio);
+  }
+  .ar-svc__pic {
+    display: none;
+  }
+  .ar-svc__stage {
+    position: relative;
+    min-height: 520px;
+    border-radius: var(--r);
+    overflow: hidden;
+    background: #e9e4dc;
+  }
+  .ar-svc__stage :global(.ar-svc__shot) {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 50% 55%;
-  }
-  .ar-hero__after {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-  }
-  /* The minio line rides the left edge of the "after" window as it slides in. */
-  .ar-hero__after::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1;
-    width: 5px;
-    background: var(--minio);
     opacity: 0;
+    transition: opacity 0.6s ease;
   }
-  .ar-hero__tag {
-    position: absolute;
-    left: var(--pad);
-    bottom: 1rem;
-    z-index: 3;
-    padding: 0.3rem 0.6rem;
-    background: var(--inchiostro);
-    color: var(--bianco);
-    font-family: var(--mono);
-    font-weight: 500;
-    font-size: 0.8125rem;
-  }
-  .ar-hero__tag--dopo {
-    background: var(--minio-scuro);
-  }
-  @media (min-width: 1240px) {
-    .ar-hero__tag {
-      left: calc((100% - var(--max)) / 2);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .ar-hero__tag--prima {
-      opacity: 0;
-    }
-  }
-  /* Transforms and opacity only: the window slides in while its picture slides back, so the
-     bathroom "renovates itself" behind the line without moving. */
-  @media (prefers-reduced-motion: no-preference) {
-    .ar-hero__after {
-      animation: ar-slide 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.9s both;
-    }
-    .ar-hero__after > :global(.ar-hero__img) {
-      animation: ar-slide-back 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.9s both;
-    }
-    .ar-hero__after::before {
-      animation: ar-line 2.4s linear 0.9s both;
-    }
-    .ar-hero__tag--prima {
-      animation: ar-out 0.4s ease 2.9s both;
-    }
-    .ar-hero__tag--dopo {
-      animation: ar-in 0.4s ease 3.1s both;
-    }
-  }
-  @keyframes ar-slide {
-    from {
-      transform: translateX(100%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-  @keyframes ar-slide-back {
-    from {
-      transform: translateX(-100%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-  @keyframes ar-line {
-    0%,
-    88% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-    }
-  }
-  @keyframes ar-out {
-    to {
-      opacity: 0;
-    }
-  }
-  @keyframes ar-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  .ar-svc__stage :global(.ar-svc__shot.is-on) {
+    opacity: 1;
   }
   @media (max-width: 899px) {
-    .ar-hero {
-      grid-template-columns: [full-start] var(--pad) [in-start] minmax(0, 1fr) [in-end] var(--pad) [full-end];
+    .ar-svc {
+      grid-template-columns: minmax(0, 1fr);
     }
-    .ar-hero__text {
-      grid-column: in-start / in-end;
-      padding-right: 0;
-      padding-bottom: 1.75rem;
+    .ar-svc__stage {
+      display: none;
     }
-    .ar-sign {
-      grid-column: in-start / in-end;
-      grid-row: 2;
-      align-self: start;
-      margin-bottom: 0;
-      border-width: 6px;
-    }
-    .ar-hero__media {
-      grid-row: 3;
-      height: auto;
-      aspect-ratio: 4 / 3;
-      margin-top: -2.5rem; /* the sign overlaps the top of the photo */
-    }
-  }
-  @media (max-width: 599px) {
-    .ar-hero__sub {
-      font-size: 1.0625rem;
-      margin-top: 1.1rem;
-    }
-    .ar-hero__cta {
-      margin-top: 1.4rem;
-    }
-    .ar-sign__head {
-      padding: 0.8rem 1rem 0.9rem;
-    }
-    .ar-sign__rows {
-      font-size: 0.875rem;
-    }
-    .ar-sign__rows div {
-      grid-template-columns: 7.25rem minmax(0, 1fr);
-    }
-    .ar-sign__rows dt {
-      padding: 0.65rem 0.6rem 0.65rem 0.9rem;
-    }
-    .ar-sign__rows dd {
-      padding: 0.65rem 0.9rem 0.65rem 0.7rem;
-    }
-  }
-
-  /* ================= Services: sticky heading, a ruled list with a picture per line ================= */
-  .ar-svc {
-    display: grid;
-    gap: 2rem;
-  }
-  .ar-svc > * {
-    min-width: 0;
-  }
-  .ar-svc__big {
-    display: none;
-  }
-  .ar-svc__list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    border-top: 2px solid var(--inchiostro);
-  }
-  .ar-svc__item {
-    display: grid;
-    grid-template-columns: 104px minmax(0, 1fr);
-    gap: 1rem;
-    align-items: center;
-    padding-block: 1rem;
-    border-bottom: 1px solid var(--inchiostro);
-  }
-  .ar-svc__pic :global(img) {
-    display: block;
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-  }
-  .ar-svc__item p {
-    margin-top: 0.35rem;
-    color: var(--grafite);
-    max-width: 46ch;
-  }
-  @media (max-width: 599px) {
     .ar-svc__item {
-      align-items: start;
+      padding: 0;
+      background: none;
     }
-    .ar-svc__item p {
-      font-size: 1rem;
+    .ar-svc__item.is-on {
+      background: none;
     }
-  }
-  @media (min-width: 900px) {
-    .ar-svc {
-      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-      gap: clamp(2.5rem, 5vw, 5rem);
-      align-items: start;
+    .ar-svc__item::before {
+      content: none;
     }
-    /* The side column is as tall as the list: its picture takes whatever height is left. */
-    .ar-svc {
-      align-items: stretch;
-    }
-    .ar-svc__side {
-      display: flex;
-      flex-direction: column;
-    }
-    .ar-svc__big {
+    .ar-svc__pic {
       display: block;
-      position: relative;
-      flex: 1 1 auto;
-      min-height: 240px;
-      margin-top: 2rem;
+      aspect-ratio: 4 / 3;
+      margin-bottom: 0.9rem;
+      border-radius: var(--r);
       overflow: hidden;
+      background: #e9e4dc;
     }
-    .ar-svc__big :global(img) {
-      position: absolute;
-      inset: 0;
+    .ar-svc__pic :global(img) {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    .ar-svc__item {
-      grid-template-columns: 240px minmax(0, 1fr);
-      gap: clamp(1.5rem, 3vw, 2.5rem);
-      padding-block: 1.25rem;
-    }
-    /* Picture about as tall as the name and two lines of text beside it: no empty block in the row. */
-    .ar-svc__pic :global(img) {
-      aspect-ratio: 16 / 9;
-    }
-    .ar-svc__item p {
-      max-width: none;
+  }
+  @media (min-width: 761px) and (max-width: 899px) {
+    .ar-svc__list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 20px;
     }
   }
 
-  /* ================= Works: a catalogue of jobs, ruled like a table ================= */
-  .ar-jobs {
-    list-style: none;
+  /* ================= Works: a gallery of sliders, one big ================= */
+  .ar-gal {
     margin: 0;
     padding: 0;
+    list-style: none;
     display: grid;
-    border-top: 2px solid var(--inchiostro);
+    gap: clamp(14px, 1.6vw, 22px);
   }
-  .ar-job {
+  .ar-gal__item {
     min-width: 0;
-    padding-block: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--inchiostro);
   }
-  .ar-job__meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.4rem 1.5rem;
-    margin-bottom: 0.9rem;
+  .ar-gal :global(.cmp) {
+    --cmp-focus: var(--rovere-chiaro);
+    height: 100%;
+    border-radius: var(--r);
   }
-  .ar-job__data {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1.25rem;
-    margin: 0;
-    font-family: var(--mono);
-    font-size: 0.875rem;
+  .ar-gal :global(.cmp__media) {
+    aspect-ratio: 16 / 10;
+    height: auto;
   }
-  .ar-job__data div {
-    display: flex;
-    gap: 0.5em;
+  .ar-gal__cap {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+    padding: 10px 14px;
+    border-radius: var(--r-s);
+    background: var(--parete);
+    color: var(--grigio);
+    font-size: 0.9375rem;
+    line-height: 1.3;
+    pointer-events: none;
   }
-  .ar-job__data dt {
-    color: var(--grafite);
+  .ar .ar-gal__cap h3 {
+    color: var(--anta);
+    font-size: 1.25rem;
+    line-height: 1.1;
   }
-  .ar-job__data dd {
-    margin: 0;
-    font-weight: 500;
-  }
-  /* The slider's caption repeats the row data above it (title, zone, days); the slider's own
-     label and picture alts still carry it. */
-  .ar-job :global(figcaption) {
-    display: none;
-  }
-  .ar-job :global(.ba__knob) {
-    border-radius: 0;
-    box-shadow: none;
-    border: 2px solid var(--inchiostro);
-  }
-  .ar-job :global(.ba__line) {
-    width: 4px;
-    margin-left: -2px;
-  }
-  .ar-job :global(.ba__tag) {
-    border-radius: 0;
-    background: var(--inchiostro);
-    font-family: var(--mono);
-    font-weight: 500;
-  }
-  .ar-job :global(.ba__media:has(.ba__range:focus-visible)) {
-    outline-color: var(--minio-scuro);
-  }
-  .ar-more {
-    margin-top: 1.5rem;
-  }
-  @media (max-width: 599px) {
-    .ar-more {
-      width: 100%;
+  /* Tablets: the featured job on its own row, then pairs; the last job closes full width. */
+  @media (min-width: 600px) and (max-width: 899px) {
+    .ar-gal {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ar-gal__item--big,
+    .ar-gal__item:last-child {
+      grid-column: 1 / -1;
     }
   }
-  /* Only on phones, and only while the list is short (Demo.astro adds .is-on). */
+  @media (min-width: 900px) {
+    .ar-gal {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .ar-gal__item--big {
+      grid-column: 1 / 3;
+      grid-row: 1 / 3;
+    }
+    .ar-gal__item--big :global(.cmp__media) {
+      aspect-ratio: auto;
+      height: 100%;
+    }
+    .ar-gal__item--big :global(.cmp) {
+      --knob: 68px;
+    }
+    .ar-gal__item--big .ar-gal__cap {
+      left: 20px;
+      bottom: 20px;
+      padding: 16px 22px;
+      font-size: 1.0625rem;
+    }
+    .ar .ar-gal__item--big .ar-gal__cap h3 {
+      font-size: clamp(1.75rem, 1.2rem + 1vw, 2.4rem);
+      margin-bottom: 0.15rem;
+    }
+  }
+  .ar-more {
+    margin-top: 1.25rem;
+    width: 100%;
+  }
   .ar-more:not(:global(.is-on)) {
     display: none;
   }
@@ -1067,191 +1073,277 @@ const ld = {
       display: none;
     }
   }
-  @media (min-width: 761px) {
-    .ar-jobs {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .ar-job:nth-child(odd) {
-      padding-right: clamp(1.25rem, 2.5vw, 2rem);
-      border-right: 1px solid var(--inchiostro);
-    }
-    .ar-job:nth-child(even) {
-      padding-left: clamp(1.25rem, 2.5vw, 2rem);
-    }
-  }
 
-  /* ================= How we work: the phases, set like the lines of a written quote ================= */
-  /* Section heads: title and note side by side on computers, the note lined up with a column of the
-     ruled list below it (the jobs' second column, the phases' description column), so neither half is empty. */
-  .ar-doc__head {
-    margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
-  }
-  @media (min-width: 900px) {
-    .ar-doc__head {
-      display: grid;
-      align-items: start;
-    }
-    .ar-doc__head .ar-lead {
-      margin-top: 0;
-      padding-top: 0.4em; /* the note's first line sits on the title's first line */
-    }
-    .ar-doc__head--jobs,
-    .ar-doc__head--zone {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: calc(2 * clamp(1.25rem, 2.5vw, 2rem));
-    }
-    .ar-doc__head--fasi {
-      grid-template-columns: 9rem minmax(0, 4fr) minmax(0, 7fr);
-      column-gap: 2rem;
-    }
-    .ar-doc__head--fasi h2 {
-      grid-column: 1 / 3;
-    }
-  }
-  .ar-fasi {
-    list-style: none;
+  /* ================= How we work: the same bathroom, a step further each time ================= */
+  .ar-steps {
+    --gap: clamp(16px, 2vw, 28px);
     margin: 0;
     padding: 0;
-    border-top: 6px solid var(--inchiostro);
-  }
-  .ar-fasi li {
+    list-style: none;
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.3rem;
-    padding-block: 1.1rem;
-    border-bottom: 1px solid var(--inchiostro);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--gap);
   }
-  .ar-fasi li:last-child {
-    border-bottom-width: 2px;
+  .ar-step {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
   }
-  .ar-fasi__n {
-    font-family: var(--mono);
-    font-weight: 500;
-    font-size: 0.875rem;
-    color: var(--minio-scuro);
+  .ar-step__pic {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--r);
+    overflow: hidden;
+    background: #e9e4dc;
   }
-  .ar-fasi p {
-    color: var(--grafite);
-    max-width: 52ch;
+  .ar-step__pic :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
-  @media (min-width: 900px) {
-    .ar-fasi li {
-      grid-template-columns: 9rem minmax(0, 4fr) minmax(0, 7fr);
-      gap: 2rem;
-      align-items: baseline;
-      padding-block: 1.5rem;
+  .ar-step__after {
+    position: absolute;
+    inset: 0;
+    clip-path: inset(0 0 0 calc((100 - var(--done)) * 1%));
+  }
+  .ar-step__seam {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc((100 - var(--done)) * 1%);
+    width: 3px;
+    margin-left: -1.5px;
+    background: var(--parete);
+  }
+  /* The track: a dot per phase on one line that runs under the pictures. */
+  .ar-step__dot {
+    position: relative;
+    display: block;
+    height: 18px;
+    margin: 22px 0 18px;
+  }
+  .ar-step__dot::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--rovere);
+    box-shadow: 0 0 0 4px var(--parete);
+    z-index: 1;
+  }
+  .ar-step__dot::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: calc(-1 * var(--gap));
+    top: 8px;
+    height: 2px;
+    background: var(--rovere);
+  }
+  .ar-step:last-child .ar-step__dot::after {
+    right: 0;
+    background: linear-gradient(90deg, var(--rovere), var(--rovere-chiaro));
+  }
+  .ar-step:last-child .ar-step__dot::before {
+    background: var(--anta);
+  }
+  .ar-step p {
+    margin-top: 0.5rem;
+    color: var(--grigio);
+  }
+  @media (max-width: 899px) {
+    .ar-steps {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
     }
-    .ar-fasi__n {
-      font-size: 0.9375rem;
+    .ar-step {
+      grid-template-columns: 112px minmax(0, 1fr);
+      grid-template-rows: auto;
+      column-gap: 18px;
+      padding-bottom: 28px;
     }
-    .ar-fasi p {
-      font-size: 1.125rem;
+    .ar-step:last-child {
+      padding-bottom: 0;
+    }
+    .ar-step__pic {
+      aspect-ratio: 1;
+      grid-row: 1;
+      border-radius: var(--r-s);
+    }
+    .ar-step__dot {
+      display: none;
+    }
+    /* On phones the line runs down from picture to picture. */
+    .ar-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 55px;
+      top: 112px;
+      bottom: 0;
+      width: 2px;
+      background: var(--rovere);
+    }
+    .ar-step__text {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: center;
+    }
+    .ar .ar-step h3 {
+      font-size: 1.375rem;
+    }
+    .ar-step p {
+      font-size: 1rem;
     }
   }
 
-  /* ================= Zones: one flowing line, no grid to leave half empty ================= */
+  /* Tablets: two phases a row, the picture on top. */
+  @media (min-width: 600px) and (max-width: 899px) {
+    .ar-steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 32px 20px;
+    }
+    .ar-step {
+      grid-template-columns: minmax(0, 1fr);
+      padding-bottom: 0;
+    }
+    .ar-step__pic {
+      aspect-ratio: 4 / 3;
+      border-radius: var(--r);
+    }
+    .ar-step:not(:last-child)::after {
+      content: none;
+    }
+    .ar-step__text {
+      grid-column: 1;
+      grid-row: 2;
+      margin-top: 14px;
+    }
+  }
+
+  /* ================= Zones: big oak-tinted band, the zones as large chips ================= */
+  .ar-zone {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(28px, 4vw, 64px);
+    align-items: center;
+  }
+  .ar-zone__addr {
+    margin: 0.6rem 0 1.5rem;
+    color: var(--anta);
+    font-weight: 600;
+  }
   .ar-zones {
-    list-style: none;
     margin: 0;
     padding: 0;
+    list-style: none;
     display: flex;
     flex-wrap: wrap;
-    font-weight: 500;
-    font-stretch: 75%;
-    font-size: clamp(1.9rem, 1rem + 3vw, 3.75rem);
-    line-height: 1.12;
+    gap: 12px;
   }
   .ar-zones li {
-    white-space: nowrap;
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 0.55em 0.9em;
+    border-radius: var(--r-s);
+    background: var(--parete);
+    color: var(--anta);
+    font-family: var(--slab);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 1rem + 1.6vw, 2.75rem);
+    line-height: 1.05;
   }
-  .ar-zones li:not(:last-child)::after {
-    content: ",";
-    margin-right: 0.3em;
-  }
-  .ar-zones li:last-child::after {
-    content: ".";
-  }
-  .ar-zone__note {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between; /* the ruled line is filled end to end, like a form footer */
-    gap: 0 1.5rem;
-    margin-top: clamp(1.25rem, 2.5vw, 2rem);
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--inchiostro);
-    font-family: var(--mono);
-    font-size: 0.9375rem;
-  }
-  .ar-zone__note a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    color: var(--minio-scuro);
-    font-weight: 500;
-    text-underline-offset: 0.2em;
-  }
-
-  /* ================= Quote request ================= */
-  .ar-quote-grid {
-    display: grid;
-    gap: 2rem;
-  }
-  .ar-quote-grid > * {
-    min-width: 0;
-  }
-  @media (min-width: 900px) {
-    .ar-quote-grid {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      gap: clamp(2.5rem, 5vw, 5rem);
-      align-items: start;
+  @media (max-width: 599px) {
+    .ar-zone {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ar-zones {
+      gap: 8px;
     }
   }
-  .ar-quote-alt {
-    margin: 1.75rem 0 0;
-    border-top: 2px solid var(--inchiostro);
-    font-family: var(--mono);
-    font-size: 0.9375rem;
+
+  /* ================= Quote request: green band, white sheet ================= */
+  .ar-quote {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(28px, 4vw, 64px);
+    align-items: stretch;
   }
-  .ar-quote-alt div {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0 1rem;
-    border-bottom: 1px solid var(--inchiostro);
+  .ar-quote__alt {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: clamp(24px, 3vw, 40px);
   }
-  .ar-quote-alt dt {
-    color: var(--grafite);
+  .ar-alt {
+    display: grid;
+    gap: 0.15rem;
+    min-height: 56px;
+    padding: 18px 22px;
+    border-radius: var(--r);
+    background: var(--anta-2);
+    color: var(--parete);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
   }
-  .ar-quote-alt dd {
-    margin: 0;
+  .ar-alt__k {
+    color: var(--nebbia);
   }
-  .ar-quote-alt a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 48px;
-    color: var(--inchiostro);
-    font-weight: 500;
-    text-underline-offset: 0.2em;
+  .ar-alt__v {
+    font-family: var(--slab);
+    font-weight: 700;
+    font-size: clamp(1.375rem, 1rem + 1vw, 1.75rem);
+    line-height: 1.1;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .ar-alt:hover {
+      background: #355a51;
+    }
   }
   .ar-form {
-    --fpad: clamp(20px, 3vw, 36px);
+    --fpad: clamp(20px, 3vw, 40px);
     display: grid;
     gap: 1rem;
-    padding: 0 var(--fpad) var(--fpad);
-    background: var(--bianco);
-    border: 2px solid var(--inchiostro);
+    align-content: start;
+    padding: var(--fpad);
+    border-radius: var(--r);
+    background: var(--parete);
+    color: var(--corpo);
   }
-  /* The progress line is the sheet's ink header band, like the head of the site sign. */
+  /* The sheet's head: a light oak strip with the step and its three segments. */
+  .ar-form__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: calc(-1 * var(--fpad)) calc(-1 * var(--fpad)) 0.5rem;
+    padding: 14px var(--fpad);
+    border-radius: var(--r) var(--r) 0 0;
+    background: #f3ece3;
+  }
   .ar-form__progress {
-    margin: 0 calc(-1 * var(--fpad)) 0.5rem;
-    padding: 0.7rem var(--fpad);
-    background: var(--inchiostro);
-    color: var(--bianco);
-    font-family: var(--mono);
-    font-weight: 500;
-    font-size: 0.875rem;
+    color: var(--rovere-scuro);
+    font-weight: 600;
+  }
+  .ar-form__bar {
+    display: flex;
+    gap: 6px;
+  }
+  .ar-form__bar i {
+    width: 40px;
+    height: 6px;
+    border-radius: 6px;
+    background: #ffffff;
+    transition: background-color 0.3s ease;
+  }
+  .ar-form__bar i:first-child,
+  .ar-form:has([data-dstep]:nth-of-type(2).is-current) .ar-form__bar i:nth-child(2),
+  .ar-form:has([data-dstep]:nth-of-type(3).is-current) .ar-form__bar i:nth-child(-n + 3) {
+    background: var(--rovere);
   }
   .ar-form fieldset {
     border: 0;
@@ -1264,8 +1356,7 @@ const ld = {
   .ar-form legend {
     padding: 0;
     margin-bottom: 0.75rem;
-    font-weight: 800;
-    font-size: clamp(1.6rem, 1.2rem + 1vw, 2.1rem);
+    font-size: clamp(1.75rem, 1.3rem + 1.1vw, 2.4rem);
     line-height: 1.05;
   }
   :global(.ar-form.is-steps) [data-dstep]:not(.is-current) {
@@ -1273,10 +1364,10 @@ const ld = {
   }
   .ar .ar-sub legend {
     font-family: var(--font-head);
-    font-stretch: 100%;
     font-size: 1.0625rem;
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: 0.5rem;
+    color: var(--corpo);
   }
   .ar-opts {
     display: flex;
@@ -1286,68 +1377,91 @@ const ld = {
   .ar-opt {
     position: relative;
   }
-  /* Phones: options in two equal columns, an odd last one spans both (no ragged half-empty rows). */
+  /* Tablets and computers: the first question's answers are big tiles that fill the sheet. */
+  @media (min-width: 600px) {
+    .ar-opts--big {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .ar-opts--big .ar-opt {
+      grid-column: span 2;
+    }
+    .ar-opts--big .ar-opt:nth-child(n + 4) {
+      grid-column: span 3;
+    }
+    .ar-form .ar-nav .ar-btn {
+      flex: 1 1 0;
+    }
+    .ar-opts--big .ar-opt span {
+      width: 100%;
+      min-height: 76px;
+      font-size: 1.125rem;
+    }
+  }
   @media (max-width: 599px) {
     .ar-opts {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr 1fr;
     }
     .ar-opt:last-child:nth-child(odd) {
       grid-column: 1 / -1;
     }
     .ar-opt span {
-      display: grid;
       width: 100%;
-    }
-    .ar-nav > .ar-btn {
-      flex: 1 1 0;
     }
   }
   .ar-opt input {
     position: absolute;
-    inset: 0;
-    margin: 0;
     opacity: 0;
-    cursor: pointer;
+    width: 1px;
+    height: 1px;
   }
   .ar-opt span {
-    display: inline-grid;
-    place-items: center;
-    min-height: 48px;
-    padding: 0 1.1rem;
-    border: 2px solid var(--inchiostro);
-    background: var(--bianco);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 0 1.2rem;
+    border-radius: var(--r-s);
+    background: #f3ece3;
+    color: var(--anta);
     font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
   }
   .ar-opt input:checked + span {
-    background: var(--inchiostro);
-    color: var(--bianco);
+    background: var(--anta);
+    color: var(--parete);
   }
   .ar-opt input:focus-visible + span {
-    outline: 3px solid var(--minio-scuro);
+    outline: 3px solid var(--anta);
     outline-offset: 2px;
   }
   .ar-field {
     display: grid;
-    gap: 0.35rem;
+    gap: 0.4rem;
     font-weight: 600;
   }
   .ar-field input,
   .ar-field select {
+    min-height: 56px;
+    padding: 0 1rem;
+    border: 2px solid transparent;
+    border-radius: var(--r-s);
+    background: #f3ece3;
+    color: var(--corpo);
     font: inherit;
     font-weight: 400;
-    min-height: 52px;
-    padding: 0 0.8rem;
-    border: 2px solid var(--inchiostro);
-    border-radius: 0;
-    background: var(--bianco);
-    color: var(--inchiostro);
+  }
+  .ar-field input:focus-visible,
+  .ar-field select:focus-visible {
+    border-color: var(--anta);
+    outline: none;
   }
   .ar-err {
-    margin: 0;
-    color: #a3230f;
-    font-weight: 700;
-    font-size: 0.95rem;
+    color: #a4231b;
+    font-weight: 600;
+    font-size: 0.9375rem;
   }
   .ar-err:empty {
     display: none;
@@ -1356,94 +1470,78 @@ const ld = {
     display: flex;
     flex-wrap: wrap;
     gap: 0.6rem;
-    margin-top: 0.5rem;
+    margin-top: 0.4rem;
   }
   .ar-small {
-    font-size: 0.875rem;
-    color: var(--grafite);
+    color: var(--grigio);
+    font-size: 0.9375rem;
+  }
+  @media (max-width: 899px) {
+    .ar-quote {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 599px) {
+    .ar-form__bar i {
+      width: 28px;
+    }
   }
 
-  /* ================= Footer: the bottom of a letterhead ================= */
+  /* ================= Footer: deep green, the name big ================= */
   .ar-foot {
-    padding-block: clamp(40px, 6vw, 72px) clamp(24px, 3vw, 36px);
-    background: var(--intonaco);
-    border-top: 6px solid var(--inchiostro);
+    background: var(--anta-notte);
+    color: var(--nebbia);
+    padding-block: clamp(48px, 5vw, 72px) clamp(32px, 3vw, 48px);
   }
   .ar-foot__in {
     display: grid;
-    gap: 1.5rem 3rem;
+    gap: 2rem;
   }
   .ar-foot__name {
-    font-weight: 800;
-    font-stretch: 72%;
-    font-size: clamp(2.25rem, 1.2rem + 3.2vw, 4rem);
-    line-height: 0.95;
-    max-width: 9ch;
+    color: var(--parete);
+    font-family: var(--slab);
+    font-weight: 700;
+    font-size: clamp(2.25rem, 1.2rem + 3.6vw, 4.5rem);
+    line-height: 1;
   }
   .ar-foot__data {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, auto));
+    justify-content: space-between;
+    gap: 1.25rem 2rem;
     margin: 0;
-    border-top: 2px solid var(--inchiostro);
-    font-family: var(--mono);
-    font-size: 0.875rem;
-  }
-  .ar-foot__data div {
-    padding: 0.6rem 0.75rem 0.5rem 0;
-    border-bottom: 1px solid var(--inchiostro);
   }
   .ar-foot__data dt {
-    color: var(--grafite);
+    font-size: 0.9375rem;
   }
   .ar-foot__data dd {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-    margin: 0;
-    font-weight: 500;
-    overflow-wrap: anywhere;
+    margin: 0.2rem 0 0;
+    color: var(--parete);
+    font-weight: 600;
   }
   .ar-foot__data a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    color: var(--inchiostro);
-    text-underline-offset: 0.2em;
+    margin-block: -10px;
+    color: var(--parete);
+    text-decoration: underline;
+    text-decoration-color: var(--rovere);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.25em;
   }
   .ar-foot__note {
-    grid-column: 1 / -1;
-    font-size: 0.875rem;
-    color: var(--grafite);
+    font-size: 0.9375rem;
   }
   .ar-foot__note a {
     display: inline-block;
-    padding-block: 0.75rem;
-    color: var(--inchiostro);
-    font-weight: 600;
+    padding: 0.7rem 0;
+    color: var(--parete);
+    text-underline-offset: 0.2em;
   }
-  @media (min-width: 900px) {
-    .ar-foot__in {
-      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-      align-items: start;
-    }
+  @media (max-width: 899px) {
     .ar-foot__data {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .ar-foot__data div:not(:nth-child(3n + 1)) {
-      padding-left: 0.9rem;
-      border-left: 1px solid var(--inchiostro);
-    }
-  }
-  /* Phones and tablets (name above the data): on one line where it fits, so no half-empty line under the quote form. */
-  @media (max-width: 899px) {
-    .ar-foot__name {
-      max-width: none;
-    }
-  }
-  @media (max-width: 899px) {
-    .ar-foot__data div:nth-child(even) {
-      padding-left: 0.75rem;
-      border-left: 1px solid var(--inchiostro);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -1458,12 +1556,11 @@ const ld = {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    min-height: 56px;
+    min-height: 58px;
     padding-bottom: env(safe-area-inset-bottom);
-    background: var(--minio);
-    color: var(--bianco);
-    border-top: 2px solid var(--inchiostro);
-    font-weight: 700;
+    background: var(--anta);
+    color: var(--parete);
+    font-weight: 600;
     font-size: 1.125rem;
     text-decoration: none;
   }
@@ -1488,4 +1585,13 @@ const ld = {
   const sticky = document.querySelector<HTMLElement>(".ar-sticky");
   const hero = document.querySelector<HTMLElement>(".ar-hero");
   if (sticky && hero) new IntersectionObserver(([e]) => sticky.classList.toggle("is-on", !e.isIntersecting), { rootMargin: "-40% 0px 0px 0px" }).observe(hero);
+  // Services: the line the pointer is on picks the big picture (decorative; on phones every
+  // service shows its own picture).
+  const items = Array.from(document.querySelectorAll<HTMLElement>("[data-svc]"));
+  const shots = Array.from(document.querySelectorAll<HTMLElement>("[data-shot]"));
+  const pick = (i: number) => {
+    items.forEach((el, k) => el.classList.toggle("is-on", k === i));
+    shots.forEach((el, k) => el.classList.toggle("is-on", k === i));
+  };
+  items.forEach((el, i) => el.addEventListener("pointerenter", () => pick(i)));
 </script>

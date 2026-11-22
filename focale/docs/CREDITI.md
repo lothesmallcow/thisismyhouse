@@ -33,6 +33,9 @@ Presi dal file di Claude Design "Analisi del sito v4" (che li includeva da Googl
 
 ## Caratteri dei siti dimostrativi (22 novembre 2026)
 
-Archivo (Omnibus-Type), IBM Plex Mono (IBM), Bodoni Moda (indestructible type*), Hanken Grotesk (Alfredo Marco Pradil),
+Zilla Slab e Fira Sans (Mozilla Foundation, Typotheque e Carrois Apostrophe; Arcadi, dal 22 novembre 2026: pesi 600 e 700
+di Zilla Slab, 400 e 600 di Fira Sans, solo latino, da `@fontsource/zilla-slab` e `@fontsource/fira-sans` 5.3.0),
+Bodoni Moda (indestructible type*), Hanken Grotesk (Alfredo Marco Pradil),
 Sofia Sans e Sofia Sans Extra Condensed (Lettersoup), Familjen Grotesk (Familjen STHLM): tutti con licenza SIL Open Font
 License 1.1, presi dai pacchetti Fontsource e ospitati sul sito (public/fonts/demo/). Nessuna richiesta a server esterni.
+Archivo e IBM Plex Mono (il vecchio aspetto di Arcadi) sono stati tolti.
