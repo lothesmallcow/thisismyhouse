@@ -15,6 +15,7 @@ import { CONSENT } from "../../scorer/consent";
 import { breadcrumbs } from "../../lib/schema";
 import { examples } from "../../scorer/samples";
 import ExampleSite from "../../components/ExampleSite.astro";
+import { BANDS } from "../../scorer/scale";
 
 const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
 // For the waiting ring: each sector's categories, weights and check titles.
@@ -112,6 +113,17 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
               <span class="az-ring__s">su 100</span>
             </div>
           </div>
+          <div class="az-scale" data-az-scale>
+            <ol class="az-scale__bands" aria-label="Come leggere il voto">
+              {BANDS.map((b) => (
+                <li class="az-scale__band" data-min={b.min} data-max={b.max}>
+                  <span class="az-scale__r">{b.min}-{b.max}</span>
+                  <span class="az-scale__w">{b.word}</span>
+                </li>
+              ))}
+            </ol>
+            <p class="az-scale__line" data-az-scale-line></p>
+          </div>
         </div>
         <ul class="az-cats" data-az-cats></ul>
       </section>
@@ -129,13 +141,14 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
       <section class="az-stack az-stack--24" data-parte="correzioni" data-az-fixes-wrap>
         <div class="az-split">
           <h2 class="az-h2" data-az-fixes-title>Da sistemare per prime</h2>
-          <p class="az-climb"><span data-az-climb-from></span> <span class="az-blue">→ <span data-az-climb-to></span></span></p>
+          <p class="az-climb" data-az-climb><span data-az-climb-from></span> <span class="az-blue">→ <span data-az-climb-to></span></span></p>
+          <p class="az-climb-note" data-az-climb-note hidden>Sopra 90 il sito è già praticamente perfetto: questi sono ritocchi, non urgenze.</p>
         </div>
         <ol class="az-fixes" data-az-fixes></ol>
       </section>
 
       <section class="az-stack az-stack--12" data-parte="avvisi" data-az-flags-wrap>
-        <h2 class="az-h-small">Da verificare · non tolgono punti</h2>
+        <h2 class="az-h-small">Da verificare, non tolgono punti</h2>
         <ul class="az-flags" data-az-flags></ul>
       </section>
 
@@ -549,6 +562,55 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     font-size: 13px;
     color: var(--az-soft);
     margin-top: 2px;
+  }
+  .az-scale {
+    width: min(100%, 360px);
+    margin-top: 28px;
+    display: grid;
+    gap: 12px;
+  }
+  .az-scale__bands {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .az-scale__band {
+    display: grid;
+    gap: 2px;
+    padding: 8px 6px;
+    border-radius: 10px;
+    background: #f5f5f7;
+    color: var(--az-soft);
+    text-align: center;
+  }
+  .az-scale__band.is-here {
+    background: #1d1d1f;
+    color: #fff;
+  }
+  .az-scale__r {
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .az-scale__w {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+  .az-scale__line {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.45;
+    text-align: center;
+    color: var(--az-soft);
+  }
+  .az-climb-note {
+    margin: 0;
+    max-width: 34ch;
+    font-size: 15px;
+    color: var(--az-soft);
   }
   .az-cats {
     list-style: none;

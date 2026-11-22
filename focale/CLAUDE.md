@@ -221,6 +221,10 @@ Schibsted TTFs: it cannot read woff2).
   waiting (ring builds while check names go by), report (ring by category, summary, fixes with the score
   climbing, flags, every check), error (by API `code`). Prices in offer.json = site.ts (600/900/1.200 + Cura).
   The "→ N" comparison uses benchmark.json only; without a measured demo for the sector it shows no number.
+- Score bands (Lorenzo, 22 Nov 2026: our sites need not be 100): src/scorer/scale.ts is the one source. 0-49 Da sistemare,
+  50-74 Discreto, 75-89 Buono, 90-100 Ottimo = "praticamente perfetto". The report and the home examples show the four
+  bands with the current one marked; from 90 up there is no "→ 100" climb, the fixes are called "ritocchi". Never
+  present 100 as the goal.
 - Render report strings with textContent only: "found" sentences quote the analysed page.
 - prospects/ (batch CLI output) is git-ignored: other businesses' results stay private.
 - reports/Requisiti siti per settore.md: per-sector requirements and build checklists for future sites.

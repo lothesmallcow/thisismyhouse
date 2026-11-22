@@ -8,6 +8,7 @@
  */
 import type { FullAnalysis } from "../scorer/analyze";
 import type { Report, SectorId } from "../scorer/types";
+import { verdict, bandOf, PRACTICALLY_PERFECT } from "../scorer/scale";
 
 interface Pkg {
   id: string;
@@ -47,7 +48,6 @@ const colour = (id: string) => `oklch(0.72 0.15 ${HUE[id] ?? 250})`;
 const STATUS_COLOUR: Record<string, string> = { pass: "#34C759", partial: "#FF9F0A", fail: "#FF3B30", unmeasured: "#AEAEB2" };
 const STATUS_WORD: Record<string, string> = { pass: "Superato", partial: "In parte", fail: "Non superato", unmeasured: "Non misurato" };
 
-const verdict = (v: number) => (v >= 90 ? "Ottimo" : v >= 75 ? "Buono" : v >= 50 ? "Discreto" : "Da sistemare");
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, ...kids: (Node | string | null | undefined | false)[]) {
   const e = document.createElement(tag);
@@ -332,6 +332,14 @@ export function initScorer() {
     const v = verdict(r.total);
     $("[data-az-ring-wrap]").setAttribute("aria-label", `Voto ${r.total} su 100, ${v.toLowerCase()}`);
     $("[data-az-verdict]").textContent = v;
+    const band = bandOf(r.total);
+    document.querySelectorAll<HTMLElement>(".az-scale__band").forEach((b) => {
+      const here = Number(b.dataset.min) === band.min;
+      b.classList.toggle("is-here", here);
+      if (here) b.setAttribute("aria-current", "true");
+      else b.removeAttribute("aria-current");
+    });
+    $("[data-az-scale-line]").textContent = band.line;
     $("[data-az-cats]").replaceChildren(
       ...cats.map((c, i) => {
         const lost = r.checks.filter((x) => x.category === c.id && x.max > 0 && x.status !== "unmeasured" && x.earned < x.max);
@@ -377,6 +385,11 @@ export function initScorer() {
     $("[data-az-fixes-title]").textContent = r.fixes.length === 1 ? "La cosa che vale più punti" : "Da sistemare per prime";
     $("[data-az-climb-from]").textContent = String(r.total);
     $("[data-az-climb-to]").textContent = String(dopo);
+    // From 90 up the site is practically perfect: no race to 100.
+    const nearlyPerfect = r.total >= PRACTICALLY_PERFECT;
+    $("[data-az-climb]").hidden = nearlyPerfect;
+    $("[data-az-climb-note]").hidden = !nearlyPerfect;
+    if (nearlyPerfect) $("[data-az-fixes-title]").textContent = r.fixes.length === 1 ? "L'ultimo ritocco" : "Gli ultimi ritocchi";
     $("[data-az-fixes]").replaceChildren(
       ...r.fixes.map((f, i) =>
         el(

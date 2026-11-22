@@ -7,10 +7,10 @@
  */
 import { examples } from "../scorer/samples";
 import ExampleSite from "./ExampleSite.astro";
+import { BANDS, bandOf, verdict, PRACTICALLY_PERFECT } from "../scorer/scale";
 
 const HUE: Record<string, number> = { speed: 35, conversion: 80, local: 135, trust: 180, a11y: 240, legal: 290, content: 345 };
 const col = (id: string) => `oklch(0.72 0.15 ${HUE[id] ?? 250})`;
-const verdict = (v: number) => (v >= 90 ? "Ottimo" : v >= 75 ? "Buono" : v >= 50 ? "Discreto" : "Da sistemare");
 const R = 120;
 const C = 2 * Math.PI * R;
 const GAP = 8;
@@ -50,6 +50,14 @@ const tabs = examples.map((e) => {
           <p class="rt__pill">Sito inventato per l'esempio</p>
           <h3 class="rt__h">{e.say}<br />{r.total} su 100.</h3>
           <p class="rt__line">{e.line}</p>
+          <ol class="rt__scale" aria-label="Come leggere il voto">
+            {BANDS.map((b) => (
+              <li class={`rt__band${bandOf(r.total) === b ? " is-here" : ""}`} aria-current={bandOf(r.total) === b ? "true" : undefined}>
+                <span class="rt__band-r">{b.min}-{b.max}</span>
+                <span class="rt__band-w">{b.word}</span>
+              </li>
+            ))}
+          </ol>
         </div>
         <div class="rt__ring" role="img" aria-label={`Voto ${r.total} su 100: ${verdict(r.total)}`}>
           <svg viewBox="0 0 300 300" aria-hidden="true" focusable="false">
@@ -71,7 +79,9 @@ const tabs = examples.map((e) => {
       <ExampleSite example={e.key} id={`rt-xs-${e.key}`} limit={6} />
 
       <div class="rt__end">
-        {fixes > 0 ? (
+        {r.total >= PRACTICALLY_PERFECT ? (
+          <p class="rt__climb"><span class="rt__climb-t">Sopra 90 un sito è praticamente perfetto: i punti che mancano sono ritocchi, non urgenze.</span></p>
+        ) : fixes > 0 ? (
           <p class="rt__climb">
             <span class="rt__climb-t">{climbLabel}</span>
             <span class="rt__climb-n"><span>{r.total}</span><span class="rt__arrow" aria-hidden="true">→</span><span class="sr-only">diventa</span><span class="rt__to">{after}</span></span>
@@ -257,6 +267,37 @@ const tabs = examples.map((e) => {
   .rt__line {
     max-width: 46ch;
     color: var(--grafite);
+  }
+  .rt__scale {
+    list-style: none;
+    margin: 0.25rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    width: min(100%, 26rem);
+  }
+  .rt__band {
+    display: grid;
+    gap: 1px;
+    padding: 0.4rem 0.3rem;
+    border-radius: 10px;
+    background: var(--nebbia);
+    color: var(--grafite);
+    text-align: center;
+  }
+  .rt__band.is-here {
+    background: var(--inchiostro);
+    color: #fff;
+  }
+  .rt__band-r {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .rt__band-w {
+    font-size: 0.6875rem;
+    line-height: 1.2;
   }
   .rt__ring {
     position: relative;
