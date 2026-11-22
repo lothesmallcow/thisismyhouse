@@ -1539,9 +1539,15 @@ a.link {
   max-width: 16ch;
 }
 .hs-check__form {
+  margin-top: 0.75rem;
+}
+.hs-check__example {
   display: grid;
   gap: 0.75rem;
-  justify-items: start;
+}
+.hs-check__ex-h {
+  font-weight: 600;
+  color: var(--grafite);
 }
 .hs-check__row {
   display: flex;

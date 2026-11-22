@@ -6,6 +6,7 @@
 import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
 import PreviewForm from "../components/PreviewForm.astro";
+import ReportTeaser from "../components/ReportTeaser.astro";
 import { Image } from "astro:assets";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
@@ -57,15 +58,18 @@ const steps = [
           <p class="eyebrow">Analisi gratuita</p>
           <h2 id="check-t">Quanto lavora il tuo sito oggi?</h2>
           <p class="lead">Incolla l'indirizzo: in un minuto ti diamo un voto su 100 e le cose da sistemare per prime. Il risultato lo vedi solo tu.</p>
+          <form class="hs-check__form" action="/analisi-sito/" method="get">
+            <label for="check-url" class="sr-only">Indirizzo del tuo sito</label>
+            <div class="hs-check__row">
+              <input id="check-url" class="hs-check__input" name="url" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="www.nomeattivita.it" required />
+              <button class="btn btn--primary btn--big" type="submit">Analizza</button>
+            </div>
+          </form>
         </div>
-        <form class="hs-check__form" action="/analisi-sito/" method="get" data-in style="--d: 0.08s">
-          <label for="check-url" class="sr-only">Indirizzo del tuo sito</label>
-          <div class="hs-check__row">
-            <input id="check-url" class="hs-check__input" name="url" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="www.nomeattivita.it" required />
-            <button class="btn btn--primary btn--big" type="submit">Analizza</button>
-          </div>
-          <a class="textlink" href="/analisi-sito/#voto-12">Guarda un esempio di report</a>
-        </form>
+        <div class="hs-check__example" data-in style="--d: 0.08s">
+          <p class="hs-check__ex-h">Ecco cosa ricevi:</p>
+          <ReportTeaser />
+        </div>
       </div>
     </section>
 

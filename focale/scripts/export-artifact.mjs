@@ -61,7 +61,7 @@ for (const f of files) {
       const bodyClass = /class="([^"]*)"/.exec(bodyTag?.[1] ?? "")?.[1] ?? "";
       const title = /<title>[\s\S]*?<\/title>/.exec(head)?.[0] ?? "";
       const rest = head.replace(title, "").replace(/<meta charset[^>]*>|<meta name="viewport"[^>]*>/g, "");
-      html = `${title}\n${rest}\n<script>document.documentElement.lang="it";document.body.className=${JSON.stringify(bodyClass)};</script>\n${body}`;
+      html = `${title}\n${rest}\n<script>document.documentElement.lang="it";(function(c){var s=function(){document.body.className=c};document.body?s():document.addEventListener("DOMContentLoaded",s)})(${JSON.stringify(bodyClass)});</script>\n${body}`;
     }
     writeFileSync(dst, html.replaceAll("_astro/", "assets/"));
     if (f === "index.html") {

@@ -166,16 +166,6 @@ export function initScorer() {
       openSample(a.dataset.azSample!);
     }),
   );
-  if (location.hash === "#voto-12") openSample("old");
-  if (location.hash === "#voto-97") openSample("good");
-  // Arriving from the home's box (?url=...): fill the address and start right away.
-  const fromHome = new URLSearchParams(location.search).get("url");
-  if (fromHome && !location.hash) {
-    urlInput.value = fromHome.slice(0, 300);
-    const s = new URLSearchParams(location.search).get("settore");
-    if (s && data.sectors.some((x) => x.id === s)) sectorPick.value = s;
-    form.requestSubmit();
-  }
 
   document.querySelectorAll<HTMLButtonElement>("[data-az-restart]").forEach((b) =>
     b.addEventListener("click", () => {
@@ -508,4 +498,29 @@ export function initScorer() {
       btn.disabled = false;
     }
   });
+
+  /* ---------- Deep links: run last, once everything above exists ---------- */
+  // #voto-12 / #voto-97 (or ?esempio=12 / ?esempio=97, which survive previews that drop the hash)
+  // open an example report; ?url=... (from the home's box) starts an analysis straight away.
+  const params = new URLSearchParams(location.search);
+  const sampleFromLink = () => {
+    const h = location.hash;
+    const q = params.get("esempio");
+    if (h === "#voto-12" || q === "12") return "old";
+    if (h === "#voto-97" || q === "97") return "good";
+    return "";
+  };
+  const linked = sampleFromLink();
+  if (linked) openSample(linked);
+  window.addEventListener("hashchange", () => {
+    if (location.hash === "#voto-12") openSample("old");
+    else if (location.hash === "#voto-97") openSample("good");
+  });
+  const fromHome = params.get("url");
+  if (fromHome && !linked) {
+    urlInput.value = fromHome.slice(0, 300);
+    const s = params.get("settore");
+    if (s && data.sectors.some((x) => x.id === s)) sectorPick.value = s;
+    form.requestSubmit();
+  }
 }

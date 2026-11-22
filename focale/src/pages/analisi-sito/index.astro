@@ -7,30 +7,13 @@
  * The two examples are computed at build time from INVENTED pages, and say so.
  */
 import Base from "../../layouts/Base.astro";
-import { rubric, fromPartsAll } from "../../scorer/analyze";
+import { rubric } from "../../scorer/analyze";
 import { resolveRubric } from "../../scorer/sectors";
 import offer from "../../scorer/offer.json";
 import benchmark from "../../scorer/benchmark.json";
 import { CONSENT } from "../../scorer/consent";
 import { breadcrumbs } from "../../lib/schema";
-import sampleHtml from "../../../test/scorer/fixtures/old-studio.html?raw";
-import goodHtml from "../../../test/scorer/fixtures/new-studio.html?raw";
-
-// Invented pages with invented lab numbers: the page labels them as examples.
-const lab = (lcp: number, tbt: number, cls: number, bytes: number, a11y: number) => ({
-  lighthouseResult: {
-    lighthouseVersion: "13.0.0",
-    audits: {
-      "largest-contentful-paint": { numericValue: lcp },
-      "total-blocking-time": { numericValue: tbt },
-      "cumulative-layout-shift": { numericValue: cls },
-      "total-byte-weight": { numericValue: bytes },
-    },
-    categories: { accessibility: { score: a11y } },
-  },
-});
-const sample = fromPartsAll("http://www.studio-esempio.it/", sampleHtml, lab(5200, 740, 0.18, 4_600_000, 0.71), { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
-const sampleGood = fromPartsAll("https://www.studio-esempio-due.it/", goodHtml, lab(2900, 120, 0.02, 1_400_000, 0.93), { sector: "fitness", measuredAt: "2026-11-21T09:00:00Z" });
+import { sample, sampleGood } from "../../scorer/samples";
 
 const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
 // For the waiting ring: each sector's categories, weights and check titles.
@@ -109,7 +92,6 @@ const data = { sectors, offer, benchmark, consent: CONSENT, sample, sampleGood, 
         <h1 id="az-rep-t" class="az-url" data-az-url></h1>
         <div class="az-meta">
           <span data-az-meta></span>
-          <span aria-hidden="true">·</span>
           <label for="az-sector-now" class="sr-only">Valutato come</label>
           <select id="az-sector-now" class="az-select az-select--40" data-az-sector-now>
             {sectors.map((s) => <option value={s.id}>{s.label}</option>)}

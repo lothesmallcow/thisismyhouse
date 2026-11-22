@@ -1,0 +1,174 @@
+---
+/**
+ * Home: a real, clickable preview of the example report (invented site, says so). Same ring as the
+ * report page (one arc per category, length = weight, fill = points), the score, and the three
+ * checks that cost the most. Opens /analisi-sito/ on that example (?esempio= survives previews that drop the hash).
+ */
+import { sample } from "../scorer/samples";
+
+const report = sample.results.fitness.report;
+const HUE: Record<string, number> = { speed: 35, conversion: 80, local: 135, trust: 180, a11y: 240, legal: 290, content: 345 };
+const R = 124;
+const C = 2 * Math.PI * R;
+const GAP = 6;
+const cats = report.categories.filter((c) => c.max > 0);
+const total = cats.reduce((t, c) => t + c.max, 0) || 100;
+let start = 0;
+const arcs = cats.map((c) => {
+  const len = (c.max / total) * C - GAP;
+  const off = -(start + GAP / 2);
+  start += (c.max / total) * C;
+  return { len, off, fill: len * Math.max(0, Math.min(1, c.earned / c.max)), colour: `oklch(0.72 0.15 ${HUE[c.id] ?? 250})` };
+});
+const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
+const verdict = (v: number) => (v >= 90 ? "Ottimo" : v >= 75 ? "Buono" : v >= 50 ? "Discreto" : "Da sistemare");
+const lost = report.checks
+  .filter((c) => c.max - c.earned > 0)
+  .sort((a, b) => b.max - b.earned - (a.max - a.earned))
+  .slice(0, 3);
+const host = report.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+---
+<a class="rt" href={`/analisi-sito/?esempio=${report.total}#voto-${report.total}`} aria-label={`Apri il report d'esempio: ${host}, voto ${report.total} su 100`}>
+  <span class="rt__top">
+    <span class="rt__tag">Esempio su un sito inventato</span>
+    <span class="rt__host">{host}</span>
+  </span>
+  <span class="rt__main">
+    <span class="rt__ring">
+      <svg viewBox="0 0 300 300" aria-hidden="true" focusable="false">
+        {arcs.map((a) => (
+          <>
+            <circle cx="150" cy="150" r={R} fill="none" stroke="#EDEDF0" stroke-width="22" transform="rotate(-90 150 150)" stroke-dasharray={`${a.len} ${C}`} stroke-dashoffset={a.off} />
+            {a.fill > 0.5 && <circle cx="150" cy="150" r={R} fill="none" stroke={a.colour} stroke-width="22" transform="rotate(-90 150 150)" stroke-dasharray={`${a.fill} ${C}`} stroke-dashoffset={a.off} />}
+          </>
+        ))}
+      </svg>
+      <span class="rt__score"><span class="rt__n">{report.total}</span><span class="rt__w">{verdict(report.total)}</span></span>
+    </span>
+    <span class="rt__lost">
+      <span class="rt__lost-h">Perché {report.total} e non 100</span>
+      {lost.map((c) => (
+        <span class="rt__row"><span class="rt__pts">-{fmt(c.max - c.earned)}</span><span class="rt__t">{c.title}</span></span>
+      ))}
+      <span class="rt__more">e altre {report.checks.filter((c) => c.max - c.earned > 0).length - lost.length} cose da sistemare</span>
+    </span>
+  </span>
+  <span class="rt__cta">Apri il report completo</span>
+</a>
+
+<style>
+  .rt {
+    display: grid;
+    gap: 1.25rem;
+    padding: clamp(1.25rem, 0.75rem + 2vw, 2rem);
+    border-radius: var(--radius-card);
+    background: #fff;
+    color: var(--inchiostro);
+    text-decoration: none;
+    width: 100%;
+  }
+  .rt:focus-visible {
+    outline: 2px solid var(--inchiostro);
+    outline-offset: 3px;
+  }
+  .rt__top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    font-size: 0.875rem;
+    color: var(--grafite);
+  }
+  .rt__host {
+    font-weight: 600;
+    color: var(--inchiostro);
+  }
+  .rt__main {
+    display: grid;
+    gap: 1.25rem;
+    align-items: center;
+  }
+  @media (min-width: 520px) {
+    .rt__main {
+      grid-template-columns: 9.5rem minmax(0, 1fr);
+      gap: 1.75rem;
+    }
+  }
+  .rt__ring {
+    position: relative;
+    width: 9.5rem;
+    aspect-ratio: 1;
+    justify-self: center;
+  }
+  .rt__ring svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .rt__score {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+  }
+  .rt__n {
+    font-size: 2.75rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .rt__w {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: var(--grafite);
+  }
+  .rt__lost {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .rt__lost-h {
+    font-weight: 600;
+  }
+  .rt__row {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.35;
+  }
+  .rt__pts {
+    font-weight: 600;
+    color: #c4261d;
+    font-variant-numeric: tabular-nums;
+  }
+  .rt__more {
+    font-size: 0.875rem;
+    color: var(--grafite);
+  }
+  .rt__cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    border-radius: var(--radius-btn);
+    background: var(--nebbia);
+    font-weight: 600;
+    color: var(--inchiostro);
+  }
+  .rt__cta::after {
+    content: "→" / "";
+    margin-left: 0.5rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .rt {
+      transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .rt:hover {
+      transform: translateY(-3px);
+    }
+  }
+  .rt:hover .rt__cta {
+    background: var(--filo);
+  }
+</style>
