@@ -50,6 +50,11 @@ const teachers = [
   { r: "Yoga vinyasa", n: "Nome dell'insegnante" },
   { r: "Ginnastica posturale", n: "Nome dell'insegnante" },
 ];
+const street = "Via Esempio 12";
+const metro = [
+  { s: "Isola", l: "M5", m: "4 minuti" },
+  { s: "Garibaldi", l: "", m: "8 minuti" },
+];
 const hours = [
   { d: "Lunedì a venerdì", h: "7:00 - 21:30" },
   { d: "Sabato", h: "9:30 - 13:00" },
@@ -343,21 +348,21 @@ const ld = {
 
   <section class="sl-sec" id="dove" aria-labelledby="dove-t">
     <div class="sl-wrap">
-      <div class="sl-sh">
+      <div class="sl-sh sl-sh--where">
         <h2 id="dove-t">Dove siamo</h2>
+        <p>{street}, quartiere Isola. Lezioni da lunedì a sabato, dalle {all[0].h} alle {all[all.length - 1].h}.</p>
       </div>
       <div class="sl-where">
         <div>
           <h3>Indirizzo</h3>
-          <p class="sl-where__addr">Via Esempio 12</p>
+          <p class="sl-where__addr">{street}</p>
           <p>20159 Milano, quartiere Isola</p>
           <a class="sl-btn sl-btn--line" href={maps}>Come arrivare con Google Maps</a>
         </div>
         <div>
           <h3>A piedi dalla metro</h3>
           <dl class="sl-list">
-            <div><dt>Isola, M5</dt><dd>4 minuti</dd></div>
-            <div><dt>Garibaldi</dt><dd>8 minuti</dd></div>
+            {metro.map((x) => (<div><dt>{x.s}{x.l && `, ${x.l}`}</dt><dd>{x.m}</dd></div>))}
           </dl>
         </div>
         <div>
@@ -418,7 +423,7 @@ const ld = {
     --sl-cond: "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif;
     --sl-text: "Sofia Sans", system-ui, sans-serif;
     --sl-pad: clamp(18px, 4vw, 40px);
-    --sl-sec: clamp(48px, 8vw, 112px);
+    --sl-sec: clamp(48px, 5vw, 72px); /* section gap: content to content stays under about 150 px */
     --sl-in: clamp(12px, 1.4vw, 20px); /* inset of rows inside ruled lists */
     /* The Focus banner and anything global use Sofia Sans too: no Geist on this page. */
     --font: var(--sl-text);
@@ -985,7 +990,7 @@ const ld = {
     padding: var(--sl-sec) 0 0;
   }
   .sl-sec--first {
-    padding-top: clamp(40px, 6vw, 80px);
+    padding-top: clamp(40px, 4.5vw, 64px);
   }
   .sl-sec--after {
     padding-top: clamp(32px, 4vw, 56px);
@@ -1002,9 +1007,21 @@ const ld = {
     max-width: 52ch;
   }
   @media (min-width: 900px) {
+    /* The line sits beside the heading's top, as its standfirst: no empty corner above it. */
     .sl-sh {
       grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-      align-items: end;
+      align-items: start;
+    }
+    .sl-sh p {
+      padding-top: 6px;
+    }
+    /* Where: the header follows the three columns below, the line starts over the second one. */
+    .sl-sh--where {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
+      gap: 10px 0;
+    }
+    .sl-sh--where p {
+      padding-left: var(--sl-in);
     }
   }
   .sl-rows > li {
@@ -1096,8 +1113,10 @@ const ld = {
     border-bottom-color: var(--sl-ink);
   }
   @media (min-width: 900px) {
+    /* Columns sized to what they hold, the spare width shared between them: no half-empty middle column. */
     .sl-prices > li {
-      grid-template-columns: minmax(0, 3fr) minmax(0, 6.4fr) minmax(0, 2.6fr);
+      grid-template-columns: minmax(0, 22rem) minmax(0, 36rem) auto;
+      justify-content: space-between;
       gap: 32px;
     }
     .sl-prices__n {

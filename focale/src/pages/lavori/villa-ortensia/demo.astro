@@ -306,12 +306,16 @@ const ld = {
 
     <footer class="vo-foot">
       <div class="vo-wrap vo-foot__in">
-        <span class="vo-mono" aria-hidden="true">VO</span>
-        <p class="vo-foot__name">Villa Ortensia</p>
-        <p class="vo-foot__tag">Matrimoni ed eventi sul Lago di Como, da aprile a ottobre.</p>
-        <address class="vo-foot__addr">{address}</address>
+        <div class="vo-foot__mid">
+          <span class="vo-mono" aria-hidden="true">VO</span>
+          <p class="vo-foot__name">Villa Ortensia</p>
+          <p class="vo-foot__tag">Matrimoni ed eventi sul Lago di Como, da aprile a ottobre.</p>
+        </div>
+        <div class="vo-foot__where">
+          <address class="vo-foot__addr">{address}</address>
+          <a href={mapsHref}>Come arrivare</a>
+        </div>
         <ul class="vo-foot__links">
-          <li><a href={mapsHref}>Come arrivare</a></li>
           <li><a href={waHref} target="_blank" rel="noopener">WhatsApp, rispondiamo in giornata</a></li>
           <li><a href={telHref()}>Chiamaci</a></li>
           <li><a href={reviewsHref}>Le recensioni su Google</a></li>
@@ -334,7 +338,8 @@ const ld = {
     --filo: rgba(28, 42, 51, 0.28); /* hairlines, decorative */
     --serif: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
     --sans: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
-    --pad: clamp(48px, 8vw, 112px);
+    /* One section padding; two neighbours together stay under about 150 px of empty (dead-space check). */
+    --pad: clamp(48px, 5vw, 72px);
     --gut: clamp(18px, 4.5vw, 64px);
     background: var(--intonaco);
     color: var(--lago);
@@ -871,14 +876,15 @@ const ld = {
   }
 
   /* ---------- Seasons and prices: an invitation card, opened flat ---------- */
+  /* The card's own frame is its margin: the band around it stays slim. */
   .vo-card-sec {
-    padding: var(--pad) 0;
+    padding: clamp(40px, 4vw, 56px) 0 clamp(40px, 3.5vw, 48px);
   }
   .vo-card {
     position: relative;
     max-width: 1120px;
     margin: 0 auto;
-    padding: clamp(2.5rem, 5vw, 4.5rem) clamp(1.25rem, 4vw, 4rem) clamp(2rem, 4vw, 3.5rem);
+    padding: clamp(2.5rem, 5vw, 4.5rem) clamp(1.25rem, 4vw, 4rem) clamp(1.75rem, 2.5vw, 2rem);
     background: var(--carta);
     border: 1px solid var(--lago);
     outline: 1px solid var(--ortensia);
@@ -955,8 +961,24 @@ const ld = {
       grid-template-columns: 1fr 1fr;
       gap: 0;
     }
+    /* The two halves end together: the shorter list spreads its three entries over the taller one's height. */
     .vo-card__panel {
       padding: 0 clamp(1.5rem, 3vw, 3rem);
+      display: flex;
+      flex-direction: column;
+    }
+    .vo-card__panel .vo-entries {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Any spare height goes round the small rule between entries, so the rule stays in the middle. */
+    .vo-card__panel .vo-entries li + li {
+      flex: 1 1 auto;
+      grid-template-rows: 1fr;
+    }
+    .vo-card__panel .vo-entries li + li::before {
+      align-self: center;
     }
     .vo-card__panel + .vo-card__panel {
       border-left: 1px solid var(--filo);
@@ -965,7 +987,7 @@ const ld = {
 
   /* ---------- Visit ---------- */
   .vo-visit-sec {
-    padding: var(--pad) 0;
+    padding: clamp(48px, 4vw, 56px) 0;
     background: var(--carta);
   }
   .vo-visit {
@@ -1035,7 +1057,7 @@ const ld = {
   .vo-form {
     display: grid;
     gap: 1.2rem;
-    padding: clamp(20px, 3vw, 40px);
+    padding: clamp(20px, 2.4vw, 32px);
     border: 1px solid var(--lago);
     background: var(--intonaco);
   }
@@ -1129,7 +1151,7 @@ const ld = {
 
   /* ---------- Footer: the back of the invitation ---------- */
   .vo-foot {
-    padding: clamp(48px, 7vw, 88px) 0 clamp(28px, 4vw, 40px);
+    padding: clamp(40px, 4vw, 56px) 0 clamp(28px, 4vw, 40px);
     font-size: 16px;
     text-align: center;
   }
@@ -1137,6 +1159,58 @@ const ld = {
     display: grid;
     justify-items: center;
     gap: 0.5rem;
+  }
+  .vo-foot__mid,
+  .vo-foot__where {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+  }
+  /* Computers: like the back of an invitation, the name in the middle, where on the left, how to reach us on the right. */
+  @media (min-width: 900px) {
+    .vo-foot__in {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: start;
+      gap: 0.5rem clamp(2rem, 4vw, 4rem);
+    }
+    .vo-foot__mid {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .vo-foot__where {
+      grid-column: 1;
+      grid-row: 1;
+      justify-self: start;
+      justify-items: start;
+      gap: 0;
+      text-align: left;
+    }
+    .vo-foot__where .vo-foot__addr {
+      margin-top: 0;
+      padding: 0.35rem 0;
+    }
+    .vo-foot__where a {
+      padding: 0.35rem 0;
+    }
+    .vo-foot .vo-foot__links {
+      grid-column: 3;
+      grid-row: 1;
+      justify-self: end;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+      margin: 0;
+    }
+    .vo-foot__links a {
+      padding: 0.35rem 0;
+    }
+    /* The small print runs the whole width, closing all three columns. */
+    .vo-foot .vo-foot__note {
+      grid-column: 1 / -1;
+      justify-self: stretch;
+      max-width: none;
+      margin-top: 1rem;
+    }
   }
   .vo-foot__name {
     margin-top: 0.75rem;
@@ -1162,6 +1236,7 @@ const ld = {
     gap: 0 1.75rem;
   }
   .vo-foot__links a,
+  .vo-foot__where a,
   .vo-foot__note a {
     color: var(--lago);
     text-decoration-color: var(--ortensia);
