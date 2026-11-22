@@ -137,7 +137,7 @@
   --gutter: clamp(1.25rem, 0.6rem + 2.8vw, 3.5rem);
   --max: 77.5rem;
   --measure: 62ch;
-  --space-section: clamp(3rem, 1.5rem + 3.6vw, 5.25rem); /* Lorenzo, 22 Nov 2026: two stacked paddings left dead bands */
+  --space-section: clamp(3rem, 1.5rem + 2.6vw, 4.5rem); /* Lorenzo, 22 Nov 2026: two stacked paddings left dead bands */
   --space-block: clamp(2.25rem, 1.5rem + 2vw, 4rem);
   --radius-ui: 999px; /* pills: tags and chips only; buttons use --radius-btn */
   --radius-btn: 14px;
@@ -751,7 +751,7 @@ html.lenis body {
   box-sizing: border-box;
   /* By width, not height: tall phones made this 100 px+ on each side (Lorenzo: dead space).
      Theme "Mela" (22 Nov 2026): a little tighter, and two white sections in a row share one gap. */
-  padding-block: clamp(2.5rem, 1rem + 3.3vw, 5rem);
+  padding-block: clamp(2.5rem, 1rem + 2.6vw, 4.5rem);
 }
 .home .scenes > section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get)
   + section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get) {
