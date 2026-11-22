@@ -137,12 +137,19 @@ Schibsted TTFs: it cannot read woff2).
   picture wipes, parallax, pinned sideways galleries ([data-hscroll]), stacking cards ([data-stack]),
   count-ups, highlighter strokes ([data-mark]), magnetic buttons. Lenis on mouse only. Language switches must
   use setText() from demo-motion so split headings survive.
-  Villa Ortensia: editorial, spaces as stacking cards, seasons, price bands. Arcadi: "studio" look (stone, ink, one rust
-  accent, square buttons, hairlines, quieter pictures): Lorenzo found the bold orange version childish.
-  Theme "Mela" variants (Lorenzo, 22 Nov 2026: the demos in the new style, each a different colour): a block at the
-  end of each demo's styles sets Geist (no serif, no italics), tight semibold titles, 14 px buttons with an arrow,
-  grey fields, rounded pictures, and one accent: Arcadi brick orange #c2410c, Villa Ortensia sage green #2e7d5b,
-  Studio Linea indigo #5e5ce6 (white text 5:1 on each). Re-shoot their screenshots with `npm run screens:demo`.
+  Each demo has ITS OWN personality (Lorenzo, 22 Nov 2026: "they all look the same, same italic, same layout"; research
+  in reports/Pattern AI e personalità dei siti.md). Never give two demos the same type, layout archetype or signature:
+  Arcadi "Il cartello di cantiere" (document/catalogue: Archivo variable condensed headings + IBM Plex Mono for data
+  only, plaster grey #e4e3df, ink, minio #c8461c, zero radius, the hero is a construction-site sign with label/value
+  rows; works as a ruled catalogue). Villa Ortensia "La pianta della villa" (architectural/asymmetric: Bodoni Moda
+  UPRIGHT only + Hanken Grotesk, plaster pink #ebd8cf, lake ink #1c2a33, ortensia #4b5fa6, arched pictures, an SVG floor
+  plan that navigates the spaces, seasons and prices as an invitation card; components/demo/VillaPlan.astro). Studio
+  Linea "L'orario è la pagina" (index/timetable: Sofia Sans Extra Condensed + Sofia Sans, white, ink, yellow #FFD400
+  only as a surface with black text, the weekly timetable is the hero with today highlighted, day tabs on phones,
+  everything in ruled rows). Example sites in public/esempi/: Respiro uses Familjen Grotesk, mist #e9eeef and brass.
+  Banned everywhere: one italic/coloured accent word in a headline, cream + thin serif + terracotta, sage, indigo,
+  eyebrow labels above every heading, decorative 01/02 numbering, stat strips, an arrow on every button.
+  Re-shoot their screenshots with `npm run screens:demo` (needs the built site on localhost:4321).
 - Home sections alternate white and grey (#f5f5f7) with one padding; two white sections in a row share one gap.
   Makeover.astro, ProjectFilm.astro and the laptop model are no longer on any page (kept in the repo).
 - Lavori: the first project is a REAL client's site, Casa Turati 3 (Paolo's apartment in Milan, permission

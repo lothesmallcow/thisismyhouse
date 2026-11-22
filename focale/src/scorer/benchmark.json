@@ -6,12 +6,12 @@
     "fitness": {
       "label": "Studio Linea (studio fitness dimostrativo)",
       "path": "/analisi-sito/esempio-fitness/",
-      "total": 100,
+      "total": 97,
       "categories": [
         {
           "id": "speed",
           "label": "Velocità e telefono",
-          "earned": 20,
+          "earned": 16.5,
           "max": 20
         },
         {
@@ -55,12 +55,12 @@
     "edilizia": {
       "label": "Arcadi (impresa di ristrutturazioni dimostrativa)",
       "path": "/lavori/arcadi-ristrutturazioni/demo/",
-      "total": 100,
+      "total": 97,
       "categories": [
         {
           "id": "speed",
           "label": "Velocità e telefono",
-          "earned": 20,
+          "earned": 16.5,
           "max": 20
         },
         {
@@ -104,12 +104,12 @@
     "eventi": {
       "label": "Villa Ortensia (location per matrimoni dimostrativa)",
       "path": "/lavori/villa-ortensia/demo/",
-      "total": 96,
+      "total": 92,
       "categories": [
         {
           "id": "speed",
           "label": "Velocità e telefono",
-          "earned": 20,
+          "earned": 16.5,
           "max": 20
         },
         {
@@ -154,7 +154,7 @@
   "scorerPage": {
     "label": "La pagina dell'analisi",
     "path": "/analisi-sito/",
-    "technicalScore": 100,
+    "technicalScore": 92,
     "note": "Non è un'attività locale: misurata solo su velocità, accessibilità, basi legali e dati per Google."
   }
 }
