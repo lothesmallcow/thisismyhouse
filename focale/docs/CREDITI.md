@@ -30,3 +30,9 @@
 
 Caratteri Geist e Geist Mono di Vercel, licenza SIL Open Font License 1.1, ospitati sul sito (public/fonts/geist-*.woff2).
 Presi dal file di Claude Design "Analisi del sito v4" (che li includeva da Google Fonts).
+
+## Caratteri dei siti dimostrativi (22 novembre 2026)
+
+Archivo (Omnibus-Type), IBM Plex Mono (IBM), Bodoni Moda (indestructible type*), Hanken Grotesk (Alfredo Marco Pradil),
+Sofia Sans e Sofia Sans Extra Condensed (Lettersoup), Familjen Grotesk (Familjen STHLM): tutti con licenza SIL Open Font
+License 1.1, presi dai pacchetti Fontsource e ospitati sul sito (public/fonts/demo/). Nessuna richiesta a server esterni.
