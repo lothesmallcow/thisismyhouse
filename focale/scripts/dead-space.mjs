@@ -61,7 +61,8 @@ for (const path of pages) {
       const floating = (el) => {
         for (let e = el; e && e !== document.body; e = e.parentElement) {
           const p = getComputedStyle(e).position;
-          if (p === "fixed" || p === "sticky") return true;
+          // Fixed bars float over the page; sticky blocks sit in their place in a full-page picture, so they count.
+          if (p === "fixed") return true;
         }
         return false;
       };

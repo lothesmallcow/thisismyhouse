@@ -32,6 +32,15 @@ const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra $
       <p class="lead est__lead">
         Sette domande, un minuto. La stima arriva alla fine. Il conto lo fa il tuo telefono: non ti chiediamo l'email e non salviamo niente.
       </p>
+      <ol class="est__topics" aria-label="Le sette domande">
+        <li>La tua attività</li>
+        <li>Quanto è grande il sito</li>
+        <li>Se vuoi aggiungere pagine da solo</li>
+        <li>Come ti arrivano le richieste</li>
+        <li>Le lingue</li>
+        <li>Le foto</li>
+        <li>Gli extra</li>
+      </ol>
     </div>
 
     <div class="est__grid">
@@ -211,8 +220,40 @@ const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra $
   .est__head {
     max-width: 44rem;
   }
+  /* Computers: the explanation beside the questions, not above a half-width card (dead space on the right). */
+  @media (min-width: 1000px) {
+    .est > .wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: clamp(2rem, 5vw, 5rem);
+      align-items: start;
+    }
+    .est__head {
+      position: sticky;
+      top: calc(var(--header-h, 72px) + 1.5rem);
+    }
+    .est .est__grid {
+      margin-top: 0;
+      max-width: none;
+    }
+  }
   .est__head h2 {
     margin-top: 0.75rem;
+  }
+  .est__topics {
+    display: none;
+  }
+  @media (min-width: 1000px) {
+    .est__topics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem 1.5rem;
+      margin: 1.5rem 0 0;
+      padding: 1.25rem 0 0 1.1rem;
+      border-top: 1px solid var(--filo);
+      color: var(--grafite);
+      font-size: var(--fs-small);
+    }
   }
   .est__lead {
     margin-top: 1rem;

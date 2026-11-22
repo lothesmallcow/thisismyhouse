@@ -63,9 +63,15 @@ const get = [
 
   <section class="section" aria-labelledby="passi-t">
     <div class="wrap">
-      <div class="hs-head">
-        <p class="eyebrow">I passi</p>
-        <h2 id="passi-t">Dal primo messaggio al sito online.</h2>
+      <div class="hs-head cf-head-row">
+        <div>
+          <p class="eyebrow">I passi</p>
+          <h2 id="passi-t">Dal primo messaggio al sito online.</h2>
+        </div>
+        <div class="cf-ask">
+          <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
+          <p class="muted small">Gratis e senza impegno. Rispondiamo in giornata.</p>
+        </div>
       </div>
       <ol class="hs-how__steps cf-steps">
         {
@@ -78,10 +84,6 @@ const get = [
           ))
         }
       </ol>
-      <div class="cf-ask">
-        <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
-        <p class="muted small">Gratis e senza impegno. Rispondiamo in giornata.</p>
-      </div>
     </div>
   </section>
 
@@ -99,6 +101,7 @@ const get = [
         <div class="cf-card cf-card--get">
           <h3>Cosa ricevi</h3>
           <ul class="cf-list">{get.map((n) => <li><Icon name="check" size={18} />{n}</li>)}</ul>
+          <a class="btn cf-card__btn" href="/prezzi/">Vedi i pacchetti e i prezzi</a>
         </div>
       </div>
     </div>
@@ -132,11 +135,22 @@ const get = [
   <Closing />
 </Base>
 <style>
+  /* The button sits on the title's row, not alone under the first step (Lorenzo, 22 Nov 2026: dead space). */
+  .cf-head-row {
+    display: grid;
+    gap: 1.25rem;
+  }
+  @media (min-width: 900px) {
+    .cf-head-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      column-gap: 3rem;
+    }
+  }
   .cf-ask {
     display: grid;
     gap: 0.6rem;
     justify-items: start;
-    margin-top: 2.5rem;
   }
   .cf-two {
     display: grid;
@@ -152,6 +166,17 @@ const get = [
     padding: clamp(1.4rem, 1rem + 1.2vw, 2.25rem);
     border-radius: 20px;
     background: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  .cf-card__btn {
+    margin-top: auto;
+    align-self: flex-start;
+    background: #fff;
+    color: var(--blu);
+  }
+  .cf-card__btn::after {
+    content: none;
   }
   .cf-card--get {
     background: var(--blu);
@@ -192,6 +217,7 @@ const get = [
   }
   .cf-g-grid > div {
     justify-self: stretch;
+    max-width: 40rem;
   }
   @media (min-width: 1000px) {
     .cf-g-grid {

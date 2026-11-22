@@ -137,7 +137,7 @@
   --gutter: clamp(1.25rem, 0.6rem + 2.8vw, 3.5rem);
   --max: 77.5rem;
   --measure: 62ch;
-  --space-section: clamp(3.5rem, 2rem + 5vw, 7.5rem);
+  --space-section: clamp(3rem, 1.5rem + 3.6vw, 5.25rem); /* Lorenzo, 22 Nov 2026: two stacked paddings left dead bands */
   --space-block: clamp(2.25rem, 1.5rem + 2vw, 4rem);
   --radius-ui: 999px; /* pills: tags and chips only; buttons use --radius-btn */
   --radius-btn: 14px;
@@ -751,7 +751,7 @@ html.lenis body {
   box-sizing: border-box;
   /* By width, not height: tall phones made this 100 px+ on each side (Lorenzo: dead space).
      Theme "Mela" (22 Nov 2026): a little tighter, and two white sections in a row share one gap. */
-  padding-block: clamp(2.5rem, 1rem + 4vw, 6rem);
+  padding-block: clamp(2.5rem, 1rem + 3.3vw, 5rem);
 }
 .home .scenes > section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get)
   + section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get) {
@@ -921,13 +921,17 @@ html.lenis body {
     grid-column: 1 / -1;
   }
 }
+/* Computers: the blue panel is a band across the top (title | text), then six tiles in two full rows
+   (Lorenzo, 22 Nov 2026: the 2x2 blue block was half empty). */
 @media (min-width: 1000px) {
   .hs-get__in {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .hs-get__big {
-    grid-column: 1 / span 2;
-    grid-row: 1 / span 2;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+    column-gap: 3rem;
   }
 }
 .hs-get__big,
@@ -963,6 +967,15 @@ html.lenis body {
 }
 .hs-get__tile p {
   color: var(--grafite);
+}
+.hs-get__more {
+  text-decoration: none;
+  color: var(--inchiostro);
+  align-content: center;
+}
+.hs-get__more .textlink {
+  justify-self: start;
+  margin-top: 0.25rem;
 }
 .hs-get__icon {
   display: grid;
@@ -1195,7 +1208,7 @@ html.lenis body {
   .hs-studio__in {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: clamp(2rem, 5vw, 5rem);
-    align-items: start;
+    align-items: center;
   }
 }
 .hs-studio__in h2 {
@@ -1224,20 +1237,14 @@ html.lenis body {
   color: var(--blu);
 }
 
-/* FAQ */
+/* FAQ: heading on its own row, questions in two columns (Lorenzo, 22 Nov 2026: the heading alone in a
+   left column left a tall empty block beside the list). */
 .hs-faq {
   padding-top: 0;
 }
 .hs-faq__in {
   display: grid;
-  gap: 1rem;
-}
-@media (min-width: 900px) {
-  .hs-faq__in {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: clamp(2rem, 5vw, 5rem);
-    align-items: start;
-  }
+  gap: 1.5rem;
 }
 
 /* Chiusura: the form itself, on navy; WhatsApp and phone for who prefers them. */
@@ -1276,6 +1283,26 @@ html.lenis body {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem 1.5rem;
+}
+.hs-end__next {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 1.25rem 0 0;
+  border-top: 1px solid var(--filo);
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+.hs-end__next li {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+}
+.hs-end__when {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--link);
 }
 .hs-end__tel {
   display: inline-flex;
@@ -1529,8 +1556,8 @@ a.link {
   .hs-check__in {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: clamp(3rem, 6vw, 7rem);
-    row-gap: 3.5rem;
-    align-items: end;
+    row-gap: 3rem;
+    align-items: start;
   }
 }
 .hs-check__text {
@@ -1538,7 +1565,7 @@ a.link {
   gap: 1rem;
 }
 .hs-check__text h2 {
-  max-width: 14ch;
+  max-width: 18ch;
 }
 .hs-check__go {
   display: grid;

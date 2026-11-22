@@ -106,10 +106,11 @@ const steps = [
     <section class="section hs-get" aria-labelledby="get-t">
       <div class="wrap hs-get__in">
         <div class="hs-get__big" data-in>
-          <p class="eyebrow">Cosa ricevi</p>
-          <h2 id="get-t">Un sito che si legge dal telefono e ti fa chiamare.</h2>
+          <div>
+            <p class="eyebrow">Cosa ricevi</p>
+            <h2 id="get-t">Un sito che si legge dal telefono e ti fa chiamare.</h2>
+          </div>
           <p class="lead">Testi scritti da noi, foto dei tuoi lavori in primo piano, il numero sempre a un tocco. Niente da imparare: lo usi come usi WhatsApp.</p>
-          <a class="textlink" href="/come-funziona/">Tutto quello che è compreso</a>
         </div>
         {
           gets.map((g, i) => (
@@ -120,6 +121,11 @@ const steps = [
             </div>
           ))
         }
+        <a class="hs-get__tile hs-get__more" href="/come-funziona/" data-in style="--d: 0.3s">
+          <h3>Tutto quello che è compreso</h3>
+          <p>Pagine, testi, foto, modulo, Google: l'elenco completo, pacchetto per pacchetto.</p>
+          <span class="textlink">Vedi come funziona</span>
+        </a>
       </div>
     </section>
 
@@ -212,12 +218,14 @@ const steps = [
 
     <section class="section hs-faq" id="domande" aria-labelledby="domande-t">
       <div class="wrap hs-faq__in">
-        <div class="hs-head" data-in>
-          <p class="eyebrow">Domande</p>
-          <h2 id="domande-t">Le domande che ci fanno tutti.</h2>
+        <div class="hs-head hs-head--row" data-in>
+          <div>
+            <p class="eyebrow">Domande</p>
+            <h2 id="domande-t">Le domande che ci fanno tutti.</h2>
+          </div>
           <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
         </div>
-        <div data-in style="--d: 0.1s"><Faq items={faqItems} compact /></div>
+        <div data-in style="--d: 0.1s"><Faq items={faqItems} cols /></div>
       </div>
     </section>
 
@@ -237,6 +245,11 @@ const steps = [
               <a class="hs-end__tel" href={telHref()}><Icon name="phone" /> <P value={site.phoneDisplay} /></a>
             </li>
           </ul>
+          <ol class="hs-end__next" aria-label="Cosa succede dopo">
+            {steps.map((st) => (
+              <li><span class="hs-end__when">{st.when}</span><span>{st.t}</span></li>
+            ))}
+          </ol>
         </div>
         <div class="hs-end__form">
           <PreviewForm />

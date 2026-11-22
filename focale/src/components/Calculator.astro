@@ -67,11 +67,21 @@ const payback = price <= defaults.valore ? "meno di un lavoro" : `${Math.ceil(pr
     display: grid;
     gap: 3.5rem;
   }
+  /* Computers: the result card sits in the middle of the left column, not stretched to its height
+     (Lorenzo, 22 Nov 2026: the stretched blue card was half empty). */
   @media (min-width: 1100px) {
     .calc__grid {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 4rem;
-      align-items: stretch;
+      align-items: center;
+    }
+    .calc__intro {
+      margin-bottom: 2rem;
+    }
+    .calc__result {
+      min-height: 26rem;
+      display: grid;
+      align-content: center;
     }
   }
   .calc__form {
