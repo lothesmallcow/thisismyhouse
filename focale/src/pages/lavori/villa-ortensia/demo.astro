@@ -1,12 +1,18 @@
 ---
 /**
- * Demo: Villa Ortensia, an invented wedding venue on Lake Como. Built like a real client site with
- * the motion kit (scripts/demo-motion.ts): see-through header over a full-screen hero, a statement
- * with highlighter strokes, the three spaces as cards that stack while scrolling, the seasons,
- * price bands that count up, and a visit request on WhatsApp.
+ * Demo: Villa Ortensia, an invented wedding venue on Lake Como. Direction "La pianta della villa":
+ * an architectural, asymmetric page derived from the place (a Liberty lakeside villa in pink Lombard
+ * plaster, wrought-iron balustrades, blue-violet hydrangeas, letterpress invitations, the architect's
+ * plan). Bodoni Moda set upright for headings (never italic, no accent word), Hanken Grotesk for text;
+ * plaster pink, white, lake ink and ONE accent, "ortensia" blue-violet. Every picture is an arched window.
+ * The signature is the floor plan (components/demo/VillaPlan.astro): it is the navigation of "Gli spazi".
+ * Without JS its rooms are anchors to the three room panels; with JS they switch the panel in place.
+ * Motion kit (scripts/demo-motion.ts): [data-dh] header, [data-menu] menu, [data-split], [data-rise],
+ * [data-count], [data-magnetic].
  */
 import Demo from "../../../layouts/Demo.astro";
 import { Image } from "astro:assets";
+import VillaPlan from "../../../components/demo/VillaPlan.astro";
 import { site } from "../../../config/site";
 import { telHref } from "../../../lib/util";
 
@@ -14,27 +20,49 @@ const img = import.meta.glob<{ default: ImageMetadata }>("../../../assets/demo/v
 const pic = (n: string) => img[`../../../assets/demo/villa-ortensia/${n}.jpg`].default;
 
 const spaces = [
-  { k: "giardino", t: "Il giardino sul lago", n: 180, c: "ospiti per la cerimonia", d: "Il prato scende fino all'acqua. La cerimonia si fa qui, con il lago alle spalle degli sposi." },
-  { k: "salone", t: "Il salone delle feste", n: 160, c: "ospiti a tavola", d: "Quattro finestre ad arco sul lago e due lampadari d'epoca. La cena si sposta qui se piove." },
-  { k: "terrazza", t: "La terrazza", n: 120, c: "ospiti per l'aperitivo", d: "Il tramonto sulle montagne, le luci accese sopra la balaustra." },
+  {
+    k: "giardino",
+    t: "Il giardino sul lago",
+    n: 180,
+    c: "ospiti per la cerimonia",
+    d: "Il prato scende fino all'acqua. La cerimonia si fa qui, con il lago alle spalle degli sposi.",
+    alt: "Il prato sul lago con l'arco di ortensie e le sedie bianche pronte per la cerimonia",
+  },
+  {
+    k: "salone",
+    t: "Il salone delle feste",
+    n: 160,
+    c: "ospiti a tavola",
+    d: "Quattro finestre ad arco sul lago e due lampadari d'epoca. La cena si sposta qui se piove.",
+    alt: "Il salone con le grandi finestre ad arco sul lago, i lampadari e i tavoli rotondi apparecchiati",
+  },
+  {
+    k: "terrazza",
+    t: "La terrazza",
+    n: 120,
+    c: "ospiti per l'aperitivo",
+    d: "Il tramonto sulle montagne, le luci accese sopra la balaustra.",
+    alt: "La terrazza al tramonto, con le luci appese sopra la balaustra e le montagne oltre il lago",
+  },
 ];
+const plan = spaces.map(({ k, t, n, c }) => ({ k, t, n, c }));
 const seasons = [
   { t: "Primavera", m: "aprile, maggio, giugno", d: "Le ortensie fioriscono a fine maggio: il giardino è al suo meglio." },
   { t: "Estate", m: "luglio, agosto", d: "Cene lunghe in terrazza, il lago ancora chiaro alle nove di sera." },
   { t: "Autunno", m: "settembre, ottobre", d: "Luce bassa e dorata, montagne nitide, prezzi più dolci." },
 ];
 const bands = [
-  { n: 120, pre: "Da", post: "€ a persona", d: "Menù e allestimento base" },
-  { n: 160, pre: "Da", post: "€ a persona", d: "Menù completo e allestimento floreale" },
-  { n: 0, pre: "", post: "Su misura", d: "Esclusiva della villa per tutto il weekend" },
+  { n: 120, d: "Menù e allestimento base" },
+  { n: 160, d: "Menù completo e allestimento floreale" },
+  { n: 0, d: "Esclusiva della villa per tutto il weekend" },
 ];
 const months = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
 const years = [2027, 2028];
-const nav = [
+const navLeft = [
   { href: "#spazi", t: "Gli spazi" },
   { href: "#stagioni", t: "Le stagioni" },
-  { href: "#fasce", t: "Fasce di prezzo" },
 ];
+const navRight = [{ href: "#fasce", t: "Fasce di prezzo" }];
 const waHref = `https://wa.me/${site.whatsappNumber}`;
 const address = "Via Esempio 1, 22021 Bellagio (CO)";
 const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
@@ -50,41 +78,40 @@ const ld = {
 <Demo
   title="Villa Ortensia | Matrimoni sul Lago di Como (demo)"
   description="Sito dimostrativo di Focus Design per una location per matrimoni inventata sul Lago di Como."
-  fonts={["/fonts/demo/cormorant-500.woff2", "/fonts/demo/jost.woff2"]}
-  themeColor="#56646b"
+  fonts={["/fonts/demo/bodoni-moda.woff2", "/fonts/demo/hanken-grotesk.woff2"]}
+  themeColor="#ebd8cf"
 >
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(ld)} />
   <style is:global>
     @font-face {
-      font-family: "Cormorant Garamond";
+      font-family: "Bodoni Moda";
       font-style: normal;
       font-display: swap;
-      font-weight: 500;
-      src: url("/fonts/demo/cormorant-500.woff2") format("woff2");
+      font-weight: 400 900;
+      src: url("/fonts/demo/bodoni-moda.woff2") format("woff2");
     }
     @font-face {
-      font-family: "Cormorant Garamond";
-      font-style: italic;
-      font-display: swap;
-      font-weight: 500;
-      src: url("/fonts/demo/cormorant-500-italic.woff2") format("woff2");
-    }
-    @font-face {
-      font-family: "Jost";
+      font-family: "Hanken Grotesk";
       font-style: normal;
       font-display: swap;
       font-weight: 100 900;
-      src: url("/fonts/demo/jost.woff2") format("woff2");
+      src: url("/fonts/demo/hanken-grotesk.woff2") format("woff2");
     }
   </style>
   <div class="vo">
     <header class="vo-top" data-dh>
       <div class="vo-wrap vo-top__in">
-        <a class="vo-logo" href="#">Villa Ortensia</a>
-        <nav class="vo-nav" aria-label="Menu">
-          {nav.map((n) => <a href={n.href}>{n.t}</a>)}
+        <nav class="vo-nav vo-nav--l" aria-label="Sezioni">
+          {navLeft.map((n) => <a href={n.href}>{n.t}</a>)}
         </nav>
-        <a class="vo-btn vo-btn--sm vo-top__cta" href="#visita">Prenota una visita</a>
+        <a class="vo-mark" href="#" aria-label="Villa Ortensia, torna all'inizio">
+          <span class="vo-mono" aria-hidden="true">VO</span>
+          <span class="vo-mark__name">Villa Ortensia</span>
+        </a>
+        <nav class="vo-nav vo-nav--r" aria-label="Prezzi e visita">
+          {navRight.map((n) => <a href={n.href}>{n.t}</a>)}
+          <a class="vo-nav__visit" href="#visita">Prenota una visita</a>
+        </nav>
         <button type="button" class="vo-burger" data-menu aria-controls="vo-menu" aria-expanded="false">
           <span class="vo-burger__lines" aria-hidden="true"><i></i><i></i></span>
           Menu
@@ -93,112 +120,135 @@ const ld = {
     </header>
     <div class="vo-menu" id="vo-menu" data-menu-panel hidden>
       <nav aria-label="Menu">
-        {nav.map((n) => <a href={n.href}>{n.t}</a>)}
-        <a href="#visita">Prenota una visita</a>
+        {[...navLeft, ...navRight].map((n) => <a href={n.href}>{n.t}</a>)}
+        <a class="vo-menu__visit" href="#visita">Prenota una visita</a>
       </nav>
     </div>
 
     <section class="vo-hero">
-      <div class="vo-hero__media">
-        <div class="vo-hero__drift" data-parallax="9">
-          <Image src={pic("hero")} alt="La villa sul lago con il giardino di ortensie e le montagne sullo sfondo" widths={[640, 1100, 1600, 2200]} sizes="100vw" loading="eager" fetchpriority="high" class="vo-hero__img" />
+      <div class="vo-wrap vo-hero__in">
+        <div class="vo-hero__text">
+          <h1 data-split="load">Matrimoni in villa sul Lago di Como</h1>
+          <p class="vo-hero__lead">
+            La cerimonia nel giardino, la cena nel salone, l'ultimo brindisi in terrazza. Tutto nella stessa villa, per un giorno solo vostro.
+          </p>
+          <div class="vo-hero__cta">
+            <a class="vo-btn" href="#visita" data-magnetic>Prenota una visita</a>
+            <p class="vo-hero__meta">Bellagio, da aprile a ottobre.<br />Fino a 180 ospiti.</p>
+          </div>
         </div>
-      </div>
-      <div class="vo-wrap vo-hero__text">
-        <p class="vo-kicker">Matrimoni sul Lago di Como</p>
-        <h1 data-split="load">Una villa sul lago, per un giorno solo vostro.</h1>
-        <div class="vo-hero__cta">
-          <a class="vo-btn vo-btn--light" href="#visita" data-magnetic>Prenota una visita</a>
-          <a class="vo-link vo-link--light" href="#spazi">Guarda gli spazi</a>
-        </div>
-      </div>
-      <ul class="vo-hero__facts vo-wrap" aria-label="In breve">
-        <li>Fino a 180 ospiti</li>
-        <li>Cerimonia e ricevimento</li>
-        <li>Giardino sull'acqua</li>
-      </ul>
-    </section>
-
-    <section class="vo-intro">
-      <div class="vo-wrap">
-        <p class="vo-statement" data-rise>
-          Un giardino che scende <span data-mark>fino all'acqua</span>, un salone con le finestre sul lago, una terrazza per il tramonto. Tutto nello stesso posto, <span data-mark>per un giorno solo vostro</span>.
-        </p>
+        <figure class="vo-hero__pic vo-arch">
+          <Image src={pic("hero")} alt="La villa rosa sul lago, con il giardino di ortensie, i cipressi e le montagne sullo sfondo" widths={[480, 760, 1100, 1400]} sizes="(min-width: 900px) 44vw, 92vw" loading="eager" fetchpriority="high" />
+        </figure>
       </div>
     </section>
 
-    <section class="vo-spaces-sec" id="spazi">
+    <section class="vo-spaces" id="spazi" data-plan-root>
       <div class="vo-wrap">
-        <div class="vo-head">
-          <h2 data-split>Gli spazi</h2>
-          <p class="vo-lead" data-rise>Tre luoghi della stessa villa, per ogni momento della giornata.</p>
+        <div class="vo-spaces__top">
+          <div class="vo-spaces__intro">
+            <h2 data-split>Gli spazi</h2>
+            <p class="vo-statement" data-rise>
+              Un giardino che scende fino all'acqua, un salone con le finestre sul lago, una terrazza per il tramonto. Tutto nello stesso posto.
+            </p>
+            <ul class="vo-legend" aria-label="Gli spazi e quanti ospiti">
+              {
+                spaces.map((s) => (
+                  <li>
+                    <a href={`#spazio-${s.k}`} data-room={s.k}>
+                      <span class="vo-legend__t">{s.t}</span>
+                      <span class="vo-legend__dots" aria-hidden="true" />
+                      <span class="vo-legend__n">
+                        <b>{s.n}</b> {s.c.replace("ospiti ", "")}
+                      </span>
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+          <figure class="vo-sheet">
+            <VillaPlan rooms={plan} />
+            <figcaption>Pianta del piano terra e del giardino. Scegliete uno spazio per vederlo.</figcaption>
+          </figure>
         </div>
-        <ul class="vo-spaces d-rail" data-stack tabindex="0" aria-label="Gli spazi">
+
+        <div class="vo-rooms" data-rooms>
           {
             spaces.map((s, i) => (
-              <li style={`--i: ${i}`}>
-                <article class="vo-space">
-                  <div class="vo-space__pic dm-zoom">
-                    <Image src={pic(s.k)} alt="" widths={[480, 900, 1400]} sizes="(min-width: 900px) 60vw, 82vw" />
-                  </div>
-                  <div class="vo-space__txt">
-                    <p class="vo-space__n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</p>
-                    <h3>{s.t}</h3>
-                    <p class="vo-cap">
-                      Fino a <span data-count={s.n}>{s.n}</span> {s.c}
-                    </p>
-                    <p>{s.d}</p>
-                  </div>
-                </article>
-              </li>
+              <article class={`vo-room vo-room--${s.k}`} id={`spazio-${s.k}`} tabindex="-1" aria-labelledby={`spazio-${s.k}-t`}>
+                <figure class="vo-room__pic vo-arch">
+                  <Image src={pic(s.k)} alt={s.alt} widths={[480, 760, 1100, 1400]} sizes="(min-width: 900px) 56vw, 92vw" />
+                </figure>
+                <div class="vo-room__cap">
+                  <h3 id={`spazio-${s.k}-t`}>{s.t}</h3>
+                  <p class="vo-room__n">
+                    <span>Fino a</span> <b data-count={s.n}>{s.n}</b> <span>{s.c}</span>
+                  </p>
+                  <p>{s.d}</p>
+                  <p class="vo-room__more">
+                    <span>Gli altri spazi:</span>
+                    {spaces
+                      .filter((o) => o.k !== s.k)
+                      .map((o) => (
+                        <a href={`#spazio-${o.k}`} data-room={o.k}>
+                          {o.t}
+                        </a>
+                      ))}
+                  </p>
+                </div>
+              </article>
             ))
           }
-        </ul>
-      </div>
-    </section>
-
-    <section class="vo-seasons-sec" id="stagioni">
-      <div class="vo-wrap">
-        <h2 data-split>Le stagioni</h2>
-        <ol class="vo-seasons">
-          {
-            seasons.map((s) => (
-              <li>
-                <h3 data-split>{s.t}</h3>
-                <p class="vo-months" data-rise>{s.m}</p>
-                <p data-rise>{s.d}</p>
-              </li>
-            ))
-          }
-        </ol>
-      </div>
-    </section>
-
-    <section class="vo-bands-sec" id="fasce">
-      <div class="vo-wrap">
-        <div class="vo-head">
-          <h2 data-split>Fasce di prezzo</h2>
-          <p class="vo-lead" data-rise>Per sapere subito se siamo nel vostro budget, prima ancora di scriverci.</p>
         </div>
-        <ul class="vo-bands" data-rise-group>
-          {
-            bands.map((b) => (
-              <li>
-                <p class="vo-band">
-                  {b.n > 0 ? (
-                    <>
-                      <small>{b.pre}</small> <span data-count={b.n}>{b.n}</span> <small>{b.post}</small>
-                    </>
-                  ) : (
-                    b.post
-                  )}
-                </p>
-                <p>{b.d}</p>
-              </li>
-            ))
-          }
-        </ul>
-        <p class="vo-note">Fasce indicative di un'attività inventata.</p>
+      </div>
+    </section>
+
+    <section class="vo-card-sec" id="stagioni" aria-label="Le stagioni e le fasce di prezzo">
+      <div class="vo-wrap">
+        <div class="vo-card">
+          <span class="vo-mono vo-card__mono" aria-hidden="true">VO</span>
+          <div class="vo-card__in">
+            <div class="vo-card__panel">
+              <h2 data-split>Le stagioni</h2>
+              <p class="vo-card__lead">Da aprile a ottobre, ogni mese ha la sua luce.</p>
+              <ul class="vo-entries">
+                {
+                  seasons.map((s) => (
+                    <li>
+                      <h3>{s.t}</h3>
+                      <p class="vo-entries__m">{s.m}</p>
+                      <p>{s.d}</p>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+            <div class="vo-card__panel" id="fasce">
+              <h2 data-split>Fasce di prezzo</h2>
+              <p class="vo-card__lead">Per sapere subito se siamo nel vostro budget, prima ancora di scriverci.</p>
+              <ul class="vo-entries">
+                {
+                  bands.map((b) => (
+                    <li>
+                      <p class="vo-price">
+                        {b.n > 0 ? (
+                          <>
+                            <small>da</small> <span data-count={b.n}>{b.n}</span><small>&nbsp;€ a persona</small>
+                          </>
+                        ) : (
+                          "Su misura"
+                        )}
+                      </p>
+                      <p>{b.d}</p>
+                    </li>
+                  ))
+                }
+              </ul>
+              <p class="vo-note">Fasce indicative di un'attività inventata.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -207,9 +257,12 @@ const ld = {
         <div class="vo-visit__intro">
           <h2 data-split>Prenota una visita</h2>
           <p class="vo-lead" data-rise>Quattro informazioni e vi proponiamo due date per vedere la villa. Rispondiamo su WhatsApp in giornata.</p>
-          <figure class="vo-visit__pic" data-wipe>
-            <Image src={pic("terrazza")} alt="" widths={[500, 900]} sizes="(min-width: 900px) 40vw, 100vw" />
-          </figure>
+          <div class="vo-visit__alt">
+            <p class="vo-visit__h">Preferite parlarne a voce?</p>
+            <p><a href={telHref()}>Chiamateci</a> oppure <a href={waHref} target="_blank" rel="noopener">scriveteci su WhatsApp</a>.</p>
+            <p class="vo-visit__h">Dove siamo</p>
+            <p>{address}<br /><a href={mapsHref}>Come arrivare</a></p>
+          </div>
         </div>
         <form class="vo-form" data-demo-form data-wa={site.whatsappNumber} data-heading="Richiesta di visita dal sito" data-err="Completa questo campo." novalidate>
           <div class="vo-row">
@@ -245,40 +298,24 @@ const ld = {
             <input type="text" name="nomi" placeholder="es. Marco e Sara" required data-label="Nomi" />
             <span class="vo-err" data-derr="nomi" aria-live="polite"></span>
           </label>
-          <button type="submit" class="vo-btn" data-magnetic>Invia su WhatsApp</button>
+          <button type="submit" class="vo-btn vo-btn--accent" data-magnetic>Invia su WhatsApp</button>
           <p class="vo-note">Si apre WhatsApp con il messaggio già scritto. Questo è un sito dimostrativo: il messaggio arriva a Focus Design.</p>
         </form>
       </div>
     </section>
 
     <footer class="vo-foot">
-      <div class="vo-wrap">
+      <div class="vo-wrap vo-foot__in">
+        <span class="vo-mono" aria-hidden="true">VO</span>
         <p class="vo-foot__name">Villa Ortensia</p>
-        <div class="vo-foot__cols">
-          <p class="vo-foot__tag">Matrimoni ed eventi sul Lago di Como, da aprile a ottobre.</p>
-          <div>
-            <p class="vo-foot__h">Il sito</p>
-            <ul>
-              {nav.map((n) => <li><a href={n.href}>{n.t}</a></li>)}
-              <li><a href="#visita">Prenota una visita</a></li>
-            </ul>
-          </div>
-          <div>
-            <p class="vo-foot__h">Scriveteci</p>
-            <ul>
-              <li><a href={waHref} target="_blank" rel="noopener">WhatsApp, rispondiamo in giornata</a></li>
-              <li><a href={telHref()}>Chiamaci</a></li>
-            </ul>
-          </div>
-          <div>
-            <p class="vo-foot__h">Dove siamo</p>
-            <ul>
-              <li><p>{address}</p></li>
-              <li><a href={mapsHref}>Come arrivare</a></li>
-              <li><a href={reviewsHref}>Le recensioni su Google</a></li>
-            </ul>
-          </div>
-        </div>
+        <p class="vo-foot__tag">Matrimoni ed eventi sul Lago di Como, da aprile a ottobre.</p>
+        <address class="vo-foot__addr">{address}</address>
+        <ul class="vo-foot__links">
+          <li><a href={mapsHref}>Come arrivare</a></li>
+          <li><a href={waHref} target="_blank" rel="noopener">WhatsApp, rispondiamo in giornata</a></li>
+          <li><a href={telHref()}>Chiamaci</a></li>
+          <li><a href={reviewsHref}>Le recensioni su Google</a></li>
+        </ul>
         <p class="vo-foot__note">Villa Ortensia è un'attività inventata: indirizzo e partita IVA sono d'esempio (P.IVA 00000000000). Progetto dimostrativo di Focus Design. <a href="/privacy/">Informativa privacy</a></p>
       </div>
     </footer>
@@ -287,123 +324,172 @@ const ld = {
 
 <style>
   .vo {
-    --ink: #2a2f33;
-    --lake: #56646b;
-    --lake-deep: #3d4950;
-    --mist: #eef1f0;
-    --ivory: #fbfaf7;
-    --rose: #b98fa8;
-    --mark: rgba(214, 177, 200, 0.6);
-    background: var(--ivory);
-    color: var(--ink);
-    font-family: "Jost", "Archivo", sans-serif;
-    font-weight: 380;
+    /* Colours taken from the villa: plaster, paper, the lake at dusk, one hydrangea. */
+    --intonaco: #ebd8cf; /* Lombard plaster pink, the page surface */
+    --carta: #ffffff; /* invitation paper */
+    --lago: #1c2a33; /* deep lake ink, text and buttons (10.7:1 on plaster) */
+    --lago-2: #4f5b66; /* secondary text (5.1:1 on plaster, 6.7:1 on white) */
+    --ortensia: #4b5fa6; /* the one accent (white text on it 6:1) */
+    --ortensia-scura: #3e5094; /* accent as small text on plaster (5.5:1) */
+    --filo: rgba(28, 42, 51, 0.28); /* hairlines, decorative */
+    --serif: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+    --sans: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --pad: clamp(48px, 8vw, 112px);
+    --gut: clamp(18px, 4.5vw, 64px);
+    background: var(--intonaco);
+    color: var(--lago);
+    font-family: var(--sans);
+    font-weight: 400;
     font-size: 18px;
-    line-height: 1.65;
+    line-height: 1.6;
   }
   .vo h1,
   .vo h2,
   .vo h3 {
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-weight: 500;
-    font-stretch: 100%;
+    font-family: var(--serif);
+    font-style: normal;
+    font-optical-sizing: auto;
     color: inherit;
-    letter-spacing: -0.005em;
+    letter-spacing: 0;
   }
   .vo h2 {
-    font-size: clamp(2.8rem, 1.8rem + 3.6vw, 5.4rem);
-    line-height: 1;
-    margin-bottom: 1rem;
+    font-size: clamp(2.4rem, 1.7rem + 2.6vw, 4.25rem);
+    font-weight: 500;
+    line-height: 1.02;
   }
   .vo h3 {
-    font-size: clamp(2rem, 1.5rem + 1.4vw, 2.9rem);
-    line-height: 1.05;
+    font-size: clamp(1.6rem, 1.3rem + 0.9vw, 2.2rem);
+    font-weight: 600;
+    line-height: 1.1;
   }
   .vo-wrap {
-    max-width: 1280px;
+    max-width: 1320px;
     margin: 0 auto;
-    padding: 0 clamp(20px, 5vw, 64px);
+    padding: 0 var(--gut);
+  }
+  .vo :is(section[id], article[id], [id="fasce"]) {
+    scroll-margin-top: calc(var(--banner) + 84px);
   }
 
-  /* ---------- Header ---------- */
+  /* The monogram: two letters under an arch, like the villa's windows. */
+  .vo-mono {
+    display: inline-grid;
+    place-items: end center;
+    width: 2.1rem;
+    height: 2.55rem;
+    padding-bottom: 0.2rem;
+    border: 1px solid currentColor;
+    border-radius: 999px 999px 0 0;
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 0.82rem;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    box-sizing: border-box;
+  }
+
+  /* ---------- Header: centred like an invitation ---------- */
   .vo-top {
-    color: #fff;
+    color: var(--lago);
   }
   .vo-top.is-solid {
-    background: rgba(251, 250, 247, 0.97);
-    color: var(--ink);
-    box-shadow: 0 1px 0 #e3e5e2;
+    background: var(--intonaco);
+    box-shadow: 0 1px 0 var(--filo);
   }
   .vo-top__in {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: 2rem;
-    min-height: 78px;
+    gap: 1rem;
+    min-height: 76px;
   }
-  .vo-logo {
-    font-family: "Cormorant Garamond", serif;
-    font-style: italic;
-    font-size: 1.85rem;
+  .vo-mark {
+    grid-column: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
     color: inherit;
     text-decoration: none;
-    margin-right: auto;
+    min-height: 44px;
+  }
+  .vo-mark__name {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.45rem;
+    line-height: 1;
     white-space: nowrap;
   }
   .vo-nav {
     display: none;
-    gap: 2rem;
+    align-items: center;
+    gap: clamp(1.25rem, 2.4vw, 2.5rem);
+    font-size: 0.98rem;
+  }
+  .vo-nav--l {
+    grid-column: 1;
+    justify-self: end;
+    margin-right: clamp(0.5rem, 2vw, 2rem);
+  }
+  .vo-nav--r {
+    grid-column: 3;
+    justify-self: start;
+    margin-left: clamp(0.5rem, 2vw, 2rem);
   }
   .vo-nav a {
     color: inherit;
     text-decoration: none;
-    font-size: 0.95rem;
-    letter-spacing: 0.06em;
-    padding: 0.6rem 0;
-    background: linear-gradient(currentColor, currentColor) 0 calc(100% - 0.35rem) / 0 1px no-repeat;
-    transition: background-size 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    white-space: nowrap;
   }
-  .vo-nav a:hover {
-    background-size: 100% 1px;
+  .vo-nav .vo-nav__visit {
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--ortensia);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
   }
-  .vo-top .vo-top__cta {
-    display: none;
-  }
-  .vo-top:not(.is-solid) .vo-top__cta {
-    background: #fff;
-    color: var(--ink);
+  @media (hover: hover) and (pointer: fine) {
+    .vo-nav a:hover {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 6px;
+    }
   }
   .vo-burger {
+    grid-column: 3;
+    justify-self: end;
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
     min-height: 44px;
+    padding: 0 0.25rem;
     border: 0;
     background: transparent;
     color: inherit;
     font: inherit;
-    letter-spacing: 0.06em;
+    font-size: 1rem;
     cursor: pointer;
   }
   .vo-burger__lines {
     display: grid;
     gap: 6px;
-    width: 24px;
+    width: 22px;
   }
   .vo-burger__lines i {
     display: block;
-    height: 1px;
+    height: 1.5px;
     background: currentColor;
-    transition: transform 0.35s ease;
   }
   .vo-burger[aria-expanded="true"] .vo-burger__lines i:first-child {
-    transform: translateY(3.5px) rotate(45deg);
+    transform: translateY(3.75px) rotate(45deg);
   }
   .vo-burger[aria-expanded="true"] .vo-burger__lines i:last-child {
-    transform: translateY(-3.5px) rotate(-45deg);
+    transform: translateY(-3.75px) rotate(-45deg);
   }
-  @media (min-width: 980px) {
-    .vo-nav,
-    .vo-top .vo-top__cta {
+  @media (min-width: 1040px) {
+    .vo-nav {
       display: inline-flex;
     }
     .vo-burger {
@@ -416,398 +502,549 @@ const ld = {
     z-index: 85;
     display: grid;
     align-content: center;
-    padding: 6rem clamp(24px, 8vw, 56px) 3rem;
-    background: var(--lake-deep);
-    color: #fff;
+    justify-items: center;
+    text-align: center;
+    padding: 6rem var(--gut) 3rem;
+    background: var(--intonaco);
+    color: var(--lago);
   }
   .vo-menu nav {
     display: grid;
-    gap: 0.4rem;
+    gap: 0.5rem;
   }
   .vo-menu a {
     color: inherit;
     text-decoration: none;
-    font-family: "Cormorant Garamond", serif;
-    font-size: clamp(2.4rem, 10vw, 3.4rem);
-    line-height: 1.15;
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(2.2rem, 9vw, 3.2rem);
+    line-height: 1.2;
   }
-  .vo-menu a:last-child {
-    font-style: italic;
-  }
-  :global(.dm-menu-open) .vo-top {
-    color: #fff;
-    background: transparent;
-    box-shadow: none;
+  .vo-menu .vo-menu__visit {
+    margin-top: 1rem;
+    color: var(--ortensia-scura);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 8px;
   }
   @media (prefers-reduced-motion: no-preference) {
     .vo-menu:not([hidden]) {
-      animation: vo-menu 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      animation: vo-menu 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     }
     @keyframes vo-menu {
       from {
-        clip-path: inset(0 0 100% 0);
+        opacity: 0;
+        transform: translateY(-12px);
       }
-      to {
-        clip-path: inset(0 0 0 0);
-      }
+    }
+    .vo-burger__lines i {
+      transition: transform 0.35s ease;
     }
   }
 
-  /* ---------- Buttons and links ---------- */
+  /* ---------- Buttons: solid, square, no arrow ---------- */
   .vo-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-height: 54px;
     padding: 0 1.9rem;
-    background: var(--ink);
+    background: var(--lago);
     color: #fff;
     font: inherit;
-    font-weight: 500;
-    letter-spacing: 0.06em;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
     text-decoration: none;
     border: 0;
+    border-radius: 0;
     cursor: pointer;
-    transition:
-      background-color 0.3s ease,
-      color 0.3s ease;
   }
-  .vo-btn:hover {
-    background: var(--lake-deep);
+  .vo-btn--accent {
+    background: var(--ortensia);
   }
-  .vo-btn--sm {
-    min-height: 44px;
-    padding: 0 1.3rem;
-    font-size: 0.92rem;
+  @media (hover: hover) and (pointer: fine) {
+    .vo-btn:hover {
+      background: var(--ortensia);
+    }
+    .vo-btn--accent:hover {
+      background: var(--lago);
+    }
   }
-  .vo-btn--light {
-    background: #fff;
-    color: var(--ink);
-  }
-  .vo-btn--light:hover {
-    background: var(--mist);
-  }
-  .vo-link {
-    color: inherit;
-    letter-spacing: 0.06em;
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 6px;
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-  .vo-link--light {
-    color: #fff;
+  @media (hover: none), (pointer: coarse) {
+    .vo-btn:active {
+      transform: scale(0.98);
+    }
   }
 
-  /* ---------- Hero ---------- */
-  .vo-hero {
-    position: relative;
-    min-height: 100vh;
-    min-height: 100svh;
-    display: grid;
-    grid-template-rows: 1fr auto;
+  /* Pictures are arched windows: square sides, one round arch on top. */
+  .vo-arch {
+    margin: 0;
     overflow: hidden;
-    color: #fff;
-    background: #2e3a40;
+    border-radius: 999px 999px 0 0;
+    background: var(--carta);
   }
-  .vo-hero__media {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-  }
-  .vo-hero__drift {
-    position: absolute;
-    inset: 0;
-  }
-  .vo-hero__media :global(.vo-hero__img) {
+  .vo-arch :global(img) {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 50% 45%;
   }
-  .vo-hero__media::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(180deg, rgba(20, 28, 32, 0.45) 0%, rgba(20, 28, 32, 0) 30%),
-      linear-gradient(0deg, rgba(20, 28, 32, 0.82) 0%, rgba(20, 28, 32, 0.4) 40%, rgba(20, 28, 32, 0.1) 70%);
+
+  /* ---------- Hero: text on the left, the villa in an arch on the right ---------- */
+  .vo-hero {
+    padding-top: calc(var(--banner) + 76px + clamp(24px, 4vw, 56px));
+    padding-bottom: clamp(40px, 5vw, 72px);
   }
-  @media (max-width: 899px) {
-    .vo-hero__media::after {
-      background: linear-gradient(0deg, rgba(20, 28, 32, 0.88) 0%, rgba(20, 28, 32, 0.66) 48%, rgba(20, 28, 32, 0.32) 72%, rgba(20, 28, 32, 0.15) 100%);
-    }
-  }
-  .vo-hero__text {
-    position: relative;
-    z-index: 2;
-    align-self: end;
-    width: 100%;
-    padding-top: calc(var(--banner) + 120px);
-    padding-bottom: clamp(2rem, 5vh, 3.5rem);
-  }
-  .vo-kicker {
-    font-size: 0.92rem;
-    letter-spacing: 0.14em;
-    margin-bottom: 1.1rem;
-    color: #e9eef0;
+  .vo-hero__in {
+    display: grid;
+    gap: 2rem;
+    align-items: end;
   }
   .vo h1 {
-    font-size: clamp(3rem, 1.4rem + 6.4vw, 8rem);
-    line-height: 0.95;
-    max-width: 13ch;
-    color: #fff;
+    font-size: clamp(2.6rem, 1.2rem + 5.2vw, 6.4rem);
+    font-weight: 500;
+    line-height: 0.98;
+    max-width: 11ch;
+  }
+  .vo-hero__lead {
+    margin-top: 1.5rem;
+    max-width: 34ch;
+    font-size: clamp(1.1rem, 1rem + 0.35vw, 1.3rem);
+    color: var(--lago);
   }
   .vo-hero__cta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem 2rem;
+    gap: 1rem 1.75rem;
     margin-top: 2rem;
   }
-  .vo-hero__facts {
-    position: relative;
-    z-index: 2;
+  .vo-hero__meta {
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: var(--lago-2);
+    padding-left: 1.25rem;
+    border-left: 1px solid var(--lago);
+  }
+  .vo-hero__pic {
+    aspect-ratio: 6 / 5;
+  }
+  @media (min-width: 900px) {
+    .vo-hero__in {
+      grid-template-columns: 1.1fr 1fr;
+      gap: clamp(2.5rem, 5vw, 5rem);
+    }
+    .vo-hero__text {
+      padding-bottom: clamp(0rem, 2vw, 2rem);
+    }
+    .vo-hero__pic {
+      aspect-ratio: auto;
+      height: min(calc(100svh - var(--banner) - 76px - 180px), 640px);
+      min-height: 460px;
+    }
+  }
+
+  /* ---------- Gli spazi: intro beside the plan, then the room shown ---------- */
+  .vo-spaces {
+    background: var(--carta);
+    padding: var(--pad) 0;
+  }
+  .vo-spaces__top {
+    display: grid;
+    gap: 2rem;
+  }
+  .vo-statement {
+    margin-top: 1.25rem;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(1.3rem, 1.1rem + 0.7vw, 1.75rem);
+    line-height: 1.35;
+  }
+  .vo-legend {
     list-style: none;
-    margin: 0 auto;
-    width: 100%;
+    margin: 2rem 0 0;
+    padding: 0;
+    border-top: 1px solid var(--lago);
+  }
+  .vo-legend li {
+    border-bottom: 1px solid var(--filo);
+  }
+  .vo-legend a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    min-height: 56px;
+    padding: 0.85rem 0;
+    box-sizing: border-box;
+    color: inherit;
+    text-decoration: none;
+  }
+  .vo-legend__t {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.15rem;
+  }
+  .vo-legend__dots {
+    flex: 1;
+    min-width: 1rem;
+    border-bottom: 1px dotted var(--lago-2);
+    transform: translateY(-0.3em);
+  }
+  .vo-legend__n {
+    font-size: 0.95rem;
+    color: var(--lago-2);
+    white-space: nowrap;
+  }
+  .vo-legend__n b {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--lago);
+  }
+  .vo-legend a[aria-current="true"] .vo-legend__t {
+    color: var(--ortensia-scura);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 5px;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .vo-legend a:hover .vo-legend__t {
+      text-decoration: underline;
+      text-underline-offset: 5px;
+    }
+  }
+  .vo-sheet {
+    margin: 0;
+    padding: clamp(12px, 2vw, 28px);
+    border: 1px solid var(--lago);
+    outline: 1px solid var(--filo);
+    outline-offset: -7px;
+    background: var(--carta);
+  }
+  .vo-sheet figcaption {
+    margin-top: 0.75rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--filo);
+    font-size: 0.9rem;
+    color: var(--lago-2);
+  }
+  @media (min-width: 900px) {
+    .vo-spaces__top {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: clamp(2.5rem, 5vw, 5rem);
+      align-items: center;
+    }
+  }
+
+  /* The room panels: picture in an arch, caption beside it, overlapping a little. */
+  .vo-rooms {
+    display: grid;
+    gap: clamp(3rem, 6vw, 5rem);
+    margin-top: clamp(3rem, 6vw, 5.5rem);
+  }
+  .vo-room {
+    display: grid;
+    gap: 1.25rem;
+    outline: none;
+  }
+  .vo-room:focus-visible .vo-room__cap {
+    outline: 3px solid var(--lago);
+    outline-offset: 4px;
+  }
+  .vo-room__pic {
+    aspect-ratio: 4 / 3;
+  }
+  .vo-room__cap {
+    display: grid;
+    align-content: start;
+    gap: 0.85rem;
+    background: var(--carta);
+  }
+  .vo-room__n {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 2.5rem;
-    padding-block: 1.25rem 1.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    align-items: baseline;
+    gap: 0 0.5rem;
+    color: var(--lago-2);
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--filo);
+  }
+  .vo-room__n b {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(2.6rem, 2rem + 2vw, 3.8rem);
+    line-height: 1;
+    color: var(--ortensia-scura);
+  }
+  .vo-room__more {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 1.25rem;
+    margin-top: 0.5rem;
     font-size: 0.95rem;
-    letter-spacing: 0.06em;
-    color: #eef2f3;
-    box-sizing: border-box;
+    color: var(--lago-2);
+  }
+  .vo-room__more a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--lago);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--ortensia);
+    text-underline-offset: 5px;
+  }
+  @media (min-width: 900px) {
+    .vo-room {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      align-items: end;
+      gap: 0;
+    }
+    .vo-room__pic {
+      aspect-ratio: auto;
+      height: clamp(400px, 35vw, 500px);
+    }
+    .vo-room__cap {
+      position: relative;
+      z-index: 1;
+      padding: clamp(1.5rem, 2.5vw, 2.5rem);
+      border: 1px solid var(--lago);
+    }
+    /* Garden: wide arch on the left, caption overlapping its lower right corner. */
+    .vo-room--giardino .vo-room__pic {
+      grid-column: 1 / 9;
+      grid-row: 1;
+    }
+    .vo-room--giardino .vo-room__cap {
+      grid-column: 8 / 13;
+      grid-row: 1;
+      margin-bottom: clamp(1.5rem, 3vw, 3rem);
+    }
+    /* Salone: arch on the right, caption on the left, lifted higher. */
+    .vo-room--salone .vo-room__pic {
+      grid-column: 5 / 13;
+      grid-row: 1;
+    }
+    .vo-room--salone .vo-room__cap {
+      grid-column: 1 / 6;
+      grid-row: 1;
+      align-self: center;
+    }
+    /* Terrace: arch on the left, caption hanging from the top on the right. */
+    .vo-room--terrazza .vo-room__pic {
+      grid-column: 1 / 9;
+      grid-row: 1;
+    }
+    .vo-room--terrazza .vo-room__cap {
+      grid-column: 8 / 13;
+      grid-row: 1;
+      align-self: start;
+      margin-top: clamp(3rem, 8vw, 7rem);
+    }
+  }
+  /* With the script the plan switches the room in place (no script: all three, one under the other). */
+  .vo-rooms.is-live .vo-room:not(.is-on) {
+    display: none;
   }
   @media (prefers-reduced-motion: no-preference) {
-    .vo-hero__media :global(.vo-hero__img) {
-      animation: vo-zoom 3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    .vo-rooms.is-live .vo-room.is-on .vo-room__pic {
+      animation: vo-room-pic 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    @keyframes vo-zoom {
+    .vo-rooms.is-live .vo-room.is-on .vo-room__cap {
+      animation: vo-room-cap 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes vo-room-pic {
       from {
-        transform: scale(1.12);
+        opacity: 0;
+        transform: scale(0.97);
+      }
+    }
+    @keyframes vo-room-cap {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
       }
     }
   }
 
-  /* ---------- Statement ---------- */
-  .vo-intro {
-    padding: clamp(90px, 13vw, 190px) 0;
+  /* ---------- Seasons and prices: an invitation card, opened flat ---------- */
+  .vo-card-sec {
+    padding: var(--pad) 0;
+  }
+  .vo-card {
+    position: relative;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 5vw, 4.5rem) clamp(1.25rem, 4vw, 4rem) clamp(2rem, 4vw, 3.5rem);
+    background: var(--carta);
+    border: 1px solid var(--lago);
+    outline: 1px solid var(--ortensia);
+    outline-offset: -10px;
     text-align: center;
   }
-  .vo-statement {
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-size: clamp(2rem, 1.2rem + 3vw, 4rem);
-    line-height: 1.18;
-    max-width: 24ch;
-    margin: 0 auto;
-  }
-  .vo-statement [data-mark] {
-    background-image: linear-gradient(var(--mark), var(--mark));
-    font-style: italic;
-  }
-
-  /* ---------- Spaces: cards that stack ---------- */
-  .vo-spaces-sec {
-    padding: clamp(40px, 6vw, 80px) 0 clamp(80px, 10vw, 140px);
-  }
-  .vo-head {
-    display: grid;
-    gap: 0.5rem 3rem;
-    margin-bottom: clamp(2rem, 4vw, 3.5rem);
-  }
-  @media (min-width: 900px) {
-    .vo-head {
-      grid-template-columns: auto 1fr;
-      align-items: end;
-    }
-    .vo-head h2 {
-      margin: 0;
-    }
-  }
-  .vo-lead {
-    max-width: 40ch;
-    font-size: 1.15rem;
-  }
-  .vo-spaces {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: clamp(1.5rem, 3vw, 2.5rem);
-  }
-  .vo-space {
-    display: grid;
-    background: var(--mist);
-    overflow: hidden;
-    transform-origin: 50% 0;
-  }
-  @media (min-width: 900px) {
-    .vo-spaces {
-      gap: 14vh;
-    }
-    .vo-space {
-      grid-template-columns: 1.45fr 1fr;
-      min-height: min(72vh, 640px);
-      box-shadow: 0 -30px 60px -40px rgba(40, 50, 55, 0.35);
-    }
-  }
-  .vo-space__pic :global(img) {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: 260px;
-    object-fit: cover;
-  }
-  .vo-space__txt {
-    padding: clamp(1.5rem, 3vw, 3.5rem);
-    display: grid;
-    align-content: center;
-    gap: 0.75rem;
-  }
-  .vo-space__n {
-    font-family: "Cormorant Garamond", serif;
-    font-style: italic;
-    color: var(--lake);
-    font-size: 1.3rem;
-  }
-  .vo-cap {
-    color: var(--lake);
-    letter-spacing: 0.04em;
-  }
-  .vo-cap span {
-    font-family: "Cormorant Garamond", serif;
-    font-size: 1.6em;
-    line-height: 1;
-    color: var(--ink);
-  }
-
-  /* ---------- Seasons ---------- */
-  .vo-seasons-sec {
-    padding: clamp(80px, 10vw, 140px) 0;
-    background: var(--lake-deep);
-    color: #f1f4f4;
-  }
-  .vo-seasons {
-    list-style: none;
-    margin: clamp(2rem, 4vw, 3.5rem) 0 0;
-    padding: 0;
-    display: grid;
-    gap: 2.5rem;
-  }
-  @media (min-width: 900px) {
-    .vo-seasons {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 3rem;
-    }
-  }
-  .vo-seasons li {
-    border-top: 1px solid rgba(241, 244, 244, 0.3);
-    padding-top: 1.5rem;
-  }
-  .vo-seasons h3 {
-    font-style: italic;
-    font-size: clamp(2.6rem, 1.8rem + 2.4vw, 4rem);
-    margin-bottom: 0.4rem;
-  }
-  .vo-months {
-    letter-spacing: 0.08em;
-    color: #c9d3d6;
+  .vo-card__mono {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--carta);
+    color: var(--ortensia-scura);
+    width: 2.6rem;
+    height: 3.1rem;
     font-size: 0.95rem;
-    margin-bottom: 0.75rem;
   }
-
-  /* ---------- Price bands ---------- */
-  .vo-bands-sec {
-    padding: clamp(80px, 10vw, 140px) 0;
+  .vo-card__in {
+    display: grid;
+    gap: 3rem;
   }
-  .vo-bands {
+  .vo-card__lead {
+    margin: 0.85rem auto 0;
+    max-width: 32ch;
+    color: var(--lago-2);
+  }
+  .vo-entries {
     list-style: none;
-    margin: 0;
+    margin: 2rem 0 0;
     padding: 0;
     display: grid;
-    gap: 1rem;
+    gap: 1.75rem;
   }
-  @media (min-width: 900px) {
-    .vo-bands {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0;
-    }
-    .vo-bands li + li {
-      border-left: 1px solid #dfe3e1;
-    }
+  .vo-entries li {
+    display: grid;
+    gap: 0.3rem;
+    justify-items: center;
   }
-  .vo-bands li {
-    padding: 1.75rem clamp(1rem, 2.5vw, 2.25rem);
-    border-top: 1px solid #dfe3e1;
+  .vo-entries li + li::before {
+    content: "";
+    width: 36px;
+    height: 1px;
+    background: var(--ortensia);
+    margin-bottom: 1.4rem;
   }
-  .vo-band {
-    font-family: "Cormorant Garamond", serif;
-    font-size: clamp(2.6rem, 1.8rem + 2.4vw, 4rem);
-    line-height: 1.05;
-    margin-bottom: 0.5rem;
+  .vo-entries p:last-child {
+    max-width: 34ch;
   }
-  .vo-band small {
-    font-family: "Jost", sans-serif;
-    font-size: 1rem;
-    letter-spacing: 0.04em;
-    color: var(--lake);
+  .vo-entries__m {
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: var(--ortensia-scura);
+    font-weight: 500;
+  }
+  .vo-price {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(2rem, 1.6rem + 1.4vw, 2.8rem);
+    line-height: 1.1;
+  }
+  .vo-price small {
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--lago-2);
   }
   .vo-note {
     font-size: 0.88rem;
-    color: #5f6a6f;
-    margin-top: 1rem;
+    color: var(--lago-2);
+    margin-top: 1.5rem;
+  }
+  @media (min-width: 900px) {
+    .vo-card__in {
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+    .vo-card__panel {
+      padding: 0 clamp(1.5rem, 3vw, 3rem);
+    }
+    .vo-card__panel + .vo-card__panel {
+      border-left: 1px solid var(--filo);
+    }
   }
 
   /* ---------- Visit ---------- */
   .vo-visit-sec {
-    padding: clamp(80px, 10vw, 140px) 0;
-    background: var(--mist);
+    padding: var(--pad) 0;
+    background: var(--carta);
   }
   .vo-visit {
     display: grid;
     gap: 2.5rem;
   }
-  @media (min-width: 900px) {
+  .vo-lead {
+    margin-top: 1rem;
+    max-width: 38ch;
+    font-size: 1.15rem;
+  }
+  .vo-visit__alt {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--lago);
+    display: grid;
+    gap: 0.35rem;
+  }
+  .vo-visit__alt p + .vo-visit__h {
+    margin-top: 1.25rem;
+  }
+  .vo-visit__h {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.2rem;
+  }
+  .vo-visit__alt a {
+    color: var(--lago);
+    font-weight: 600;
+    text-decoration-color: var(--ortensia);
+    text-underline-offset: 4px;
+    display: inline-block;
+    padding: 0.55rem 0;
+  }
+  /* Phones and tablets: the form comes right after the lead, the other ways to reach us after it. */
+  @media (max-width: 899px) {
     .vo-visit {
-      grid-template-columns: 1fr 1.05fr;
-      gap: 5rem;
-      align-items: start;
+      gap: 0;
+    }
+    .vo-visit__intro {
+      display: contents;
+    }
+    .vo-visit .vo-form {
+      margin-top: 2rem;
+    }
+    .vo-visit__alt {
+      order: 2;
     }
   }
-  .vo-visit__pic {
-    margin: 2rem 0 0;
-    overflow: hidden;
-  }
-  .vo-visit__pic :global(img) {
-    display: block;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-  }
-  @media (max-width: 899px) {
-    .vo-visit__pic {
-      display: none;
+  @media (min-width: 900px) {
+    .vo-visit {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      gap: clamp(3rem, 6vw, 6rem);
+      align-items: stretch;
+    }
+    .vo-visit__intro {
+      display: flex;
+      flex-direction: column;
+    }
+    .vo-visit__alt {
+      margin-top: auto;
+    }
+    .vo-visit__intro .vo-lead {
+      margin-bottom: 2rem;
     }
   }
   .vo-form {
     display: grid;
-    gap: 1.1rem;
-    background: #fff;
-    padding: clamp(22px, 3vw, 44px);
-    box-shadow: 0 40px 80px -50px rgba(40, 50, 55, 0.45);
+    gap: 1.2rem;
+    padding: clamp(20px, 3vw, 40px);
+    border: 1px solid var(--lago);
+    background: var(--intonaco);
   }
   .vo-form label,
   .vo-form legend {
     display: grid;
-    gap: 0.35rem;
-    font-weight: 500;
+    gap: 0.4rem;
+    font-weight: 600;
     font-size: 0.95rem;
-    letter-spacing: 0.02em;
   }
   .vo-form fieldset {
     border: 0;
@@ -817,20 +1054,22 @@ const ld = {
   .vo-form select,
   .vo-form input[type="text"] {
     font: inherit;
+    font-weight: 400;
     min-height: 52px;
     padding: 0 0.85rem;
-    border: 1px solid #a9b2b5;
-    background: #fff;
-    color: var(--ink);
+    border: 1px solid var(--lago-2);
+    border-radius: 0;
+    background: var(--carta);
+    color: var(--lago);
   }
   .vo-form select:focus-visible,
   .vo-form input:focus-visible {
-    outline: 2px solid var(--lake);
-    outline-offset: 2px;
+    outline: 3px solid var(--ortensia);
+    outline-offset: 1px;
   }
   .vo-row {
     display: grid;
-    gap: 1.1rem;
+    gap: 1.2rem;
   }
   @media (min-width: 560px) {
     .vo-row {
@@ -851,6 +1090,7 @@ const ld = {
     position: absolute;
     opacity: 0;
     inset: 0;
+    margin: 0;
     cursor: pointer;
   }
   .vo-opt span {
@@ -858,20 +1098,25 @@ const ld = {
     align-items: center;
     min-height: 46px;
     padding: 0 1.1rem;
-    border: 1px solid #a9b2b5;
+    border: 1px solid var(--lago-2);
+    background: var(--carta);
     font-weight: 400;
-    transition:
-      background-color 0.25s ease,
-      color 0.25s ease;
   }
   .vo-opt input:checked + span {
-    background: var(--ink);
-    border-color: var(--ink);
+    background: var(--lago);
+    border-color: var(--lago);
     color: #fff;
   }
   .vo-opt input:focus-visible + span {
-    outline: 2px solid var(--lake);
+    outline: 3px solid var(--ortensia);
     outline-offset: 2px;
+  }
+  .vo-form .vo-btn {
+    justify-self: start;
+    margin-top: 0.4rem;
+  }
+  .vo-form .vo-note {
+    margin-top: 0;
   }
   .vo-err {
     color: #9b2b17;
@@ -882,159 +1127,142 @@ const ld = {
     display: none;
   }
 
-  /* ---------- Footer ---------- */
+  /* ---------- Footer: the back of the invitation ---------- */
   .vo-foot {
-    background: var(--ink);
-    color: #dfe5e6;
-    padding: clamp(60px, 8vw, 100px) 0 40px;
+    padding: clamp(48px, 7vw, 88px) 0 clamp(28px, 4vw, 40px);
     font-size: 16px;
+    text-align: center;
+  }
+  .vo-foot__in {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
   }
   .vo-foot__name {
-    font-family: "Cormorant Garamond", serif;
-    font-style: italic;
-    font-size: clamp(3.2rem, 1rem + 9vw, 9rem);
-    line-height: 1;
-    color: #fff;
-    margin-bottom: 2.5rem;
-  }
-  .vo-foot__cols {
-    display: grid;
-    gap: 2rem;
-    padding-bottom: 2.5rem;
-    border-bottom: 1px solid rgba(223, 229, 230, 0.2);
-  }
-  @media (min-width: 760px) {
-    .vo-foot__cols {
-      grid-template-columns: 1.4fr 1fr 1fr 1fr;
-    }
+    margin-top: 0.75rem;
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+    line-height: 1.05;
   }
   .vo-foot__tag {
-    font-family: "Cormorant Garamond", serif;
-    font-size: 1.5rem;
-    line-height: 1.25;
-    max-width: 22ch;
-    color: #fff;
+    color: var(--lago-2);
   }
-  .vo-foot__h {
-    letter-spacing: 0.1em;
-    color: #aab6b9;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+  .vo-foot__addr {
+    font-style: normal;
+    margin-top: 0.75rem;
   }
-  .vo-foot ul {
+  .vo-foot__links {
     list-style: none;
-    margin: 0;
+    margin: 0.5rem 0 0;
     padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 1.75rem;
   }
-  .vo-foot a {
-    color: #fff;
+  .vo-foot__links a,
+  .vo-foot__note a {
+    color: var(--lago);
+    text-decoration-color: var(--ortensia);
+    text-underline-offset: 4px;
     display: inline-block;
-    padding: 0.35rem 0;
+    padding: 0.6rem 0;
   }
   .vo-foot__note {
-    padding-top: 1.5rem;
-    font-size: 0.88rem;
-    color: #b8c2c4;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--filo);
+    max-width: 62ch;
+    font-size: 0.86rem;
+    color: var(--lago-2);
   }
 
-  /* ================= Theme "Mela", sage green (Lorenzo, 22 Nov 2026) =================
-     The same page in the new look of the Focus Design site: Geist only (no serif, no italics),
-     tight semibold titles, rounded buttons with an arrow, light grey fields and surfaces,
-     rounded pictures. Villa Ortensia's own colour is sage green (white text on it 5.1:1). */
-  .vo {
-    --ink: #1d1d1f;
-    --lake: #2e7d5b;
-    --lake-deep: #23664a;
-    --mist: #f5f5f7;
-    --ivory: #ffffff;
-    --rose: #2e7d5b;
-    --mark: rgba(46, 125, 91, 0.2);
-    background: #fff;
-    font-weight: 400;
-    font-size: 17px;
-    letter-spacing: -0.01em;
-  }
-  .vo.vo :global(*) {
-    font-family: "Geist", "Geist Fallback", system-ui, sans-serif !important;
-    font-style: normal !important;
-  }
-  .vo h1,
-  .vo h2 {
-    font-weight: 600;
-    letter-spacing: -0.045em;
-    line-height: 1;
-  }
-  .vo h3 {
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
-  .vo .vo-logo,
-  .vo .vo-foot__name {
-    font-weight: 600;
-    letter-spacing: -0.03em;
-  }
-  .vo .vo-btn {
-    border-radius: 14px;
-    background: var(--lake);
-    color: #fff;
-    font-weight: 600;
-    letter-spacing: 0;
-    min-height: 56px;
-  }
-  .vo .vo-btn::after {
-    content: "→" / "";
-    margin-left: 0.6rem;
-  }
-  .vo .vo-btn:hover {
-    background: var(--lake-deep);
-  }
-  .vo .vo-btn--light {
-    background: #fff;
-    color: var(--ink);
-  }
-  .vo .vo-btn--light:hover {
-    background: #f5f5f7;
-  }
-  .vo .vo-link {
-    letter-spacing: 0;
-  }
-  .vo .vo-kicker,
-  .vo .vo-cap,
-  .vo .vo-space__n {
-    letter-spacing: 0;
-  }
-  .vo .vo-form select,
-  .vo .vo-form input[type="text"] {
-    background: #f5f5f7;
-    border-color: transparent;
-    border-radius: 14px;
-    min-height: 56px;
-  }
-  .vo .vo-opt span {
-    border-radius: 14px;
-    border-color: transparent;
-    background: #f5f5f7;
-  }
-  .vo .vo-opt input:checked + span {
-    background: var(--lake);
-    border-color: var(--lake);
-    color: #fff;
-  }
-  .vo .vo-space :global(img),
-  .vo .vo-visit__pic,
-  .vo .vo-band {
-    border-radius: 22px;
-    overflow: hidden;
-  }
-  .vo .vo-months {
-    color: #ffffff;
-    letter-spacing: 0;
-  }
-  .vo .vo-seasons-sec {
-    color: #ffffff;
+  /* ---------- Phones ---------- */
+  @media (max-width: 599px) {
+    .vo {
+      font-size: 17px;
+    }
+    .vo-top__in {
+      min-height: 64px;
+    }
+    .vo-mark__name {
+      font-size: 1.25rem;
+    }
+    .vo-mark .vo-mono {
+      width: 1.8rem;
+      height: 2.2rem;
+      font-size: 0.72rem;
+    }
+    .vo-hero {
+      padding-top: calc(var(--banner) + 64px + 20px);
+    }
+    .vo h1 {
+      font-size: clamp(2.3rem, 10.5vw, 2.8rem);
+    }
+    .vo-sheet {
+      padding: 8px;
+      outline-offset: -5px;
+    }
+    .vo-card {
+      outline-offset: -7px;
+    }
+    .vo-card__in {
+      gap: 2.5rem;
+    }
+    .vo-card__panel + .vo-card__panel {
+      padding-top: 2.5rem;
+      border-top: 1px solid var(--filo);
+    }
   }
 </style>
 <script>
   import { initDemoForms } from "../../../scripts/demo-form";
   initDemoForms();
+
+  // The plan switches the room shown. Links stay real anchors (#spazio-<key>) without JS.
+  const root = document.querySelector<HTMLElement>("[data-plan-root]");
+  const list = root?.querySelector<HTMLElement>("[data-rooms]");
+  if (root && list) {
+    const panels = Array.from(list.querySelectorAll<HTMLElement>(".vo-room"));
+    const keyOf = (p: HTMLElement) => p.id.replace("spazio-", "");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const show = (key: string, move: boolean) => {
+      const panel = panels.find((p) => keyOf(p) === key);
+      if (!panel) return;
+      panels.forEach((p) => p.classList.toggle("is-on", p === panel));
+      root.querySelectorAll<Element>("[data-room]").forEach((a) => {
+        if (a.getAttribute("data-room") === key && !a.closest(".vo-room")) a.setAttribute("aria-current", "true");
+        else a.removeAttribute("aria-current");
+      });
+      if (!move) return;
+      const r = panel.getBoundingClientRect();
+      const top = 110;
+      if (r.top < top || r.bottom > innerHeight) {
+        // An absolute position: Lenis' element targets drift when the page was scrolled natively.
+        const y = Math.max(0, scrollY + r.top - top);
+        const lenis = (window as unknown as { __lenis?: { scrollTo: (t: number) => void } }).__lenis;
+        if (lenis) lenis.scrollTo(y);
+        else scrollTo({ top: y, behavior: reduce.matches ? "auto" : "smooth" });
+      }
+      panel.focus({ preventScroll: true });
+    };
+    list.classList.add("is-live");
+    const fromHash = location.hash.startsWith("#spazio-") ? location.hash.slice(8) : "";
+    show(panels.some((p) => keyOf(p) === fromHash) ? fromHash : keyOf(panels[0]), false);
+    // Capture phase: handled here before the smooth-scroll anchor handler on the link itself.
+    root.addEventListener(
+      "click",
+      (e) => {
+        const a = (e.target as Element).closest("[data-room]");
+        if (!a) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const key = a.getAttribute("data-room")!;
+        show(key, true);
+        history.replaceState(null, "", `#spazio-${key}`);
+      },
+      true,
+    );
+  }
 </script>

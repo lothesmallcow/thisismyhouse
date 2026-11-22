@@ -1,0 +1,311 @@
+---
+/**
+ * Villa Ortensia demo: the floor plan of the villa and its garden, drawn like an architect's sheet.
+ * It is the navigation of "Gli spazi": each room is an SVG link to its panel (#spazio-<key>), so it
+ * works as plain anchors without JS; the page script turns it into a switcher (aria-current marks the
+ * room shown). Thin walls, the garden sloping to the lake, the terrace on the sunset side, a small dock.
+ * Sizes are in viewBox units (720 x 520); labels grow on phones through CSS.
+ */
+interface Room {
+  k: string;
+  t: string;
+  n: number;
+  c: string;
+}
+interface Props {
+  rooms: Room[];
+}
+const { rooms } = Astro.props;
+const room = (k: string) => rooms.find((r) => r.k === k)!;
+const label = (r: Room) => `${r.t}, fino a ${r.n} ${r.c}`;
+const g = room("giardino");
+const s = room("salone");
+const t = room("terrazza");
+
+// Ceremony chairs: two blocks facing the arch by the water.
+const chairs: [number, number][] = [];
+for (let row = 0; row < 4; row++) {
+  for (let i = 0; i < 4; i++) {
+    chairs.push([414 + i * 11, 336 + row * 11]);
+    chairs.push([484 + i * 11, 336 + row * 11]);
+  }
+}
+// Balustrade of the terrace: north, west and south edges.
+const balusters: [number, number][] = [];
+for (let x = 56; x <= 184; x += 8) {
+  balusters.push([x, 66]);
+  balusters.push([x, 194]);
+}
+for (let y = 74; y <= 186; y += 8) balusters.push([56, y]);
+// Hydrangea beds (ortensie), drawn as clusters of small circles.
+const beds: [number, number][] = [
+  [52, 246],
+  [92, 238],
+  [628, 244],
+  [668, 252],
+  [252, 262],
+  [372, 262],
+  [602, 362],
+  [642, 352],
+];
+const blooms = beds.flatMap(([x, y]) => [
+  [x, y, 6],
+  [x + 8, y + 4, 5],
+  [x - 6, y + 6, 5],
+  [x + 2, y + 10, 4.5],
+]);
+const lake = [440, 456, 472, 488, 504];
+---
+<svg class="vo-plan" viewBox="0 0 720 520" role="group" aria-label="Pianta della villa: scegliete uno spazio">
+  <g aria-hidden="true" class="vo-plan__ground">
+    <!-- Shoreline and the lake below it -->
+    <path class="vo-plan__water" d="M0 420 Q180 438 360 422 Q540 406 720 420" />
+    {lake.map((y, i) => <path class="vo-plan__wave" d={`M0 ${y} H720`} style={`stroke-dashoffset: ${i * 13}`} />)}
+    <!-- Contour lines: the lawn slopes down to the water -->
+    <path class="vo-plan__contour" d="M0 288 Q360 306 720 282" />
+    <path class="vo-plan__contour" d="M0 346 Q360 366 720 340" />
+    <path class="vo-plan__contour" d="M0 394 Q360 412 720 390" />
+    <!-- Gravel path from the villa door to the dock -->
+    <path class="vo-plan__walk" d="M308 202 C308 290 342 330 308 424" />
+    {blooms.map(([x, y, r]) => <circle class="vo-plan__bloom" cx={x} cy={y} r={r} />)}
+    <!-- Cypresses -->
+    {[[526, 58], [526, 186], [590, 122]].map(([x, y]) => (
+      <g class="vo-plan__tree">
+        <circle cx={x} cy={y} r="11" />
+        <path d={`M${x - 11} ${y} H${x + 11} M${x} ${y - 11} V${y + 11}`} />
+      </g>
+    ))}
+  </g>
+
+  <a href="#spazio-giardino" class="vo-plan__room" data-room="giardino" aria-label={label(g)}>
+    <path class="vo-plan__shape" d="M0 216 H720 V420 Q540 406 360 422 Q180 438 0 420 Z" />
+    <g aria-hidden="true">
+      <!-- Ceremony: arch by the water, chairs facing it -->
+      <path class="vo-plan__arch" d="M454 404 A16 16 0 0 1 486 404" />
+      {chairs.map(([x, y]) => <rect class="vo-plan__chair" x={x} y={y} width="7" height="6" />)}
+    </g>
+    <text class="vo-plan__name" x="160" y="318" text-anchor="middle">Giardino</text>
+    <text class="vo-plan__cap" x="160" y="340" text-anchor="middle">fino a {g.n} per la cerimonia</text>
+  </a>
+
+  <!-- The villa: walls drawn as two thin lines -->
+  <g aria-hidden="true" class="vo-plan__walls">
+    <rect x="190" y="40" width="300" height="162" class="vo-plan__wall" />
+    <rect x="197" y="47" width="286" height="148" class="vo-plan__wall vo-plan__wall--in" />
+    <path class="vo-plan__wall vo-plan__wall--in" d="M422 47 V195 M422 122 H483" />
+    <text class="vo-plan__minor" x="452" y="90" text-anchor="middle">Ingresso</text>
+    <text class="vo-plan__minor" x="452" y="165" text-anchor="middle">Servizi</text>
+  </g>
+
+  <a href="#spazio-salone" class="vo-plan__room" data-room="salone" aria-label={label(s)}>
+    <rect class="vo-plan__shape" x="197" y="47" width="225" height="148" />
+    <g aria-hidden="true">
+      {[232, 266, 352, 386].map((x) => <rect class="vo-plan__window" x={x - 12} y="195" width="24" height="7" />)}
+      {[236, 272, 344, 380].map((x) => <circle class="vo-plan__table" cx={x} cy="170" r="8" />)}
+      <!-- Door to the garden -->
+      <path class="vo-plan__door" d="M296 195 A12 12 0 0 1 308 183 V195" />
+    </g>
+    <text class="vo-plan__name" x="309" y="108" text-anchor="middle">Salone</text>
+    <text class="vo-plan__cap" x="309" y="130" text-anchor="middle">fino a {s.n} a tavola</text>
+  </a>
+
+  <a href="#spazio-terrazza" class="vo-plan__room" data-room="terrazza" aria-label={label(t)}>
+    <rect class="vo-plan__shape" x="50" y="60" width="140" height="140" />
+    <g aria-hidden="true">
+      {balusters.map(([x, y]) => <circle class="vo-plan__baluster" cx={x} cy={y} r="2" />)}
+    </g>
+    <text class="vo-plan__name" x="122" y="124" text-anchor="middle">Terrazza</text>
+    <text class="vo-plan__cap" x="122" y="146" text-anchor="middle">fino a {t.n}</text>
+    <text class="vo-plan__cap" x="122" y="162" text-anchor="middle">per l'aperitivo</text>
+  </a>
+
+  <g aria-hidden="true">
+    <!-- Dock -->
+    <rect class="vo-plan__dock" x="297" y="416" width="22" height="78" />
+    {[428, 440, 452, 464, 476].map((y) => <path class="vo-plan__plank" d={`M297 ${y} H319`} />)}
+    <text class="vo-plan__minor vo-plan__minor--water" x="330" y="488">Pontile</text>
+    <text class="vo-plan__minor vo-plan__minor--water" x="704" y="500" text-anchor="end">Lago di Como</text>
+    <!-- Sunset side -->
+    <path class="vo-plan__sun" d="M30 142 A12 12 0 0 1 30 118" />
+    <text class="vo-plan__minor" x="26" y="100" text-anchor="middle">ovest</text>
+    <!-- North arrow -->
+    <g class="vo-plan__north">
+      <circle cx="668" cy="70" r="20" />
+      <path d="M668 46 L676 74 L668 68 L660 74 Z" />
+      <text x="668" y="36" text-anchor="middle">N</text>
+    </g>
+  </g>
+</svg>
+
+<style>
+  .vo-plan {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    font-family: var(--sans);
+  }
+  .vo-plan__water {
+    fill: none;
+    stroke: var(--ortensia);
+    stroke-width: 1;
+  }
+  .vo-plan__wave {
+    fill: none;
+    stroke: var(--ortensia);
+    stroke-width: 1;
+    stroke-dasharray: 22 12;
+    opacity: 0.5;
+  }
+  .vo-plan__contour {
+    fill: none;
+    stroke: var(--lago);
+    stroke-width: 1;
+    stroke-dasharray: 2 6;
+    opacity: 0.45;
+  }
+  .vo-plan__walk {
+    fill: none;
+    stroke: var(--intonaco);
+    stroke-width: 12;
+    stroke-linecap: round;
+  }
+  .vo-plan__bloom {
+    fill: var(--ortensia);
+    opacity: 0.55;
+  }
+  .vo-plan__tree circle {
+    fill: var(--carta);
+    stroke: var(--lago);
+    stroke-width: 1;
+  }
+  .vo-plan__tree path {
+    stroke: var(--lago);
+    stroke-width: 0.75;
+  }
+  .vo-plan__wall {
+    fill: none;
+    stroke: var(--lago);
+    stroke-width: 1.6;
+  }
+  .vo-plan__walls > rect:first-child {
+    fill: var(--carta);
+  }
+  .vo-plan__wall--in {
+    stroke-width: 1;
+  }
+  .vo-plan__window {
+    fill: var(--carta);
+    stroke: var(--lago);
+    stroke-width: 1;
+  }
+  .vo-plan__table,
+  .vo-plan__chair {
+    fill: none;
+    stroke: var(--lago);
+    stroke-width: 1;
+  }
+  .vo-plan__door,
+  .vo-plan__arch,
+  .vo-plan__sun {
+    fill: none;
+    stroke: var(--lago);
+    stroke-width: 1;
+  }
+  .vo-plan__arch {
+    stroke: var(--ortensia);
+    stroke-width: 2.5;
+  }
+  .vo-plan__baluster {
+    fill: var(--lago);
+  }
+  .vo-plan__dock {
+    fill: var(--carta);
+    stroke: var(--lago);
+    stroke-width: 1.2;
+  }
+  .vo-plan__plank {
+    stroke: var(--lago);
+    stroke-width: 0.75;
+  }
+  .vo-plan__north circle {
+    fill: none;
+    stroke: var(--lago);
+    stroke-width: 1;
+  }
+  .vo-plan__north path {
+    fill: var(--lago);
+  }
+  .vo-plan__north text,
+  .vo-plan__minor {
+    font-size: 12px;
+    fill: var(--lago-2);
+    letter-spacing: 0.04em;
+  }
+  .vo-plan__minor--water {
+    fill: var(--ortensia-scura);
+  }
+
+  /* Rooms: links. The shape is painted (transparent) so the whole room is clickable. */
+  .vo-plan__room {
+    cursor: pointer;
+    outline: none;
+  }
+  .vo-plan__shape {
+    fill: var(--ortensia);
+    fill-opacity: 0;
+    stroke: var(--ortensia);
+    stroke-width: 0;
+  }
+  .vo-plan__name {
+    font-family: var(--serif);
+    font-size: 23px;
+    font-weight: 600;
+    fill: var(--lago);
+    paint-order: stroke;
+    stroke: var(--carta);
+    stroke-width: 5px;
+    stroke-linejoin: round;
+  }
+  .vo-plan__cap {
+    font-size: 13.5px;
+    fill: var(--lago);
+    paint-order: stroke;
+    stroke: var(--carta);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+  }
+  .vo-plan__room[aria-current="true"] .vo-plan__shape {
+    fill-opacity: 0.16;
+    stroke-width: 2.5;
+  }
+  .vo-plan__room[aria-current="true"] .vo-plan__name {
+    fill: var(--ortensia-scura);
+    text-decoration: underline;
+  }
+  .vo-plan__room:focus-visible .vo-plan__shape {
+    fill-opacity: 0.12;
+    stroke: var(--lago);
+    stroke-width: 4;
+    stroke-dasharray: 8 5;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .vo-plan__room:hover .vo-plan__shape {
+      fill-opacity: 0.1;
+      stroke-width: 1.5;
+    }
+  }
+  /* Phones: the plan is drawn at about half size, so the names grow and the details go
+     (the list under the plan carries the capacities). */
+  @media (max-width: 599px) {
+    .vo-plan__name {
+      font-size: 28px;
+      stroke-width: 6px;
+    }
+    .vo-plan__cap,
+    .vo-plan__minor,
+    .vo-plan__north text {
+      display: none;
+    }
+  }
+</style>
