@@ -15,7 +15,7 @@ export const condizioni: LegalDoc = {
     {
       h: "2. Anteprima gratuita",
       p: [
-        "Su richiesta prepariamo gratis un'anteprima della homepage del tuo nuovo sito, di norma entro {previewHours} ore da quando abbiamo le informazioni di base. L'anteprima non ti obbliga a nulla. Se decidi di non procedere, l'anteprima non viene pubblicata e non può essere usata né da te né da altri: resta un nostro lavoro preparatorio. Le informazioni e le immagini che ci hai dato non vengono usate per altri scopi e, se ce lo chiedi, le cancelliamo.",
+        "Su richiesta prepariamo gratis un'anteprima della homepage del tuo nuovo sito, di norma entro {previewHours} ore da quando abbiamo le informazioni di base. L'anteprima non ti obbliga a nulla. Se decidi di non procedere, l'anteprima resta a te: puoi tenerla e guardarla quando vuoi. Il progetto grafico però resta nostro: non può essere pubblicato né usato per costruire un sito, da te o da altri, senza un nostro accordo scritto. Le informazioni e le immagini che ci hai dato non vengono usate per altri scopi e, se ce lo chiedi, le cancelliamo.",
       ],
     },
     {
