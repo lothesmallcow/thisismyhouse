@@ -15,7 +15,7 @@ import { CONSENT } from "../../scorer/consent";
 import { breadcrumbs } from "../../lib/schema";
 import { examples } from "../../scorer/samples";
 import ExampleSite from "../../components/ExampleSite.astro";
-import { BANDS } from "../../scorer/scale";
+import { BANDS, SCORE_DISCLAIMER } from "../../scorer/scale";
 
 const sectors = rubric.sectors.map((s) => ({ id: s.id, label: s.label }));
 // For the waiting ring: each sector's categories, weights and check titles.
@@ -61,6 +61,7 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
         {examples.map((e) => <a href={`#voto-${e.key}`} data-az-sample={e.key}>{e.label.toLowerCase()} ({e.full.results.fitness.report.total})</a>)}
       </div>
       <p class="az-note">Il risultato lo vedi solo tu: non lo pubblichiamo e non salviamo la pagina.</p>
+      <p class="az-note az-note--fine">{SCORE_DISCLAIMER}</p>
     </div>
   </section>
 
@@ -123,6 +124,7 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
               ))}
             </ol>
             <p class="az-scale__line" data-az-scale-line></p>
+            <p class="az-scale__fine">{SCORE_DISCLAIMER}</p>
           </div>
         </div>
         <ul class="az-cats" data-az-cats></ul>
@@ -605,6 +607,16 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     line-height: 1.45;
     text-align: center;
     color: var(--az-soft);
+  }
+  .az-scale__fine,
+  .az-note--fine {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--az-soft);
+  }
+  .az-scale__fine {
+    text-align: center;
   }
   .az-climb-note {
     margin: 0;

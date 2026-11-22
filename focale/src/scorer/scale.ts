@@ -19,3 +19,7 @@ export const bandOf = (v: number) => BANDS.find((b) => v >= b.min && v <= b.max)
 export const verdict = (v: number) => bandOf(v).word;
 /** From this score up, chasing the last points is not worth it. */
 export const PRACTICALLY_PERFECT = 90;
+
+/** Shown in small print wherever a score appears (Lorenzo, 22 Nov 2026): the score is an estimate. */
+export const SCORE_DISCLAIMER =
+  "Il voto è indicativo: viene da un elenco fisso di controlli automatici sulla pagina analizzata. Non giudica la qualità di foto, testi o servizio e può sbagliare: prendilo come una prima lettura, non come un giudizio definitivo.";

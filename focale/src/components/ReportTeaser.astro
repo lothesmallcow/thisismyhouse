@@ -7,7 +7,7 @@
  */
 import { examples } from "../scorer/samples";
 import ExampleSite from "./ExampleSite.astro";
-import { BANDS, bandOf, verdict, PRACTICALLY_PERFECT } from "../scorer/scale";
+import { BANDS, bandOf, verdict, PRACTICALLY_PERFECT, SCORE_DISCLAIMER } from "../scorer/scale";
 
 const HUE: Record<string, number> = { speed: 35, conversion: 80, local: 135, trust: 180, a11y: 240, legal: 290, content: 345 };
 const col = (id: string) => `oklch(0.72 0.15 ${HUE[id] ?? 250})`;
@@ -96,6 +96,7 @@ const tabs = examples.map((e) => {
       </div>
     </div>
   ))}
+  <p class="rt__fine">{SCORE_DISCLAIMER}</p>
 </div>
 
 <script>
@@ -267,6 +268,13 @@ const tabs = examples.map((e) => {
   .rt__line {
     max-width: 46ch;
     color: var(--grafite);
+  }
+  .rt__fine {
+    margin: -0.75rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--grafite);
+    max-width: 70ch;
   }
   .rt__scale {
     list-style: none;
