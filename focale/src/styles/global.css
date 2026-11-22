@@ -1516,65 +1516,92 @@ a.link {
   color: var(--blu);
 }
 
-/* Home: the analysis entry right under the opening (Lorenzo, 22 Nov 2026: more functional than the film). */
+/* Home: the analysis entry right under the opening (Lorenzo, 22 Nov 2026: more functional than the film).
+   Left: title and one search-style bar (field with the button inside); right: the living example report. */
 .hs-check {
   background: var(--nebbia);
 }
 .hs-check__in {
   display: grid;
-  gap: 1.75rem;
+  gap: 2.5rem;
   align-items: center;
 }
-@media (min-width: 900px) {
+@media (min-width: 960px) {
   .hs-check__in {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 4rem;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(3rem, 5vw, 6rem);
   }
 }
 .hs-check__text {
   display: grid;
-  gap: 0.75rem;
+  gap: 1rem;
+  align-content: center;
 }
 .hs-check__text h2 {
-  max-width: 16ch;
+  max-width: 14ch;
 }
 .hs-check__form {
   margin-top: 0.75rem;
 }
-.hs-check__example {
-  display: grid;
-  gap: 0.75rem;
-}
-.hs-check__ex-h {
-  font-weight: 600;
-  color: var(--grafite);
-}
 .hs-check__row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   width: 100%;
+  max-width: 34rem;
+  padding: 8px 8px 8px 0;
+  border-radius: 18px;
+  background: #fff;
+}
+.hs-check__row:focus-within {
+  box-shadow: 0 0 0 2px var(--inchiostro);
 }
 .hs-check__input {
-  flex: 1 1 240px;
-  min-height: 60px;
-  padding: 0 1.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 0.5rem 0 1.25rem;
   border: 0;
-  border-radius: var(--radius-field);
-  background: #fff;
+  background: transparent;
   font: inherit;
   font-size: 1.125rem;
   color: var(--inchiostro);
 }
 .hs-check__input:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--inchiostro);
 }
 .hs-check__row .btn {
-  min-height: 60px;
+  flex: none;
+  min-height: 52px;
+  border-radius: 12px;
 }
-@media (max-width: 480px) {
-  .hs-check__row .btn {
-    width: 100%;
+.hs-check__note {
+  font-size: 0.875rem;
+  color: var(--grafite);
+}
+@media (max-width: 479px) {
+  .hs-check__row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    background: none;
   }
+  .hs-check__row:focus-within {
+    box-shadow: none;
+  }
+  .hs-check__input {
+    min-height: 60px;
+    border-radius: var(--radius-field);
+    background: #fff;
+  }
+  .hs-check__input:focus-visible {
+    box-shadow: 0 0 0 2px var(--inchiostro);
+  }
+  .hs-check__row .btn {
+    min-height: 56px;
+    border-radius: var(--radius-btn);
+  }
+}
+.hs-check__example {
+  display: grid;
 }

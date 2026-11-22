@@ -38,8 +38,10 @@ Schibsted TTFs: it cannot read woff2).
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
 - Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right); then (Lorenzo, 22 Nov
   2026, replacing the phone/laptop makeover film, which he found useless there) the analysis entry `.hs-check`
-  (grey band: address box, form GET to /analisi-sito/?url=..., which fills the address and starts at once;
-  "Guarda un esempio di report"), "Per chi lavoriamo" (3 sector
+  (grey band: a search-style bar, form GET to /analisi-sito/?url=..., which fills the address and starts at once;
+  beside it ReportTeaser.astro, a living sleep-score-style card of the invented example: ring by category with
+  solid = points taken and light = points the first five fixes win back, verdict, category bars, "12 → 42",
+  whole card links to /analisi-sito/?esempio=12#voto-12; examples come from src/scorer/samples.ts), "Per chi lavoriamo" (3 sector
   cards with demo screenshots), "Cosa ricevi" bento, 4 steps with timings, prices (per-plan CTA, recommended plan
   navy), Lo studio, FAQ, closing band on navy with the 3-step PreviewForm embedded. Nothing pins, no ambient
   motion (living background, ticker and colour floods were removed). Section blocks (.hs-*) live in global.css

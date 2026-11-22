@@ -1,109 +1,209 @@
 ---
 /**
- * Home: a real, clickable preview of the example report (invented site, says so). Same ring as the
- * report page (one arc per category, length = weight, fill = points), the score, and the three
- * checks that cost the most. Opens /analisi-sito/ on that example (?esempio= survives previews that drop the hash).
+ * Home: a living preview of the example report (invented site, says so), modelled on a sleep-score
+ * card: the ring by category (solid = points taken, light = points the first five fixes win back),
+ * the score and one word, the categories with their bars, and the climb "12 → 42". Whole card opens
+ * the full example (?esempio= survives previews that drop the hash). Animates once when in view.
  */
 import { sample } from "../scorer/samples";
 
-const report = sample.results.fitness.report;
+const r = sample.results.fitness.report;
 const HUE: Record<string, number> = { speed: 35, conversion: 80, local: 135, trust: 180, a11y: 240, legal: 290, content: 345 };
-const R = 124;
+const col = (id: string, a = 1) => `oklch(0.72 0.15 ${HUE[id] ?? 250}${a < 1 ? ` / ${a}` : ""})`;
+const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
+const verdict = (v: number) => (v >= 90 ? "Ottimo" : v >= 75 ? "Buono" : v >= 50 ? "Discreto" : "Da sistemare");
+
+// Points the first five fixes win back, per category (same climb as the report page).
+const measuredMax = r.checks.filter((c) => c.max > 0 && c.status !== "unmeasured").reduce((t, c) => t + c.max, 0) || 100;
+const k = 100 / measuredMax;
+const catOf = Object.fromEntries(r.checks.map((c) => [c.id, c.category]));
+const back: Record<string, number> = {};
+for (const f of r.fixes) back[catOf[f.id]] = (back[catOf[f.id]] ?? 0) + f.gain;
+const after = Math.min(100, Math.round(r.total + r.fixes.reduce((t, f) => t + f.gain, 0) * k));
+
+const cats = r.categories.filter((c) => c.max > 0).map((c) => ({ ...c, back: Math.min(c.max - c.earned, back[c.id] ?? 0) }));
+const best = [...cats].sort((a, b) => b.earned / b.max - a.earned / a.max || b.max - a.max)[0];
+const worst = [...cats].sort((a, b) => b.max - b.earned - (a.max - a.earned))[0];
+
+const R = 120;
 const C = 2 * Math.PI * R;
-const GAP = 6;
-const cats = report.categories.filter((c) => c.max > 0);
+const GAP = 7;
 const total = cats.reduce((t, c) => t + c.max, 0) || 100;
 let start = 0;
 const arcs = cats.map((c) => {
   const len = (c.max / total) * C - GAP;
   const off = -(start + GAP / 2);
   start += (c.max / total) * C;
-  return { len, off, fill: len * Math.max(0, Math.min(1, c.earned / c.max)), colour: `oklch(0.72 0.15 ${HUE[c.id] ?? 250})` };
+  const got = len * (c.earned / c.max);
+  const plus = len * ((c.earned + c.back) / c.max);
+  return { id: c.id, len, off, got, plus };
 });
-const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
-const verdict = (v: number) => (v >= 90 ? "Ottimo" : v >= 75 ? "Buono" : v >= 50 ? "Discreto" : "Da sistemare");
-const lost = report.checks
-  .filter((c) => c.max - c.earned > 0)
-  .sort((a, b) => b.max - b.earned - (a.max - a.earned))
-  .slice(0, 3);
-const host = report.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+const host = r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
 ---
-<a class="rt" href={`/analisi-sito/?esempio=${report.total}#voto-${report.total}`} aria-label={`Apri il report d'esempio: ${host}, voto ${report.total} su 100`}>
-  <span class="rt__top">
-    <span class="rt__tag">Esempio su un sito inventato</span>
-    <span class="rt__host">{host}</span>
+<a class="rt" href={`/analisi-sito/?esempio=${r.total}#voto-${r.total}`} data-rt>
+  <span class="rt__head">
+    <span class="rt__id">
+      <span class="rt__title">Report del sito</span>
+      <span class="rt__host">{host}</span>
+    </span>
+    <span class="rt__pill">Esempio inventato</span>
   </span>
-  <span class="rt__main">
+
+  <span class="rt__hero">
     <span class="rt__ring">
       <svg viewBox="0 0 300 300" aria-hidden="true" focusable="false">
         {arcs.map((a) => (
           <>
-            <circle cx="150" cy="150" r={R} fill="none" stroke="#EDEDF0" stroke-width="22" transform="rotate(-90 150 150)" stroke-dasharray={`${a.len} ${C}`} stroke-dashoffset={a.off} />
-            {a.fill > 0.5 && <circle cx="150" cy="150" r={R} fill="none" stroke={a.colour} stroke-width="22" transform="rotate(-90 150 150)" stroke-dasharray={`${a.fill} ${C}`} stroke-dashoffset={a.off} />}
+            <circle class="rt__arc" cx="150" cy="150" r={R} stroke="#EDEDF0" stroke-dasharray={`${a.len} ${C}`} stroke-dashoffset={a.off} />
+            {a.plus > 0.5 && <circle class="rt__arc rt__fill rt__fill--plus" cx="150" cy="150" r={R} stroke={col(a.id, 0.24)} stroke-dasharray={`${a.plus} ${C}`} stroke-dashoffset={a.off} />}
+            {a.got > 0.5 && <circle class="rt__arc rt__fill" cx="150" cy="150" r={R} stroke={col(a.id)} stroke-dasharray={`${a.got} ${C}`} stroke-dashoffset={a.off} />}
           </>
         ))}
       </svg>
-      <span class="rt__score"><span class="rt__n">{report.total}</span><span class="rt__w">{verdict(report.total)}</span></span>
+      <span class="rt__score" aria-hidden="true">
+        <span class="rt__n" data-rt-n data-to={r.total}>{r.total}</span>
+        <span class="rt__su">su 100</span>
+      </span>
     </span>
-    <span class="rt__lost">
-      <span class="rt__lost-h">Perché {report.total} e non 100</span>
-      {lost.map((c) => (
-        <span class="rt__row"><span class="rt__pts">-{fmt(c.max - c.earned)}</span><span class="rt__t">{c.title}</span></span>
-      ))}
-      <span class="rt__more">e altre {report.checks.filter((c) => c.max - c.earned > 0).length - lost.length} cose da sistemare</span>
+    <span class="rt__verdict">
+      <span class="rt__word">{verdict(r.total)}</span>
+      <span class="rt__line">Va meglio in {best.label.toLowerCase()}, perde di più in {worst.label.toLowerCase()}.</span>
+      <span class="rt__legend">
+        <span><i class="rt__sw"></i>Punti presi</span>
+        <span><i class="rt__sw rt__sw--plus"></i>Da recuperare</span>
+      </span>
     </span>
   </span>
+
+  <span class="rt__cats">
+    {cats.map((c) => (
+      <span class="rt__cat" style={`--c: ${col(c.id)}; --cp: ${col(c.id, 0.24)}`}>
+        <span class="rt__cat-top">
+          <span class="rt__cat-name">{c.label}</span>
+          <span class="rt__cat-v">{fmt(c.earned)}<span class="rt__cat-max">/{c.max}</span></span>
+        </span>
+        <span class="rt__bar">
+          <i class="rt__bar-plus" style={`width: ${((c.earned + c.back) / c.max) * 100}%`}></i>
+          <i class="rt__bar-got" style={`width: ${(c.earned / c.max) * 100}%`}></i>
+        </span>
+      </span>
+    ))}
+  </span>
+
+  <span class="rt__climb">
+    <span class="rt__climb-t">Con le prime {r.fixes.length} correzioni</span>
+    <span class="rt__climb-n"><span>{r.total}</span><span class="rt__arrow" aria-hidden="true">→</span><span class="rt__to">{after}</span></span>
+  </span>
+
   <span class="rt__cta">Apri il report completo</span>
+  <span class="sr-only">: esempio su un sito inventato, voto {r.total} su 100, {after} dopo le prime correzioni.</span>
 </a>
+
+<script>
+  const card = document.querySelector<HTMLElement>("[data-rt]");
+  if (card && window.matchMedia("(prefers-reduced-motion: no-preference)").matches && "IntersectionObserver" in window) {
+    card.classList.add("rt--wait");
+    const n = card.querySelector<HTMLElement>("[data-rt-n]")!;
+    const to = Number(n.dataset.to);
+    n.textContent = "0";
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        requestAnimationFrame(() => card.classList.remove("rt--wait"));
+        const t0 = performance.now() + 200;
+        const tick = (t: number) => {
+          const p = Math.max(0, Math.min(1, (t - t0) / 1400));
+          n.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(card);
+  }
+</script>
 
 <style>
   .rt {
+    container-type: inline-size;
     display: grid;
-    gap: 1.25rem;
-    padding: clamp(1.25rem, 0.75rem + 2vw, 2rem);
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 0.8rem + 1.6vw, 2rem);
     border-radius: var(--radius-card);
     background: #fff;
     color: var(--inchiostro);
     text-decoration: none;
-    width: 100%;
   }
   .rt:focus-visible {
     outline: 2px solid var(--inchiostro);
     outline-offset: 3px;
   }
-  .rt__top {
+
+  /* Head */
+  .rt__head {
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
-    gap: 0.25rem 1rem;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .rt__id {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+  .rt__title {
     font-size: 0.875rem;
     color: var(--grafite);
   }
   .rt__host {
+    font-size: 1.125rem;
     font-weight: 600;
-    color: var(--inchiostro);
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
   }
-  .rt__main {
+  .rt__pill {
+    flex: none;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: var(--nebbia);
+    font-size: 0.8125rem;
+    color: var(--grafite);
+  }
+
+  /* Ring + verdict */
+  .rt__hero {
     display: grid;
+    justify-items: center;
     gap: 1.25rem;
-    align-items: center;
+    text-align: center;
   }
-  @media (min-width: 520px) {
-    .rt__main {
-      grid-template-columns: 9.5rem minmax(0, 1fr);
+  @container (min-width: 400px) {
+    .rt__hero {
+      grid-template-columns: auto minmax(0, 1fr);
+      justify-items: start;
+      align-items: center;
       gap: 1.75rem;
+      text-align: left;
     }
   }
   .rt__ring {
     position: relative;
-    width: 9.5rem;
+    width: 11rem;
     aspect-ratio: 1;
-    justify-self: center;
   }
   .rt__ring svg {
+    display: block;
     width: 100%;
     height: 100%;
-    display: block;
+  }
+  .rt__arc {
+    fill: none;
+    stroke-width: 24;
+    stroke-linecap: butt;
+    transform: rotate(-90deg);
+    transform-origin: 150px 150px;
   }
   .rt__score {
     position: absolute;
@@ -113,39 +213,149 @@ const host = report.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
     text-align: center;
   }
   .rt__n {
-    font-size: 2.75rem;
+    font-size: 3.5rem;
+    font-weight: 600;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .rt__su {
+    margin-top: 0.2rem;
+    font-size: 0.8125rem;
+    color: var(--grafite);
+  }
+  .rt__verdict {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .rt__word {
+    font-size: 1.75rem;
     font-weight: 600;
     letter-spacing: -0.03em;
-    line-height: 1;
+    line-height: 1.1;
   }
-  .rt__w {
+  .rt__line {
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--grafite);
+    max-width: 30ch;
+  }
+  .rt__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
     margin-top: 0.25rem;
     font-size: 0.8125rem;
     color: var(--grafite);
   }
-  .rt__lost {
+  @container (max-width: 399px) {
+    .rt__legend {
+      justify-content: center;
+    }
+  }
+  .rt__legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .rt__sw {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 3px;
+    background: var(--grafite);
+  }
+  .rt__sw--plus {
+    background: rgb(110 110 115 / 0.24);
+  }
+
+  /* Categories */
+  .rt__cats {
     display: grid;
-    gap: 0.6rem;
+    gap: 0.9rem 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--filo);
   }
-  .rt__lost-h {
-    font-weight: 600;
+  @container (min-width: 460px) {
+    .rt__cats {
+      grid-template-columns: 1fr 1fr;
+    }
   }
-  .rt__row {
+  .rt__cat {
     display: grid;
-    grid-template-columns: 2.75rem minmax(0, 1fr);
-    gap: 0.5rem;
-    font-size: 0.9375rem;
-    line-height: 1.35;
+    gap: 0.4rem;
   }
-  .rt__pts {
+  .rt__cat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+  }
+  .rt__cat-name {
+    min-width: 0;
+  }
+  .rt__cat-v {
+    flex: none;
     font-weight: 600;
-    color: #c4261d;
     font-variant-numeric: tabular-nums;
   }
-  .rt__more {
-    font-size: 0.875rem;
+  .rt__cat-max {
+    font-weight: 400;
     color: var(--grafite);
   }
+  .rt__bar {
+    position: relative;
+    height: 6px;
+    border-radius: 3px;
+    background: #ededf0;
+    overflow: hidden;
+  }
+  .rt__bar i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 3px;
+    transform-origin: left center;
+  }
+  .rt__bar-plus {
+    background: var(--cp);
+  }
+  .rt__bar-got {
+    background: var(--c);
+  }
+
+  /* Climb */
+  .rt__climb {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: var(--nebbia);
+  }
+  .rt__climb-t {
+    font-size: 0.9375rem;
+    color: var(--grafite);
+  }
+  .rt__climb-n {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: none;
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .rt__arrow {
+    font-size: 1.375rem;
+    font-weight: 400;
+    color: var(--grafite);
+  }
+  .rt__to {
+    color: var(--link);
+  }
+
   .rt__cta {
     display: flex;
     align-items: center;
@@ -153,22 +363,45 @@ const host = report.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
     min-height: 56px;
     border-radius: var(--radius-btn);
     background: var(--nebbia);
-    font-weight: 600;
     color: var(--inchiostro);
+    font-weight: 600;
   }
   .rt__cta::after {
     content: "→" / "";
     margin-left: 0.5rem;
   }
+
   @media (prefers-reduced-motion: no-preference) {
-    .rt {
-      transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+    .rt__fill {
+      transition: stroke-dasharray 1.3s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s;
     }
+    .rt__fill--plus {
+      transition-delay: 0.9s;
+    }
+    .rt__bar i {
+      transition: transform 1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.3s;
+    }
+    .rt__bar-plus {
+      transition-delay: 1s !important;
+    }
+    .rt--wait .rt__fill {
+      stroke-dasharray: 0 800;
+    }
+    .rt--wait .rt__bar i {
+      transform: scaleX(0);
+    }
+    .rt {
+      transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .rt:hover .rt__cta {
+      background: var(--filo);
+    }
+  }
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
     .rt:hover {
       transform: translateY(-3px);
     }
-  }
-  .rt:hover .rt__cta {
-    background: var(--filo);
   }
 </style>
