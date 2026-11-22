@@ -63,7 +63,13 @@ const msgs: { me: boolean; text: string }[] = [
       0 0 0 1px rgba(11, 27, 63, 0.06);
     overflow: hidden;
     position: relative;
+  }  /* Computers: as tall as the shorter title beside it (Lorenzo, 22 Nov 2026: no empty block in the page head). */
+  @media (min-width: 960px) {
+    .cs {
+      zoom: 0.82;
+    }
   }
+
   /* Phones: the whole chat in one screen (Lorenzo). */
   @media (max-width: 599px) {
     .cs {
