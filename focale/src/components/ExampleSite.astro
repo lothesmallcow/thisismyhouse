@@ -346,6 +346,24 @@ const ratio = media.spots.height / media.spots.width;
       display: none;
     }
   }
+  /* Very wide (the report page) with a long list: the list in two columns (rows of two, an odd last point
+     takes the whole row), so it is about as tall as the phone and nothing needs to stick or leave an
+     empty column beside it. */
+  @container (min-width: 900px) {
+    .xs__in:has(.xs__item:nth-child(8)) {
+      align-items: center;
+    }
+    .xs__in:has(.xs__item:nth-child(8)) .xs__device {
+      position: static;
+    }
+    .xs__list:has(.xs__item:nth-child(8)) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 8px;
+    }
+    .xs__list:has(.xs__item:nth-child(8)) .xs__item:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
 
   @media (prefers-reduced-motion: no-preference) {
     .xs__page {

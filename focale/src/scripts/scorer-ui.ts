@@ -39,7 +39,8 @@ const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matc
 const SVG = "http://www.w3.org/2000/svg";
 const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const euro = (n: number) => `${n.toLocaleString("it-IT")} €`;
+// Italian grouping for four digits too (1.200 €): it-IT leaves 1200 ungrouped by default.
+const euro = (n: number) => `${n.toLocaleString("it-IT", { useGrouping: "always" } as unknown as Intl.NumberFormatOptions)} €`;
 const host = (u: string) => u.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
 
 /** One colour per category, as in the design: same lightness and chroma, different hue. */
@@ -389,6 +390,7 @@ export function initScorer() {
     const nearlyPerfect = r.total >= PRACTICALLY_PERFECT;
     $("[data-az-climb]").hidden = nearlyPerfect;
     $("[data-az-climb-note]").hidden = !nearlyPerfect;
+    $("[data-az-climb-why]").textContent = nearlyPerfect ? "" : r.fixes.length === 1 ? "Il voto se sistemi questa cosa." : `Il voto se sistemi queste ${r.fixes.length} cose, nell'ordine.`;
     if (nearlyPerfect) $("[data-az-fixes-title]").textContent = r.fixes.length === 1 ? "L'ultimo ritocco" : "Gli ultimi ritocchi";
     $("[data-az-fixes]").replaceChildren(
       ...r.fixes.map((f, i) =>
@@ -396,8 +398,9 @@ export function initScorer() {
           "li",
           { class: "az-fix" },
           el("span", { class: "az-num" }, String(i + 1).padStart(2, "0")),
-          el("div", { class: "az-fix__body" }, el("h3", {}, f.title), el("p", { class: "az-soft" }, cap(f.found)), el("p", {}, el("span", { class: "az-we" }, "Noi: "), f.fix)),
+          el("div", { class: "az-fix__body" }, el("h3", {}, f.title), el("p", { class: "az-soft" }, cap(f.found))),
           el("span", { class: "az-gain" }, `+${fmt(f.gain)}`),
+          el("p", { class: "az-fix__we" }, el("span", { class: "az-we" }, "Noi: "), f.fix),
         ),
       ),
     );

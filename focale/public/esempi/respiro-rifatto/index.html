@@ -34,7 +34,7 @@ h2{font-weight:500;font-size:clamp(1.9rem,3.6vw,2.8rem);line-height:1.05;letter-
 .three h3{font-weight:600;font-size:1.25rem;margin-bottom:.4rem}
 .three p,.soft{color:#45535a;font-weight:400}
 .band{background:#dbe4e6;max-width:none}
-.band>div{max-width:1200px;margin:0 auto}
+.band>div{max-width:1152px;margin:0 auto}
 .team{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.5rem}
 .av{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;font-size:2.2rem;font-weight:600;color:#fff;margin-bottom:1rem}
 .q{font-weight:500;font-size:1.5rem;line-height:1.3;letter-spacing:-.01em;max-width:28ch}
@@ -50,6 +50,40 @@ footer{border-top:1px solid #cbd6d9;max-width:1200px;margin:0 auto;padding:2rem 
 .price{padding:1.25rem;border-radius:18px;background:#fff}
 .price b{display:block;font-weight:400;font-size:2rem}
 .hours{margin-top:1.5rem;display:grid;gap:.25rem}
+/* Computers: headings beside their content, no half-empty rows (dead-space check, Nov 2026) */
+@media (min-width:1000px){
+  section{padding:3.5rem 1.5rem}
+  .hero{grid-template-columns:1.25fr 1fr;padding-bottom:1.5rem}
+  .hero img{aspect-ratio:1/1.05;object-fit:cover}
+  .split{display:grid;grid-template-columns:1fr 1fr;column-gap:4rem;align-items:end}
+  .split--wide{grid-template-columns:1fr 2fr;align-items:start}
+  .split h2{margin-bottom:0}
+  .split .team,.split .prices{margin-top:0}
+  .q{max-width:none}
+  .quotes{margin-top:1.25rem}
+  /* Prices: heading and hours on the left, the three cards beside them, the button under the cards */
+  #prenota .split>div:first-child{display:contents}
+  #prenota .kick{grid-area:1/1}
+  #prenota h2{grid-area:2/1}
+  #prenota .hours{grid-area:3/1;margin-top:1.5rem}
+  #prenota .prices{grid-area:1/2/4/3;align-self:stretch}
+  #prenota .split>div:first-child>p:last-child{grid-area:4/2;margin-top:1.5rem!important}
+  .price{display:grid;grid-template-rows:auto auto 1fr;padding:1.5rem}
+  .price .soft{grid-row:2;margin-top:.35rem}
+  .price b{grid-row:3;align-self:end;padding-top:1.5rem;font-size:2.75rem;line-height:1;letter-spacing:-.02em}
+  .reviews{display:grid;grid-template-columns:1fr auto;align-items:baseline}
+  .reviews .quotes{grid-column:1/-1;grid-row:2}
+  .reviews>p:last-child{margin-top:0!important;grid-row:1;grid-column:2}
+  .info p:last-child{margin-bottom:0}
+}
+/* Below 1000 px the prices come before the hours, as one column */
+@media (max-width:999px){
+  #prenota .split{display:flex;flex-direction:column}
+  #prenota .split>div:first-child{display:contents}
+  #prenota .prices{margin-top:.25rem}
+  #prenota .hours{order:2}
+  #prenota .split>div:first-child>p:last-child{order:3}
+}
 @media (max-width:760px){.prices{grid-template-columns:1fr}.go2{margin:.75rem 0 0}}
 @media (max-width:760px){
   nav{display:none}.burger{display:block}
@@ -92,23 +126,23 @@ footer{border-top:1px solid #cbd6d9;max-width:1200px;margin:0 auto;padding:2rem 
   </div>
 </section>
 
-<section class="band" id="studio"><div>
-  <p class="kick">Lo studio</p>
-  <h2>Sei reformer, luce naturale, il silenzio di un cortile.</h2>
+<section class="band" id="studio"><div class="split">
+  <div><p class="kick">Lo studio</p>
+  <h2>Sei reformer, luce naturale, il silenzio di un cortile.</h2></div>
   <p class="soft" style="max-width:52ch">Lezioni in piccoli gruppi, mai più di sei persone. La prima lezione di prova è con un insegnante tutto per te, per capire da dove partire.</p>
 </div></section>
 
-<section id="insegnanti">
-  <p class="kick">Le insegnanti</p>
-  <h2>Chi ti accompagna.</h2>
+<section id="insegnanti"><div class="split split--wide">
+  <div><p class="kick">Le insegnanti</p>
+  <h2>Chi ti accompagna.</h2></div>
   <div class="team">
     <div><div class="av" style="background:#6e5a22">M</div><h3>Marta</h3><p class="soft">Insegnante di pilates reformer, ex danzatrice.</p></div>
     <div><div class="av" style="background:#6f7a57">E</div><h3>Elena</h3><p class="soft">Insegnante di matwork e posturale.</p></div>
     <div><div class="av" style="background:#5f7c8a">S</div><h3>Sara</h3><p class="soft">Insegnante di pilates in gravidanza e dopo il parto.</p></div>
   </div>
-</section>
+</div></section>
 
-<section class="band"><div>
+<section class="band"><div class="reviews">
   <p class="kick">Le vostre recensioni</p>
   <div class="quotes" data-why="trust.reviews">
     <div><p class="q">"Un'ora qui e la settimana cambia colore."</p><p>Giulia</p></div>
@@ -117,21 +151,21 @@ footer{border-top:1px solid #cbd6d9;max-width:1200px;margin:0 auto;padding:2rem 
   <p style="margin-top:2rem"><a href="https://search.google.com/local/reviews?placeid=ESEMPIO" data-why="trust.reviews">Leggi tutte le recensioni su Google</a></p>
 </div></section>
 
-<section id="prenota">
-  <p class="kick">Prezzi e orari</p>
+<section id="prenota"><div class="split split--wide">
+  <div><p class="kick">Prezzi e orari</p>
   <h2>Scegli come iniziare.</h2>
+  <div class="hours" data-why="info.hours"><p><b>Orari dello studio</b></p><p>Lunedì-venerdì 7:30-21:00</p><p>Sabato 9:00-13:00</p></div>
+  <p style="margin-top:1.5rem"><a class="go" href="#prenota">Prenota una lezione</a></p></div>
   <div class="prices" data-why="info.prices">
     <div class="price"><span>Lezione di prova</span><b>15&nbsp;€</b><span class="soft">Un'ora con l'insegnante, solo per te.</span></div>
     <div class="price"><span>10 lezioni</span><b>230&nbsp;€</b><span class="soft">Valide quattro mesi, in gruppo.</span></div>
     <div class="price"><span>Mensile</span><b>180&nbsp;€</b><span class="soft">Lezioni senza limiti.</span></div>
   </div>
-  <div class="hours" data-why="info.hours"><p><b>Orari dello studio</b></p><p>Lunedì-venerdì 7:30-21:00</p><p>Sabato 9:00-13:00</p></div>
-  <p style="margin-top:1.5rem"><a class="go" href="#prenota">Prenota una lezione</a></p>
-</section>
+</div></section>
 
-<section id="contatti">
-  <p class="kick">Contatti</p>
-  <h2>Vieni a trovarci.</h2>
+<section id="contatti"><div class="split split--wide">
+  <div><p class="kick">Contatti</p>
+  <h2>Vieni a trovarci.</h2></div>
   <div class="info">
     <div>
       <p>Via dell'Esempio 7<br>20159 Milano, quartiere Isola</p>
@@ -143,7 +177,7 @@ footer{border-top:1px solid #cbd6d9;max-width:1200px;margin:0 auto;padding:2rem 
       <p><a href="https://www.instagram.com/">Instagram</a></p>
     </div>
   </div>
-</section>
+</div></section>
 </main>
 
 <footer data-why="legal.vat">

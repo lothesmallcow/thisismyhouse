@@ -127,24 +127,30 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
             <p class="az-scale__fine">{SCORE_DISCLAIMER}</p>
           </div>
         </div>
-        <ul class="az-cats" data-az-cats></ul>
+        <div class="az-score__side">
+          <p class="az-sintesi" data-parte="sintesi" data-az-summary></p>
+          <ul class="az-cats" data-az-cats></ul>
+        </div>
       </section>
-
-      <p class="az-sintesi" data-parte="sintesi" data-az-summary></p>
 
       {examples.map((e) => (
         <section class="az-stack az-stack--24" data-parte="sito" data-az-site={e.key} hidden>
-          <h2 class="az-h2" id={`az-site-${e.key}-t`}>{e.pins === "won" ? "Dove prende i punti" : "Dove si vede sul sito"}</h2>
-          <p class="az-small">Il sito d'esempio dentro un telefono: ogni numero è un punto {e.pins === "won" ? "preso" : "perso"}. Tocca un punto e il telefono va dove si trova. <a class="az-link" href={e.path} target="_blank" rel="noopener">Apri il sito dal vivo</a></p>
+          <div class="az-head">
+            <h2 class="az-h2" id={`az-site-${e.key}-t`}>{e.pins === "won" ? "Dove prende i punti" : "Dove si vede sul sito"}</h2>
+            <p class="az-small">Il sito d'esempio dentro un telefono: ogni numero è un punto {e.pins === "won" ? "preso" : "perso"}. Tocca un punto e il telefono va dove si trova. <a class="az-link" href={e.path} target="_blank" rel="noopener">Apri il sito dal vivo</a></p>
+          </div>
           <ExampleSite example={e.key} id={`az-site-${e.key}`} />
         </section>
       ))}
 
       <section class="az-stack az-stack--24" data-parte="correzioni" data-az-fixes-wrap>
-        <div class="az-split">
+        <div class="az-head">
           <h2 class="az-h2" data-az-fixes-title>Da sistemare per prime</h2>
-          <p class="az-climb" data-az-climb><span data-az-climb-from></span> <span class="az-blue">→ <span data-az-climb-to></span></span></p>
-          <p class="az-climb-note" data-az-climb-note hidden>Sopra 90 il sito è già praticamente perfetto: questi sono ritocchi, non urgenze.</p>
+          <div class="az-climb-box">
+            <p class="az-climb" data-az-climb><span data-az-climb-from></span> <span class="az-blue">→ <span data-az-climb-to></span></span></p>
+            <p class="az-small" data-az-climb-why></p>
+            <p class="az-climb-note" data-az-climb-note hidden>Sopra 90 il sito è già praticamente perfetto: questi sono ritocchi, non urgenze.</p>
+          </div>
         </div>
         <ol class="az-fixes" data-az-fixes></ol>
       </section>
@@ -155,7 +161,10 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
       </section>
 
       <section class="az-stack az-stack--20" data-parte="controlli">
-        <h2 class="az-h2">Tutti i controlli</h2>
+        <div class="az-head">
+          <h2 class="az-h2">Tutti i controlli</h2>
+          <p class="az-small">Divisi per tema. Tocca una riga per leggere cosa abbiamo trovato e, dove serve, cosa faremmo noi.</p>
+        </div>
         <div class="az-allcats" data-az-all></div>
       </section>
     </main>
@@ -163,17 +172,24 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     <section class="az-offer" data-parte="offerta" aria-labelledby="az-offer-t">
       <div class="az-offer__in">
         <h2 id="az-offer-t" class="sr-only">Cosa possiamo fare noi</h2>
-        <p class="az-compare" data-az-compare></p>
-        <p class="az-compare-note" data-az-compare-note></p>
+        <div class="az-offer__head">
+          <p class="az-compare" data-az-compare></p>
+          <p class="az-compare-note" data-az-compare-note></p>
+        </div>
         <div class="az-packs" data-az-packs></div>
-        <p class="az-reason" data-az-reason></p>
-        <p class="az-care">{offer.care.line}</p>
+        <div class="az-offer__foot">
+          <p class="az-reason" data-az-reason></p>
+          <p class="az-care">{offer.care.line}</p>
+        </div>
       </div>
     </section>
 
     <section class="az-invite" data-parte="invito" aria-labelledby="az-inv-t">
-      <h2 id="az-inv-t" class="az-h1">Vuoi vedere come diventerebbe?</h2>
-      <p class="az-lead az-lead--19">Ti mandiamo gratis un'anteprima della prima pagina rifatta. Decidi dopo.</p>
+      <div class="az-invite__t">
+        <h2 id="az-inv-t" class="az-h1">Vuoi vedere come diventerebbe?</h2>
+        <p class="az-lead az-lead--19">Ti mandiamo gratis un'anteprima della prima pagina rifatta. Decidi dopo.</p>
+      </div>
+      <div class="az-invite__f">
       <p class="az-sent" role="status" data-az-sent hidden></p>
       <form class="az-stack az-stack--14 az-noprint" data-az-lead novalidate>
         <label for="az-email" class="sr-only">La tua email</label>
@@ -188,6 +204,7 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
         </label>
         <p id="az-lead-err" class="az-err" role="alert" data-az-lead-err hidden></p>
       </form>
+      </div>
     </section>
   </div>
 
@@ -276,7 +293,6 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
   }
   .az-lead--19 {
     font-size: 19px;
-    margin-top: -12px !important;
   }
   .az-row {
     display: flex;
@@ -524,14 +540,20 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     align-items: center;
     margin-top: -48px;
   }
+  .az-score__side {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
   .az-score__ring {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 28px;
   }
   .az-ring {
     position: relative;
-    width: min(100%, 360px);
+    width: min(100%, 420px);
     aspect-ratio: 1;
   }
   .az-ring svg {
@@ -566,8 +588,7 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     margin-top: 2px;
   }
   .az-scale {
-    width: min(100%, 360px);
-    margin-top: 28px;
+    width: min(100%, 400px);
     display: grid;
     gap: 12px;
   }
@@ -618,9 +639,13 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
   .az-scale__fine {
     text-align: center;
   }
+  .az-climb-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
   .az-climb-note {
     margin: 0;
-    max-width: 34ch;
     font-size: 15px;
     color: var(--az-soft);
   }
@@ -630,7 +655,7 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 14px;
   }
   .az-cat {
     display: flex;
@@ -682,19 +707,26 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     color: var(--az-soft);
   }
   .az-sintesi {
-    margin: -32px 0 0;
-    font-size: clamp(21px, 2.6vw, 28px);
+    margin: 0;
+    font-size: clamp(21px, 2.2vw, 24px);
     line-height: 1.35;
     letter-spacing: -0.02em;
-    max-width: 820px;
     text-wrap: pretty;
   }
-  .az-split {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: baseline;
+  /* Section head: title on the left, its short note on the right (one line of the page, no empty half). */
+  .az-head {
+    display: grid;
     gap: 12px;
+  }
+  @media (min-width: 900px) {
+    .az-head {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+      align-items: end;
+      gap: 16px 48px;
+    }
+    .az-head .az-small {
+      padding-bottom: 4px;
+    }
   }
   .az-climb {
     margin: 0;
@@ -713,13 +745,36 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     display: flex;
     flex-direction: column;
   }
+  /* A fix: number, what we found, what we would do, points. Computers: the problem and our fix side by side. */
   .az-fix {
     display: grid;
     grid-template-columns: 40px minmax(0, 1fr) auto;
-    gap: 16px;
+    gap: 4px 16px;
     align-items: baseline;
     padding: 22px 0;
     border-top: 1px solid var(--az-line);
+  }
+  .az-fix__we {
+    grid-column: 2 / -1;
+    margin: 0;
+  }
+  @media (min-width: 900px) {
+    .az-fix {
+      grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 72px;
+      column-gap: 32px;
+    }
+    .az-fix > .az-num {
+      grid-row: 1;
+    }
+    .az-fix__we {
+      grid-column: 3;
+      grid-row: 1;
+    }
+    .az-gain {
+      grid-column: 4;
+      grid-row: 1;
+      justify-self: end;
+    }
   }
   .az-fix h3 {
     margin: 0;
@@ -756,11 +811,10 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
   }
   @media (max-width: 520px) {
     .az-fix {
-      grid-template-columns: 28px minmax(0, 1fr);
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      column-gap: 12px;
     }
     .az-gain {
-      grid-column: 2;
-      justify-self: start;
       font-size: 18px;
     }
   }
@@ -791,6 +845,23 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     display: flex;
     flex-direction: column;
     gap: 28px;
+  }
+  /* Computers: the short rows in two balanced columns (one long column left an empty middle). */
+  @media (min-width: 900px) {
+    .az-allcats {
+      display: block;
+      columns: 2;
+      column-gap: 64px;
+    }
+    .az-allcats > div + div {
+      margin-top: 28px;
+    }
+    .az-allcat__h {
+      break-after: avoid;
+    }
+    .az-check {
+      break-inside: avoid;
+    }
   }
   .az-allcat__h {
     display: flex;
@@ -852,12 +923,12 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
   /* Offer */
   .az-offer {
     background: var(--az-grey);
-    margin-top: 120px;
+    margin-top: 64px;
   }
   .az-offer__in {
     max-width: 1120px;
     margin: 0 auto;
-    padding: 88px 20px;
+    padding: 80px 20px;
     display: flex;
     flex-direction: column;
     gap: 48px;
@@ -874,10 +945,25 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     font-size: clamp(44px, 8vw, 88px);
   }
   .az-compare-note {
-    margin: -24px 0 0;
+    margin: 0;
     font-size: 19px;
     color: var(--az-soft);
     max-width: 560px;
+  }
+  .az-offer__head {
+    display: grid;
+    gap: 24px;
+  }
+  /* Computers: the big comparison on the left, what it means on the right, from the top of its digits. */
+  @media (min-width: 900px) {
+    .az-offer__head {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: 24px 56px;
+    }
+    .az-compare-note {
+      padding-top: 8px;
+    }
   }
   .az-packs {
     display: grid;
@@ -945,10 +1031,28 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     display: flex;
     gap: 8px;
   }
+  /* Under the cards, on their grid: why this package under the first two, the monthly care under the third. */
+  .az-offer__foot {
+    margin-top: -24px;
+    display: grid;
+    gap: 12px;
+  }
+  @media (min-width: 900px) {
+    .az-offer__foot {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .az-reason {
+      grid-column: span 2;
+      padding-right: 28px;
+    }
+  }
   .az-reason {
-    margin: -24px 0 0;
+    margin: 0;
     font-size: 17px;
-    max-width: 720px;
+  }
+  .az-reason:empty {
+    display: none;
   }
   .az-care {
     margin: 0;
@@ -958,12 +1062,25 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
 
   /* Invite */
   .az-invite {
-    max-width: 720px;
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 96px 20px 128px;
+    padding: 80px 20px 96px;
+    display: grid;
+    gap: 28px;
+  }
+  .az-invite__t,
+  .az-invite__f {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 16px;
+  }
+  /* Computers: the question on the left, the form on the right. */
+  @media (min-width: 900px) {
+    .az-invite {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: end;
+      gap: 28px 64px;
+    }
   }
   .az-sent {
     margin: 0;
@@ -991,6 +1108,37 @@ const data = { sectors, offer, benchmark, consent: CONSENT, examples: examples.m
     left: -9999px;
     width: 1px;
     height: 1px;
+  }
+  /* Phones: 48-64 px between parts, the recommended package first. */
+  @media (max-width: 599px) {
+    .az-report {
+      gap: 64px;
+    }
+    .az-sample {
+      margin-bottom: -40px;
+    }
+    .az-score {
+      margin-top: -24px;
+    }
+    .az-offer {
+      margin-top: 56px;
+    }
+    .az-offer__in {
+      padding: 56px 20px;
+      gap: 32px;
+    }
+    .az-offer__head {
+      gap: 16px;
+    }
+    .az-offer__foot {
+      margin-top: -8px;
+    }
+    .az-pack--rec {
+      order: -1;
+    }
+    .az-invite {
+      padding: 56px 20px 56px;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .az-page .az-bar > i,

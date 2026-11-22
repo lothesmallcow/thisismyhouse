@@ -36,7 +36,7 @@ h2{font-weight:500;font-size:clamp(1.9rem,3.6vw,2.8rem);line-height:1.05;letter-
 .three h3{font-weight:600;font-size:1.25rem;margin-bottom:.4rem}
 .three p,.soft{color:#98a4a9;font-weight:300}
 .band{background:#dbe4e6;max-width:none}
-.band>div{max-width:1200px;margin:0 auto}
+.band>div{max-width:1152px;margin:0 auto}
 .team{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.5rem}
 .av{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;font-size:2.2rem;font-weight:600;color:#fff;margin-bottom:1rem}
 .q{font-weight:500;font-size:1.5rem;line-height:1.3;letter-spacing:-.01em;max-width:28ch}
@@ -45,12 +45,28 @@ h2{font-weight:500;font-size:clamp(1.9rem,3.6vw,2.8rem);line-height:1.05;letter-
 .info{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
 .info p{margin-bottom:.75rem}
 footer{border-top:1px solid #cbd6d9;max-width:1200px;margin:0 auto;padding:2rem 1.5rem 3rem;display:flex;justify-content:space-between;font-size:.85rem;color:#98a4a9}
+/* Computers: headings beside their content, no half-empty rows (dead-space check, Nov 2026) */
+@media (min-width:1000px){
+  section{padding:3.5rem 1.5rem}
+  .hero{grid-template-columns:1.15fr 1fr;padding-bottom:1.5rem}
+  .hero img{aspect-ratio:1/.82;object-fit:cover;object-position:50% 70%}
+  .lead{max-width:42ch}
+  .split{display:grid;grid-template-columns:1fr 1fr;column-gap:4rem;align-items:end}
+  .split--wide{grid-template-columns:1fr 2fr;align-items:start}
+  .split h2{margin-bottom:0}
+  .split .team{margin-top:0}
+  .split>div>p:last-child{margin-bottom:0}
+  .q{max-width:none}
+}
 @media (max-width:760px){
+  .btn{display:block;text-align:center}
+  .lead{max-width:none}
+  .three p,.soft{text-wrap:balance}
   nav{display:none}.burger{display:block}
   .hero{grid-template-columns:1fr;padding-top:.5rem;padding-bottom:1rem;gap:2rem}
   .hero img{order:-1;border-radius:160px 160px 20px 20px}
   .three,.team,.quotes,.info{grid-template-columns:1fr}
-  section{padding:3.5rem 1.5rem}
+  section{padding:3rem 1.5rem}
   footer{flex-direction:column;gap:.75rem}
   .team{gap:1.25rem}
   .team>div{display:grid;grid-template-columns:72px 1fr;column-gap:1rem;align-items:center}
@@ -86,21 +102,21 @@ footer{border-top:1px solid #cbd6d9;max-width:1200px;margin:0 auto;padding:2rem 
   </div>
 </section>
 
-<section class="band" id="studio"><div>
-  <p class="kick">Lo studio</p>
-  <h2>Sei reformer, luce naturale, il silenzio di un cortile.</h2>
+<section class="band" id="studio"><div class="split">
+  <div><p class="kick">Lo studio</p>
+  <h2>Sei reformer, luce naturale, il silenzio di un cortile.</h2></div>
   <p class="soft" style="max-width:52ch">Lezioni in piccoli gruppi, mai più di sei persone. La prima lezione di prova è con un insegnante tutto per te, per capire da dove partire.</p>
 </div></section>
 
-<section id="insegnanti">
-  <p class="kick">Le insegnanti</p>
-  <h2>Chi ti accompagna.</h2>
+<section id="insegnanti"><div class="split split--wide">
+  <div><p class="kick">Le insegnanti</p>
+  <h2>Chi ti accompagna.</h2></div>
   <div class="team">
     <div><div class="av" style="background:#6e5a22">M</div><h3>Marta</h3><p class="soft">Insegnante di pilates reformer, ex danzatrice.</p></div>
     <div><div class="av" style="background:#6f7a57">E</div><h3>Elena</h3><p class="soft">Insegnante di matwork e posturale.</p></div>
     <div><div class="av" style="background:#5f7c8a">S</div><h3>Sara</h3><p class="soft">Insegnante di pilates in gravidanza e dopo il parto.</p></div>
   </div>
-</section>
+</div></section>
 
 <section class="band"><div>
   <p class="kick">Le vostre recensioni</p>
@@ -110,16 +126,16 @@ footer{border-top:1px solid #cbd6d9;max-width:1200px;margin:0 auto;padding:2rem 
   </div>
 </div></section>
 
-<section>
-  <p class="kick">Lezioni</p>
-  <h2>Un percorso su misura per te.</h2>
-  <p class="soft" data-why="info.prices">Ogni percorso è personalizzato: scrivici e ti prepariamo una proposta pensata per te.</p>
-  <p class="soft" data-why="info.hours">Il calendario delle lezioni lo trovi nella nostra app, dopo l'iscrizione allo studio.</p>
-</section>
+<section><div class="split">
+  <div><p class="kick">Lezioni</p>
+  <h2>Un percorso su misura per te.</h2></div>
+  <div><p class="soft" data-why="info.prices">Ogni percorso è personalizzato: scrivici e ti prepariamo una proposta pensata per te.</p>
+  <p class="soft" data-why="info.hours">Il calendario delle lezioni lo trovi nella nostra app, dopo l'iscrizione allo studio.</p></div>
+</div></section>
 
-<section id="contatti">
-  <p class="kick">Contatti</p>
-  <h2>Vieni a trovarci.</h2>
+<section id="contatti"><div class="split split--wide">
+  <div><p class="kick">Contatti</p>
+  <h2>Vieni a trovarci.</h2></div>
   <div class="info">
     <div>
       <p data-why="local.maps">Via dell'Esempio 7<br>20159 Milano</p>
@@ -130,7 +146,7 @@ footer{border-top:1px solid #cbd6d9;max-width:1200px;margin:0 auto;padding:2rem 
       <p data-why="contact.whatsapp"><a href="https://www.instagram.com/">Instagram</a></p>
     </div>
   </div>
-</section>
+</div></section>
 </main>
 
 <footer data-why="legal.cookie">
