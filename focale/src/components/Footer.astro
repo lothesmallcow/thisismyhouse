@@ -10,7 +10,11 @@ const year = new Date().getFullYear();
     <div class="ftr__top">
       <div class="ftr__intro">
         <p class="ftr__claim">Siti web per piccole imprese che vogliono più richieste.</p>
-        <p class="ftr__where">Milano, Lombardia e online.</p>
+        <p class="ftr__where">Milano, Lombardia e online. Rispondiamo entro la giornata lavorativa.</p>
+        <div class="ftr__cta">
+          <a class="btn btn--primary" href="/anteprima-gratuita">Anteprima gratuita</a>
+          <a class="btn btn--secondary" href={whatsappHref(`Ciao, vi scrivo dal sito di ${site.brand}.`)} target="_blank" rel="noopener">WhatsApp</a>
+        </div>
       </div>
       <nav class="ftr__cols" aria-label="Piè di pagina">
         <div>
@@ -109,8 +113,17 @@ const year = new Date().getFullYear();
     max-width: 18ch;
   }
   .ftr__where {
-    margin: 1rem 0 2rem !important;
+    margin: 1rem 0 1.5rem !important;
     color: var(--grafite);
+    max-width: 30ch;
+  }
+  .ftr__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .ftr__cta .btn {
+    min-height: 48px;
   }
   .ftr__cols {
     display: grid;
