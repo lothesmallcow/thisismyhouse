@@ -2,13 +2,20 @@
 /**
  * Demo: "Studio Linea", an INVENTED pilates and yoga studio. It is the template we would build for
  * a fitness studio, and the page the Website Scorer measures for the "fitness" projected score
- * (scripts/scorer/selftest.mjs writes src/scorer/benchmark.json from it). Everything a visitor needs
+ * (scripts/scorer/selftest.ts writes src/scorer/benchmark.json from it). Everything a visitor needs
  * is on one page: what, where, the week's classes, prices, the trial, who teaches, how to arrive.
  * Placeholders are honest: no invented reviews, people or photos; the phone, VAT and address are
- * obviously fake. The schedule is the hero's picture: it is the first thing a member looks for.
+ * obviously fake.
+ *
+ * Look (22 Nov 2026), "L'orario è la pagina": the printed weekly timetable on the studio wall is the
+ * hero. Sofia Sans Extra Condensed for times, numbers and headings, Sofia Sans for text; white, ink,
+ * steel lines (reformer rails and springs), one signal yellow used as a surface with black text
+ * (today's column, Prenota, the trial lesson). Everything sits in ruled rows like a printed board:
+ * no rounded cards, no eyebrows, no arrows on buttons. On phones the timetable is a day switcher
+ * (tabs) that opens on today. The days are all in the HTML; a small inline script only picks today,
+ * the next class and the header's live line, before first paint (no layout shift).
  */
 import Demo from "../../layouts/Demo.astro";
-import ReviewsEmpty from "../../components/demo/ReviewsEmpty.astro";
 
 const name = "Studio Linea";
 const tel = "+390200000000";
@@ -19,10 +26,10 @@ const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURICompo
 const reviews = "https://search.google.com/local/reviews?placeid=ESEMPIO";
 
 const classes = [
-  { k: "reformer", t: "Pilates reformer", d: "Sulle macchine, in gruppi di sei. Rinforza schiena e addome senza carichi pesanti.", who: "Per chi inizia e per chi ha già esperienza" },
-  { k: "mat", t: "Pilates matwork", d: "Sul tappetino, con piccoli attrezzi. Controllo, respiro e postura.", who: "Per tutti i livelli" },
-  { k: "yoga", t: "Yoga vinyasa", d: "Sequenze fluide legate al respiro. Si suda, poi si scioglie tutto.", who: "Livello base e intermedio" },
-  { k: "posturale", t: "Ginnastica posturale", d: "Movimenti lenti per collo, spalle e schiena di chi lavora seduto.", who: "Anche dopo un periodo fermo" },
+  { k: "Reformer", t: "Pilates reformer", d: "Sulle macchine, in gruppi di sei. Rinforza schiena e addome senza carichi pesanti.", who: "Per chi inizia e per chi ha già esperienza" },
+  { k: "Matwork", t: "Pilates matwork", d: "Sul tappetino, con piccoli attrezzi. Controllo, respiro e postura.", who: "Per tutti i livelli" },
+  { k: "Yoga", t: "Yoga vinyasa", d: "Sequenze fluide legate al respiro. Si suda, poi si scioglie tutto.", who: "Livello base e intermedio" },
+  { k: "Posturale", t: "Ginnastica posturale", d: "Movimenti lenti per collo, spalle e schiena di chi lavora seduto.", who: "Anche dopo un periodo fermo" },
 ];
 const days = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 const week: Record<string, { h: string; c: string }[]> = {
@@ -49,6 +56,20 @@ const hours = [
   { d: "Domenica", h: "chiuso" },
 ];
 
+// The timetable, worked out from `week` (nothing typed twice).
+const label: Record<string, string> = { Reformer: "Reformer", Matwork: "Matwork", Yoga: "Yoga", Posturale: "Posturale" };
+const toMin = (h: string) => {
+  const [a, b] = h.split(":").map(Number);
+  return a * 60 + b;
+};
+const bands = [
+  { k: "mattina", t: "Mattina", has: (m: number) => m < 12 * 60 },
+  { k: "pranzo", t: "Pausa pranzo", has: (m: number) => m >= 12 * 60 && m < 15 * 60 },
+  { k: "sera", t: "Sera", has: (m: number) => m >= 15 * 60 },
+];
+const all = days.flatMap((d) => week[d]).sort((a, b) => toMin(a.h) - toMin(b.h));
+const perWeek = (k: string) => all.filter((c) => c.c === k).length;
+
 const ld = {
   "@context": "https://schema.org",
   "@type": "ExerciseGym",
@@ -67,157 +88,300 @@ const ld = {
 <Demo
   title="Pilates reformer e yoga a Milano Isola | Studio Linea (demo)"
   description="Pilates reformer, matwork, yoga e posturale a Milano Isola. Orari della settimana, prezzi chiari e lezione di prova a 15 €. Prenoti online in un minuto."
-  themeColor="#5E5CE6"
+  themeColor="#111418"
   bodyClass="sl"
+  fonts={["/fonts/demo/sofia-sans-extra-condensed.woff2", "/fonts/demo/sofia-sans.woff2"]}
 >
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(ld)} />
 
   <header class="sl-head">
-    <div class="sl-wrap sl-head__in">
-      <a class="sl-logo" href="#top" aria-label="Studio Linea, inizio pagina">Studio <b>Linea</b></a>
-      <nav aria-label="Sezioni" class="sl-nav">
-        <a href="#corsi">Corsi</a>
+    <div class="sl-head__in">
+      <a class="sl-head__name" href="#top"><span>Studio Linea</span><small>Pilates e yoga a Isola</small></a>
+      <p class="sl-head__live">
+        <span data-live-k>Lezioni da lunedì a sabato</span>
+        <b data-live-v>dalle {all[0].h} alle {all[all.length - 1].h}</b>
+      </p>
+      <nav class="sl-head__nav" aria-label="Sezioni">
         <a href="#orari">Orari</a>
         <a href="#prezzi">Prezzi</a>
-        <a href="#insegnanti">Insegnanti</a>
         <a href="#dove">Dove siamo</a>
+        <a href={`tel:${tel}`}>Chiama</a>
       </nav>
-      <div class="sl-head__act">
-        <a class="sl-btn sl-btn--ghost sl-only-wide" href={`tel:${tel}`}>Chiama</a>
-        <a class="sl-btn" href={book}>Prenota</a>
-      </div>
+      <a class="sl-head__book" href={book}>Prenota</a>
     </div>
   </header>
 
-  <section class="sl-hero" id="top">
-    <div class="sl-wrap sl-hero__grid">
-      <div class="sl-hero__text">
-        <p class="sl-kicker">Via Esempio 12, Milano Isola</p>
-        <h1>Pilates reformer e yoga a Milano Isola</h1>
-        <p class="sl-lead">Gruppi di sei persone al massimo, insegnanti che ti correggono per nome. La prima lezione costa 15 € e si prenota in un minuto.</p>
-        <div class="sl-hero__cta">
-          <a class="sl-btn sl-btn--big" href={book}>Prenota la lezione di prova</a>
-          <a class="sl-btn sl-btn--ghost sl-btn--big" href={wa}>Scrivici su WhatsApp</a>
-        </div>
-        <p class="sl-note">Niente iscrizione annuale. Disdici fino a 6 ore prima.</p>
+  <section class="sl-top" id="top" aria-labelledby="sl-h1">
+    <div class="sl-wrap sl-top__grid">
+      <div class="sl-top__text">
+        <h1 id="sl-h1">Pilates reformer e yoga a Milano Isola</h1>
+        <p class="sl-lead">Gruppi di sei persone al massimo, insegnanti che ti correggono per nome. Siamo in Via Esempio 12, a 4 minuti a piedi dalla metro Isola.</p>
       </div>
-      <figure class="sl-today" aria-labelledby="oggi">
-        <figcaption id="oggi"><span>Lunedì allo studio</span><a href="#orari">Tutta la settimana</a></figcaption>
-        <ol>
-          {week["Lunedì"].map((c) => (
-            <li><time>{c.h}</time><span>{c.c === "Yoga" ? "Yoga vinyasa" : c.c === "Matwork" ? "Pilates matwork" : `Pilates ${c.c.toLowerCase()}`}</span><a href={book} aria-label={`Prenota ${c.c} delle ${c.h}`}>Prenota</a></li>
-          ))}
-        </ol>
-      </figure>
+      <div class="sl-trial">
+        <p class="sl-trial__k">Lezione di prova</p>
+        <p class="sl-trial__p">15 €</p>
+        <p class="sl-trial__d">La prima, su qualsiasi corso. Si prenota in un minuto. Niente iscrizione annuale, disdici fino a 6 ore prima.</p>
+        <div class="sl-trial__act">
+          <a class="sl-btn sl-btn--ink" href={book}>Prenota la prova</a>
+          <a class="sl-trial__wa" href={wa}>Scrivici su WhatsApp</a>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="sl-sec" id="corsi" aria-labelledby="corsi-t">
+  <section class="sl-tt" id="orari" aria-labelledby="orari-t">
     <div class="sl-wrap">
-      <h2 id="corsi-t">Quattro corsi, una sola idea: muoversi bene</h2>
-      <ul class="sl-classes">
-        {classes.map((c) => (
-          <li class={`sl-class sl-class--${c.k}`}>
-            <h3>{c.t}</h3>
-            <p>{c.d}</p>
-            <p class="sl-class__who">{c.who}</p>
-          </li>
+      <div class="tt__head">
+        <h2 id="orari-t">Orari della settimana</h2>
+        <p>Ogni lezione dura 50 minuti. Tocca un orario per prenotare.</p>
+      </div>
+      <div class="tt__tabs" role="tablist" aria-label="Scegli il giorno">
+        {days.map((d, i) => (
+          <button type="button" role="tab" class="tt__tab" id={`tt-tab-${i}`} aria-controls={`tt-day-${i}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1} data-day={i}>
+            {d.slice(0, 3)}<span class="sr-only">{d.slice(3)}</span>
+          </button>
         ))}
-      </ul>
-    </div>
-  </section>
-
-  <section class="sl-sec sl-sec--mist" id="orari" aria-labelledby="orari-t">
-    <div class="sl-wrap">
-      <h2 id="orari-t">Orari della settimana</h2>
-      <p class="sl-sub">Ogni lezione dura 50 minuti. Tocca un orario per prenotare.</p>
-      <div class="sl-week" role="list">
-        {days.map((d) => (
-          <div class="sl-day" role="listitem">
-            <h3>{d}</h3>
-            <ul>
-              {week[d].map((c) => (
-                <li><a href={book}><time>{c.h}</time> {c.c}</a></li>
-              ))}
-            </ul>
+      </div>
+      <div class="tt">
+        <div class="tt__bands" aria-hidden="true">
+          <span></span>
+          {bands.map((b) => <span>{b.t}</span>)}
+        </div>
+        {days.map((d, i) => (
+          <div class:list={["tt__day", { "is-on": i === 0 }]} id={`tt-day-${i}`} data-day={i}>
+            <h3 class="tt__dh"><span>{d}</span><span class="tt__tag" data-tag></span></h3>
+            {bands.map((b) => {
+              const list = week[d].filter((c) => b.has(toMin(c.h)));
+              return (
+                <div class:list={["tt__cell", { "is-empty": !list.length }]}>
+                  {list.length > 0 && (
+                    <>
+                      <p class="tt__bl">{b.t}</p>
+                      <ul>
+                        {list.map((c) => (
+                          <li>
+                            <a href={book} data-day={i} data-min={toMin(c.h)} data-time={c.h} data-name={label[c.c]}>
+                              <time>{c.h}</time>
+                              <span class="tt__c">{label[c.c]}<span class="sr-only">, {d.toLowerCase()}</span></span>
+                              <span class="tt__go">Prenota</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
+      <div class="sl-spring" aria-hidden="true"></div>
+    </div>
+  </section>
+  <script is:inline>
+    // Today's column, the next class and the header's live line, from the timetable above.
+    // Runs while the page is parsed, so the right day is there at first paint.
+    (function () {
+      var root = document.getElementById("orari");
+      if (!root || !window.Intl) return;
+      var names = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"];
+      var idx = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+      var parts = {};
+      try {
+        new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Rome", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+          .formatToParts(new Date())
+          .forEach(function (p) { parts[p.type] = p.value; });
+      } catch (e) { return; }
+      var today = idx[parts.weekday];
+      if (today === undefined) return;
+      var now = +parts.hour * 60 + +parts.minute;
+      var rows = [].slice.call(root.querySelectorAll("a[data-min]"));
+      var next = null;
+      for (var k = 0; k < 7 && !next; k++) {
+        var d = (today + k) % 7;
+        for (var i = 0; i < rows.length; i++) {
+          if (+rows[i].dataset.day === d && (k > 0 || +rows[i].dataset.min > now)) { next = rows[i]; break; }
+        }
+      }
+      var nd = next ? +next.dataset.day : -1;
+      var when = function (day) { return day === today ? "Oggi" : day === (today + 1) % 7 ? "Domani" : names[day].charAt(0).toUpperCase() + names[day].slice(1); };
+      var show = today <= 5 ? today : nd;
+      var col = root.querySelector('.tt__day[data-day="' + show + '"]');
+      var tab = root.querySelector('.tt__tab[data-day="' + show + '"]');
+      if (col) {
+        col.classList.add("is-today");
+        col.querySelector("[data-tag]").textContent = show === today ? "Oggi" : "Domani";
+      }
+      if (tab) tab.classList.add("is-today");
+      if (next && nd === today) next.classList.add("is-next");
+      if (next) {
+        document.querySelector("[data-live-k]").textContent = today === 6 ? "Oggi chiuso. Prossima lezione" : "Prossima lezione";
+        document.querySelector("[data-live-v]").textContent = when(nd) + " " + next.dataset.time + ", " + next.dataset.name;
+      }
+
+      // Phones: one day at a time, as tabs (arrow keys, Home, End). Computers: the whole week.
+      var tabs = [].slice.call(root.querySelectorAll(".tt__tab"));
+      var cols = [].slice.call(root.querySelectorAll(".tt__day"));
+      var narrow = window.matchMedia("(max-width: 999px)");
+      function pick(n, focus) {
+        tabs.forEach(function (t, j) {
+          t.setAttribute("aria-selected", j === n ? "true" : "false");
+          t.tabIndex = j === n ? 0 : -1;
+        });
+        cols.forEach(function (c, j) { c.classList.toggle("is-on", j === n); });
+        if (focus) tabs[n].focus();
+      }
+      function roles() {
+        cols.forEach(function (c, j) {
+          if (narrow.matches) {
+            c.setAttribute("role", "tabpanel");
+            c.setAttribute("aria-labelledby", "tt-tab-" + j);
+          } else {
+            c.removeAttribute("role");
+            c.removeAttribute("aria-labelledby");
+          }
+        });
+      }
+      tabs.forEach(function (t, j) {
+        t.addEventListener("click", function () { pick(j, false); });
+        t.addEventListener("keydown", function (e) {
+          var n = e.key === "ArrowRight" ? (j + 1) % tabs.length : e.key === "ArrowLeft" ? (j + tabs.length - 1) % tabs.length : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : -1;
+          if (n < 0) return;
+          e.preventDefault();
+          pick(n, true);
+        });
+      });
+      if (show >= 0 && show <= 5) pick(show, false);
+      roles();
+      if (narrow.addEventListener) narrow.addEventListener("change", roles);
+    })();
+  </script>
+
+  <section class="sl-sec sl-sec--first" id="corsi" aria-labelledby="corsi-t">
+    <div class="sl-wrap">
+      <div class="sl-sh">
+        <h2 id="corsi-t">Quattro corsi, una sola idea: muoversi bene</h2>
+        <p>{all.length} lezioni ogni settimana, da lunedì a sabato. Scegli il corso, poi l'orario che ti torna.</p>
+      </div>
+      <ul class="sl-rows sl-courses">
+        {classes.map((c) => (
+          <li>
+            <h3>{c.t}</h3>
+            <p class="sl-courses__d">{c.d}</p>
+            <p class="sl-courses__who">{c.who}</p>
+            <p class="sl-courses__n"><b>{perWeek(c.k)}</b> {perWeek(c.k) === 1 ? "lezione" : "lezioni"} a settimana</p>
+          </li>
+        ))}
+      </ul>
     </div>
   </section>
 
   <section class="sl-sec" id="prezzi" aria-labelledby="prezzi-t">
     <div class="sl-wrap">
-      <h2 id="prezzi-t">Prezzi chiari, senza quota d'iscrizione</h2>
-      <ul class="sl-prices">
+      <div class="sl-sh">
+        <h2 id="prezzi-t">Prezzi chiari, senza quota d'iscrizione</h2>
+        <p>Niente iscrizione annuale. Disdici fino a 6 ore prima e la lezione non si perde.</p>
+      </div>
+      <ul class="sl-rows sl-prices">
         {prices.map((p) => (
-          <li class:list={["sl-price", { "sl-price--main": p.main }]}>
+          <li class:list={[{ "is-main": p.main }]}>
             <h3>{p.t}</h3>
-            <p class="sl-price__n">{p.p}</p>
-            <p>{p.d}</p>
-            {p.main && <a class="sl-btn" href={book}>Prenota la prova</a>}
+            <div class="sl-prices__d">
+              <p>{p.d}</p>
+              {p.main && <a class="sl-btn sl-btn--ink" href={book}>Prenota la prova</a>}
+            </div>
+            <p class="sl-prices__n">{p.p}</p>
           </li>
         ))}
       </ul>
     </div>
   </section>
 
-  <section class="sl-sec sl-sec--mist" id="insegnanti" aria-labelledby="ins-t">
+  <section class="sl-sec" id="insegnanti" aria-labelledby="ins-t">
     <div class="sl-wrap">
-      <h2 id="ins-t">Le insegnanti</h2>
-      <p class="sl-sub">Qui vanno le foto vere e due righe su ognuna: formazione, da quanti anni insegna, cosa ama del suo corso.</p>
-      <ul class="sl-teachers">
+      <div class="sl-sh">
+        <h2 id="ins-t">Le insegnanti</h2>
+        <p>Qui vanno le foto vere e due righe su ognuna: formazione, da quanti anni insegna, cosa ama del suo corso. Non mettiamo persone inventate.</p>
+      </div>
+      <ul class="sl-teach">
         {teachers.map((t) => (
-          <li><span class="sl-teachers__ph" aria-hidden="true"></span><p class="sl-teachers__n">{t.n}</p><p>{t.r}</p></li>
+          <li>
+            <span class="sl-teach__ph" aria-hidden="true">Foto</span>
+            <div>
+              <h3>{t.r}</h3>
+              <p>{t.n}</p>
+            </div>
+          </li>
         ))}
       </ul>
     </div>
   </section>
 
-  <section class="sl-sec" id="recensioni" aria-labelledby="rec-t">
+  <section class="sl-sec sl-sec--after" id="recensioni" aria-labelledby="rec-t">
     <div class="sl-wrap sl-rev">
       <h2 id="rec-t">Cosa dice chi viene da noi</h2>
-      <ReviewsEmpty text="Qui mostriamo le recensioni Google vere dello studio, collegate alla scheda. Non ne scriviamo mai di inventate." />
-      <a class="sl-link" href={reviews}>Leggi le recensioni su Google</a>
+      <p>Qui mostriamo le recensioni Google vere dello studio, collegate alla scheda. Non ne scriviamo mai di inventate.</p>
+      <a class="sl-btn sl-btn--line" href={reviews}>Leggi le recensioni su Google</a>
     </div>
   </section>
 
-  <section class="sl-sec sl-sec--ink" id="prenota" aria-labelledby="pren-t">
+  <section class="sl-sec" id="prenota" aria-labelledby="pren-t">
     <div class="sl-wrap sl-book">
-      <div>
+      <div class="sl-book__main">
         <h2 id="pren-t">Prenota la lezione di prova</h2>
-        <p>Nel sito vero questo pulsante apre il sistema di prenotazione che lo studio usa già, con i posti liberi in tempo reale.</p>
+        <p class="sl-book__p">15 €</p>
+        <p>Nel sito vero il primo pulsante apre il sistema di prenotazione che lo studio usa già, con i posti liberi in tempo reale.</p>
       </div>
-      <div class="sl-book__act">
-        <a class="sl-btn sl-btn--big sl-btn--light" href="#orari">Scegli l'orario e prenota</a>
-        <a class="sl-btn sl-btn--big sl-btn--line" href={`tel:${tel}`}>Chiama {telShow}</a>
-        <a class="sl-btn sl-btn--big sl-btn--line" href={wa}>WhatsApp</a>
-      </div>
+      <ul class="sl-book__act">
+        <li><a class="is-sig" href="#orari"><span>Scegli l'orario e prenota</span><small>Tutte le lezioni della settimana</small></a></li>
+        <li><a href={`tel:${tel}`}><span>Chiama {telShow}</span><small>Negli orari della reception</small></a></li>
+        <li><a href={wa}><span>Scrivici su WhatsApp</span><small>Il messaggio è già pronto</small></a></li>
+      </ul>
     </div>
   </section>
 
   <section class="sl-sec" id="dove" aria-labelledby="dove-t">
-    <div class="sl-wrap sl-where">
-      <div>
+    <div class="sl-wrap">
+      <div class="sl-sh">
         <h2 id="dove-t">Dove siamo</h2>
-        <p class="sl-addr">Via Esempio 12, 20159 Milano</p>
-        <p>A 4 minuti a piedi dalla metro Isola (M5), a 8 da Garibaldi.</p>
-        <a class="sl-btn sl-btn--ghost" href={maps}>Come arrivare con Google Maps</a>
       </div>
-      <div>
-        <h3>Orari della reception</h3>
-        <dl class="sl-hours">
-          {hours.map((h) => (<><dt>{h.d}</dt><dd>{h.h}</dd></>))}
-        </dl>
+      <div class="sl-where">
+        <div>
+          <h3>Indirizzo</h3>
+          <p class="sl-where__addr">Via Esempio 12</p>
+          <p>20159 Milano, quartiere Isola</p>
+          <a class="sl-btn sl-btn--line" href={maps}>Come arrivare con Google Maps</a>
+        </div>
+        <div>
+          <h3>A piedi dalla metro</h3>
+          <dl class="sl-list">
+            <div><dt>Isola, M5</dt><dd>4 minuti</dd></div>
+            <div><dt>Garibaldi</dt><dd>8 minuti</dd></div>
+          </dl>
+        </div>
+        <div>
+          <h3>Orari della reception</h3>
+          <dl class="sl-list">
+            {hours.map((h) => (<div><dt>{h.d}</dt><dd>{h.h}</dd></div>))}
+          </dl>
+        </div>
       </div>
     </div>
   </section>
 
   <footer class="sl-foot">
-    <div class="sl-wrap sl-foot__in">
-      <p><b>{name}</b> è un'attività inventata da Focus Design per mostrare come costruiamo il sito di uno studio. Nel sito vero qui ci sono ragione sociale, sede e partita IVA dello studio.</p>
-      <p>Studio Linea di Esempio, Via Esempio 12, 20159 Milano. P.IVA 00000000000 (esempio)</p>
-      <p class="sl-foot__links"><a href="/privacy/">Informativa privacy</a><a href="/cookie/">Cookie</a></p>
+    <div class="sl-wrap">
+      <div class="sl-foot__row">
+        <p class="sl-foot__name">{name}</p>
+        <p>Via Esempio 12<br />20159 Milano</p>
+        <p>{hours.slice(0, 2).map((h, i) => (<>{i > 0 && <br />}{h.d} {h.h}</>))}</p>
+        <p class="sl-foot__links"><a href={`tel:${tel}`}>{telShow}</a><a href={wa}>WhatsApp</a></p>
+      </div>
+      <div class="sl-foot__row sl-foot__legal">
+        <p><b>{name}</b> è un'attività inventata da Focus Design per mostrare come costruiamo il sito di uno studio. Nel sito vero qui ci sono ragione sociale, sede e partita IVA dello studio. Studio Linea di Esempio, Via Esempio 12, 20159 Milano. P.IVA 00000000000 (esempio)</p>
+        <p class="sl-foot__links"><a href="/privacy/">Informativa privacy</a><a href="/cookie/">Cookie</a></p>
+      </div>
     </div>
   </footer>
 
@@ -229,488 +393,996 @@ const ld = {
 </Demo>
 
 <style is:global>
+  /* Studio Linea's own type (OFL, self-hosted, credits in docs/CREDITI.md). */
+  @font-face {
+    font-family: "Sofia Sans Extra Condensed";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 1 1000;
+    src: url("/fonts/demo/sofia-sans-extra-condensed.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Sofia Sans";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 1 1000;
+    src: url("/fonts/demo/sofia-sans.woff2") format("woff2");
+  }
   body.sl {
-    --sl-ink: #1d1d1f;
-    --sl-soft: #6e6e73;
+    --sl-ink: #111418; /* the printed timetable */
+    --sl-soft: #4a5259; /* secondary text, 8:1 on white */
+    --sl-steel: #8c949c; /* reformer rails and springs: lines only, never text */
+    --sl-hair: #d3d7db; /* thin rules inside a block */
     --sl-paper: #ffffff;
-    --sl-mist: #f5f5f7;
-    --sl-line: #e8e8ed;
-    --sl-teal: #5e5ce6; /* indigo: Studio Linea's own colour (theme "Mela", 22 Nov 2026) */
-    --sl-teal-2: #4b49d6;
-    --sl-light: #e4e4fc;
+    --sl-sig: #ffd400; /* signal yellow: a surface, always with black text */
+    --sl-cond: "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif;
+    --sl-text: "Sofia Sans", system-ui, sans-serif;
+    --sl-pad: clamp(18px, 4vw, 40px);
+    --sl-sec: clamp(48px, 8vw, 112px);
+    --sl-in: clamp(12px, 1.4vw, 20px); /* inset of rows inside ruled lists */
+    /* The Focus banner and anything global use Sofia Sans too: no Geist on this page. */
+    --font: var(--sl-text);
+    --font-head: var(--sl-text);
     background: var(--sl-paper);
     color: var(--sl-ink);
-    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
-    letter-spacing: -0.01em;
+    font-family: var(--sl-text);
     font-size: 17px;
-    line-height: 1.55;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+  /* Anchors land under the banner and the sticky strip, not behind them. */
+  html:has(body.sl) {
+    scroll-padding-top: 116px;
+  }
+  .in-frame:has(body.sl) {
+    scroll-padding-top: 72px;
+  }
+  body.sl ::selection {
+    background: var(--sl-sig);
+    color: var(--sl-ink);
   }
   .sl h1,
   .sl h2,
   .sl h3 {
-    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
-    letter-spacing: -0.035em;
-    line-height: 1.05;
-    color: var(--sl-ink);
+    font-family: var(--sl-cond);
+    color: inherit;
+    letter-spacing: 0;
+    text-wrap: balance;
   }
   .sl h1 {
-    font-size: clamp(2.5rem, 5.6vw, 4.4rem);
-    font-weight: 600;
-    letter-spacing: -0.05em;
-    max-width: 14ch;
+    font-size: clamp(2.9rem, 6.8vw, 6.6rem);
+    font-weight: 900;
+    line-height: 0.86;
+    max-width: 15ch;
   }
   .sl h2 {
-    font-size: clamp(1.75rem, 3.4vw, 2.6rem);
-    font-weight: 600;
+    font-size: clamp(2.25rem, 4.4vw, 4rem);
+    font-weight: 900;
+    line-height: 0.92;
     max-width: 22ch;
   }
   .sl h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
   }
   .sl p {
     margin: 0;
   }
-  .sl-wrap {
-    width: min(1160px, 100% - 2.5rem);
-    margin-inline: auto;
-  }
   .sl a {
     color: inherit;
   }
-
-  .sl-head {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: rgba(255, 255, 255, 0.97);
-    border-bottom: 1px solid var(--sl-line);
+  .sl ul,
+  .sl dl {
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
-  body.sl:not(.in-frame) .sl-head {
-    top: var(--banner);
+  .sl dd {
+    margin: 0;
   }
-  .sl-head__in {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    min-height: 68px;
+  /* The Focus banner is fixed on top: the page starts under it (0 when framed). */
+  body.sl main {
+    padding-top: var(--banner);
   }
-  .sl-logo {
-    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
-    font-size: 1.35rem;
-    text-decoration: none;
-    margin-right: auto;
-  }
-  .sl-logo b {
-    color: var(--sl-teal);
-    font-weight: 700;
-  }
-  .sl-nav {
-    display: none;
-    gap: 1.4rem;
-  }
-  .sl-nav a {
-    text-decoration: none;
-    font-weight: 500;
-    padding: 0.6rem 0;
-  }
-  .sl-head__act {
-    display: flex;
-    gap: 0.5rem;
-  }
-  .sl-only-wide {
-    display: none !important;
-  }
-  @media (min-width: 980px) {
-    .sl-nav {
-      display: flex;
-    }
-    .sl-only-wide {
-      display: inline-flex !important;
-    }
+  .sl-wrap {
+    width: min(1360px, 100% - 2 * var(--sl-pad));
+    margin-inline: auto;
   }
 
+  /* ---------- Buttons: square, signal yellow, no arrows ---------- */
   .sl-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 46px;
-    padding: 0 1.25rem;
-    border-radius: 14px;
-    background: var(--sl-teal);
-    color: #fff !important;
-    font-weight: 600;
+    min-height: 48px;
+    padding: 0 22px;
+    border: 2px solid var(--sl-sig);
+    border-radius: 2px;
+    background: var(--sl-sig);
+    color: var(--sl-ink) !important;
+    font-family: var(--sl-text);
+    font-weight: 800;
+    font-size: 1.0625rem;
     text-decoration: none;
-    border: 2px solid var(--sl-teal);
     touch-action: manipulation;
   }
-  .sl-btn:not(.sl-btn--ghost):not(.sl-btn--line)::after {
-    content: "→" / "";
-    margin-left: 0.6rem;
-  }
-  .sl-btn--big {
-    min-height: 54px;
-    padding: 0 1.6rem;
-    font-size: 1.05rem;
-  }
-  .sl-btn--ghost {
-    background: var(--sl-mist);
-    border-color: var(--sl-mist);
-    color: var(--sl-ink) !important;
-  }
-  .sl-btn--light {
-    background: var(--sl-light);
-    border-color: var(--sl-light);
-    color: var(--sl-ink) !important;
+  .sl-btn--ink {
+    background: var(--sl-ink);
+    border-color: var(--sl-ink);
+    color: var(--sl-sig) !important;
   }
   .sl-btn--line {
     background: transparent;
-    border-color: rgba(255, 255, 255, 0.7);
+    border-color: var(--sl-ink);
   }
   @media (hover: hover) and (pointer: fine) {
     .sl-btn:hover {
-      background: var(--sl-teal-2);
-      border-color: var(--sl-teal-2);
-      color: #fff !important;
+      background: var(--sl-ink);
+      border-color: var(--sl-ink);
+      color: var(--sl-sig) !important;
     }
-    .sl-btn--light:hover {
-      background: #fff;
-      border-color: #fff;
+    .sl-btn--ink:hover {
+      background: var(--sl-paper);
       color: var(--sl-ink) !important;
-    }
-    .sl-btn--line:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: #fff;
     }
   }
   .sl-btn:active {
     transform: scale(0.98);
   }
 
-  .sl-hero {
-    padding: clamp(2.5rem, 6vw, 5rem) 0 clamp(3rem, 6vw, 5.5rem);
+  /* ---------- Header: the top strip of the board, with the next class live ---------- */
+  .sl-head {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--sl-paper);
+    border-bottom: 2px solid var(--sl-ink);
   }
-  .sl-hero__grid {
-    display: grid;
-    gap: 2.5rem;
-    align-items: center;
+  body.sl:not(.in-frame) .sl-head {
+    top: var(--banner);
   }
-  @media (min-width: 900px) {
-    .sl-hero__grid {
-      grid-template-columns: 7fr 5fr;
-      gap: 4rem;
-    }
-  }
-  .sl-kicker {
-    color: var(--sl-teal);
-    font-weight: 600;
-    margin-bottom: 1rem !important;
-  }
-  .sl-lead {
-    font-size: 1.2rem;
-    color: var(--sl-soft);
-    max-width: 40ch;
-    margin-top: 1.25rem !important;
-  }
-  .sl-hero__cta {
+  .sl-head__in {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 2rem;
+    align-items: stretch;
+    min-height: 60px;
+    padding-left: var(--sl-pad);
   }
-  .sl-note {
-    margin-top: 1rem !important;
-    color: var(--sl-soft);
-    font-size: 0.95rem;
-  }
-
-  .sl-today {
-    margin: 0;
-    background: var(--sl-ink);
-    color: #fff;
-    border-radius: 22px;
-    padding: 1.5rem;
-  }
-  .sl-today figcaption {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-    font-weight: 600;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-  }
-  .sl-today figcaption span {
-    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
-    font-size: 1.3rem;
-  }
-  .sl-today figcaption a {
-    color: var(--sl-light);
-    font-size: 0.95rem;
-  }
-  .sl-today ol {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .sl-today li {
-    display: grid;
-    grid-template-columns: 4.2rem 1fr auto;
-    gap: 0.75rem;
-    align-items: center;
-    padding: 0.85rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  }
-  .sl-today li:last-child {
-    border-bottom: 0;
-  }
-  .sl-today time {
-    font-weight: 700;
-    font-size: 1.1rem;
-  }
-  .sl-today li a {
-    color: var(--sl-ink);
-    background: var(--sl-light);
-    border-radius: 14px;
-    padding: 0.55rem 0.95rem;
-    font-weight: 600;
-    text-decoration: none;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .sl-sec {
-    padding: clamp(3.5rem, 7vw, 6rem) 0;
-  }
-  .sl-sec--mist {
-    background: var(--sl-mist);
-  }
-  .sl-sec--ink {
-    background: var(--sl-teal);
-    color: #fff;
-  }
-  .sl-sec--ink h2 {
-    color: #fff;
-  }
-  .sl-sub {
-    color: var(--sl-soft);
-    margin-top: 0.75rem !important;
-    max-width: 60ch;
-  }
-
-  .sl-classes {
-    list-style: none;
-    padding: 0;
-    margin: 2.5rem 0 0;
-    display: grid;
-    gap: 1px;
-    background: var(--sl-line);
-    border: 1px solid var(--sl-line);
-    border-radius: 22px;
-    overflow: hidden;
-  }
-  @media (min-width: 760px) {
-    .sl-classes {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  .sl-class {
-    background: #fff;
-    padding: 1.75rem;
-  }
-  .sl-class p {
-    margin-top: 0.5rem !important;
-    color: var(--sl-soft);
-  }
-  .sl-class .sl-class__who {
-    color: var(--sl-teal);
-    font-weight: 600;
-  }
-
-  .sl-week {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-    margin-top: 2rem;
-  }
-  @media (min-width: 900px) {
-    .sl-week {
-      grid-template-columns: repeat(6, 1fr);
-    }
-  }
-  .sl-day {
-    background: #fff;
-    border-radius: 16px;
-    padding: 1rem;
-  }
-  .sl-day h3 {
-    font-size: 1.05rem;
-    margin-bottom: 0.5rem;
-  }
-  .sl-day ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .sl-day a {
-    display: block;
-    padding: 0.55rem 0;
-    min-height: 44px;
-    text-decoration: none;
-    border-top: 1px solid var(--sl-line);
-  }
-  .sl-day time {
-    font-weight: 700;
-    color: var(--sl-teal);
-    margin-right: 0.3rem;
-  }
-
-  .sl-prices {
-    list-style: none;
-    padding: 0;
-    margin: 2.5rem 0 0;
-    display: grid;
-    gap: 1rem;
-  }
-  @media (min-width: 860px) {
-    .sl-prices {
-      grid-template-columns: 1.2fr 1fr 1fr;
-    }
-  }
-  .sl-price {
-    border: 1px solid var(--sl-line);
-    border-radius: 22px;
-    padding: 1.75rem;
+  .sl-head__name {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    justify-content: center;
+    padding-right: 20px;
+    text-decoration: none;
+    line-height: 1;
   }
-  .sl-price--main {
-    border: 2px solid var(--sl-teal);
-    background: var(--sl-mist);
+  .sl-head__name span {
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: 1.75rem;
   }
-  .sl-price__n {
-    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
-    font-size: 2.4rem;
-    font-weight: 600;
-    color: var(--sl-teal);
+  .sl-head__name small {
+    margin-top: 3px;
+    font-size: 0.8125rem;
+    color: var(--sl-soft);
   }
-  .sl-price .sl-btn {
-    align-self: flex-start;
-    margin-top: auto;
+  .sl-head__live {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6px 20px;
+    border-left: 1px solid var(--sl-steel);
+    margin-right: auto !important;
+    line-height: 1.15;
+    min-width: 0;
   }
-
-  .sl-teachers {
-    list-style: none;
-    padding: 0;
-    margin: 2rem 0 0;
-    display: grid;
-    gap: 1rem;
+  .sl-head__live span {
+    font-size: 0.8125rem;
+    color: var(--sl-soft);
   }
-  @media (min-width: 760px) {
-    .sl-teachers {
-      grid-template-columns: repeat(3, 1fr);
+  .sl-head__live b {
+    font-family: var(--sl-cond);
+    font-weight: 800;
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+  .sl-head__nav {
+    display: none;
+  }
+  .sl-head__nav a {
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    border-left: 1px solid var(--sl-steel);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    text-decoration: none;
+  }
+  .sl-head__book {
+    display: none;
+    align-items: center;
+    padding: 0 clamp(24px, 3vw, 40px);
+    background: var(--sl-sig);
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: 1.6rem;
+    text-decoration: none;
+    border-left: 2px solid var(--sl-ink);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .sl-head__nav a:hover {
+      background: var(--sl-sig);
+    }
+    .sl-head__book:hover {
+      background: var(--sl-ink);
+      color: var(--sl-sig);
     }
   }
-  .sl-teachers li {
-    background: #fff;
-    border-radius: 22px;
-    padding: 1.25rem;
+  @media (min-width: 900px) {
+    .sl-head__book {
+      display: flex;
+    }
   }
-  .sl-teachers__ph {
-    display: block;
-    aspect-ratio: 4 / 3;
-    border-radius: 14px;
-    border: 2px dashed var(--sl-line);
-    margin-bottom: 1rem;
+  @media (min-width: 1100px) {
+    .sl-head__nav {
+      display: flex;
+    }
   }
-  .sl-teachers__n {
-    font-weight: 700;
-  }
-
-  .sl-rev {
-    display: grid;
-    gap: 1.25rem;
-    justify-items: start;
-  }
-  .sl-link {
-    font-weight: 600;
-    color: var(--sl-teal) !important;
-    padding: 0.6rem 0;
+  @media (max-width: 420px) {
+    .sl-head__name small {
+      display: none;
+    }
+    .sl-head__name span {
+      font-size: 1.5rem;
+    }
+    .sl-head__live {
+      padding-inline: 14px;
+    }
+    .sl-head__live b {
+      font-size: 1.2rem;
+    }
   }
 
-  .sl-book {
+  /* ---------- Top: headline and the trial, compact over the timetable ---------- */
+  .sl-top {
+    padding: clamp(24px, 3.5vw, 48px) 0 clamp(24px, 3vw, 40px);
+  }
+  .sl-top__grid {
     display: grid;
-    gap: 2rem;
-    align-items: center;
+    gap: 20px;
   }
-  .sl-book p {
-    margin-top: 0.75rem !important;
-    max-width: 48ch;
-    color: #ffffff;
+  @media (min-width: 900px) {
+    .sl-top__grid {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+      gap: clamp(32px, 4vw, 64px);
+      align-items: stretch;
+    }
+    .sl-top__text {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 24px;
+    }
   }
-  .sl-book__act {
+  .sl-lead {
+    margin-top: 16px !important;
+    font-size: clamp(1.0625rem, 1.3vw, 1.25rem);
+    max-width: 46ch;
+  }
+  .sl-trial {
+    background: var(--sl-sig);
+    padding: clamp(18px, 2vw, 28px);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 6px 16px;
+  }
+  .sl-trial__k {
+    font-family: var(--sl-cond);
+    font-weight: 800;
+    font-size: 1.6rem;
+    line-height: 1;
+    align-self: start;
+  }
+  .sl-trial__p {
+    grid-row: 1 / 3;
+    grid-column: 2;
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: clamp(4rem, 7vw, 6.5rem);
+    line-height: 0.8;
+    white-space: nowrap;
+    align-self: start;
+  }
+  .sl-trial__d {
+    grid-column: 1;
+    font-size: 0.9375rem;
+    max-width: 32ch;
+  }
+  .sl-trial__act {
+    grid-column: 1 / -1;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 4px 20px;
+    margin-top: 12px;
+  }
+  .sl-trial__wa {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    font-weight: 700;
+    text-underline-offset: 3px;
+  }
+
+  /* ---------- The timetable ---------- */
+  .tt__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 24px;
+    margin-bottom: 14px;
+  }
+  .tt__head h2 {
+    font-size: clamp(1.75rem, 2.6vw, 2.4rem);
+  }
+  .tt__head p {
+    color: var(--sl-soft);
+  }
+  .tt__tabs {
+    display: none;
+  }
+  .tt {
+    border-top: 3px solid var(--sl-ink);
+    border-bottom: 3px solid var(--sl-ink);
+  }
+  .tt__dh {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px var(--sl-in);
+    font-size: 1.5rem !important;
+    border-bottom: 1px solid var(--sl-steel);
+  }
+  .tt__tag {
+    background: var(--sl-ink);
+    color: var(--sl-sig);
+    font-family: var(--sl-text);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    line-height: 1.2;
+  }
+  .tt__tag:empty {
+    display: none;
+  }
+  .tt__bl {
+    font-family: var(--sl-cond);
+    font-weight: 800;
+    font-size: 1.05rem;
+    padding: 10px var(--sl-in) 0;
+  }
+  .tt li + li {
+    border-top: 1px solid var(--sl-hair);
+  }
+  .tt__day.is-today li + li {
+    border-top-color: rgba(17, 20, 24, 0.25);
+  }
+  .tt a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 12px var(--sl-in) 14px;
+    min-height: 44px;
+    text-decoration: none;
+    position: relative;
+  }
+  .tt time {
+    grid-column: 1 / -1;
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: clamp(2.5rem, 3.6vw, 3.6rem);
+    line-height: 0.86;
+    font-variant-numeric: tabular-nums;
+  }
+  .tt__c {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+  .tt__go {
+    background: var(--sl-sig);
+    font-weight: 800;
+    font-size: 0.8125rem;
+    padding: 4px 8px;
+    line-height: 1.2;
+  }
+  .tt__day.is-today .tt__go {
+    background: var(--sl-ink);
+    color: var(--sl-sig);
+  }
+  .tt a.is-next {
+    box-shadow: inset 6px 0 0 var(--sl-ink);
+  }
+  .tt__day {
+    position: relative;
+  }
+  .tt__day.is-today {
+    background: var(--sl-sig);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .tt a:hover {
+      background: var(--sl-sig);
+    }
+    .tt a:hover .tt__go {
+      background: var(--sl-ink);
+      color: var(--sl-sig);
+    }
+    .tt__day.is-today a:hover {
+      background: var(--sl-ink);
+      color: var(--sl-paper);
+    }
+    .tt__day.is-today a:hover .tt__go {
+      background: var(--sl-sig);
+      color: var(--sl-ink);
+    }
+  }
+  .tt a:active {
+    transform: scale(0.99);
+  }
+
+  /* Computers: the week as a printed board, days as columns, bands of the day as rows. */
+  @media (min-width: 1000px) {
+    .tt {
+      display: grid;
+      grid-template-columns: 7rem repeat(6, minmax(0, 1fr));
+      grid-template-rows: auto repeat(3, auto);
+    }
+    .tt__bands,
+    .tt__day {
+      grid-row: 1 / -1;
+      display: grid;
+      grid-template-rows: subgrid;
+    }
+    .tt__day {
+      border-left: 1px solid var(--sl-steel);
+    }
+    /* Narrow columns (1000-1300 px): "Prenota" goes under the class name instead of over it. */
+    .tt a {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tt time {
+      flex: 0 0 100%;
+    }
+    .tt__bands span {
+      font-family: var(--sl-cond);
+      font-weight: 800;
+      font-size: 1.25rem;
+      line-height: 1.05;
+      padding: 14px 12px 0 0;
+    }
+    .tt__bands span + span,
+    .tt__cell + .tt__cell {
+      border-top: 1px solid var(--sl-steel);
+    }
+    /* No class in that part of the day: hatched, as on a printed board. */
+    .tt__cell.is-empty {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M-1 11L11 -1' stroke='%23D3D7DB' stroke-width='1'/%3E%3C/svg%3E") repeat;
+    }
+    .tt__bands span:first-child {
+      border-bottom: 1px solid var(--sl-steel);
+      margin-bottom: -1px;
+    }
+    /* The band names are the first column here (phones show them inside each day). */
+    .tt__bl {
+      display: none;
+    }
+  }
+  /* Phones and tablets: one day at a time, tabs on top (all days stacked if scripts are off). */
+  @media (max-width: 999px) {
+    .tt__bands,
+    .tt__cell.is-empty {
+      display: none;
+    }
+    .tt__day + .tt__day {
+      border-top: 3px solid var(--sl-ink);
+    }
+    .js .tt {
+      border-top: 0;
+    }
+    .js .tt__tabs {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      border: 2px solid var(--sl-ink);
+      margin-bottom: 8px;
+    }
+    .js .tt__day:not(.is-on) {
+      display: none;
+    }
+    .js .tt__day + .tt__day {
+      border-top: 0;
+    }
+    .js .tt__day {
+      border-top: 3px solid var(--sl-ink);
+    }
+    .tt__tab {
+      min-height: 48px;
+      border: 0;
+      border-left: 1px solid var(--sl-steel);
+      background: var(--sl-paper);
+      color: var(--sl-ink);
+      font-family: var(--sl-cond);
+      font-weight: 800;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0;
+    }
+    .tt__tab:first-child {
+      border-left: 0;
+    }
+    .tt__tab.is-today {
+      background: var(--sl-sig);
+    }
+    .tt__tab[aria-selected="true"] {
+      background: var(--sl-ink);
+      color: var(--sl-paper);
+    }
+    .tt__tab.is-today[aria-selected="true"] {
+      color: var(--sl-sig);
+    }
+    .tt__tab:focus-visible {
+      outline-offset: -5px;
+      outline-color: var(--sl-sig);
+    }
+    .tt__tab:not([aria-selected="true"]):focus-visible {
+      outline-color: var(--sl-ink);
+    }
+    .tt__cell + .tt__cell:not(.is-empty) {
+      border-top: 1px solid var(--sl-steel);
+    }
+    .tt a {
+      grid-template-columns: 5.6rem minmax(0, 1fr) auto;
+      padding-block: 10px;
+    }
+    .tt time {
+      grid-column: auto;
+      font-size: 2.6rem;
+    }
+    .tt__bl {
+      padding-top: 8px;
+      font-size: 1rem;
+    }
+  }
+  /* The spring: a reformer spring drawn as the board's bottom edge. */
+  .sl-spring {
+    height: 22px;
+    margin-top: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='22' viewBox='0 0 12 22'%3E%3Cellipse cx='6' cy='11' rx='7' ry='9' fill='none' stroke='%238C949C' stroke-width='1.5'/%3E%3C/svg%3E") repeat-x left center / 12px 22px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .tt__day.is-today,
+    .tt__tab.is-today {
+      animation: sl-fill 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes sl-fill {
+      from {
+        transform: translateY(8px);
+      }
+      to {
+        transform: none;
+      }
+    }
+  }
+
+  /* ---------- Sections: ruled rows like a printed board ---------- */
+  .sl-sec {
+    padding: var(--sl-sec) 0 0;
+  }
+  .sl-sec--first {
+    padding-top: clamp(40px, 6vw, 80px);
+  }
+  .sl-sec--after {
+    padding-top: clamp(32px, 4vw, 56px);
+  }
+  .sl-sh {
+    display: grid;
+    gap: 10px 48px;
+    border-top: 3px solid var(--sl-ink);
+    padding-top: 14px;
+    margin-bottom: clamp(16px, 2vw, 28px);
+  }
+  .sl-sh p {
+    color: var(--sl-soft);
+    max-width: 52ch;
+  }
+  @media (min-width: 900px) {
+    .sl-sh {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      align-items: end;
+    }
+  }
+  .sl-rows > li {
+    display: grid;
+    gap: 6px 16px;
+    padding: 18px var(--sl-in) 20px;
+    border-bottom: 1px solid var(--sl-steel);
+  }
+  .sl-rows > li:first-child {
+    border-top: 1px solid var(--sl-steel);
+  }
+
+  /* Courses */
+  .sl-courses h3 {
+    font-size: clamp(1.75rem, 2.4vw, 2.25rem);
+    font-weight: 900;
+  }
+  .sl-courses__who {
+    font-weight: 700;
+  }
+  .sl-courses__n {
+    color: var(--sl-soft);
+    font-size: 0.9375rem;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .sl-courses__n b {
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: 2.6rem;
+    line-height: 0.8;
+    color: var(--sl-ink);
+  }
+  @media (min-width: 900px) {
+    .sl-courses > li {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 4.2fr) minmax(0, 2.8fr) minmax(0, 2fr);
+      gap: 32px;
+      align-items: baseline;
+    }
+    .sl-courses__n {
+      justify-content: flex-end;
+    }
+  }
+  @media (max-width: 899px) {
+    .sl-courses > li {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .sl-courses__d,
+    .sl-courses__who {
+      grid-column: 1 / -1;
+    }
+    .sl-courses__n {
+      grid-row: 1;
+      grid-column: 2;
+      font-size: 0.8125rem;
+    }
+    .sl-courses__n b {
+      font-size: 2rem;
+    }
+  }
+
+  /* Prices: a price board, the trial row in yellow */
+  .sl-prices > li {
+    align-items: center;
+  }
+  .sl-prices h3 {
+    font-size: clamp(1.75rem, 2.4vw, 2.25rem);
+    font-weight: 900;
+  }
+  .sl-prices__d {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  .sl-prices__d p {
+    max-width: 48ch;
+  }
+  .sl-prices__n {
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: clamp(3rem, 5vw, 4.75rem);
+    line-height: 0.85;
+    white-space: nowrap;
+  }
+  .sl-prices .is-main {
+    background: var(--sl-sig);
+    border-bottom-color: var(--sl-ink);
+  }
+  @media (min-width: 900px) {
+    .sl-prices > li {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 6.4fr) minmax(0, 2.6fr);
+      gap: 32px;
+    }
+    .sl-prices__n {
+      text-align: right;
+    }
+  }
+  @media (max-width: 899px) {
+    .sl-prices > li {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+    }
+    .sl-prices__d {
+      grid-column: 1 / -1;
+    }
+    .sl-prices__n {
+      grid-row: 1;
+      grid-column: 2;
+      font-size: 2.6rem;
+    }
+  }
+
+  /* Teachers: one ruled row, a small photo slot each (no big empty boxes) */
+  .sl-teach {
+    display: grid;
+    border-top: 1px solid var(--sl-steel);
+    border-bottom: 1px solid var(--sl-steel);
+  }
+  .sl-teach li {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 16px var(--sl-in);
+  }
+  .sl-teach li + li {
+    border-top: 1px solid var(--sl-steel);
+  }
+  .sl-teach__ph {
+    width: 64px;
+    height: 64px;
+    border: 1px dashed var(--sl-steel);
+    display: grid;
+    place-items: center;
+    font-size: 0.75rem;
+    color: var(--sl-soft);
+  }
+  .sl-teach h3 {
+    font-size: 1.6rem;
+  }
+  .sl-teach p {
+    color: var(--sl-soft);
+    margin-top: 4px !important;
+  }
+  @media (min-width: 900px) {
+    .sl-teach {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .sl-teach li + li {
+      border-top: 0;
+      border-left: 1px solid var(--sl-steel);
+    }
+  }
+
+  /* Reviews: one honest line with the link */
+  .sl-rev {
+    display: grid;
+    gap: 12px 40px;
+    border-top: 3px solid var(--sl-ink);
+    border-bottom: 1px solid var(--sl-steel);
+    padding: 16px 0 20px;
+    align-items: center;
+  }
+  .sl-rev h2 {
+    font-size: clamp(1.75rem, 2.6vw, 2.4rem);
+  }
+  .sl-rev p {
+    color: var(--sl-soft);
+    max-width: 56ch;
+  }
+  .sl-rev .sl-btn {
+    justify-self: start;
+  }
+  @media (min-width: 900px) {
+    .sl-rev {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) auto;
+    }
+  }
+
+  /* Booking: ink panel with the price, three ruled actions beside it */
+  .sl-book {
+    display: grid;
+    border-top: 3px solid var(--sl-ink);
+    border-bottom: 3px solid var(--sl-ink);
+  }
+  .sl-book__main {
+    background: var(--sl-ink);
+    color: var(--sl-paper);
+    padding: clamp(20px, 3vw, 40px);
+    display: grid;
+    gap: 14px;
+    align-content: space-between;
+  }
+  .sl-book__p {
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: clamp(4.5rem, 9vw, 8.5rem);
+    line-height: 0.8;
+    color: var(--sl-sig);
+  }
+  .sl-book__main p:last-child {
+    max-width: 46ch;
+    color: #e4e7ea;
+  }
+  .sl-book__act {
+    display: grid;
+    grid-auto-rows: 1fr;
+  }
+  .sl-book__act li + li {
+    border-top: 1px solid var(--sl-steel);
+  }
+  .sl-book__act a {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-height: 88px;
+    padding: 14px clamp(18px, 2.4vw, 32px);
+    text-decoration: none;
+  }
+  .sl-book__act span {
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: clamp(1.75rem, 2.8vw, 2.6rem);
+    line-height: 0.95;
+  }
+  .sl-book__act small {
+    font-size: 0.9375rem;
+    color: var(--sl-soft);
+  }
+  .sl-book__act a.is-sig {
+    background: var(--sl-sig);
+  }
+  .sl-book__act a.is-sig small {
+    color: var(--sl-ink);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .sl-book__act a:hover {
+      background: var(--sl-sig);
+    }
+    .sl-book__act a:hover small {
+      color: var(--sl-ink);
+    }
+    .sl-book__act a.is-sig:hover {
+      background: var(--sl-ink);
+      color: var(--sl-sig);
+    }
+    .sl-book__act a.is-sig:hover small {
+      color: var(--sl-paper);
+    }
   }
   @media (min-width: 900px) {
     .sl-book {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 
+  /* Where: three ruled columns */
   .sl-where {
     display: grid;
-    gap: 2.5rem;
+    border-top: 1px solid var(--sl-steel);
+    border-bottom: 1px solid var(--sl-steel);
   }
-  @media (min-width: 860px) {
-    .sl-where {
-      grid-template-columns: 1fr 1fr;
-    }
+  .sl-where > div {
+    padding: 18px var(--sl-in) 22px;
   }
-  .sl-where p {
-    margin-top: 0.75rem !important;
+  .sl-where > div + div {
+    border-top: 1px solid var(--sl-steel);
+  }
+  .sl-where h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+  }
+  .sl-where__addr {
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: clamp(2.25rem, 3.4vw, 3.25rem);
+    line-height: 0.9;
   }
   .sl-where .sl-btn {
-    margin-top: 1.5rem;
+    margin-top: 16px;
   }
-  .sl-addr {
-    font-size: 1.3rem;
-    font-weight: 600;
+  .sl-list > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 10px 0;
+    border-top: 1px solid var(--sl-hair);
   }
-  .sl-hours {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.5rem 2rem;
-    margin: 1rem 0 0;
+  .sl-list dd {
+    font-family: var(--sl-cond);
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1;
+    white-space: nowrap;
   }
-  .sl-hours dd {
-    margin: 0;
-    font-weight: 600;
+  @media (min-width: 900px) {
+    .sl-where {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .sl-where > div + div {
+      border-top: 0;
+      border-left: 1px solid var(--sl-steel);
+    }
   }
 
+  /* ---------- Footer: a compact info strip ---------- */
   .sl-foot {
-    background: var(--sl-ink);
-    color: #dfe9e6;
-    padding: 2.5rem 0 6rem;
-    font-size: 0.95rem;
+    margin-top: var(--sl-sec);
+    border-top: 3px solid var(--sl-ink);
+    padding: 18px 0 calc(84px + env(safe-area-inset-bottom));
+    font-size: 0.9375rem;
   }
-  .sl-foot__in {
+  .sl-foot__row {
     display: grid;
-    gap: 0.75rem;
+    gap: 10px 24px;
+  }
+  .sl-foot__name {
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: 1.75rem;
+    line-height: 1;
   }
   .sl-foot__links {
     display: flex;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    column-gap: 20px;
   }
   .sl-foot a {
-    color: #fff;
-    display: inline-block;
-    padding: 0.5rem 0;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-weight: 700;
+    text-underline-offset: 3px;
+  }
+  .sl-foot__legal {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--sl-hair);
+    color: var(--sl-soft);
+    font-size: 0.875rem;
+  }
+  .sl-foot__legal a {
+    color: var(--sl-ink);
+  }
+  @media (min-width: 900px) {
+    .sl-foot {
+      padding-bottom: 18px;
+    }
+    .sl-foot__row {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+      align-items: start;
+    }
+    .sl-foot__row > p + p {
+      border-left: 1px solid var(--sl-steel);
+      padding-left: 16px;
+    }
+    .sl-foot__row .sl-foot__links a {
+      min-height: 0;
+      padding: 12px 0;
+      margin-top: -12px;
+    }
+    .sl-foot__legal {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+      align-items: center;
+    }
+    .sl-foot__legal .sl-foot__links a {
+      margin: 0;
+      min-height: 44px;
+      padding: 0;
+    }
   }
 
+  /* ---------- Phones: action strip at the bottom ---------- */
   .sl-bar {
     position: fixed;
     left: 0;
@@ -719,25 +1391,29 @@ const ld = {
     z-index: 30;
     display: grid;
     grid-template-columns: 1.4fr 1fr 1fr;
-    gap: 0.5rem;
-    padding: 0.6rem max(0.6rem, env(safe-area-inset-right)) calc(0.6rem + env(safe-area-inset-bottom)) max(0.6rem, env(safe-area-inset-left));
-    background: #fff;
-    border-top: 1px solid var(--sl-line);
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: var(--sl-paper);
+    border-top: 2px solid var(--sl-ink);
   }
   .sl-bar a {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 48px;
-    border-radius: 14px;
-    font-weight: 600;
+    min-height: 54px;
+    font-family: var(--sl-cond);
+    font-weight: 900;
+    font-size: 1.35rem;
     text-decoration: none;
-    border: 2px solid var(--sl-teal);
-    color: var(--sl-teal);
+  }
+  .sl-bar a + a {
+    border-left: 1px solid var(--sl-steel);
   }
   .sl-bar a:first-child {
-    background: var(--sl-teal);
-    color: #fff;
+    background: var(--sl-sig);
+  }
+  .sl-bar a:active {
+    background: var(--sl-ink);
+    color: var(--sl-sig);
   }
   .in-frame .sl-bar {
     position: sticky;
@@ -745,9 +1421,6 @@ const ld = {
   @media (min-width: 900px) {
     .sl-bar {
       display: none;
-    }
-    .sl-foot {
-      padding-bottom: 2.5rem;
     }
   }
 </style>
