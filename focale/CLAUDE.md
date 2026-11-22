@@ -185,6 +185,13 @@ Schibsted TTFs: it cannot read woff2).
   The closing (Closing.astro) is a full-width orange band that runs into the orange footer.
 - docs/video/focus-design-home-telefono.mp4: vertical recording of the home (Playwright + ffmpeg).
 - `node scripts/overflow-check.mjs` finds cut-off text and sideways scroll on every page at 6 widths.
+- `npm run dead-space` (scripts/dead-space.mjs, built site on localhost:4321) finds dead space: it maps text, pictures and
+  drawn boxes and reports big empty rectangles in the content column (empty halves beside short text, columns that
+  stop early, stacked padding bands), with red-painted screenshots. Lorenzo (22 Nov 2026): run it before every delivery;
+  every page must read 0 at 1440 and 390, or each remaining flag must be a known false positive (text-only edges of a
+  filled panel). How the pages got to 0: section heads as title left + intro right aligned with the content's columns;
+  short columns restructured or given real content already on the page; uneven column lists turned into ruled rows;
+  grids sized from their item count; sections 72 px apart on computers (40-48 px on phones).
 - Computers must stay exactly as designed (Lorenzo): phone fixes go in phone-only media queries
   ((max-width: 599px), (hover: none), (pointer: coarse)), never in the base tokens. Check with a pixel diff of
   the old and new build at 1440 and 1280 (reduced motion): every page must come out identical.
