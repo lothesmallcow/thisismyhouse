@@ -183,6 +183,8 @@ through, fewer small effects. The studio stays "noi" (no founder name, photo or 
   bottom-left. Services: a list that picks one big picture (rail on phones). Works: bento of six sliders on green, the
   kitchen featured 2x2. "Come lavoriamo": the same bathroom four times, a little more finished at each phase, on an
   oak dot track. Zones as big white chips on the oak band; quote form a white sheet on green.)
+  The home hero phone shows the same Arcadi (demo/ArcadiHero.astro, same fonts and colours): change both together, then
+  re-run `node scripts/soft-shots.mjs` and its `--hero` mode.
   Villa Ortensia "La pianta della villa" (architectural/asymmetric: Bodoni Moda UPRIGHT only + Hanken Grotesk, plaster pink #ebd8cf, lake ink #1c2a33, ortensia #4b5fa6, arched pictures, an SVG floor
   plan that navigates the spaces, seasons and prices as an invitation card; components/demo/VillaPlan.astro). Studio
   Linea "L'orario è la pagina" (index/timetable: Sofia Sans Extra Condensed + Sofia Sans, white, ink, yellow #FFD400
