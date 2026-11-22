@@ -164,8 +164,10 @@ const ld = {
 
     <section class="ar-sec" id="lavori" aria-labelledby="h-lavori">
       <div class="ar-wrap">
-        <h2 id="h-lavori" data-split>Lavori finiti, prima e dopo</h2>
-        <p class="ar-lead ar-lead--tight">Sei cantieri chiusi. Trascina la linea su ogni foto per confrontare.</p>
+        <div class="ar-doc__head ar-doc__head--jobs">
+          <h2 id="h-lavori" data-split>Lavori finiti, prima e dopo</h2>
+          <p class="ar-lead">Sei cantieri chiusi. Trascina la linea su ogni foto per confrontare.</p>
+        </div>
         <ol class="ar-jobs d-more">
           {
             works.map((w) => (
@@ -194,7 +196,7 @@ const ld = {
 
     <section class="ar-sec ar-sec--white" id="come-lavoriamo" aria-labelledby="h-come">
       <div class="ar-wrap">
-        <div class="ar-doc__head">
+        <div class="ar-doc__head ar-doc__head--fasi">
           <h2 id="h-come" data-split>Come lavoriamo</h2>
           <p class="ar-lead">Quattro fasi, sempre le stesse. Sai sempre a che punto siamo.</p>
         </div>
@@ -214,11 +216,14 @@ const ld = {
 
     <section class="ar-sec" id="zone" aria-labelledby="h-zone">
       <div class="ar-wrap ar-zone">
-        <h2 id="h-zone" data-split>Dove lavoriamo</h2>
+        <div class="ar-doc__head ar-doc__head--zone">
+          <h2 id="h-zone" data-split>Dove lavoriamo</h2>
+          <p class="ar-lead">Milano e prima cintura, {zones.length} zone.</p>
+        </div>
         <ul class="ar-zones" aria-label="Le zone">{zones.map((z) => <li>{z}</li>)}</ul>
         <p class="ar-zone__note">
-          <span>Sopralluogo gratuito in tutte le zone.</span>
           <span>Sede: {address}.</span>
+          <span>Sopralluogo gratuito in tutte le zone.</span>
           <a href={mapsHref}>Come arrivare</a>
         </p>
       </div>
@@ -378,7 +383,7 @@ const ld = {
     --mono: "Plex Mono Arcadi", ui-monospace, "SFMono-Regular", Menlo, monospace;
     --pad: clamp(18px, 4.5vw, 40px);
     --max: 1240px;
-    --sec: clamp(48px, 8vw, 112px);
+    --sec: clamp(48px, 5vw, 72px); /* two sections meet with at most 144 px of empty band */
     --top-h: 56px;
     background: var(--intonaco);
     color: var(--inchiostro);
@@ -973,15 +978,16 @@ const ld = {
       gap: clamp(1.5rem, 3vw, 2.5rem);
       padding-block: 1.25rem;
     }
+    /* Picture about as tall as the name and two lines of text beside it: no empty block in the row. */
     .ar-svc__pic :global(img) {
-      aspect-ratio: 3 / 2;
+      aspect-ratio: 16 / 9;
+    }
+    .ar-svc__item p {
+      max-width: none;
     }
   }
 
   /* ================= Works: a catalogue of jobs, ruled like a table ================= */
-  .ar-lead--tight {
-    margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
-  }
   .ar-jobs {
     list-style: none;
     margin: 0;
@@ -1047,6 +1053,11 @@ const ld = {
   .ar-more {
     margin-top: 1.5rem;
   }
+  @media (max-width: 599px) {
+    .ar-more {
+      width: 100%;
+    }
+  }
   /* Only on phones, and only while the list is short (Demo.astro adds .is-on). */
   .ar-more:not(:global(.is-on)) {
     display: none;
@@ -1070,8 +1081,32 @@ const ld = {
   }
 
   /* ================= How we work: the phases, set like the lines of a written quote ================= */
+  /* Section heads: title and note side by side on computers, the note lined up with a column of the
+     ruled list below it (the jobs' second column, the phases' description column), so neither half is empty. */
   .ar-doc__head {
     margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
+  }
+  @media (min-width: 900px) {
+    .ar-doc__head {
+      display: grid;
+      align-items: start;
+    }
+    .ar-doc__head .ar-lead {
+      margin-top: 0;
+      padding-top: 0.4em; /* the note's first line sits on the title's first line */
+    }
+    .ar-doc__head--jobs,
+    .ar-doc__head--zone {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: calc(2 * clamp(1.25rem, 2.5vw, 2rem));
+    }
+    .ar-doc__head--fasi {
+      grid-template-columns: 9rem minmax(0, 4fr) minmax(0, 7fr);
+      column-gap: 2rem;
+    }
+    .ar-doc__head--fasi h2 {
+      grid-column: 1 / 3;
+    }
   }
   .ar-fasi {
     list-style: none;
@@ -1117,7 +1152,7 @@ const ld = {
   /* ================= Zones: one flowing line, no grid to leave half empty ================= */
   .ar-zones {
     list-style: none;
-    margin: clamp(1.25rem, 2.5vw, 2rem) 0 0;
+    margin: 0;
     padding: 0;
     display: flex;
     flex-wrap: wrap;
@@ -1140,6 +1175,7 @@ const ld = {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between; /* the ruled line is filled end to end, like a form footer */
     gap: 0 1.5rem;
     margin-top: clamp(1.25rem, 2.5vw, 2rem);
     padding-top: 0.75rem;
@@ -1200,18 +1236,22 @@ const ld = {
     text-underline-offset: 0.2em;
   }
   .ar-form {
+    --fpad: clamp(20px, 3vw, 36px);
     display: grid;
     gap: 1rem;
-    padding: clamp(20px, 3vw, 36px);
+    padding: 0 var(--fpad) var(--fpad);
     background: var(--bianco);
     border: 2px solid var(--inchiostro);
-    border-top-width: 8px;
   }
+  /* The progress line is the sheet's ink header band, like the head of the site sign. */
   .ar-form__progress {
+    margin: 0 calc(-1 * var(--fpad)) 0.5rem;
+    padding: 0.7rem var(--fpad);
+    background: var(--inchiostro);
+    color: var(--bianco);
     font-family: var(--mono);
     font-weight: 500;
     font-size: 0.875rem;
-    color: var(--minio-scuro);
   }
   .ar-form fieldset {
     border: 0;
@@ -1245,6 +1285,23 @@ const ld = {
   }
   .ar-opt {
     position: relative;
+  }
+  /* Phones: options in two equal columns, an odd last one spans both (no ragged half-empty rows). */
+  @media (max-width: 599px) {
+    .ar-opts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ar-opt:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+    .ar-opt span {
+      display: grid;
+      width: 100%;
+    }
+    .ar-nav > .ar-btn {
+      flex: 1 1 0;
+    }
   }
   .ar-opt input {
     position: absolute;
@@ -1375,6 +1432,12 @@ const ld = {
     .ar-foot__data div:not(:nth-child(3n + 1)) {
       padding-left: 0.9rem;
       border-left: 1px solid var(--inchiostro);
+    }
+  }
+  /* Phones and tablets (name above the data): on one line where it fits, so no half-empty line under the quote form. */
+  @media (max-width: 899px) {
+    .ar-foot__name {
+      max-width: none;
     }
   }
   @media (max-width: 899px) {
