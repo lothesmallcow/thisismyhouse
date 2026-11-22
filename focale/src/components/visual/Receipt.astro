@@ -58,6 +58,12 @@ const rows: [string, number][] = [
     display: grid;
     justify-items: center;
   }
+  /* Computers: as tall as the text beside it in the page head (no empty block under the lead). */
+  @media (min-width: 960px) {
+    .rc {
+      zoom: 0.8;
+    }
+  }
   /* Phones: the whole receipt in one screen (Lorenzo). */
   @media (max-width: 599px) {
     .rc {

@@ -13,6 +13,7 @@ import { breadcrumbs } from "../lib/schema";
   jsonLd={[breadcrumbs([{ name: "Contatti", path: "/contatti/" }])]}
 >
   <PageHead
+    even
     label="Contatti"
     title="Scrivici. Ti rispondiamo in giornata."
     lead="Rispondiamo entro la giornata lavorativa, dal lunedì al venerdì. Lavoriamo da Milano, in tutta la Lombardia di persona e ovunque online."
@@ -117,6 +118,14 @@ import { breadcrumbs } from "../lib/schema";
       0 40px 70px -40px rgba(11, 27, 63, 0.45),
       0 0 0 1px var(--filo);
   }
+  /* Computers: text and card in two equal columns, the card as wide as its column (a narrow card
+     left an empty block between the short title lines and the card). */
+  @media (min-width: 960px) {
+    .ct-card {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
   .ct-rows {
     list-style: none;
     padding: 0;
@@ -168,6 +177,11 @@ import { breadcrumbs } from "../lib/schema";
   .ct-form-grid h2 {
     max-width: 10ch;
   }
+  @media (max-width: 599px) {
+    .ct-form-grid h2 {
+      max-width: none;
+    }
+  }
   .ct-note {
     margin-top: 1.5rem;
     color: var(--grafite);
@@ -214,6 +228,10 @@ import { breadcrumbs } from "../lib/schema";
     display: grid;
     gap: 1.5rem;
     max-width: 40rem;
+  }
+  /* The send button as wide as the fields above it (short, it left an empty block beside it). */
+  .ct-form [data-submit] {
+    width: 100%;
   }
   .ct-hp {
     position: absolute;

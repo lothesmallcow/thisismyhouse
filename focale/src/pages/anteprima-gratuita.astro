@@ -25,13 +25,15 @@ const next = [
         <p class="lead ag-lead">Tre domande veloci. Poi ti scriviamo noi.</p>
         <h2 class="ag-next-t">Cosa succede dopo</h2>
         <ol class="ag-next">{next.map((n) => <li>{n}</li>)}</ol>
+      </div>
+      <div class="ag-form">
+        <PreviewForm />
         <p class="ag-alt">
-          Preferisci scrivere?
+          Preferisci scrivere?{" "}
           <a class="link" href={whatsappHref("Ciao, vorrei l'anteprima gratuita del nuovo sito per la mia attività.")} target="_blank" rel="noopener">WhatsApp</a>
-          oppure <a class="link" href={telHref()}><P value={site.phoneDisplay} /></a>
+          {" "}oppure <a class="link" href={telHref()}><P value={site.phoneDisplay} /></a>
         </p>
       </div>
-      <PreviewForm />
     </div>
   </section>
 </Base>
@@ -88,8 +90,11 @@ const next = [
     font-weight: 700;
     font-size: var(--fs-small);
   }
+  /* Under the form (the other ways to reach us): the two columns end together. */
   .ag-alt {
     margin-top: 1.5rem !important;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--filo);
     color: var(--grafite);
   }
   .ag h1 {

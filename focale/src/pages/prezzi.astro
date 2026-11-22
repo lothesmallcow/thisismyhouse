@@ -102,6 +102,7 @@ const service = {
                   </li>
                 ))}
               </ul>
+              {p.from && <a class="textlink pz__est" href="#stima">Calcola una stima per il tuo caso</a>}
               <a href={`/anteprima-gratuita?pacchetto=${p.slug}`} class:list={["btn", p.recommended ? "btn--primary" : "btn--secondary", "pz__btn"]}>
                 Voglio l'anteprima gratuita
               </a>
@@ -119,9 +120,12 @@ const service = {
 
   <section class="section pz-inc" aria-labelledby="compreso">
     <div class="wrap">
-      <div class="pz-inc__head">
+      <div class="hs-head hs-head--split hs-head--wide" style="--hs-gap: 0.75rem">
         <p class="sec__label">Incluso</p>
         <h2 id="compreso" data-focus>Compreso in tutti i pacchetti</h2>
+        <div class="hs-head__side">
+          <p class="lead">Qualunque pacchetto scegli, queste sei cose ci sono sempre. L'unico costo a parte è il dominio.</p>
+        </div>
       </div>
       <ul class="pz-inc__grid">
         {
@@ -142,12 +146,16 @@ const service = {
   </section>
 
   <section class="section section--pietra" aria-labelledby="dom-prezzi">
-    <div class="wrap sec">
-      <p class="sec__label">Domande</p>
-      <div class="sec__body">
-        <h2 id="dom-prezzi" class="pz-h2" data-focus>Domande sui prezzi</h2>
-        <Faq items={faqItems} cols />
+    <div class="wrap">
+      <div class="hs-head hs-head--split" style="--hs-gap: 0.6rem">
+        <p class="sec__label">Domande</p>
+        <h2 id="dom-prezzi" data-focus>Domande sui prezzi</h2>
+        <div class="hs-head__side">
+          <p class="lead">Costi nascosti, pagamenti, cambio di pacchetto: le risposte brevi. Le altre sono in Come funziona.</p>
+          <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
+        </div>
       </div>
+      <Faq items={faqItems} cols />
     </div>
   </section>
 
@@ -286,22 +294,25 @@ const service = {
   .pz__btn {
     margin-top: auto;
   }
+  /* "Su misura" starts from a price: the estimator gives the figure for each case. */
+  .pz__est {
+    align-self: flex-start;
+    margin: -0.5rem 0 1.5rem;
+  }
+  @media (max-width: 599px) {
+    .pz__est {
+      margin: 0 0 0.5rem;
+    }
+  }
   /* The estimator right after brings its own top spacing: one gap, not two. */
   .pz {
     padding-bottom: 0;
   }
   /* Included: six tiles, then the one extra cost as a band. */
-  .pz-inc__head {
-    display: grid;
-    gap: 1rem;
-  }
-  .pz-inc__head h2 {
-    max-width: 24ch;
-  }
   .pz-inc__grid {
     list-style: none;
     padding: 0;
-    margin: clamp(2rem, 1rem + 2vw, 3rem) 0 0;
+    margin: 0;
     display: grid;
     gap: 0.75rem;
   }
@@ -347,6 +358,12 @@ const service = {
     background: var(--blu);
     color: #fff;
   }
+  /* Phones: the section ends with the framed "Costi a parte" box, whose padding already frames it. */
+  @media (max-width: 599px) {
+    .pz-inc {
+      padding-bottom: 1.5rem;
+    }
+  }
   .pz-extra {
     margin-top: 0.75rem;
     display: grid;
@@ -372,9 +389,6 @@ const service = {
   }
   .pz-vat {
     color: var(--grafite);
-  }
-  .pz-h2 {
-    margin-bottom: var(--space-block);
   }
   /* Phones: each package fits one screen with the header and the sticky bar (Lorenzo): the two
      prices side by side, tighter list and spacing. */

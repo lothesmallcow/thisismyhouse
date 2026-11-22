@@ -44,6 +44,7 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
                 <h2>{l.data.name}</h2>
                 <p class="muted">{l.data.sector}</p>
                 <p class="lv__goal">{l.data.goal}</p>
+                <p class="lv__before"><b>Prima:</b> {l.data.problems[0]}</p>
                 <p class="small muted">{kindLabel(l)}.</p>
                 <div class="lv__links">
                   <a class="textlink" href={`/lavori/${l.id}/`}>Leggi il progetto</a>
@@ -56,11 +57,12 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
       </ol>
     </div>
   </section>
-  <Closing title="Vuoi un sito così per la tua attività?" />
+  <Closing />
 </Base>
 <style>
+  /* The list ends with a framed card: its own padding frames it, the closing follows. */
   .lv {
-    padding-bottom: var(--space-section);
+    padding-bottom: clamp(1.5rem, 0.5rem + 2vw, 2.5rem);
   }
   .lv__list {
     list-style: none;
@@ -168,6 +170,13 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
     font-size: var(--fs-lead);
     line-height: 1.4;
     max-width: 26ch;
+  }
+  /* Where the project started (the first problem from its page): the text column is about as tall
+     as the screenshots beside it, so no empty block above and under the text. */
+  .lv__before {
+    margin-top: 1rem !important;
+    color: var(--grafite);
+    max-width: 34ch;
   }
   .lv__text .small {
     margin-top: 1rem !important;

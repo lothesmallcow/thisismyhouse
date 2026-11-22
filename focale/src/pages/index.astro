@@ -77,9 +77,12 @@ const steps = [
 
     <section class="section hs-sec" id="settori" aria-labelledby="settori-t">
       <div class="wrap">
-        <div class="hs-head" data-in>
+        <div class="hs-head hs-head--split hs-head--wide" data-in>
           <p class="eyebrow">Per chi lavoriamo</p>
           <h2 id="settori-t">Tre mestieri diversi, lo stesso problema: il sito non ti fa chiamare.</h2>
+          <div class="hs-head__side">
+            <p class="lead">Per ognuno c'è un sito fatto da noi: aprilo e guardalo come lo vedrebbe un tuo cliente.</p>
+          </div>
         </div>
         <ul class="hs-sec__grid">
           {
@@ -184,6 +187,7 @@ const steps = [
                     </li>
                   ))}
                 </ul>
+                {p.from && <a class="textlink hs-plan__est" href="/prezzi/#stima">Calcola una stima per il tuo caso</a>}
                 <a href={`/anteprima-gratuita?pacchetto=${p.slug}`} class:list={["btn", p.recommended ? "btn--primary" : "btn--secondary", "hs-plan__btn"]}>
                   Anteprima gratuita
                 </a>
@@ -218,12 +222,13 @@ const steps = [
 
     <section class="section hs-faq" id="domande" aria-labelledby="domande-t">
       <div class="wrap hs-faq__in">
-        <div class="hs-head hs-head--row" data-in>
-          <div>
-            <p class="eyebrow">Domande</p>
-            <h2 id="domande-t">Le domande che ci fanno tutti.</h2>
+        <div class="hs-head hs-head--split" style="--hs-gap: 0.6rem" data-in>
+          <p class="eyebrow">Domande</p>
+          <h2 id="domande-t">Le domande che ci fanno tutti.</h2>
+          <div class="hs-head__side">
+            <p class="lead">Costi, tempi, testi e pagamenti: qui le risposte brevi. Tutte le altre sono nella pagina Come funziona.</p>
+            <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
           </div>
-          <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
         </div>
         <div data-in style="--d: 0.1s"><Faq items={faqItems} cols /></div>
       </div>

@@ -9,11 +9,13 @@ interface Props {
   lead?: string;
   label?: string;
   class?: string;
+  /** Text and picture in two equal columns (for a wide picture such as the contact card). */
+  even?: boolean;
 }
-const { title, lead, label, class: cls } = Astro.props;
+const { title, lead, label, class: cls, even = false } = Astro.props;
 const hasVisual = Astro.slots.has("visual");
 ---
-<section class:list={["ph", cls, { "ph--visual": hasVisual }]} data-hero>
+<section class:list={["ph", cls, { "ph--visual": hasVisual, "ph--even": even }]} data-hero>
   <div class="wrap ph__in">
     <div class="ph__text">
       {label && <p class="ph__label">{label}</p>}
@@ -40,7 +42,8 @@ const hasVisual = Astro.slots.has("visual");
   .ph {
     position: relative;
     overflow: hidden;
-    padding-block: clamp(2rem, 1rem + 3.5vw, 4.5rem) clamp(2.5rem, 1.5rem + 2.5vw, 4rem);
+    /* Bottom: the next section brings its own padding (two stacked paddings read as dead space). */
+    padding-block: clamp(2rem, 1rem + 3.5vw, 4.5rem) clamp(2rem, 1rem + 2.2vw, 3rem);
   }
   .ph__in {
     position: relative;
@@ -79,7 +82,10 @@ const hasVisual = Astro.slots.has("visual");
     }
     .ph--visual .ph__title {
       font-size: clamp(2.4rem, 1rem + 3.8vw, 5rem);
-      max-width: 13ch;
+      max-width: var(--ph-title, 13ch);
+    }
+    .ph--visual.ph--even .ph__in {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 </style>

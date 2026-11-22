@@ -157,6 +157,8 @@
     --fs-mega: clamp(2.125rem, 1.25rem + 3.6vw, 4.5rem);
     --fs-display: clamp(2.125rem, 1.25rem + 3.6vw, 4.5rem);
     --fs-micro: 0.875rem;
+    /* Two section paddings stay under about 96 px between the content of two sections. */
+    --space-section: 2.5rem;
   }
 }
 
@@ -628,6 +630,10 @@ a.link {
   .tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  /* An odd last option takes the whole row: no orphan half-row. */
+  .tiles > .tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 .tile {
   position: relative;
@@ -846,6 +852,49 @@ html.lenis body {
   }
 }
 
+/* Split head: the title on the left, its intro (and link) on the right, top-aligned with the title and
+   lined up with the second column of the content below (--hs-gap = that content's column gap). */
+.hs-head__side {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.hs-head__side .lead {
+  max-width: 44ch;
+}
+/* A head that ends with a link: the link's own 44 px box already adds room below it. */
+.hs-head:has(> .hs-head__side > .textlink:last-child) {
+  margin-bottom: clamp(1.25rem, 0.75rem + 1vw, 1.75rem);
+}
+@media (min-width: 900px) {
+  .hs-head--split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: var(--hs-gap, 1.5rem);
+    align-items: start;
+  }
+  .hs-head--split > :is(.eyebrow, .sec__label) {
+    grid-column: 1 / -1;
+  }
+  .hs-head--split > h2 {
+    grid-column: 1;
+  }
+  .hs-head--split > .hs-head__side {
+    grid-column: 2;
+    padding-top: 0.35rem;
+  }
+  /* Over a three-column grid: the title takes two columns, the intro the third. */
+  .hs-head--wide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .hs-head--wide > h2 {
+    grid-column: 1 / span 2;
+    max-width: none;
+  }
+  .hs-head--wide > .hs-head__side {
+    grid-column: 3;
+  }
+}
+
 /* Per chi lavoriamo: three sector cards, each with its demo site. */
 .hs-sec__grid {
   list-style: none;
@@ -890,24 +939,31 @@ html.lenis body {
   object-position: top;
 }
 .hs-card__body {
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.6rem;
   padding: 1.25rem 1.4rem 1.4rem;
 }
 .hs-card__problem {
   color: var(--grafite);
 }
+/* The links sit at the foot of every card, on one line across the row (titles and texts differ in length). */
 .hs-card__links {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 1.25rem;
-  margin-top: 0.25rem;
+  margin-top: auto;
+  padding-top: 0.25rem;
 }
 
 /* Cosa ricevi: a bento, the promise large, five concrete benefits around it. */
 .hs-get {
   background: var(--nebbia);
+}
+/* The band opens with the blue panel, whose own padding already frames the heading. */
+.home .scenes > section.hs-get {
+  padding-top: clamp(1.5rem, 0.5rem + 2vw, 2.5rem);
 }
 .hs-get__in {
   display: grid;
@@ -1160,6 +1216,12 @@ html.lenis body {
   margin-top: auto;
   align-self: stretch;
 }
+/* "Su misura" starts from a price: the estimator gives the figure for each case (and the card is
+   no longer shorter than the others above its button). */
+.hs-plan__est {
+  align-self: flex-start;
+  margin: 0.25rem 0 1rem;
+}
 /* Phones: a package card fits one screen with the header and the sticky bar (Lorenzo). */
 @media (max-width: 599px) {
   .hs-plan {
@@ -1239,12 +1301,25 @@ html.lenis body {
 
 /* FAQ: heading on its own row, questions in two columns (Lorenzo, 22 Nov 2026: the heading alone in a
    left column left a tall empty block beside the list). */
-.hs-faq {
+.hs-faq,
+.home .scenes > section.hs-faq {
   padding-top: 0;
 }
 .hs-faq__in {
   display: grid;
-  gap: 1.5rem;
+}
+/* Phones: Lo studio and the FAQ are both white and share one gap; the link to the studio page stays
+   with its facts. */
+@media (max-width: 599px) {
+  .home .scenes > section.hs-studio {
+    padding-bottom: 1.75rem;
+  }
+  .hs-studio__body {
+    gap: 1rem;
+  }
+  .hs-studio__body > .textlink {
+    margin-top: -0.5rem;
+  }
 }
 
 /* Chiusura: the form itself, on navy; WhatsApp and phone for who prefers them. */
@@ -1313,6 +1388,13 @@ html.lenis body {
   text-decoration: none;
   overflow-wrap: anywhere;
 }
+/* Computers: one option per row, so the form card is as tall as the text column beside it (in two
+   columns the card stopped well above the text and left an empty block under it). */
+@media (min-width: 1000px) {
+  .hs-end__form .tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 /* The form sits on a white card: light tokens again inside it. */
 .hs-end__form {
   border-radius: 24px;
@@ -1339,6 +1421,10 @@ html.lenis body {
   .hs-get__icon {
     grid-row: span 2;
     margin-bottom: 0;
+  }
+  /* The last tile has no icon: its title must not fall into the icon's narrow column. */
+  .hs-get__more {
+    grid-template-columns: minmax(0, 1fr);
   }
   .hs-how__steps li {
     grid-template-columns: auto 1fr;
@@ -1548,14 +1634,20 @@ a.link {
 .hs-check {
   background: var(--nebbia);
 }
+/* The band ends with the example report's own card, whose padding already frames it. */
+.home .scenes > section.hs-check {
+  padding-bottom: clamp(1.5rem, 0.5rem + 2vw, 2.5rem);
+}
 .hs-check__in {
   display: grid;
   gap: 1.5rem;
 }
+/* Computers: the title on the left third, the intro and the bar beside it, top-aligned (no empty
+   middle between a short title and a far-off intro). */
 @media (min-width: 960px) {
   .hs-check__in {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    column-gap: clamp(3rem, 6vw, 7rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    column-gap: clamp(2rem, 4vw, 4rem);
     row-gap: 3rem;
     align-items: start;
   }

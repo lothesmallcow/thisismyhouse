@@ -29,7 +29,7 @@ const blocks = [
   jsonLd={[breadcrumbs([{ name: "Lavori", path: "/lavori/" }, { name: d.name, path: `/lavori/${l.id}/` }])]}
 >
   <section class="cs-head" data-hero>
-    <div class="wrap">
+    <div class="wrap cs-head__in">
       <p class="cs-back"><a class="textlink" href="/lavori/">Tutti i lavori</a></p>
       <h1>{d.name}</h1>
       <div class="cs-meta">
@@ -97,6 +97,28 @@ const blocks = [
   @media (max-width: 699px) {
     .cs-meta .btn {
       margin-left: 0;
+    }
+  }
+  /* Computers: the name on the left, sector, kind and button on the right of it (one row, no empty
+     half beside a short name). */
+  @media (min-width: 900px) {
+    .cs-head__in {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 2rem;
+      align-items: center;
+    }
+    .cs-back {
+      grid-column: 1 / -1;
+    }
+    .cs-meta {
+      margin-top: 0;
+      display: grid;
+      justify-items: start;
+      gap: 0.25rem;
+    }
+    .cs-meta .btn {
+      margin: 0.75rem 0 0;
     }
   }
   .wrap :global(.cs-live) {

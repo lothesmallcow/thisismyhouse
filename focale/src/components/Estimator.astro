@@ -220,6 +220,10 @@ const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra $
   .est__head {
     max-width: 44rem;
   }
+  /* The section ends with the question card, framed by its own padding. */
+  .est {
+    padding-bottom: clamp(2rem, 1rem + 2vw, 2.5rem);
+  }
   /* Computers: the explanation beside the questions, not above a half-width card (dead space on the right). */
   @media (min-width: 1000px) {
     .est > .wrap {
@@ -296,11 +300,14 @@ const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra $
     padding-top: 0.5rem;
     border-top: 1px solid var(--filo);
   }
+  /* The buttons share the row: "Avanti" alone takes all of it on the first question (an empty
+     half-row beside it read as dead space). */
   .est__nav .btn {
+    flex: 1 1 0;
     min-width: 8rem;
   }
   .est__back[disabled] {
-    visibility: hidden;
+    display: none;
   }
   .est__nojs {
     color: var(--grafite);
@@ -344,12 +351,13 @@ const range = (a: number, b: number) => (a === b ? `${num(a)}\u00a0€` : `tra $
     display: grid;
     gap: 0.5rem;
   }
+  /* Two options a row; an odd last option takes the whole row (no orphan half-row). */
   @media (min-width: 560px) {
     .est__cards {
-      grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .est__cards--2 {
-      grid-template-columns: 1fr 1fr;
+    .est__card:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
     }
   }
   .est__card,

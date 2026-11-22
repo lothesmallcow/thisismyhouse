@@ -37,8 +37,10 @@ const banners = [
           WhatsApp
         </a>
       </div>
-      <p class="hero__micro" data-hero-fade>Gratis e senza impegno. Rispondiamo in giornata.</p>
-      <a class="textlink hero__more" href="#analisi" data-hero-fade>Quanto lavora il tuo sito oggi? Fai l'analisi</a>
+      <div class="hero__after" data-hero-fade>
+        <p class="hero__micro">Gratis e senza impegno. Rispondiamo in giornata.</p>
+        <a class="textlink hero__more" href="#analisi">Quanto lavora il tuo sito oggi? Fai l'analisi</a>
+      </div>
     </div>
 
     <figure class="film" data-film data-tilt-area data-phone3d>
@@ -140,13 +142,18 @@ const banners = [
     gap: 0.75rem;
     margin-top: 1.75rem;
   }
+  /* The reassurance and the link to the analysis share one row on computers (Lorenzo: no empty
+     block beside short lines at the foot of the offer). */
+  .hero__after {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1.5rem;
+    margin-top: 0.85rem;
+  }
   .hero__micro {
-    margin-top: 0.85rem !important;
     font-size: var(--fs-small);
     color: var(--grafite);
-  }
-  .hero__more {
-    margin-top: 0.5rem;
   }
   @media (max-width: 480px) {
     .hero__cta .btn--wa {

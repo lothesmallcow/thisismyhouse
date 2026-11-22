@@ -229,6 +229,11 @@ const activities = [
     gap: 0.75rem;
     margin-top: 0.5rem;
   }
+  /* The buttons share the row: alone, "Avanti" takes all of it (a short button left an empty
+     half-row beside it). */
+  .pf-nav .btn {
+    flex: 1 1 0;
+  }
   :global(html:not(.js) .pf-form .pf-nav:not(.pf-nav--submit)),
   :global(html:not(.js) .pf-form [data-back]) {
     display: none;

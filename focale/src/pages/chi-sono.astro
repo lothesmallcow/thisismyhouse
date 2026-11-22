@@ -24,6 +24,7 @@ const cols = [
   jsonLd={[breadcrumbs([{ name: "Lo studio", path: "/chi-sono/" }])]}
 >
   <PageHead
+    class="studio-head"
     label="Lo studio"
     title="Uno studio piccolo, a Milano, che fa una cosa sola."
     lead="Costruiamo siti per piccole imprese che lavorano bene: imprese di ristrutturazione, serramentisti, B&B, agriturismi e location per eventi."
@@ -38,6 +39,10 @@ const cols = [
         <h2 id="nome" class="st-name__t" data-focus>Focus vuol dire mettere a fuoco.</h2>
         <p class="lead st-name__p">
           Chi apre il tuo sito guarda poche cose: chi sei, cosa fai, come contattarti. Noi mettiamo a fuoco quelle e togliamo tutto il resto.
+        </p>
+        <p class="st-name__more">
+          <a class="textlink" href="/lavori/">Guarda i nostri lavori</a>
+          <a class="textlink" href="/come-funziona/">Come funziona, passo per passo</a>
         </p>
       </div>
       <FocusLens />
@@ -73,6 +78,12 @@ const cols = [
   <Closing />
 </Base>
 <style>
+  /* Phones: the rolling pill's dashes close the opening; the band follows without a second gap. */
+  @media (max-width: 599px) {
+    :global(section.ph.studio-head) {
+      padding-bottom: 1.5rem;
+    }
+  }
   .st-name__grid {
     display: grid;
     gap: 3rem;
@@ -81,11 +92,21 @@ const cols = [
   .st-name__grid > div {
     justify-self: stretch;
   }
+  /* Computers: the lens about as tall as the text beside it (no empty block above and under the text). */
   @media (min-width: 1000px) {
     .st-name__grid {
       grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
       align-items: center;
     }
+    .st-name__grid > :global(.fl) {
+      zoom: 0.8;
+    }
+  }
+  .st-name__more {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    margin-top: 1.5rem;
   }
   .st-name__t {
     margin-top: 1rem;

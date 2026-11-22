@@ -87,11 +87,14 @@ const get = [
     </div>
   </section>
 
-  <section class="section section--pietra" aria-labelledby="serve">
+  <section class="section section--pietra cf-serve" aria-labelledby="serve">
     <div class="wrap">
-      <div class="hs-head">
+      <div class="hs-head hs-head--split">
         <p class="eyebrow">Da te e per te</p>
         <h2 id="serve">Cosa ci serve da te, cosa ricevi.</h2>
+        <div class="hs-head__side">
+          <p class="lead">Da te, le informazioni sull'attività e qualche foto, anche fatta col telefono. Da noi, il sito online sul tuo dominio con gli accessi intestati a te.</p>
+        </div>
       </div>
       <div class="cf-two">
         <div class="cf-card">
@@ -110,11 +113,10 @@ const get = [
   <section class="section section--sole" aria-labelledby="garanzia">
     <div class="wrap cf-g-grid">
       <div>
-        <p class="eyebrow">Garanzia</p>
-        <h2 id="garanzia" class="cf-g-title" data-focus>La garanzia</h2>
+        <h2 id="garanzia" class="cf-g-title" data-focus>La garanzia: l'anteprima è gratis, il saldo lo paghi a sito approvato.</h2>
         <p class="lead cf-g">
-          L'anteprima è gratuita. Se non ti piace, finisce lì: non ci devi niente e non ti richiamiamo dieci volte. Se ti piace e partiamo, il
-          saldo lo paghi solo dopo aver approvato il sito finito.
+          Se l'anteprima non ti piace, finisce lì: non ci devi niente e non ti richiamiamo dieci volte. Se ti piace e partiamo, il saldo lo
+          paghi solo dopo aver approvato il sito finito.
         </p>
         <a class="btn btn--secondary" href="/condizioni">Leggi le condizioni complete</a>
       </div>
@@ -124,9 +126,13 @@ const get = [
 
   <section class="section section--pietra" id="domande" aria-labelledby="domande-t">
     <div class="wrap">
-      <div class="hs-head">
+      <div class="hs-head hs-head--split" style="--hs-gap: 0.6rem">
         <p class="eyebrow">Domande</p>
         <h2 id="domande-t">Tutte le domande.</h2>
+        <div class="hs-head__side">
+          <p class="lead">Costi, tempi, pagamenti, testi, foto e Google: le risposte brevi. Se la tua domanda non c'è, scrivici.</p>
+          <a class="textlink" href="/contatti/">Scrivici la tua domanda</a>
+        </div>
       </div>
       <Faq items={faqItems} cols />
     </div>
@@ -151,6 +157,10 @@ const get = [
     display: grid;
     gap: 0.6rem;
     justify-items: start;
+  }
+  /* The band ends with the two cards, framed by their own padding. */
+  .cf-serve {
+    padding-bottom: clamp(1.5rem, 0.5rem + 2vw, 2.5rem);
   }
   .cf-two {
     display: grid;
@@ -177,6 +187,12 @@ const get = [
   }
   .cf-card__btn::after {
     content: none;
+  }
+  /* Phones: the button across the card, like the rows above it. */
+  @media (max-width: 599px) {
+    .cf-card__btn {
+      align-self: stretch;
+    }
   }
   .cf-card--get {
     background: var(--blu);
@@ -222,11 +238,11 @@ const get = [
   @media (min-width: 1000px) {
     .cf-g-grid {
       grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      align-items: center;
+      align-items: start;
     }
   }
   .cf-g-title {
-    margin-top: 0.75rem;
+    max-width: 22ch;
   }
   .cf-g {
     margin: 1.5rem 0 2rem;

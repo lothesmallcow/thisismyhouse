@@ -67,6 +67,18 @@ const domain = new URL(url).host;
     color: var(--grafite);
     max-width: 48ch;
   }
+  /* Computers: the title on the left, its line on the right (no empty half beside a short title). */
+  @media (min-width: 900px) {
+    .rt__head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 2rem;
+      align-items: baseline;
+    }
+    .rt__lead {
+      margin-top: 0;
+    }
+  }
   .rt__stage {
     display: grid;
     justify-items: center;

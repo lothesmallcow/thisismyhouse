@@ -27,18 +27,21 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
   jsonLd={[breadcrumbs([{ name: d.short, path: `/per/${s.id}/` }]), faqPage(d.faq)]}
 >
   <PageHead label={d.short} title={d.h1} lead={d.lead} class="st-head">
-    <div class="btn-row st-cta">
+    <div class="st-cta">
       <a class="btn btn--primary btn--big" href={`/anteprima-gratuita?settore=${s.id}`}>Voglio l'anteprima gratuita</a>
+      <p class="muted small">Gratis e senza impegno. Rispondiamo in giornata.</p>
     </div>
-    <p class="muted small st-micro">Gratis e senza impegno. Rispondiamo in giornata.</p>
     <PhoneFan slot="visual" only={d.demo} />
   </PageHead>
 
   <section class="section section--pietra" aria-labelledby="problemi">
     <div class="wrap">
-      <div class="hs-head">
+      <div class="hs-head hs-head--split hs-head--wide">
         <p class="eyebrow">Il problema</p>
         <h2 id="problemi">Quello che vediamo più spesso nei siti come il tuo.</h2>
+        <div class="hs-head__side">
+          <p class="lead">Sono {d.problems.length === 3 ? "tre" : d.problems.length}. Qui sotto, come li risolviamo uno per uno.</p>
+        </div>
       </div>
       <ul class="st-problems">
         {
@@ -55,18 +58,16 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
 
   <section class="section" aria-labelledby="costruisco">
     <div class="wrap st-two">
-      <div>
-        <div class="hs-head">
-          <p class="eyebrow">La soluzione</p>
-          <h2 id="costruisco">Cosa costruiamo per te.</h2>
-        </div>
-        <ul class="st-build">
-          {d.build.map((b) => <li><Icon name="check" size={18} />{b}</li>)}
-        </ul>
-      </div>
-      <div class="st-req-card">
+      <p class="eyebrow st-two__eb">La soluzione</p>
+      <h2 id="costruisco" class="st-two__h">Cosa costruiamo per te.</h2>
+      <ul class="st-build">
+        {d.build.map((b) => <li><Icon name="check" size={18} />{b}</li>)}
+      </ul>
+      <div class="st-two__side">
         <h3>Come ti arrivano le richieste</h3>
         <p class="st-req">{d.requests}</p>
+      </div>
+      <div class="st-req-card">
         <WhatsAppMock heading={d.mock.heading} lines={d.mock.lines} />
       </div>
     </div>
@@ -76,16 +77,18 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
     demo && (
       <section class="section section--pietra" aria-labelledby="esempio">
         <div class="wrap">
-          <div class="hs-head">
+          <div class="hs-head hs-head--split st-demo-head">
             <p class="eyebrow">Un esempio</p>
             <h2 id="esempio">{demo.data.name}: com'è fatto un sito così.</h2>
+            <div class="hs-head__side">
+              <p class="lead">{kindLabel(demo)}. Aprilo e provalo come farebbe un tuo cliente.</p>
+            </div>
           </div>
           <div class="st-demo">
             <a class="st-demo__media" href={`/lavori/${demo.id}/`}>
               <Image src={demo.data.shotDesktop} alt={siteAlt(demo)} widths={[600, 1000]} sizes="(min-width: 1000px) 50vw, 92vw" />
             </a>
             <div>
-              <p class="muted">{kindLabel(demo)}</p>
               <p class="st-demo__goal">{demo.data.goal}</p>
               {demo.data.outcome?.length && (
                 <ul class="st-demo__does" aria-label="Cosa fa il sito">
@@ -103,11 +106,15 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
     )
   }
 
-  <section class="section section--pietra" aria-labelledby="dom-settore">
+  <section class="section section--pietra st-faq" aria-labelledby="dom-settore">
     <div class="wrap">
-      <div class="hs-head">
+      <div class="hs-head hs-head--split" style="--hs-gap: 0.6rem">
         <p class="eyebrow">Domande</p>
         <h2 id="dom-settore">Le domande del tuo settore.</h2>
+        <div class="hs-head__side">
+          <p class="lead">Quelle su prezzi, tempi e pagamenti, uguali per tutti, sono in Come funziona.</p>
+          <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
+        </div>
       </div>
       <Faq items={d.faq} cols />
     </div>
@@ -116,14 +123,32 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
   <Closing whatsapp={d.whatsapp} ctaHref={`/anteprima-gratuita?settore=${s.id}`} />
 </Base>
 <style>
-  :global(.st-head) .ph__title {
-    max-width: 17ch;
+  /* The sector titles are long: three lines at 17ch instead of four at 13ch, so the text block is
+     about as tall as the phones beside it. */
+  :global(.st-head) {
+    --ph-title: 17ch;
   }
+  /* The FAQ follows the example on the same grey: one gap, not two. */
+  .st-faq {
+    padding-top: 0;
+  }
+  /* The button and the reassurance share one row (alone under the button, the short line left an
+     empty block beside it). */
   .st-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1.25rem;
     margin-top: 1.75rem;
   }
-  .st-micro {
-    margin-top: 0.6rem !important;
+  /* Computers: the phones as tall as the text beside them. */
+  @media (min-width: 960px) {
+    :global(.st-head .ph__visual .pfan) {
+      aspect-ratio: 0.95;
+    }
+    :global(.st-head .ph__visual .pfan__card) {
+      --w: min(240px, 42cqw);
+    }
   }
   .st-problems {
     list-style: none;
@@ -157,16 +182,69 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
     background: #fde8e6;
     color: #b3261a;
   }
+  /* Phones: the icon beside the words, not alone on a row above them. */
+  @media (max-width: 599px) {
+    .st-problems li {
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      padding: 1.1rem 1.25rem;
+    }
+  }
+  /* What we build, then how requests arrive (phones read them in this order). Computers: the title
+     with how requests arrive beside it, then the list beside the message, the same height (rows
+     spread to the card's height): no short column next to a tall one. */
   .st-two {
     display: grid;
-    gap: 2.5rem;
+    grid-template-areas: "eb" "h" "list" "side" "card";
   }
-  @media (min-width: 1000px) {
+  .st-two__eb {
+    grid-area: eb;
+    margin-bottom: 0.75rem;
+  }
+  .st-two__h {
+    grid-area: h;
+    margin-bottom: clamp(1.25rem, 1rem + 1vw, 2rem);
+  }
+  .st-build {
+    grid-area: list;
+  }
+  .st-two__side {
+    grid-area: side;
+    display: grid;
+    gap: 0.75rem;
+    margin: 2.5rem 0 1.25rem;
+  }
+  .st-two__side h3 {
+    font-size: var(--fs-h3);
+  }
+  .st-req-card {
+    grid-area: card;
+  }
+  @media (min-width: 900px) {
     .st-two {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2rem, 5vw, 5rem);
-      align-items: center;
+      grid-template-areas: "eb eb" "h side" "list card";
+      column-gap: 2rem;
+      align-items: start;
     }
+    .st-two__h {
+      margin-bottom: clamp(1.75rem, 1rem + 2vw, 3rem);
+    }
+    .st-two__side {
+      margin: 0.35rem 0 clamp(1.75rem, 1rem + 2vw, 3rem);
+    }
+    .st-build {
+      display: grid;
+      align-content: space-between;
+      align-self: stretch;
+    }
+    .st-req-card {
+      align-self: stretch;
+    }
+  }
+  /* The message fills the card's width (centred and narrow, it left empty strips on both sides). */
+  .st-req-card :global(.wa) {
+    max-width: none;
   }
   .st-build {
     list-style: none;
@@ -185,12 +263,18 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
     color: var(--blu);
   }
   .st-req-card {
+    display: grid;
+    align-items: center;
     padding: clamp(1.4rem, 1rem + 1.2vw, 2.25rem);
     border-radius: 24px;
     background: var(--nebbia);
   }
+  @media (min-width: 900px) {
+    .st-req-card {
+      padding: 1.25rem;
+    }
+  }
   .st-req {
-    margin: 0.75rem 0 1.5rem !important;
     color: var(--grafite);
     max-width: 40ch;
   }
@@ -214,6 +298,14 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
   .st-demo__media :global(img) {
     width: 100%;
     transition: transform 0.9s var(--ease-out);
+  }
+  /* Computers: the top of the site, about as tall as the text beside it. */
+  @media (min-width: 1000px) {
+    .st-demo__media :global(img) {
+      aspect-ratio: 2 / 1;
+      object-fit: cover;
+      object-position: top;
+    }
   }
   @media (hover: hover) {
     .st-demo__media:hover :global(img) {
@@ -250,9 +342,6 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
   @media (max-width: 599px) {
     .st-req-card {
       padding: 1.15rem;
-    }
-    .st-req {
-      margin: 0.5rem 0 1rem !important;
     }
   }
 </style>
