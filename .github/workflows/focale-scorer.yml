@@ -12,7 +12,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-concurrency: { group: focale-scorer-${{ github.ref }}, cancel-in-progress: true }
+concurrency:
+  group: focale-scorer-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   scorer:
     runs-on: ubuntu-latest
