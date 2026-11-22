@@ -75,7 +75,7 @@ const blocks = [
 
   {d.quote && <CaseQuote quote={d.quote} />}
 
-  <Closing title="Vuoi un sito così per la tua attività?" />
+  <Closing />
 </Base>
 <style>
   .cs-head {
@@ -127,17 +127,37 @@ const blocks = [
     margin-inline: auto;
   }
   .cs-goal {
-    max-width: 28ch;
+    max-width: 40ch;
   }
   .cs-cols {
     display: grid;
-    gap: 3rem;
+    gap: 2rem;
     margin-top: var(--space-block);
   }
+  /* Computers: one ruled row per block (title | items in two columns), not three columns of uneven
+     length (Lorenzo, 22 Nov 2026: the short columns left empty blocks). */
   @media (min-width: 1000px) {
     .cs-cols {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+    }
+    .cs-cols > div {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
       gap: 2rem;
+      padding: 1.25rem 0;
+      border-top: 1px solid var(--inchiostro);
+    }
+    .cs-cols h3 {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+    .cs-cols ul {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 2rem;
+    }
+    .cs-cols li:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
     }
   }
   .cs-cols h3 {
