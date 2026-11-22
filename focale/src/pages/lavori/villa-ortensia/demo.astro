@@ -936,6 +936,103 @@ const ld = {
     font-size: 0.88rem;
     color: #b8c2c4;
   }
+
+  /* ================= Theme "Mela", sage green (Lorenzo, 22 Nov 2026) =================
+     The same page in the new look of the Focus Design site: Geist only (no serif, no italics),
+     tight semibold titles, rounded buttons with an arrow, light grey fields and surfaces,
+     rounded pictures. Villa Ortensia's own colour is sage green (white text on it 5.1:1). */
+  .vo {
+    --ink: #1d1d1f;
+    --lake: #2e7d5b;
+    --lake-deep: #23664a;
+    --mist: #f5f5f7;
+    --ivory: #ffffff;
+    --rose: #2e7d5b;
+    --mark: rgba(46, 125, 91, 0.2);
+    background: #fff;
+    font-weight: 400;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+  }
+  .vo.vo :global(*) {
+    font-family: "Geist", "Geist Fallback", system-ui, sans-serif !important;
+    font-style: normal !important;
+  }
+  .vo h1,
+  .vo h2 {
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+  .vo h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .vo .vo-logo,
+  .vo .vo-foot__name {
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  .vo .vo-btn {
+    border-radius: 14px;
+    background: var(--lake);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0;
+    min-height: 56px;
+  }
+  .vo .vo-btn::after {
+    content: "→" / "";
+    margin-left: 0.6rem;
+  }
+  .vo .vo-btn:hover {
+    background: var(--lake-deep);
+  }
+  .vo .vo-btn--light {
+    background: #fff;
+    color: var(--ink);
+  }
+  .vo .vo-btn--light:hover {
+    background: #f5f5f7;
+  }
+  .vo .vo-link {
+    letter-spacing: 0;
+  }
+  .vo .vo-kicker,
+  .vo .vo-cap,
+  .vo .vo-space__n {
+    letter-spacing: 0;
+  }
+  .vo .vo-form select,
+  .vo .vo-form input[type="text"] {
+    background: #f5f5f7;
+    border-color: transparent;
+    border-radius: 14px;
+    min-height: 56px;
+  }
+  .vo .vo-opt span {
+    border-radius: 14px;
+    border-color: transparent;
+    background: #f5f5f7;
+  }
+  .vo .vo-opt input:checked + span {
+    background: var(--lake);
+    border-color: var(--lake);
+    color: #fff;
+  }
+  .vo .vo-space :global(img),
+  .vo .vo-visit__pic,
+  .vo .vo-band {
+    border-radius: 22px;
+    overflow: hidden;
+  }
+  .vo .vo-months {
+    color: #ffffff;
+    letter-spacing: 0;
+  }
+  .vo .vo-seasons-sec {
+    color: #ffffff;
+  }
 </style>
 <script>
   import { initDemoForms } from "../../../scripts/demo-form";

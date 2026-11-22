@@ -1,6 +1,6 @@
 {
   "rubricVersion": "2.1.1",
-  "measuredAt": "2026-11-21",
+  "measuredAt": "2026-11-22",
   "method": "Lighthouse locale (telefono simulato) sul sito costruito, poi la stessa griglia dell'analisi",
   "templates": {
     "fitness": {
@@ -55,12 +55,12 @@
     "edilizia": {
       "label": "Arcadi (impresa di ristrutturazioni dimostrativa)",
       "path": "/lavori/arcadi-ristrutturazioni/demo/",
-      "total": 97,
+      "total": 100,
       "categories": [
         {
           "id": "speed",
           "label": "Velocità e telefono",
-          "earned": 16.5,
+          "earned": 20,
           "max": 20
         },
         {

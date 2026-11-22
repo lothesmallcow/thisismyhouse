@@ -67,7 +67,7 @@ const ld = {
 <Demo
   title="Pilates reformer e yoga a Milano Isola | Studio Linea (demo)"
   description="Pilates reformer, matwork, yoga e posturale a Milano Isola. Orari della settimana, prezzi chiari e lezione di prova a 15 €. Prenoti online in un minuto."
-  themeColor="#0B5E55"
+  themeColor="#5E5CE6"
   bodyClass="sl"
 >
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(ld)} />
@@ -230,31 +230,33 @@ const ld = {
 
 <style is:global>
   body.sl {
-    --sl-ink: #14262a;
-    --sl-soft: #46585b;
+    --sl-ink: #1d1d1f;
+    --sl-soft: #6e6e73;
     --sl-paper: #ffffff;
-    --sl-mist: #edf3f0;
-    --sl-line: #d4e0db;
-    --sl-teal: #0b5e55;
-    --sl-teal-2: #0e7a6e;
-    --sl-light: #c9efe4;
+    --sl-mist: #f5f5f7;
+    --sl-line: #e8e8ed;
+    --sl-teal: #5e5ce6; /* indigo: Studio Linea's own colour (theme "Mela", 22 Nov 2026) */
+    --sl-teal-2: #4b49d6;
+    --sl-light: #e4e4fc;
     background: var(--sl-paper);
     color: var(--sl-ink);
-    font-family: "Schibsted Grotesk", system-ui, sans-serif;
+    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
+    letter-spacing: -0.01em;
     font-size: 17px;
     line-height: 1.55;
   }
   .sl h1,
   .sl h2,
   .sl h3 {
-    font-family: "Literata", Georgia, serif;
-    letter-spacing: -0.01em;
-    line-height: 1.15;
+    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
     color: var(--sl-ink);
   }
   .sl h1 {
-    font-size: clamp(2.3rem, 5.2vw, 4rem);
+    font-size: clamp(2.5rem, 5.6vw, 4.4rem);
     font-weight: 600;
+    letter-spacing: -0.05em;
     max-width: 14ch;
   }
   .sl h2 {
@@ -294,7 +296,7 @@ const ld = {
     min-height: 68px;
   }
   .sl-logo {
-    font-family: "Literata", Georgia, serif;
+    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
     font-size: 1.35rem;
     text-decoration: none;
     margin-right: auto;
@@ -334,7 +336,7 @@ const ld = {
     justify-content: center;
     min-height: 46px;
     padding: 0 1.25rem;
-    border-radius: 999px;
+    border-radius: 14px;
     background: var(--sl-teal);
     color: #fff !important;
     font-weight: 600;
@@ -342,14 +344,19 @@ const ld = {
     border: 2px solid var(--sl-teal);
     touch-action: manipulation;
   }
+  .sl-btn:not(.sl-btn--ghost):not(.sl-btn--line)::after {
+    content: "→" / "";
+    margin-left: 0.6rem;
+  }
   .sl-btn--big {
     min-height: 54px;
     padding: 0 1.6rem;
     font-size: 1.05rem;
   }
   .sl-btn--ghost {
-    background: transparent;
-    color: var(--sl-teal) !important;
+    background: var(--sl-mist);
+    border-color: var(--sl-mist);
+    color: var(--sl-ink) !important;
   }
   .sl-btn--light {
     background: var(--sl-light);
@@ -434,7 +441,7 @@ const ld = {
     border-bottom: 1px solid rgba(255, 255, 255, 0.18);
   }
   .sl-today figcaption span {
-    font-family: "Literata", Georgia, serif;
+    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
     font-size: 1.3rem;
   }
   .sl-today figcaption a {
@@ -464,7 +471,7 @@ const ld = {
   .sl-today li a {
     color: var(--sl-ink);
     background: var(--sl-light);
-    border-radius: 999px;
+    border-radius: 14px;
     padding: 0.55rem 0.95rem;
     font-weight: 600;
     text-decoration: none;
@@ -500,7 +507,7 @@ const ld = {
     gap: 1px;
     background: var(--sl-line);
     border: 1px solid var(--sl-line);
-    border-radius: 20px;
+    border-radius: 22px;
     overflow: hidden;
   }
   @media (min-width: 760px) {
@@ -573,7 +580,7 @@ const ld = {
   }
   .sl-price {
     border: 1px solid var(--sl-line);
-    border-radius: 20px;
+    border-radius: 22px;
     padding: 1.75rem;
     display: flex;
     flex-direction: column;
@@ -584,7 +591,7 @@ const ld = {
     background: var(--sl-mist);
   }
   .sl-price__n {
-    font-family: "Literata", Georgia, serif;
+    font-family: "Geist", "Geist Fallback", system-ui, sans-serif;
     font-size: 2.4rem;
     font-weight: 600;
     color: var(--sl-teal);
@@ -608,7 +615,7 @@ const ld = {
   }
   .sl-teachers li {
     background: #fff;
-    border-radius: 20px;
+    border-radius: 22px;
     padding: 1.25rem;
   }
   .sl-teachers__ph {
@@ -641,7 +648,7 @@ const ld = {
   .sl-book p {
     margin-top: 0.75rem !important;
     max-width: 48ch;
-    color: #e6f4ef;
+    color: #ffffff;
   }
   .sl-book__act {
     display: flex;
@@ -722,7 +729,7 @@ const ld = {
     align-items: center;
     justify-content: center;
     min-height: 48px;
-    border-radius: 999px;
+    border-radius: 14px;
     font-weight: 600;
     text-decoration: none;
     border: 2px solid var(--sl-teal);
@@ -742,13 +749,5 @@ const ld = {
     .sl-foot {
       padding-bottom: 2.5rem;
     }
-  }
-  @font-face {
-    font-family: "Literata";
-    font-style: normal;
-    font-weight: 200 900;
-    font-display: swap;
-    src: url("/fonts/literata-latin.woff2") format("woff2");
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
   }
 </style>

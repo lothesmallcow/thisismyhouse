@@ -7,7 +7,6 @@ import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
 import PreviewForm from "../components/PreviewForm.astro";
 import { Image } from "astro:assets";
-import ProjectFilm from "../components/ProjectFilm.astro";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
 import PlanHelp from "../components/PlanHelp.astro";
@@ -24,8 +23,6 @@ const open = foundersOpen();
 
 const settori = (await getCollection("settori")).sort((a, b) => a.id.localeCompare(b.id));
 const lavori = await getCollection("lavori");
-// The makeover film: the real client with a film (Casa Turati 3), in the place of the old Arcadi one.
-const turati = lavori.find((l) => l.data.film)!;
 const sectors = ["ristrutturazioni-e-serramenti", "b-and-b-e-agriturismi", "location-per-matrimoni"].map((id) => {
   const s = settori.find((x) => x.id === id)!;
   const demo = lavori.find((l) => l.id === s.data.demo)!;
@@ -54,7 +51,23 @@ const steps = [
   <div class="scenes">
     <HeroScene />
 
-    <ProjectFilm l={turati} home />
+    <section class="section hs-check" id="analisi" aria-labelledby="check-t">
+      <div class="wrap hs-check__in">
+        <div class="hs-check__text" data-in>
+          <p class="eyebrow">Analisi gratuita</p>
+          <h2 id="check-t">Quanto lavora il tuo sito oggi?</h2>
+          <p class="lead">Incolla l'indirizzo: in un minuto ti diamo un voto su 100 e le cose da sistemare per prime. Il risultato lo vedi solo tu.</p>
+        </div>
+        <form class="hs-check__form" action="/analisi-sito/" method="get" data-in style="--d: 0.08s">
+          <label for="check-url" class="sr-only">Indirizzo del tuo sito</label>
+          <div class="hs-check__row">
+            <input id="check-url" class="hs-check__input" name="url" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="www.nomeattivita.it" required />
+            <button class="btn btn--primary btn--big" type="submit">Analizza</button>
+          </div>
+          <a class="textlink" href="/analisi-sito/#voto-12">Guarda un esempio di report</a>
+        </form>
+      </div>
+    </section>
 
     <section class="section hs-sec" id="settori" aria-labelledby="settori-t">
       <div class="wrap">
@@ -234,20 +247,15 @@ const steps = [
   initScenes();
   import("../scripts/forms").then((m) => m.initPreviewForm());
   initTilt();
-  // The real 3D phone and, on computers, the makeover's laptop (three.js and the models): downloaded
-  // once the page is idle, drawn from the visitor's first gesture, so neither weighs on the first
-  // paint and both are ready before the visitor scrolls to them (Lorenzo saw the CSS stand-in turn
-  // into the real laptop mid-film).
-  later(() => import("../scripts/phone3d").then((m) => m.preloadModels()));
+  // The real 3D phone (three.js and the model): downloaded once the page is idle, drawn from the
+  // visitor's first gesture, so it does not weigh on the first paint. (The makeover film with the
+  // laptop was removed from the home: Lorenzo, 22 Nov 2026.)
+  later(() => import("../scripts/phone3d").then((m) => m.preloadModels(false)));
   const wake = ["pointermove", "pointerdown", "wheel", "touchstart", "keydown", "scroll"];
   const go = () => {
     wake.forEach((e) => removeEventListener(e, go));
     later(() =>
-      import("../scripts/phone3d").then((m) => {
-        m.initPhone3D();
-        const lap = document.querySelector<HTMLElement>("[data-laptop3d]");
-        if (lap && window.matchMedia("(min-width: 900px)").matches) m.initLaptop3D(lap);
-      }),
+      import("../scripts/phone3d").then((m) => m.initPhone3D()),
     );
   };
   wake.forEach((e) => addEventListener(e, go, { passive: true }));

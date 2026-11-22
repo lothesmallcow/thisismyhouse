@@ -1607,6 +1607,116 @@ const ld = {
     border-radius: 0;
     font-weight: 500;
   }
+
+  /* ================= Theme "Mela", brick orange (Lorenzo, 22 Nov 2026) =================
+     The same page in the new look of the Focus Design site: Geist, tight semibold titles,
+     rounded buttons with an arrow, light grey fields and surfaces, rounded pictures. Each demo
+     keeps its own accent colour: Arcadi is brick orange (white text on it 5.2:1). */
+  .ar {
+    --o: #c2410c;
+    --o-soft: #fdba74;
+    --ink: #1d1d1f;
+    --stone: #ffffff;
+    --stone-2: #f5f5f7;
+    --line: #e8e8ed;
+    --font-head: "Geist", "Geist Fallback", system-ui, sans-serif;
+    --font: var(--font-head);
+    background: #fff;
+    color: #1d1d1f;
+    letter-spacing: -0.01em;
+  }
+  .ar :global(img) {
+    filter: none;
+  }
+  .ar h1,
+  .ar h2,
+  .ar .ar-hero2__text h1 {
+    font-weight: 600;
+    letter-spacing: -0.045em;
+  }
+  .ar h3,
+  .ar .ar-service h3,
+  .ar .ar-how h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .ar .ar-logo {
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  .ar .ar-btn,
+  .ar .ar-hero2__btn,
+  .ar .ar-top__quote,
+  .ar .ar-top__call,
+  .ar .ar-sticky {
+    border-radius: 14px;
+    font-weight: 600;
+  }
+  .ar .ar-btn {
+    background: var(--o);
+    border-color: var(--o);
+    color: #fff;
+  }
+  .ar .ar-btn:not(.ar-btn--ghost)::after,
+  .ar .ar-hero2__btn:not(.ar-hero2__btn--ghost)::after {
+    content: "→" / "";
+    margin-left: 0.6rem;
+  }
+  .ar .ar-btn--ghost {
+    background: #f5f5f7;
+    border-color: #f5f5f7;
+    color: var(--ink);
+  }
+  .ar .ar-foot .ar-btn {
+    background: var(--o);
+    border-color: var(--o);
+    color: #fff;
+  }
+  .ar .ar-top__quote {
+    background: var(--o);
+    border-color: var(--o);
+    color: #fff;
+  }
+  .ar .ar-hero2__chips li,
+  .ar .ar-hero2__tag,
+  .ar .ar-zone .ar-zones li,
+  .ar .ar-how__n {
+    border-radius: 999px;
+  }
+  .ar .ar-svc__stage,
+  .ar .ar-service__pic,
+  .ar .ar-works :global(.ba),
+  .ar .ar-works :global(figure) {
+    border-radius: 22px;
+    overflow: hidden;
+  }
+  .ar .ar-opt span,
+  .ar .ar-field input,
+  .ar .ar-field select,
+  .ar .ar-field textarea {
+    border-radius: 14px;
+  }
+  .ar .ar-field input,
+  .ar .ar-field select,
+  .ar .ar-field textarea {
+    background: #f5f5f7;
+    border-color: transparent;
+    min-height: 56px;
+  }
+  .ar .ar-opt span {
+    background: #f5f5f7;
+    border-color: transparent;
+  }
+  .ar .ar-sec--warm {
+    background: #f5f5f7;
+  }
+  .ar .ar-numbers dt {
+    font-weight: 600;
+    letter-spacing: -0.04em;
+  }
+  .ar .ar-sticky {
+    background: var(--o);
+  }
 </style>
 <script>
   import { initDemoForms } from "../../../scripts/demo-form";

@@ -360,8 +360,8 @@ a.link {
 }
 /* Two plain white sections in a row share one gap. Any section with its own background (a band)
    keeps its full padding, and so does the section after it: a heading never touches a band's edge. */
-.section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price)
-  + .section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price) {
+.section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price, .hs-check)
+  + .section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price, .hs-check) {
   padding-top: 0;
 }
 .section--pietra {
@@ -749,8 +749,13 @@ html.lenis body {
 /* Only the opening fills the screen and nothing pins; every other section has its natural height. */
 .home .scenes > section:not(.scene) {
   box-sizing: border-box;
-  /* By width, not height: tall phones made this 100 px+ on each side (Lorenzo: dead space). */
-  padding-block: clamp(2.75rem, 1rem + 5vw, 8rem);
+  /* By width, not height: tall phones made this 100 px+ on each side (Lorenzo: dead space).
+     Theme "Mela" (22 Nov 2026): a little tighter, and two white sections in a row share one gap. */
+  padding-block: clamp(2.5rem, 1rem + 4vw, 6rem);
+}
+.home .scenes > section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get)
+  + section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get) {
+  padding-top: clamp(0.5rem, 1.5vw, 1.5rem);
 }
 /* Phones (Lorenzo): scrolling settles exactly on the makeover's phone when you stop near it, and
    stays free otherwise ("proximity": it only catches when you stop close, never holds you).
@@ -1453,7 +1458,7 @@ a.link {
 .section--sole,
 .section--dark,
 .on-navy {
-  background: var(--nebbia);
+  background: #f5f5f7; /* literal: --nebbia is redefined below for the cards inside */
   color: var(--inchiostro);
   --carta: var(--nebbia);
   --inchiostro: #1d1d1f;
@@ -1509,4 +1514,61 @@ a.link {
 .hs-plan__tag {
   background: #fff;
   color: var(--blu);
+}
+
+/* Home: the analysis entry right under the opening (Lorenzo, 22 Nov 2026: more functional than the film). */
+.hs-check {
+  background: var(--nebbia);
+}
+.hs-check__in {
+  display: grid;
+  gap: 1.75rem;
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .hs-check__in {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4rem;
+  }
+}
+.hs-check__text {
+  display: grid;
+  gap: 0.75rem;
+}
+.hs-check__text h2 {
+  max-width: 16ch;
+}
+.hs-check__form {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.hs-check__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+.hs-check__input {
+  flex: 1 1 240px;
+  min-height: 60px;
+  padding: 0 1.25rem;
+  border: 0;
+  border-radius: var(--radius-field);
+  background: #fff;
+  font: inherit;
+  font-size: 1.125rem;
+  color: var(--inchiostro);
+}
+.hs-check__input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--inchiostro);
+}
+.hs-check__row .btn {
+  min-height: 60px;
+}
+@media (max-width: 480px) {
+  .hs-check__row .btn {
+    width: 100%;
+  }
 }

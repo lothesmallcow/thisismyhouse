@@ -168,6 +168,14 @@ export function initScorer() {
   );
   if (location.hash === "#voto-12") openSample("old");
   if (location.hash === "#voto-97") openSample("good");
+  // Arriving from the home's box (?url=...): fill the address and start right away.
+  const fromHome = new URLSearchParams(location.search).get("url");
+  if (fromHome && !location.hash) {
+    urlInput.value = fromHome.slice(0, 300);
+    const s = new URLSearchParams(location.search).get("settore");
+    if (s && data.sectors.some((x) => x.id === s)) sectorPick.value = s;
+    form.requestSubmit();
+  }
 
   document.querySelectorAll<HTMLButtonElement>("[data-az-restart]").forEach((b) =>
     b.addEventListener("click", () => {

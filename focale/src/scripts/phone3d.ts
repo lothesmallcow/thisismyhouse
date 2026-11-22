@@ -451,10 +451,10 @@ export function initPhone3D() {
  * before the visitor reaches them: the laptop used to arrive while its lid was already opening, and
  * the CSS stand-in (a black block) was seen turning into the real one.
  */
-export function preloadModels() {
+export function preloadModels(withLaptop = true) {
   if (!canGL()) return;
   loadModel().catch(() => {});
-  if (window.matchMedia("(min-width: 900px)").matches) loadLaptop().catch(() => {});
+  if (withLaptop && window.matchMedia("(min-width: 900px)").matches) loadLaptop().catch(() => {});
 }
 
 /**

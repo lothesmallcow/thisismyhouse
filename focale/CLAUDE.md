@@ -36,8 +36,10 @@ The demo sites keep their own looks. OG images (pages/og) are white with a blue 
 Schibsted TTFs: it cannot read woff2).
 
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
-- Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right) capped so the navy
-  makeover band peeks at the fold; then makeover (with the primary CTA under it), "Per chi lavoriamo" (3 sector
+- Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right); then (Lorenzo, 22 Nov
+  2026, replacing the phone/laptop makeover film, which he found useless there) the analysis entry `.hs-check`
+  (grey band: address box, form GET to /analisi-sito/?url=..., which fills the address and starts at once;
+  "Guarda un esempio di report"), "Per chi lavoriamo" (3 sector
   cards with demo screenshots), "Cosa ricevi" bento, 4 steps with timings, prices (per-plan CTA, recommended plan
   navy), Lo studio, FAQ, closing band on navy with the 3-step PreviewForm embedded. Nothing pins, no ambient
   motion (living background, ticker and colour floods were removed). Section blocks (.hs-*) live in global.css
@@ -128,6 +130,12 @@ Schibsted TTFs: it cannot read woff2).
   use setText() from demo-motion so split headings survive.
   Villa Ortensia: editorial, spaces as stacking cards, seasons, price bands. Arcadi: "studio" look (stone, ink, one rust
   accent, square buttons, hairlines, quieter pictures): Lorenzo found the bold orange version childish.
+  Theme "Mela" variants (Lorenzo, 22 Nov 2026: the demos in the new style, each a different colour): a block at the
+  end of each demo's styles sets Geist (no serif, no italics), tight semibold titles, 14 px buttons with an arrow,
+  grey fields, rounded pictures, and one accent: Arcadi brick orange #c2410c, Villa Ortensia sage green #2e7d5b,
+  Studio Linea indigo #5e5ce6 (white text 5:1 on each). Re-shoot their screenshots with `npm run screens:demo`.
+- Home sections alternate white and grey (#f5f5f7) with one padding; two white sections in a row share one gap.
+  Makeover.astro, ProjectFilm.astro and the laptop model are no longer on any page (kept in the repo).
 - Lavori: the first project is a REAL client's site, Casa Turati 3 (Paolo's apartment in Milan, permission
   given), built in the repo lothesmallcow/studio-starter and online at `url` in its yaml. It replaced the
   invented B&B Cascina Rovere (deleted, still in git history). Every place that shows a project words it
