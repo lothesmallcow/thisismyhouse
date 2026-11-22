@@ -1,1 +1,0 @@
-ALTER TABLE `catalog_companies` ADD `ats_checked_at` integer;
