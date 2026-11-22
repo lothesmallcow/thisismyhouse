@@ -91,6 +91,10 @@ const lavori = defineCollection({
       tourEnd: z.string().optional(),
       shotPhone: image(),
       shotDesktop: image(),
+      /** The desktop shot out of focus (scripts/soft-shots.mjs): FocusShot fades it out over the sharp one. */
+      shotSoft: image().optional(),
+      /** One confident sentence on what the site does (the home's pinned works). True to the choices above. */
+      line: z.string().optional(),
     }),
 });
 

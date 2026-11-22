@@ -1,12 +1,14 @@
 ---
 /**
- * Home: the opening with the iPhone film, then the makeover on a navy band (the proof, high up), the
- * sector chooser, method, prices and the close. Natural heights, nothing pins, no ambient motion. See docs/RICERCA-DESIGN.md.
+ * Home ("più gas", 22 Nov 2026): one idea per screen. The opening with the iPhone film (it opens with the
+ * "messa a fuoco"), the analysis entry, the works on one pinned stage (Works.astro: the only thing that
+ * pins), what you get, the four steps, the one dark statement band, prices, the studio, FAQ and the close.
+ * See docs/RICERCA-DESIGN.md and reports/Più gas al sito Focus Design.md.
  */
 import Base from "../layouts/Base.astro";
 import HeroScene from "../components/HeroScene.astro";
+import Works from "../components/Works.astro";
 import PreviewForm from "../components/PreviewForm.astro";
-import { Image } from "astro:assets";
 import Faq from "../components/Faq.astro";
 import Icon from "../components/Icon.astro";
 import PlanHelp from "../components/PlanHelp.astro";
@@ -20,26 +22,20 @@ import { faqPage, professionalService } from "../lib/schema";
 const faqs = (await getCollection("faq")).filter((f) => f.data.home).sort((a, b) => a.data.order - b.data.order).slice(0, 6);
 const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
 const open = foundersOpen();
+const from = open ? site.prices.essenziale.founders : site.prices.essenziale.standard;
 
-const settori = (await getCollection("settori")).sort((a, b) => a.id.localeCompare(b.id));
-const lavori = await getCollection("lavori");
-const sectors = ["ristrutturazioni-e-serramenti", "b-and-b-e-agriturismi", "location-per-matrimoni"].map((id) => {
-  const s = settori.find((x) => x.id === id)!;
-  const demo = lavori.find((l) => l.id === s.data.demo)!;
-  return { id, name: s.data.short, problem: s.data.problems[0], demo };
-});
 const gets = [
-  { icon: "phone", t: "Ti chiamano con un tocco", d: "Pulsanti per chiamarti e scriverti su WhatsApp sempre a portata di pollice." },
-  { icon: "search", t: "Ti trovano su Google", d: "Pagine scritte per le ricerche della tua zona, collegate alla scheda Google." },
-  { icon: "list", t: "Richieste già complete", d: "Un modulo in poche domande: sai subito cosa vuole chi ti scrive." },
-  { icon: "bolt", t: "Veloce anche in campagna", d: "Si apre in un attimo anche con poco segnale. Punteggio Google sopra 90." },
-  { icon: "key", t: "Tutto intestato a te", d: "Dominio, sito e accessi sono tuoi. Se un giorno cambi fornitore, te li porti via." },
+  { t: "Ti chiamano con un tocco", d: "Chiamata e WhatsApp sempre a portata di pollice." },
+  { t: "Ti trovano su Google", d: "Pagine scritte per le ricerche della tua zona." },
+  { t: "Richieste già complete", d: "Poche domande, e sai subito cosa vuole chi ti scrive." },
+  { t: "Veloce anche in campagna", d: "Si apre in un attimo con poco segnale. Punteggio Google sopra 90." },
+  { t: "Tutto intestato a te", d: "Dominio, sito e accessi sono tuoi, anche se un giorno cambi fornitore." },
 ];
 const steps = [
-  { when: "Oggi", t: "Ci racconti l'attività", d: "Dieci minuti al telefono o su WhatsApp: cosa fai, dove, per chi." },
-  { when: `Entro ${site.previewHours} ore`, t: "Vedi l'anteprima", d: "La homepage del tuo nuovo sito, con il tuo nome e i tuoi servizi. Gratis." },
-  { when: `${site.deliveryDays.essenziale}-${site.deliveryDays.professionale} giorni`, t: "Se ti convince, partiamo", d: `Acconto del ${site.depositPercent}%. Ci mandi le foto, noi costruiamo il sito.` },
-  { when: "Alla fine", t: "Approvi e va online", d: "Lo provi dal telefono. Il saldo lo paghi solo quando lo approvi." },
+  { when: "Oggi", t: "Ci racconti l'attività", d: "Dieci minuti, al telefono o su WhatsApp." },
+  { when: `Entro ${site.previewHours} ore`, t: "Vedi l'anteprima", d: "La homepage del tuo nuovo sito, con il tuo nome. Gratis." },
+  { when: `${site.deliveryDays.essenziale}-${site.deliveryDays.professionale} giorni`, t: "Se ti convince, partiamo", d: `Acconto del ${site.depositPercent}%. Tu mandi le foto, noi costruiamo.` },
+  { when: "Alla fine", t: "Approvi e va online", d: "Il saldo lo paghi solo quando lo approvi." },
 ];
 ---
 <Base
@@ -53,8 +49,8 @@ const steps = [
 
     <section class="section hs-check" id="analisi" aria-labelledby="check-t">
       <div class="wrap hs-check__in">
-        <h2 id="check-t" data-in>Quanto lavora il tuo sito oggi?</h2>
-        <div class="hs-check__go" data-in style="--d: 0.06s">
+        <h2 id="check-t">Quanto lavora il tuo sito oggi?</h2>
+        <div class="hs-check__go">
           <form class="hs-check__form" action="/analisi-sito/" method="get">
             <label for="check-url" class="sr-only">Indirizzo del tuo sito</label>
             <div class="hs-check__row">
@@ -67,70 +63,34 @@ const steps = [
       </div>
     </section>
 
-    <section class="section hs-sec" id="settori" aria-labelledby="settori-t">
-      <div class="wrap">
-        <div class="hs-head hs-head--split hs-head--wide" data-in>
-          <p class="eyebrow">Per chi lavoriamo</p>
-          <h2 id="settori-t">Tre mestieri diversi, lo stesso problema: il sito non ti fa chiamare.</h2>
-          <div class="hs-head__side">
-            <p class="lead">Per ognuno c'è un sito fatto da noi: aprilo e guardalo come lo vedrebbe un tuo cliente.</p>
-          </div>
-        </div>
-        <ul class="hs-sec__grid">
-          {
-            sectors.map((x, i) => (
-              <li class="hs-card" data-in style={`--d: ${0.08 * i}s`}>
-                <a class="hs-card__media" href={`/per/${x.id}/`} tabindex="-1" aria-hidden="true">
-                  <Image src={x.demo.data.shotDesktop} alt="" widths={[480, 800]} sizes="(min-width: 900px) 30vw, 92vw" />
-                </a>
-                <div class="hs-card__body">
-                  <h3>{x.name}</h3>
-                  <p class="hs-card__problem">{x.problem}</p>
-                  <div class="hs-card__links">
-                    <a class="textlink" href={`/per/${x.id}/`}>Cosa facciamo per te</a>
-                    <a class="textlink" href={`/lavori/${x.demo.id}/`}>{x.demo.data.url ? "Guarda il sito" : "Guarda il sito demo"}</a>
-                  </div>
-                </div>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-    </section>
+    <Works />
 
     <section class="section hs-get" aria-labelledby="get-t">
       <div class="wrap hs-get__in">
-        <div class="hs-get__big" data-in>
-          <div>
-            <p class="eyebrow">Cosa ricevi</p>
-            <h2 id="get-t">Un sito che si legge dal telefono e ti fa chiamare.</h2>
-          </div>
-          <p class="lead">Testi scritti da noi, foto dei tuoi lavori in primo piano, il numero sempre a un tocco. Niente da imparare: lo usi come usi WhatsApp.</p>
+        <div class="hs-get__big">
+          <h2 id="get-t">Fatto per il telefono. Fatto per farti chiamare.</h2>
+          <p class="lead">Testi scritti da noi, i tuoi lavori in primo piano, il numero a un tocco.</p>
         </div>
-        {
-          gets.map((g, i) => (
-            <div class="hs-get__tile" data-in style={`--d: ${0.06 * i}s`}>
-              <span class="hs-get__icon"><Icon name={g.icon as never} /></span>
-              <h3>{g.t}</h3>
-              <p>{g.d}</p>
-            </div>
-          ))
-        }
-        <a class="hs-get__tile hs-get__more" href="/come-funziona/" data-in style="--d: 0.3s">
-          <h3>Tutto quello che è compreso</h3>
-          <p>Pagine, testi, foto, modulo, Google: l'elenco completo, pacchetto per pacchetto.</p>
-          <span class="textlink">Vedi come funziona</span>
-        </a>
+        <div class="hs-get__card" data-in>
+          <ul class="hs-get__list">
+            {
+              gets.map((g) => (
+                <li>
+                  <h3>{g.t}</h3>
+                  <p>{g.d}</p>
+                </li>
+              ))
+            }
+          </ul>
+          <a class="textlink" href="/come-funziona/">Tutto quello che è compreso</a>
+        </div>
       </div>
     </section>
 
     <section class="section hs-how" id="metodo" aria-labelledby="metodo-t">
       <div class="wrap">
-        <div class="hs-head hs-head--row" data-in>
-          <div>
-            <p class="eyebrow">Come funziona</p>
-            <h2 id="metodo-t">Quattro passi. Il primo è gratis.</h2>
-          </div>
+        <div class="hs-head hs-head--row">
+          <h2 id="metodo-t">Quattro passi. Il primo è gratis.</h2>
           <a class="textlink" href="/condizioni/">Le condizioni, scritte</a>
         </div>
         <ol class="hs-how__steps">
@@ -147,19 +107,26 @@ const steps = [
       </div>
     </section>
 
+    <section class="section hs-say" aria-labelledby="say-t">
+      <div class="wrap">
+        <h2 id="say-t" class="hs-say__t">Da {euro(from)}. Prima lo vedi, poi decidi.</h2>
+        <div class="hs-say__row">
+          <p class="lead">L'anteprima arriva in {site.previewHours} ore, è gratis e resta a te. Se non ti convince, ci salutiamo.</p>
+          <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
+        </div>
+      </div>
+    </section>
+
     <section class="section hs-price" id="prezzi" aria-labelledby="prezzi-t">
       <div class="wrap">
-        <div class="hs-head hs-head--row" data-in>
-          <div>
-            <p class="eyebrow">Prezzi</p>
-            <h2 id="prezzi-t">Prezzi scritti qui, non "su richiesta".</h2>
-          </div>
+        <div class="hs-head hs-head--row">
+          <h2 id="prezzi-t">Prezzi scritti, non "su richiesta".</h2>
           {open && <p class="hs-price__founders">Prezzo fondatori per i primi {site.foundersSpotsTotal} clienti.</p>}
         </div>
         <ul class="hs-price__plans">
           {
-            plans.map((p, i) => (
-              <li class:list={["hs-plan", { "hs-plan--rec": p.recommended }]} data-in style={`--d: ${0.08 * i}s`}>
+            plans.map((p) => (
+              <li class:list={["hs-plan", { "hs-plan--rec": p.recommended }]}>
                 <div class="hs-plan__top">
                   <h3>{p.name}</h3>
                   {p.recommended && <span class="hs-plan__tag">Consigliato</span>}
@@ -187,21 +154,17 @@ const steps = [
             ))
           }
         </ul>
-        <div data-in><PlanHelp /></div>
-        <p class="hs-price__micro" data-in>
-          L'anteprima è gratis. Se ti convince: acconto del {site.depositPercent}%, saldo solo a sito approvato.
-        </p>
+        <PlanHelp />
       </div>
     </section>
 
     <section class="section hs-studio" aria-labelledby="studio-t">
       <div class="wrap hs-studio__in">
-        <div data-in>
-          <p class="eyebrow">Lo studio</p>
+        <div>
           <h2 id="studio-t">Uno studio piccolo, a Milano, che ti risponde.</h2>
         </div>
-        <div class="hs-studio__body" data-in style="--d: 0.1s">
-          <p class="lead">Facciamo una cosa sola: siti per piccole imprese che vivono di richieste. Niente pubblicità, niente social, niente gergo.</p>
+        <div class="hs-studio__body">
+          <p class="lead">Facciamo una cosa sola: siti per piccole imprese che vivono di richieste.</p>
           <ul class="hs-studio__facts">
             <li><Icon name="pin" /> Milano, di persona in tutta la Lombardia</li>
             <li><Icon name="clock" /> Rispondiamo entro la giornata lavorativa</li>
@@ -214,24 +177,22 @@ const steps = [
 
     <section class="section hs-faq" id="domande" aria-labelledby="domande-t">
       <div class="wrap hs-faq__in">
-        <div class="hs-head hs-head--split" style="--hs-gap: 0.6rem" data-in>
-          <p class="eyebrow">Domande</p>
+        <div class="hs-head hs-head--split" style="--hs-gap: 0.6rem">
           <h2 id="domande-t">Le domande che ci fanno tutti.</h2>
           <div class="hs-head__side">
-            <p class="lead">Costi, tempi, testi e pagamenti: qui le risposte brevi. Tutte le altre sono nella pagina Come funziona.</p>
+            <p class="lead">Le risposte brevi. Le altre sono in Come funziona.</p>
             <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
           </div>
         </div>
-        <div data-in style="--d: 0.1s"><Faq items={faqItems} cols /></div>
+        <div><Faq items={faqItems} cols /></div>
       </div>
     </section>
 
     <section class="section hs-end on-navy" id="anteprima" aria-labelledby="end-t">
       <div class="wrap hs-end__in">
         <div class="hs-end__text">
-          <p class="eyebrow">Anteprima gratuita</p>
           <h2 id="end-t">Guarda il tuo nuovo sito prima di decidere.</h2>
-          <p class="lead">Tre domande. Entro {site.previewHours} ore ti mandiamo la homepage del tuo nuovo sito. Se non ti convince, finisce lì.</p>
+          <p class="lead">Tre domande. Entro {site.previewHours} ore ti mandiamo la homepage del tuo nuovo sito.</p>
           <ul class="hs-end__direct">
             <li>
               <a class="btn btn--secondary" href={whatsappHref(`Ciao, vorrei l'anteprima gratuita del nuovo sito per la mia attività.`)} target="_blank" rel="noopener">
@@ -263,17 +224,17 @@ const steps = [
   initScenes();
   import("../scripts/forms").then((m) => m.initPreviewForm());
   initTilt();
-  // The real 3D phone (three.js and the model): downloaded once the page is idle, drawn from the
-  // visitor's first gesture, so it does not weigh on the first paint. (The makeover film with the
-  // laptop was removed from the home: Lorenzo, 22 Nov 2026.)
-  later(() => import("../scripts/phone3d").then((m) => m.preloadModels(false)));
-  const wake = ["pointermove", "pointerdown", "wheel", "touchstart", "keydown", "scroll"];
-  const go = () => {
-    wake.forEach((e) => removeEventListener(e, go));
-    later(() =>
-      import("../scripts/phone3d").then((m) => m.initPhone3D()),
-    );
-  };
-  wake.forEach((e) => addEventListener(e, go, { passive: true }));
+  // The real 3D phone (three.js and the model): computers only ("più gas", 22 Nov 2026: about 1 MB that a
+  // phone does not need, the CSS phone is drawn underneath anyway). Downloaded once the page is idle,
+  // drawn from the visitor's first gesture, so it does not weigh on the first paint.
+  const desk3d = matchMedia("(min-width: 900px) and (hover: hover) and (pointer: fine)").matches;
+  if (desk3d) {
+    later(() => import("../scripts/phone3d").then((m) => m.preloadModels(false)));
+    const wake = ["pointermove", "pointerdown", "wheel", "touchstart", "keydown", "scroll"];
+    const go = () => {
+      wake.forEach((e) => removeEventListener(e, go));
+      later(() => import("../scripts/phone3d").then((m) => m.initPhone3D()));
+    };
+    wake.forEach((e) => addEventListener(e, go, { passive: true }));
+  }
 </script>
-

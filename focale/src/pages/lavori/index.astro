@@ -4,6 +4,7 @@ import PageHead from "../../components/PageHead.astro";
 import Closing from "../../components/Closing.astro";
 import PhoneFan from "../../components/visual/PhoneFan.astro";
 import { Image } from "astro:assets";
+import FocusShot from "../../components/FocusShot.astro";
 import { getCollection } from "astro:content";
 import { site } from "../../config/site";
 import { breadcrumbs } from "../../lib/schema";
@@ -19,7 +20,7 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
   <PageHead
     label="Lavori"
     title="Tre siti completi. Il primo è di un cliente vero."
-    lead={`Il primo è online per un appartamento in affitto a Milano. Gli altri due li abbiamo costruiti per attività inventate, per farti vedere come lavoriamo nei settori dove il sito conta di più.`}
+    lead="Il primo è online per un appartamento a Milano. Gli altri due sono progetti per attività inventate, nei settori dove il sito conta di più."
   >
     <PhoneFan slot="visual" />
   </PageHead>
@@ -27,18 +28,19 @@ const lavori = (await getCollection("lavori")).sort((a, b) => a.data.order - b.d
     <div class="wrap">
       <ol class="lv__list">
         {
-          lavori.map((l) => (
+          lavori.map((l, i) => (
             <li class:list={["lv__item", `lv__item--${l.id}`]}>
               <a class="lv__media" href={`/lavori/${l.id}/`} aria-label={`${l.data.name}, leggi il progetto`}>
-                <Image
+                <FocusShot
                   src={l.data.shotDesktop}
+                  soft={l.data.shotSoft}
                   alt=""
                   widths={[640, 1000, 1400]}
                   sizes="(min-width: 1000px) 66vw, 92vw"
                   class="lv__desk"
-                  loading="eager"
+                  loading={i === 0 ? "eager" : "lazy"}
                 />
-                <Image src={l.data.shotPhone} alt="" widths={[200, 400]} sizes="200px" class="lv__phone" loading="eager" />
+                <Image src={l.data.shotPhone} alt="" widths={[200, 400]} sizes="200px" class="lv__phone" loading={i === 0 ? "eager" : "lazy"} />
               </a>
               <div class="lv__text">
                 <h2>{l.data.name}</h2>

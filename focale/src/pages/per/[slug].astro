@@ -6,7 +6,7 @@ import Faq from "../../components/Faq.astro";
 import Icon from "../../components/Icon.astro";
 import WhatsAppMock from "../../components/WhatsAppMock.astro";
 import PhoneFan from "../../components/visual/PhoneFan.astro";
-import { Image } from "astro:assets";
+import FocusShot from "../../components/FocusShot.astro";
 import { getCollection, getEntry, type CollectionEntry } from "astro:content";
 import { site } from "../../config/site";
 import { whatsappHref } from "../../lib/util";
@@ -39,7 +39,7 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
         <p class="eyebrow">Il problema</p>
         <h2 id="problemi">Quello che vediamo più spesso nei siti come il tuo.</h2>
         <div class="hs-head__side">
-          <p class="lead">Sono {d.problems.length === 3 ? "tre" : d.problems.length}. Qui sotto, come li risolviamo uno per uno.</p>
+          <p class="lead">Qui sotto, come li risolviamo.</p>
         </div>
       </div>
       <ul class="st-problems">
@@ -85,7 +85,7 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
           </div>
           <div class="st-demo">
             <a class="st-demo__media" href={`/lavori/${demo.id}/`}>
-              <Image src={demo.data.shotDesktop} alt={siteAlt(demo)} widths={[600, 1000]} sizes="(min-width: 1000px) 50vw, 92vw" />
+              <FocusShot src={demo.data.shotDesktop} soft={demo.data.shotSoft} alt={siteAlt(demo)} widths={[600, 1000]} sizes="(min-width: 1000px) 50vw, 92vw" />
             </a>
             <div>
               <p class="st-demo__goal">{demo.data.goal}</p>
@@ -111,7 +111,7 @@ import { kindLabel, siteAlt, siteHref } from "../../lib/lavori";
         <p class="eyebrow">Domande</p>
         <h2 id="dom-settore">Le domande del tuo settore.</h2>
         <div class="hs-head__side">
-          <p class="lead">Quelle su prezzi, tempi e pagamenti, uguali per tutti, sono in Come funziona.</p>
+          <p class="lead">Prezzi, tempi e pagamenti sono in Come funziona.</p>
           <a class="textlink" href="/come-funziona/#domande">Tutte le domande</a>
         </div>
       </div>

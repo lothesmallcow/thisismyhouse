@@ -35,6 +35,38 @@ dark text; --on-dark-muted is white on blue cards and grey inside bands. Layouts
 The demo sites keep their own looks. OG images (pages/og) are white with a blue button (Satori still uses the
 Schibsted TTFs: it cannot read woff2).
 
+## "Più gas" (Lorenzo, 22 Nov 2026) — see reports/Più gas al sito Focus Design.md
+Lorenzo: "manca un po' di gas", "nei piccoli dettagli pesi troppo", "manca personalità". Answer: ONE idea carried
+through, fewer small effects. The studio stays "noi" (no founder name, photo or story).
+- Signature "messa a fuoco" (the name: mettere a fuoco). Something soft comes sharp, ONCE, by opacity and transform
+  only: a pre-blurred copy (scripts/soft-shots.mjs, sharp; re-run when a shot changes) fades out over the sharp
+  picture. Never animate a CSS blur (the old heading blur, [data-focus], was retired). Where: the hero phone at load
+  (CSS only: corners close in, the screen snaps sharp, then the ring film; src/assets/focus/hero-screen-soft.jpg,
+  `--hero` mode of the script), project shots (FocusShot.astro + scripts/focus.ts: below the fold they sharpen when
+  they scroll in) on the home works, /lavori/ and the sector pages' example. Without JS or with reduced motion:
+  sharp at once. Viewfinder corners (`.vf`, four L corners drawn as backgrounds) in three places only: the hero
+  phone, the work on the pinned stage, FocusLens on Lo studio. The line that names it: "Mettiamo a fuoco quello che
+  fai." (home works title). "Fuoco" at most twice per page.
+- Pinned works (Works.astro, scripts/works.ts): the ONLY pinned section. Computers with motion: a sticky stage
+  (native scroll, nothing hijacked), about 70svh of scroll per work, the three works take turns (Casa Turati 3 real,
+  Arcadi and Villa Ortensia demos, worded through lib/lavori.ts) with one sentence each (`line` in the yaml) and two
+  links (project, sector page). A rail fills with a CSS scroll-driven animation (`view-timeline`, inside @supports;
+  else from --p set by the script; the timeline sits in its own rule because the minifier folds it into the
+  `animation` shorthand, which browsers reject). Keyboard focus on a hidden work scrolls it on stage. Phones,
+  reduced motion, no JS: simply stacked. It replaced the three sector cards ("Per chi lavoriamo").
+- One dark moment: near-black #1d1d1f (--notte) bands with white text and --on-ink-muted #a1a1a6: the home
+  statement band `.hs-say` ("Da 600 €. Prima lo vedi, poi decidi.", price read from config) and the closing band on
+  every inner page (Closing.astro), one huge sentence (--fs-say), static, no reveal.
+- Tone "sicuro e asciutto" (Apple-like): short titles and leads, one idea per section, no filler, no repeated small
+  lines; facts and numbers only from config/content. "L'anteprima resta a te" is true (Lorenzo), but the design stays
+  ours: never say the client may use or publish it.
+- Less clutter: "Cosa ricevi" is the blue panel + one plain ruled list (no icon tiles); Lo studio's six cards are
+  ruled columns without icons; contact "Cosa succede dopo" is ruled rows. Scroll reveals ([data-in], opacity and
+  transform, played once) only on two home blocks: the steps and the "Cosa ricevi" list.
+- 3D phone (three.js + model): only on computers (min-width 900px, fine pointer); phones keep the CSS phone.
+- Page transitions: native cross-document View Transitions (`@view-transition` + `<meta name="view-transition">`),
+  the header stays put, the page fades and rises a few px; off with reduced motion; Firefox gets a normal load.
+
 ## Home (pages/index.astro) — see docs/RICERCA-DESIGN.md
 - Layout (research-backed, see reports/): split hero (offer left 7/12, 3D phone right); then (Lorenzo, 22 Nov
   2026, replacing the phone/laptop makeover film, which he found useless there) the analysis entry `.hs-check`
@@ -51,7 +83,9 @@ Schibsted TTFs: it cannot read woff2).
   narrow = one point at a time with ‹ ›; it walks through the points when in view until touched. The report shows the
   same block for the open example ("Dove si vede sul sito"). Links: /analisi-sito/?esempio=<key>#voto-<key>), "Per chi lavoriamo" (3 sector
   cards with demo screenshots), "Cosa ricevi" bento, 4 steps with timings, prices (per-plan CTA, recommended plan
-  navy), Lo studio, FAQ, closing band on navy with the 3-step PreviewForm embedded. Nothing pins, no ambient
+  navy), Lo studio, FAQ, closing band on navy with the 3-step PreviewForm embedded. (22 Nov 2026, "più gas":
+  the sector cards became the pinned works, the only thing that pins, and a dark statement band sits between the
+  steps and the prices; see the section above.) No ambient
   motion (living background, ticker and colour floods were removed). Section blocks (.hs-*) live in global.css
   and are reused by inner pages. Sticky mobile bar appears after the hero CTA leaves and hides over forms.
 - The phone: IPhone.astro is the HTML phone (live screen in cqw units, Dynamic Island, status bar). In the hero
@@ -193,7 +227,7 @@ Schibsted TTFs: it cannot read woff2).
   are scripts/inner.ts. Never leave a half-empty row: Lorenzo checks for dead space first.
 - Colour play: a section with [data-tone="sole|pesca"] floods the whole page with its colour while it holds
   the middle of the screen (inner.ts sets body[data-tone]; muted text and hairlines darken via variables).
-  The closing (Closing.astro) is a full-width orange band that runs into the orange footer.
+  The closing (Closing.astro) is a full-width near-black band (22 Nov 2026), then the light grey footer.
 - docs/video/focus-design-home-telefono.mp4: vertical recording of the home (Playwright + ffmpeg).
 - `node scripts/overflow-check.mjs` finds cut-off text and sideways scroll on every page at 6 widths.
 - `npm run dead-space` (scripts/dead-space.mjs, built site on localhost:4321) finds dead space: it maps text, pictures and

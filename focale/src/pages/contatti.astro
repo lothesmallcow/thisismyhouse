@@ -16,7 +16,7 @@ import { breadcrumbs } from "../lib/schema";
     even
     label="Contatti"
     title="Scrivici. Ti rispondiamo in giornata."
-    lead="Rispondiamo entro la giornata lavorativa, dal lunedì al venerdì. Lavoriamo da Milano, in tutta la Lombardia di persona e ovunque online."
+    lead="Entro la giornata lavorativa, dal lunedì al venerdì. Da Milano: di persona in Lombardia, online ovunque."
   >
     <div slot="visual" class="ct-card">
       <ul class="ct-rows">
@@ -50,12 +50,12 @@ import { breadcrumbs } from "../lib/schema";
       <div>
         <h2>Preferisci un messaggio?</h2>
         <p class="ct-note">
-          Se vuoi l'anteprima gratuita, fai prima da qui: <a class="link" href="/anteprima-gratuita">Voglio l'anteprima gratuita</a>
+          Per l'anteprima gratuita fai prima da qui: <a class="link" href="/anteprima-gratuita">Voglio l'anteprima gratuita</a>
         </p>
         <h3 class="ct-next__t">Cosa succede dopo</h3>
         <ol class="ct-next">
           <li>Il messaggio lo leggiamo noi, non un sistema automatico.</li>
-          <li>Ti rispondiamo entro la giornata lavorativa, dove preferisci: telefono, WhatsApp o email.</li>
+          <li>Rispondiamo entro la giornata lavorativa, dove preferisci.</li>
           <li>Se ti serve un sito, ti proponiamo l'anteprima gratuita. Se non ti interessa, finisce lì.</li>
         </ol>
       </div>
@@ -200,29 +200,25 @@ import { breadcrumbs } from "../lib/schema";
     padding: 0;
     margin: 1.25rem 0 0;
     display: grid;
-    gap: 0.75rem;
     max-width: 30rem;
   }
+  /* "Più gas" (22 Nov 2026): plain ruled rows, a small number beside each (no cards, no blue discs). */
   .ct-next li {
     counter-increment: next;
     display: grid;
-    grid-template-columns: 2.5rem 1fr;
-    gap: 1rem;
-    align-items: start;
-    padding: 1rem 1.1rem;
-    border-radius: 18px;
-    background: var(--carta);
+    grid-template-columns: 2rem 1fr;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 1rem 0;
+    border-top: 1px solid var(--filo);
+    font-size: var(--fs-lead);
+    line-height: 1.4;
   }
   .ct-next li::before {
     content: counter(next);
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: var(--blu);
-    color: #fff;
-    font-weight: 700;
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    color: var(--grafite);
   }
   .ct-form {
     display: grid;

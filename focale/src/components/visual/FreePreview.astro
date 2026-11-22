@@ -1,14 +1,13 @@
 ---
 /**
  * La garanzia: the price of the preview, as big as the type gets, with the two promises under it.
- * Type only (no ring, no symbols that phones turn into emoji). It comes into focus like every
- * [data-focus] heading.
+ * Type only (no ring, no symbols that phones turn into emoji).
  */
 import { site } from "../../config/site";
 const promises = ["Saldo solo a sito approvato", "Se non ti piace, finisce lì"];
 ---
 <div class="fp" aria-hidden="true">
-  <p class="fp__n" data-focus>0<span>€</span></p>
+  <p class="fp__n">0<span>€</span></p>
   <p class="fp__t">per vedere l'anteprima del tuo sito, entro {site.previewHours} ore</p>
   <ul class="fp__list">
     {

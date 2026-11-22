@@ -15,9 +15,9 @@ const {
   ctaHref = "/anteprima-gratuita",
 } = Astro.props;
 ---
-<section class="closing section--sole">
+<section class="closing">
   <div class="wrap closing__in">
-    <h2 class="closing__title" data-focus>{title}</h2>
+    <h2 class="closing__title">{title}</h2>
     <div class="closing__row">
       <p class="lead closing__text">{text}</p>
       <div class="btn-row">
@@ -31,22 +31,23 @@ const {
   </div>
 </section>
 <style>
-  /* The last word before the footer: a navy band, the title as wide as the page. */
+  /* The last word before the footer: the site's one dark band ("più gas", 22 Nov 2026; colours in
+     global.css, shared with the home's statement band), the title as wide as the page. */
   .closing {
-    padding-block: var(--space-section) clamp(3rem, 2rem + 3vw, 5rem);
+    padding-block: clamp(4rem, 2rem + 6vw, 8rem);
   }
   .closing__title {
-    font-size: clamp(2.6rem, 0.8rem + 6vw, 7rem);
-    line-height: 0.95;
-    letter-spacing: -0.02em;
+    font-size: var(--fs-closing);
+    line-height: 0.98;
+    letter-spacing: -0.05em;
     max-width: 15ch;
   }
   .closing__row {
     display: grid;
     gap: 2rem;
-    margin-top: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
-    padding-top: 2rem;
-    border-top: 1px solid var(--inchiostro);
+    margin-top: clamp(2rem, 1rem + 3vw, 3.5rem);
+    padding-top: clamp(1.5rem, 1rem + 1vw, 2rem);
+    border-top: 1px solid var(--filo);
   }
   @media (min-width: 900px) {
     .closing__row {
@@ -56,5 +57,6 @@ const {
   }
   .closing__text {
     max-width: 36ch;
+    color: var(--grafite);
   }
 </style>

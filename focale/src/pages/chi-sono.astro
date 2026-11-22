@@ -3,19 +3,18 @@ import Base from "../layouts/Base.astro";
 import PageHead from "../components/PageHead.astro";
 import Closing from "../components/Closing.astro";
 import P from "../components/P.astro";
-import Icon from "../components/Icon.astro";
 import SectorFocus from "../components/visual/SectorFocus.astro";
 import FocusLens from "../components/visual/FocusLens.astro";
 import { site } from "../config/site";
 import { breadcrumbs } from "../lib/schema";
 
 const cols = [
-  { icon: "euro", t: "Prezzi e tempi scritti", d: "Sai quanto spendi e quando è pronto prima di cominciare. Niente sorprese, niente gergo." },
-  { icon: "clock", t: "Rispondiamo in giornata", d: "Entro la giornata lavorativa, dal lunedì al venerdì, dove preferisci: telefono, WhatsApp o email." },
-  { icon: "key", t: "Tutto intestato a te", d: "Dominio, sito e accessi sono tuoi. Se un giorno cambi fornitore, te li porti via." },
-  { icon: "focus", t: "Una cosa sola", d: "Niente pubblicità, social o negozi online. Se ti servono, ti diciamo a chi rivolgerti." },
-  { icon: "pin", t: "A Milano", d: "Di persona in tutta la Lombardia, online ovunque." },
-  { icon: "shield", t: "Dati in chiaro", d: "" },
+  { t: "Prezzi e tempi scritti", d: "Sai quanto spendi e quando è pronto, prima di cominciare." },
+  { t: "Rispondiamo in giornata", d: "Entro la giornata lavorativa, dal lunedì al venerdì: telefono, WhatsApp o email." },
+  { t: "Tutto intestato a te", d: "Dominio, sito e accessi sono tuoi, anche se un giorno cambi fornitore." },
+  { t: "Una cosa sola", d: "Niente pubblicità, social o negozi online. Se ti servono, ti diciamo a chi rivolgerti." },
+  { t: "A Milano", d: "Di persona in tutta la Lombardia, online ovunque." },
+  { t: "Dati in chiaro", d: "" },
 ];
 ---
 <Base
@@ -27,7 +26,7 @@ const cols = [
     class="studio-head"
     label="Lo studio"
     title="Uno studio piccolo, a Milano, che fa una cosa sola."
-    lead="Costruiamo siti per piccole imprese che lavorano bene: imprese di ristrutturazione, serramentisti, B&B, agriturismi e location per eventi."
+    lead="Siti per piccole imprese che lavorano bene: ristrutturazioni, serramenti, B&B, agriturismi, location per eventi."
   >
     <SectorFocus slot="visual" />
   </PageHead>
@@ -36,7 +35,7 @@ const cols = [
     <div class="wrap st-name__grid">
       <div>
         <p class="eyebrow">Il nome</p>
-        <h2 id="nome" class="st-name__t" data-focus>Focus vuol dire mettere a fuoco.</h2>
+        <h2 id="nome" class="st-name__t">Focus vuol dire mettere a fuoco.</h2>
         <p class="lead st-name__p">
           Chi apre il tuo sito guarda poche cose: chi sei, cosa fai, come contattarti. Noi mettiamo a fuoco quelle e togliamo tutto il resto.
         </p>
@@ -51,14 +50,12 @@ const cols = [
   <section class="section" aria-labelledby="come-t">
     <div class="wrap">
       <div class="hs-head">
-        <p class="eyebrow">Come lavoriamo</p>
-        <h2 id="come-t">Quello che puoi aspettarti da noi.</h2>
+        <h2 id="come-t">Cosa puoi aspettarti da noi.</h2>
       </div>
       <ul class="st-cols">
         {
           cols.map((c) => (
             <li>
-              <span class="hs-get__icon"><Icon name={c.icon as never} /></span>
               <h3>{c.t}</h3>
               {c.d ? (
                 <p>{c.d}</p>
@@ -137,35 +134,22 @@ const cols = [
       gap: 1.5rem;
     }
   }
+  /* "Più gas" (22 Nov 2026): six plain ruled columns, no icon cards. */
+  .st-cols {
+    row-gap: 0;
+  }
   .st-cols li {
     display: grid;
     align-content: start;
     gap: 0.5rem;
-    padding: 1.5rem;
-    border-radius: 20px;
-    border: 1px solid var(--filo);
+    padding: 1.25rem 0 1.75rem;
+    border-top: 1px solid var(--filo);
   }
-  /* On phones the icon sits beside the title: six cards, half the height. */
-  @media (max-width: 699px) {
-    .st-cols li {
-      grid-template-columns: auto 1fr;
-      column-gap: 0.85rem;
-      align-items: center;
-      padding: 1.1rem 1.25rem;
-    }
-    .st-cols li p {
-      grid-column: 1 / -1;
-    }
-    .st-cols .hs-get__icon {
-      margin: 0;
-      grid-row: auto;
-    }
-    .st-cols h3 {
-      margin: 0;
-      align-self: center;
-    }
+  .st-cols h3 {
+    font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.9rem);
   }
   .st-cols p {
     color: var(--grafite);
+    max-width: 34ch;
   }
 </style>

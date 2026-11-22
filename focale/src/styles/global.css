@@ -148,6 +148,17 @@
   --header-h: 4.5rem;
   --sticky-h: 0px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* "Più gas" (22 Nov 2026): the signature, the pinned works and the one dark statement band. */
+  --focus-time: 1.1s; /* soft to sharp */
+  --focus-zoom: 1.04; /* the shot settles from this scale as it sharpens */
+  --fs-say: clamp(2.75rem, 0.5rem + 9.4vw, 9.5rem); /* the home statement band: one huge sentence, about two full lines */
+  --fs-closing: clamp(2.6rem, 0.8rem + 6vw, 7rem); /* the closing band on inner pages */
+  --fs-work: clamp(2.25rem, 1.2rem + 3.4vw, 4.5rem); /* a work's name in the pinned section */
+  --on-ink: #ffffff; /* text on the near-black band (#1d1d1f): 16.8:1 */
+  --on-ink-muted: #a1a1a6; /* secondary text on the band: 6.5:1 */
+  --ink-line: rgba(255, 255, 255, 0.18); /* hairlines on the band */
+  --page-time: 260ms; /* view transitions between pages */
 }
 
 /* Phones only (computers stay exactly as designed): titles at about 34 px like iOS large titles, so more
@@ -362,8 +373,8 @@ a.link {
 }
 /* Two plain white sections in a row share one gap. Any section with its own background (a band)
    keeps its full padding, and so does the section after it: a heading never touches a band's edge. */
-.section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price, .hs-check)
-  + .section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price, .hs-check) {
+.section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price, .hs-check, .hs-say)
+  + .section:not(.section--dark, .section--pietra, .section--sole, .on-navy, .hs-get, .hs-price, .hs-check, .hs-say) {
   padding-top: 0;
 }
 .section--pietra {
@@ -694,14 +705,48 @@ a.link {
   outline: none;
 }
 
-/* ---------- Focus motif: headings come into focus once (JS adds .will-focus) ---------- */
-@media (prefers-reduced-motion: no-preference) and (pointer: fine) {
-  .will-focus {
-    filter: blur(12px);
-    transition: filter 1.2s var(--ease-out);
+/* ---------- Signature "messa a fuoco" (FocusShot.astro, scripts/focus.ts) ----------
+   A project shot comes from soft to sharp, once: a pre-blurred copy over the sharp picture fades out while
+   both settle from a slight zoom. Opacity and transform only (a CSS blur is never animated). Without JS or
+   with reduced motion the soft copy is never shown. */
+.fshot {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.fshot picture {
+  display: block;
+}
+.fshot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.fshot .fshot__soft {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .js .fshot .fshot__soft {
+    display: block;
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--focus-time) var(--ease-out) 0.15s;
   }
-  .will-focus.is-focused {
-    filter: blur(0);
+  .js .fshot img {
+    transition: transform calc(var(--focus-time) + 0.3s) var(--ease-out);
+  }
+  .js .fshot.is-soft .fshot__soft {
+    opacity: 1;
+    transition: none;
+  }
+  .js .fshot.is-soft img {
+    transform: scale(var(--focus-zoom));
+    transition: none;
   }
 }
 
@@ -712,14 +757,35 @@ html.is-dev [data-placeholder] {
   background: rgba(245, 183, 0, 0.12);
 }
 
-/* ---------- Page transitions ---------- */
+/* ---------- Page transitions (native cross-document View Transitions, progressive enhancement) ----------
+   Chromium and Safari: the header stays put while the page under it fades out and the new one rises in a
+   few pixels. Firefox and older browsers: a normal page load. Reduced motion: none (below). The
+   <meta name="view-transition"> in Base.astro is the opt-in older Chromium versions read. */
 @view-transition {
   navigation: auto;
 }
-::view-transition-old(root),
+.hdr {
+  view-transition-name: site-header;
+}
+::view-transition-group(site-header) {
+  animation-duration: 0s;
+}
+::view-transition-old(root) {
+  animation: vt-out var(--page-time) ease both;
+}
 ::view-transition-new(root) {
-  animation-duration: 220ms;
-  animation-timing-function: ease;
+  animation: vt-in calc(var(--page-time) + 120ms) var(--ease-out) both;
+}
+@keyframes vt-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -759,8 +825,8 @@ html.lenis body {
      Theme "Mela" (22 Nov 2026): a little tighter, and two white sections in a row share one gap. */
   padding-block: clamp(2.5rem, 1rem + 2.6vw, 4.5rem);
 }
-.home .scenes > section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get)
-  + section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get) {
+.home .scenes > section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get, .hs-say)
+  + section:not(.scene, .hs-check, .hs-price, .on-navy, .hs-get, .hs-say) {
   padding-top: clamp(0.5rem, 1.5vw, 1.5rem);
 }
 /* Phones (Lorenzo): scrolling settles exactly on the makeover's phone when you stop near it, and
@@ -798,15 +864,16 @@ html.lenis body {
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  /* Content rises out of a mask (no fade: text keeps its full colour and contrast). */
+  /* Secondary content rises in once (opacity and transform only; "più gas", 22 Nov 2026: only two
+     blocks on the home still use it, the steps and the "Cosa ricevi" list). */
   .scenes-live .scenes > section [data-in] {
     transition:
-      clip-path 1s var(--ease-out) var(--d, 0s),
+      opacity 0.7s ease var(--d, 0s),
       transform 1s var(--ease-out) var(--d, 0s);
   }
   .scenes-live .scenes > section:not(.is-in) [data-in] {
-    clip-path: inset(0 0 100% 0);
-    transform: translateY(36px);
+    opacity: 0;
+    transform: translateY(28px);
   }
 }
 
@@ -895,144 +962,319 @@ html.lenis body {
   }
 }
 
-/* Per chi lavoriamo: three sector cards, each with its demo site. */
-.hs-sec__grid {
+/* ---------- Viewfinder corners: the "Focus" mark, used in three places only (the hero phone, the work on
+   stage, FocusLens on Lo studio). One element, four L-shaped corners drawn as backgrounds. ---------- */
+.vf {
+  --vf-len: 22px;
+  --vf-w: 2px;
+  position: absolute;
+  inset: var(--vf-inset, -14px);
+  pointer-events: none;
+  color: var(--inchiostro);
+  background:
+    linear-gradient(currentColor, currentColor) top left / var(--vf-len) var(--vf-w) no-repeat,
+    linear-gradient(currentColor, currentColor) top left / var(--vf-w) var(--vf-len) no-repeat,
+    linear-gradient(currentColor, currentColor) top right / var(--vf-len) var(--vf-w) no-repeat,
+    linear-gradient(currentColor, currentColor) top right / var(--vf-w) var(--vf-len) no-repeat,
+    linear-gradient(currentColor, currentColor) bottom left / var(--vf-len) var(--vf-w) no-repeat,
+    linear-gradient(currentColor, currentColor) bottom left / var(--vf-w) var(--vf-len) no-repeat,
+    linear-gradient(currentColor, currentColor) bottom right / var(--vf-len) var(--vf-w) no-repeat,
+    linear-gradient(currentColor, currentColor) bottom right / var(--vf-w) var(--vf-len) no-repeat;
+}
+
+/* The hero's "messa a fuoco" (HeroScene.astro): once, at load, the corners close in around the phone and
+   its screen snaps sharp (a tiny pre-blurred copy fades out, scripts/soft-shots.mjs --hero); then the film
+   rings as before. CSS only, so it needs no JS; without motion: sharp screen, corners in place. */
+.film__soft {
+  display: none;
+}
+.film__vf {
+  --vf-inset: -14px;
+  --vf-len: 26px;
+  z-index: 2;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .film__soft {
+    display: block;
+    position: absolute;
+    inset: 13.7cqw 0 0;
+    width: 100%;
+    height: calc(100% - 13.7cqw);
+    object-fit: cover;
+    object-position: top;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    animation: focus-out 0.7s var(--ease-out) 0.75s backwards;
+  }
+  .film__vf {
+    animation: vf-close 0.8s var(--ease-out) 0.15s backwards;
+  }
+}
+@keyframes focus-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vf-close {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+/* ---------- Home works (Works.astro, scripts/works.ts) ----------
+   Default (no JS, reduced motion, phones): the three works stacked, picture and text side by side on
+   computers. Pinned (.wk--pin, computers with motion): one sticky stage, the works take turns. */
+.wk {
+  --wk-top: var(--header-h);
+}
+.wk__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 1rem;
+  gap: clamp(3rem, 2rem + 3vw, 5rem);
 }
-@media (min-width: 900px) {
-  .hs-sec__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.5rem;
-  }
-}
-.hs-card {
+.wk__item {
   display: grid;
-  grid-template-rows: auto 1fr;
-  border: 1px solid var(--filo);
-  border-radius: 20px;
-  overflow: hidden;
-  background: #fff;
-  transition:
-    transform 0.3s var(--ease-out),
-    box-shadow 0.3s var(--ease-out);
+  gap: 1.5rem;
+  align-items: center;
 }
-@media (hover: hover) {
-  .hs-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 24px 40px -28px rgba(11, 27, 63, 0.45);
-  }
-}
-.hs-card__media {
+.wk__media {
+  position: relative;
   display: block;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
+  order: -1;
+}
+.wk__media .fshot {
+  border-radius: 18px;
+  box-shadow: 0 0 0 1px var(--filo);
   background: var(--nebbia);
 }
-.hs-card__media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top;
+.wk__text {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
 }
-.hs-card__body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.6rem;
-  padding: 1.25rem 1.4rem 1.4rem;
-}
-.hs-card__problem {
+.wk__kind {
+  font-size: var(--fs-small);
   color: var(--grafite);
 }
-/* The links sit at the foot of every card, on one line across the row (titles and texts differ in length). */
-.hs-card__links {
+.wk__name {
+  font-size: var(--fs-work);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+.wk__line {
+  font-size: var(--fs-lead);
+  line-height: 1.4;
+  max-width: 30ch;
+}
+.wk__links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1.25rem;
-  margin-top: auto;
-  padding-top: 0.25rem;
+  gap: 0 1.5rem;
+  margin-top: 0.25rem;
+}
+.wk__rail {
+  display: none;
+}
+@media (min-width: 900px) {
+  .wk__item {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(2rem, 1rem + 3vw, 4.5rem);
+  }
+  /* Stacked on computers: the text runs the picture's full height (name on top, sentence and links at the
+     foot), so no empty block sits under a short text. */
+  .wk:not(.wk--pin *) .wk__text {
+    align-self: stretch;
+    grid-template-rows: auto auto 1fr auto;
+  }
+  .wk:not(.wk--pin *) .wk__line {
+    align-self: end;
+  }
+  .wk__media {
+    order: 0;
+  }
+}
+/* Pinned: the track gives the scroll distance (about 70 % of a screen per work), the stage holds still. */
+.wk--pin .wk {
+  height: calc(100svh - var(--wk-top) + var(--n) * 70svh);
+}
+.wk--pin .wk__stage {
+  position: sticky;
+  top: var(--wk-top);
+  height: calc(100svh - var(--wk-top));
+  display: grid;
+  align-items: center;
+}
+.wk--pin .wk__in {
+  display: grid;
+  gap: 2rem;
+}
+.wk--pin .wk__list {
+  gap: 0;
+}
+.wk--pin .wk__item {
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  grid-area: 1 / 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.wk--pin .wk__item[data-on] {
+  pointer-events: auto;
+  opacity: 1;
+  z-index: 1;
+  transition-delay: 0.1s;
+}
+.wk--pin .wk__text,
+.wk--pin .wk__media {
+  transition: transform 0.8s var(--ease-out);
+}
+.wk--pin .wk__item:not([data-on]) .wk__text {
+  transform: translateY(1.5rem);
+}
+.wk--pin .wk__item:not([data-on]) .wk__media {
+  transform: translateY(2.5rem);
+}
+/* The picture never taller than the stage leaves room for. */
+.wk--pin .wk__media {
+  width: 100%;
+  max-width: calc((100svh - var(--wk-top) - 8rem) * 1.6);
+  justify-self: center;
+}
+.wk__media .vf {
+  display: none;
+}
+.wk--pin .wk__media .vf {
+  display: block;
+  --vf-inset: -12px;
+  transition:
+    transform var(--focus-time) var(--ease-out),
+    opacity 0.4s ease;
+}
+.wk--pin .wk__media:has(.is-soft) .vf {
+  opacity: 0;
+  transform: scale(1.05);
+}
+/* The rail: one short bar per work, the current one fills while it is on stage. */
+.wk--pin .wk__rail {
+  display: grid;
+  grid-template-columns: repeat(var(--n), 3rem);
+  gap: 0.5rem;
+}
+.wk__rail span {
+  position: relative;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--filo);
+  overflow: hidden;
+}
+.wk__rail span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--inchiostro);
+  transform-origin: left;
+  transform: scaleX(clamp(0, calc(var(--p, 0) * var(--n) - var(--i)), 1));
+}
+/* Where the browser has scroll-driven animations, CSS fills the rail from the track's own scroll. */
+@supports (animation-timeline: view()) {
+  .wk--pin .wk {
+    view-timeline: --wk block;
+  }
+  .wk--pin .wk__rail span::after {
+    transform: scaleX(0);
+    animation-name: wk-fill;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+  }
+  /* A rule of its own (higher specificity): the minifier would otherwise fold the timeline into the
+     animation shorthand, which browsers reject. */
+  .wk--pin .wk .wk__rail span::after {
+    animation-timeline: --wk;
+    animation-range: contain calc(var(--i) * 100% / var(--n)) contain calc((var(--i) + 1) * 100% / var(--n));
+  }
+}
+@keyframes wk-fill {
+  to {
+    transform: scaleX(1);
+  }
 }
 
-/* Cosa ricevi: a bento, the promise large, five concrete benefits around it. */
+/* Cosa ricevi: the promise on the blue panel, the five benefits as one plain ruled list (no icon tiles). */
 .hs-get {
   background: var(--nebbia);
-}
-/* The band opens with the blue panel, whose own padding already frames the heading. */
-.home .scenes > section.hs-get {
-  padding-top: clamp(1.5rem, 0.5rem + 2vw, 2.5rem);
 }
 .hs-get__in {
   display: grid;
   gap: 1rem;
 }
-@media (min-width: 700px) {
-  .hs-get__in {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .hs-get__big {
-    grid-column: 1 / -1;
-  }
-}
-/* Computers: the blue panel is a band across the top (title | text), then six tiles in two full rows
-   (Lorenzo, 22 Nov 2026: the 2x2 blue block was half empty). */
 @media (min-width: 1000px) {
   .hs-get__in {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .hs-get__big {
-    grid-column: 1 / -1;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: center;
-    column-gap: 3rem;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   }
 }
 .hs-get__big,
-.hs-get__tile {
+.hs-get__card {
   border-radius: 20px;
-  background: #fff;
-  padding: clamp(1.4rem, 1rem + 1.2vw, 2.25rem);
+  padding: clamp(1.4rem, 1rem + 1.2vw, 2.5rem);
 }
 .hs-get__big {
   display: grid;
-  align-content: center;
+  align-content: space-between;
   justify-items: start;
-  gap: 1rem;
+  gap: 1.5rem;
   background: var(--blu);
   color: #fff;
   --inchiostro: #fff;
   --grafite: var(--on-dark-muted);
 }
-.hs-get__big .eyebrow {
-  color: var(--on-dark-muted);
-}
 .hs-get__big h2 {
-  max-width: 20ch;
+  max-width: 14ch;
 }
 .hs-get__big .lead {
-  max-width: 40ch;
+  max-width: 34ch;
   color: var(--on-dark-muted);
 }
-.hs-get__tile {
+.hs-get__card {
+  background: #fff;
   display: grid;
-  align-content: start;
-  gap: 0.5rem;
+  align-content: center;
+  justify-items: start;
 }
-.hs-get__tile p {
+.hs-get__list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  width: 100%;
+}
+.hs-get__list li {
+  display: grid;
+  gap: 0.25rem 2rem;
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--filo);
+}
+.hs-get__list li:first-child {
+  padding-top: 0;
+}
+@media (min-width: 700px) {
+  .hs-get__list li {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: baseline;
+  }
+}
+.hs-get__list h3 {
+  font-size: var(--fs-h3);
+}
+.hs-get__list p {
   color: var(--grafite);
 }
-.hs-get__more {
-  text-decoration: none;
-  color: var(--inchiostro);
-  align-content: center;
-}
-.hs-get__more .textlink {
-  justify-self: start;
-  margin-top: 0.25rem;
-}
+/* Kept for Lo studio's cards. */
 .hs-get__icon {
   display: grid;
   place-items: center;
@@ -1042,6 +1284,56 @@ html.lenis body {
   background: var(--nebbia);
   color: var(--blu);
   margin-bottom: 0.35rem;
+}
+
+/* The statement band (home) and the closing band (inner pages): the one dark moment, full width,
+   one huge sentence. Static, no reveal. */
+.hs-say,
+.closing {
+  background: var(--notte);
+  color: var(--on-ink);
+  --inchiostro: var(--on-ink);
+  --grafite: var(--on-ink-muted);
+  --filo: var(--ink-line);
+  --nebbia: rgba(255, 255, 255, 0.1);
+}
+.hs-say :focus-visible,
+.closing :focus-visible {
+  outline-color: var(--on-ink);
+}
+.home .scenes > section.hs-say {
+  padding-block: clamp(4rem, 2rem + 6vw, 8rem);
+}
+.hs-say__t {
+  font-size: var(--fs-say);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  max-width: none;
+}
+.hs-say__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem 2rem;
+  margin-top: clamp(2rem, 1rem + 3vw, 3.5rem);
+  padding-top: clamp(1.5rem, 1rem + 1vw, 2rem);
+  border-top: 1px solid var(--filo);
+}
+.hs-say__row .lead {
+  color: var(--grafite);
+  max-width: 36ch;
+}
+/* On the dark band the secondary button is a quiet light-on-dark pill. */
+:is(.hs-say, .closing) .btn--secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--on-ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  :is(.hs-say, .closing) .btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--on-ink);
+  }
 }
 
 /* Come funziona: four steps on one line, each with when it happens. */
@@ -1410,22 +1702,8 @@ html.lenis body {
   box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.5);
 }
 
-/* Phones: benefit tiles and steps read as compact rows (icon or number beside the text). */
+/* Phones: steps read as compact rows (number beside the text). */
 @media (max-width: 699px) {
-  .hs-get__tile {
-    grid-template-columns: 2.75rem 1fr;
-    column-gap: 0.9rem;
-    row-gap: 0.2rem;
-    padding: 1.1rem 1.1rem 1.2rem;
-  }
-  .hs-get__icon {
-    grid-row: span 2;
-    margin-bottom: 0;
-  }
-  /* The last tile has no icon: its title must not fall into the icon's narrow column. */
-  .hs-get__more {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .hs-how__steps li {
     grid-template-columns: auto 1fr;
     column-gap: 0.75rem;
@@ -1565,6 +1843,10 @@ a.link {
   background: var(--nebbia);
   border: 0;
   border-radius: var(--radius-field);
+}
+/* On a light grey band a light grey field disappears (the contact form): white fields there. */
+.section--pietra .field :is(input:not([type="radio"], [type="checkbox"], [type="range"]), textarea, select) {
+  background: var(--carta);
 }
 
 /* Bands: what were navy bands are now light grey surfaces with dark text (no colour flip). */

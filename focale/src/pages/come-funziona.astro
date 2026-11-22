@@ -16,19 +16,19 @@ const faqItems = faqs.map((f) => ({ q: f.data.q, a: fill(f.data.a) }));
 const steps = [
   {
     title: "Ci racconti la tua attività.",
-    text: "Dieci minuti al telefono o su WhatsApp. Ci dici cosa fai, per chi lavori, in che zona e cosa vorresti che il sito facesse per te. Se hai già un sito, gli diamo un'occhiata prima di sentirci.",
+    text: "Dieci minuti al telefono o su WhatsApp: cosa fai, per chi, in che zona. Se hai già un sito, lo guardiamo prima di sentirci.",
   },
   {
     title: "Ricevi l'anteprima gratuita.",
-    text: `Entro ${site.previewHours} ore ti mandiamo la homepage del tuo nuovo sito, con il tuo nome, i tuoi servizi e le foto che troviamo sulla tua scheda Google o che ci mandi tu. È privata: la vedi solo tu, da un link.`,
+    text: `Entro ${site.previewHours} ore la homepage del tuo nuovo sito, con il tuo nome, i tuoi servizi e le foto della tua scheda Google o le tue. È privata: la vedi solo tu, da un link.`,
   },
   {
     title: "Se ti convince, partiamo.",
-    text: `Ti mandiamo un preventivo scritto con il pacchetto scelto. Ci versi un acconto del ${site.depositPercent}% e ci mandi foto e informazioni. Da quel giorno il sito è pronto in ${site.deliveryDays.essenziale} o ${site.deliveryDays.professionale} giorni lavorativi, secondo il pacchetto.`,
+    text: `Preventivo scritto, acconto del ${site.depositPercent}%, poi foto e informazioni. Il sito è pronto in ${site.deliveryDays.essenziale} o ${site.deliveryDays.professionale} giorni lavorativi, secondo il pacchetto.`,
   },
   {
     title: "Approvi, paghi il saldo, va online.",
-    text: `Lo provi dal tuo telefono e chiedi le modifiche: ${site.revisionRounds} giri sono inclusi. Quando lo approvi, paghi il saldo e lo mettiamo online sul tuo dominio.`,
+    text: `Lo provi dal telefono, con ${site.revisionRounds} giri di modifiche inclusi. Quando lo approvi paghi il saldo e va online sul tuo dominio.`,
   },
 ];
 const whens = ["Oggi", `Entro ${site.previewHours} ore`, `${site.deliveryDays.essenziale}-${site.deliveryDays.professionale} giorni lavorativi`, "Alla fine"];
@@ -55,8 +55,8 @@ const get = [
 >
   <PageHead
     label="Come funziona"
-    title="Come funziona, dal primo messaggio al sito online."
-    lead="Dal primo messaggio al sito online in quattro passi. Il primo è gratis, e il saldo lo paghi solo quando il sito ti convince."
+    title="Dal primo messaggio al sito online."
+    lead="Tu ci racconti l'attività, noi ti mostriamo il sito. Il saldo lo paghi solo a sito approvato."
   >
     <ChatSteps slot="visual" />
   </PageHead>
@@ -64,10 +64,7 @@ const get = [
   <section class="section" aria-labelledby="passi-t">
     <div class="wrap">
       <div class="hs-head cf-head-row">
-        <div>
-          <p class="eyebrow">I passi</p>
-          <h2 id="passi-t">Quattro passi, il primo è gratis.</h2>
-        </div>
+        <h2 id="passi-t">Quattro passi, il primo è gratis.</h2>
         <div class="cf-ask">
           <a href="/anteprima-gratuita" class="btn btn--primary btn--big">Voglio l'anteprima gratuita</a>
         </div>
@@ -92,7 +89,7 @@ const get = [
         <p class="eyebrow">Da te e per te</p>
         <h2 id="serve">Cosa ci serve da te, cosa ricevi.</h2>
         <div class="hs-head__side">
-          <p class="lead">Da te, le informazioni sull'attività e qualche foto, anche fatta col telefono. Da noi, il sito online sul tuo dominio con gli accessi intestati a te.</p>
+          <p class="lead">Da te, poche informazioni e qualche foto, anche fatta col telefono. Da noi, il sito online, intestato a te.</p>
         </div>
       </div>
       <div class="cf-two">
@@ -112,11 +109,8 @@ const get = [
   <section class="section section--sole" aria-labelledby="garanzia">
     <div class="wrap cf-g-grid">
       <div>
-        <h2 id="garanzia" class="cf-g-title" data-focus>La garanzia: l'anteprima è gratis, il saldo lo paghi a sito approvato.</h2>
-        <p class="lead cf-g">
-          Se l'anteprima non ti piace, finisce lì: non ci devi niente e non ti richiamiamo dieci volte. Se ti piace e partiamo, il saldo lo
-          paghi solo dopo aver approvato il sito finito.
-        </p>
+        <h2 id="garanzia" class="cf-g-title">L'anteprima è gratis e resta a te. Il saldo, a sito approvato.</h2>
+        <p class="lead cf-g">Se l'anteprima non ti piace, finisce lì: non ci devi niente e non ti richiamiamo dieci volte.</p>
         <a class="btn btn--secondary" href="/condizioni">Leggi le condizioni complete</a>
       </div>
       <FreePreview />
@@ -129,7 +123,7 @@ const get = [
         <p class="eyebrow">Domande</p>
         <h2 id="domande-t">Tutte le domande.</h2>
         <div class="hs-head__side">
-          <p class="lead">Costi, tempi, pagamenti, testi, foto e Google: le risposte brevi. Se la tua domanda non c'è, scrivici.</p>
+          <p class="lead">Le risposte brevi. Se la tua domanda non c'è, scrivici.</p>
         </div>
       </div>
       <Faq items={faqItems} cols />
@@ -240,7 +234,8 @@ const get = [
     }
   }
   .cf-g-title {
-    max-width: 22ch;
+    max-width: 16ch;
+    font-size: var(--fs-mega);
   }
   .cf-g {
     margin: 1.5rem 0 2rem;

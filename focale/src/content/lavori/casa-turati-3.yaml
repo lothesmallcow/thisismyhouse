@@ -43,6 +43,8 @@ quote:
     - "Le commissioni di Airbnb restano quelle di oggi: il sito non ne aggiunge."
 shotPhone: ../../assets/lavori/casa-turati-3-phone.png
 shotDesktop: ../../assets/lavori/casa-turati-3-desktop.png
+shotSoft: ../../assets/lavori/casa-turati-3-desktop-soft.jpg
+line: "Una pagina sola, in italiano e in inglese, che porta dall'annuncio alle date libere."
 # Pieces of the real site, measured on its full-page shots: the home's film puts its green boxes on
 # them (film.fixes[].at), the project page shows the shots to scroll (RealTour.astro). Shots and boxes:
 # node scripts/tour-shots.mjs casa-turati-3 <url of a local build>. `t` says what each piece does.

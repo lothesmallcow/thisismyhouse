@@ -1,0 +1,67 @@
+---
+/**
+ * Home: the three works, one at a time (Lorenzo, 22 Nov 2026: "più gas"). On computers with motion
+ * allowed, scripts/works.ts pins a stage (position: sticky, native scroll, never hijacked) and the works
+ * take turns while the page scrolls past: each one comes into focus (the "messa a fuoco" signature,
+ * FocusShot.astro) with one sentence. Without JS, with reduced motion and on phones the works are simply
+ * stacked, and each shot sharpens once as it scrolls in. Wording through lib/lavori.ts: Casa Turati 3
+ * is a real client's site, the other two are demos for invented businesses, and each says so.
+ */
+import { getCollection } from "astro:content";
+import FocusShot from "./FocusShot.astro";
+import { kindLabel, siteAlt } from "../lib/lavori";
+
+const settori = await getCollection("settori");
+const works = (await getCollection("lavori"))
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((l) => ({ l, sector: settori.find((s) => s.id === l.data.settore) }));
+---
+<section class="section hs-works" id="lavori" aria-labelledby="works-t" data-works>
+  <div class="wrap">
+    <div class="hs-head hs-head--row">
+      <h2 id="works-t">Mettiamo a fuoco quello che fai.</h2>
+      <a class="textlink" href="/lavori/">Tutti i lavori</a>
+    </div>
+  </div>
+  <div class="wk" data-wk style={`--n: ${works.length}`}>
+    <div class="wk__stage">
+      <div class="wrap wk__in">
+        <ol class="wk__list">
+          {
+            works.map(({ l, sector }, i) => (
+              <li class="wk__item" data-wk-item style={`--i: ${i}`}>
+                <div class="wk__text">
+                  <p class="wk__kind">{kindLabel(l)}</p>
+                  <h3 class="wk__name">{l.data.name}</h3>
+                  {l.data.line && <p class="wk__line">{l.data.line}</p>}
+                  <div class="wk__links">
+                    <a class="textlink" href={`/lavori/${l.id}/`}>Guarda il progetto</a>
+                    {sector && <a class="textlink" href={`/per/${sector.id}/`}>{sector.data.short}</a>}
+                  </div>
+                </div>
+                <a class="wk__media" href={`/lavori/${l.id}/`} tabindex="-1" aria-hidden="true">
+                  <FocusShot
+                    src={l.data.shotDesktop}
+                    soft={l.data.shotSoft}
+                    alt={siteAlt(l)}
+                    widths={[640, 960, 1400]}
+                    sizes="(min-width: 900px) 58vw, 92vw"
+                  />
+                  <span class="vf" />
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+        <div class="wk__rail" aria-hidden="true">
+          {works.map((_, i) => <span style={`--i: ${i}`} />)}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { initWorks } from "../scripts/works";
+  initWorks();
+</script>
